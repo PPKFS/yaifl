@@ -1,7 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -ddump-splices #-}
+
 module Main (main) where
 
-import Yaifl (someFunc)
+import Yaifl
+import Relude
 
-
+data Bar = F deriving Show
 main :: IO ()
-main = someFunc
+main = putStrLn ("hi" :: String)
