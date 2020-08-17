@@ -8,18 +8,30 @@ Yet another interactive fiction library.
 
 module Yaifl.Std 
 (
-    Player, Physical, RoomData,    
-    makePlayer, makeThing, makeThingNoDesc, makeRoom,
+    Player, Physical, RoomData, Enclosing,
+    makePlayer, makeThing, makeThingWithoutDescription, makeRoom,
+    whenPlayBeginsRulesImpl, printingNameImpl, HasStd, HasStd',
+    printName,
+    introText,
+    whenPlayBeginsName, printNameName, printDarkRoomNameName,
     defaultWorld
 ) where
 
 import Relude
 import Yaifl.Common
 import Yaifl.Say
+import Yaifl.Utils
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 import qualified Language.Haskell.TH as TH
 import qualified Data.Text as Text
-import Lens.Micro.Platform
+import qualified Data.Set as DS
+import Control.Lens
+
+{- TYPES -}
+
+type HasStd a w = (HasWorld a w, HasWorld w w, HasGameInfo a w, HasGameInfo' w, Has w Object, Has w Physical, 
+                    Has w Player, Has w Enclosing, Has w RoomData, HasMessageBuffer w, HasMessageBuffer a)
+type HasStd' w = HasStd w w
 
 data ThingLit = Lit | Unlit deriving Show
 data Edibility = Edible | Inedible deriving Show
@@ -29,7 +41,6 @@ data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving Show
 
 data Physical = Physical
     {
-        _enclosedBy :: Maybe Entity,
         _location :: Entity,
         _lit :: ThingLit,
         _edible :: Edibility,
@@ -38,32 +49,19 @@ data Physical = Physical
         _pushable :: Pushability
     } deriving Show
 
-newtype Player = Player Int deriving Show
-missingPlayer :: Entity
-missingPlayer = -2
-
+physicalComponent :: Proxy Physical
+physicalComponent = Proxy
 emptyPhysical :: Physical
-emptyPhysical = Physical Nothing (-1) Lit Edible Portable Wearable PushableBetweenRooms
+emptyPhysical = Physical missingRoom Lit Edible Portable Wearable PushableBetweenRooms
 
-makeThing :: (HasGameInfo w, Has w Object, Has w Physical) => Text -> Text -> System w Entity
+makeThing :: HasStd a w => Text -> Text -> System a Entity
 makeThing n d = do
     e <- makeObject n d
     addComponent e emptyPhysical
     return e
 
-makeThingNoDesc :: (HasGameInfo w, Has w Object, Has w Physical) => Text -> System w Entity
-makeThingNoDesc n = makeThing n ""
-
-makePlayer :: (HasGameInfo w, Has w Object, Has w Player) => System w Entity
-makePlayer = do
-    e <- makeObject "yourself" "it's you."
-    addComponent globalComponent (Player e)
-    return e
-
-getPlayer :: Has w Player => w -> Entity
-getPlayer w = case w ^. store (Proxy :: Proxy Player) . at globalComponent of
-    Just (Player p) -> p
-    Nothing -> missingPlayer
+makeThingWithoutDescription :: HasStd a w => Text -> System a Entity
+makeThingWithoutDescription n = makeThing n ""
 
 data Darkness = Lighted | Dark deriving Show
 data IsVisited = Visited | Unvisited deriving Show
@@ -77,48 +75,125 @@ data RoomData = RoomData
         _containingRegion :: ContainingRegion
     } deriving Show
 
-makeRoom :: (HasGameInfo w, Has w Object, Has w RoomData) => Text -> System w Entity
+makeRoom :: HasStd a w => Text -> System a Entity
 makeRoom n = do
     e <- makeObject n ("It's the " <> n <> ".")
     addComponent e (RoomData Unvisited emptyStore Nothing)
+    addComponent e (Enclosing DS.empty)
     return e
 
+getFirstRoom :: HasGameInfo a w => a -> Entity
+getFirstRoom w = w ^. gameInfo . firstRoom
+
+newtype Enclosing = Enclosing
+    {
+        _encloses :: Set Entity
+    } deriving Show
+enclosingComponent :: Proxy Enclosing
+enclosingComponent = Proxy
+
+newtype Player = Player Int deriving Show
+
+makePlayer :: HasStd a w => System a Entity
+makePlayer = do
+    e <- makeThing "yourself" "it's you."
+    addComponent globalComponent (Player e)
+    return e
+
+getPlayer :: HasComponent a w Player => a -> Entity
+getPlayer w = maybe missingPlayer (\(Player p) -> p) $ 
+                w ^. world . store (Proxy :: Proxy Player) . at globalComponent
+
+makeLenses ''Physical
+makeLenses ''Enclosing
 defaultWorld :: [TH.Name]
-defaultWorld = [''Object, ''RoomData, ''Physical, ''Player]
+defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player]
 
-introText :: (HasMessageBuffer w, HasGameInfo w) => System w ()
-introText = do
+move :: HasStd a w => Entity -> Entity -> System a Bool
+move t le = do
     w <- get
-    let shortBorder = "------" 
-        totalLength = 2 * Text.length shortBorder + Text.length (w ^. gameInfo . title) + 2
-        longBorder = foldr (<>) "" $ replicate totalLength ("-" :: Text)
-    setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
-    sayLn longBorder
-    w2 <- get
-    sayLn (shortBorder <> " " <> (w2 ^. title) <> " " <> shortBorder)
-    sayLn longBorder
-    sayLn "\n"
-    setStyle Nothing
-    pass
+    let mp = getComponent w physicalComponent t
+        mloc = getComponent w enclosingComponent le
+        mcurrLoc = mp ^? _Just . location
+    sayDbgLn $ show le
+    doIfExists3 mp mloc mcurrLoc (show t <> " no physical thing to move") "no future loc" "no current loc" 
+        (\_ _ c -> do
+            world . component physicalComponent t . _Just . location .= le
+            world . component enclosingComponent c . _Just . encloses %= DS.delete t
+            world . component enclosingComponent le . _Just . encloses %= DS.insert t
+            return True
+        )
 
-move :: State Physical
-whenPlayBeginsRulesImpl :: (HasMessageBuffer w, HasGameInfo w, Has w Player) => UncompiledRulebook w ()
+whenPlayBeginsRulesImpl :: (HasStd' w) => UncompiledRulebook w ()
 whenPlayBeginsRulesImpl = (blankRulebook "when play begins rulebook") {
     _rules = 
         [
             makeRule "display banner rule" (do
-                introText
+                sayIntroText
                 return Nothing),
                 
             makeRule "position player in model world rule" (do
-                    w <- getWorld
-                    --move player firstRoom
-                    return Nothing)
-                {-
-            -- | do looking.
-            makeRule "initial room description rule" (\r -> do
-                _ <- zoom _1 $ tryAction (r ^. actions . lookingAction) r
-                return Nothing)-}
+                w <- get
+                _ <- move (getPlayer w) (getFirstRoom w)
+                return Nothing),
+            makeRule "initial room description rule" (do
+                tryAction "looking" []
+                return Nothing)
         ]
 }
 
+introText :: Text -> [Text]
+introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder<>"\n", 
+                longBorder<>"\n\n"]
+            where shortBorder = "------" 
+                  totalLength = 2 * Text.length shortBorder + Text.length w + 2
+                  longBorder = foldr (<>) "" $ replicate totalLength ("-" :: Text)
+
+sayIntroText :: HasStd a w => System a ()
+sayIntroText = do
+    w <- get
+    setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
+    mapM_ say (introText $ w ^. gameInfo . title)
+    setStyle Nothing
+    pass
+
+printingNameOfADarkRoomImpl :: (HasMessageBuffer w) => UncompiledRulebook w ()
+printingNameOfADarkRoomImpl = (blankRulebook printDarkRoomNameName) {
+    _rules = [
+        makeRule "" (do
+            say "Darkness"
+            return Nothing)]
+}
+
+printingNameImpl :: HasStd' w => UncompiledActivity w ()
+printingNameImpl = makeActivity printNameName 1 (do
+    (w, (e, ())) <- get
+    whenJust (getComponent w objectComponent =<< viaNonEmpty head e) (say . _name)
+    return $ Just True)
+
+makeActivity :: Text -> Int -> RuleEvaluation (w, ([Entity], ())) -> UncompiledActivity w ()
+makeActivity n numObj r = Activity n numObj (const ()) (blankRulebookVars ("before " <> n)) 
+                    (\r1 -> (blankRulebookVars ("for " <> n) r1) 
+                        {
+                            _rules = [("", r)]
+                        })
+                            (blankRulebookVars ("after " <> n))
+
+printNameName :: Text
+printNameName = "printing the name"
+printDarkRoomNameName :: Text
+printDarkRoomNameName = "printing the name of a dark room"
+whenPlayBeginsName :: Text
+whenPlayBeginsName = "when play begins rules"
+
+printName :: (HasStd u w, HasID o) => o -> System u ()
+printName o = zoom world $ doActivity printNameName [objID o]
+
+doActivity :: HasStd' w => Text -> [Entity] -> System w ()
+doActivity n params = do
+    sayDbgLn $ "running activity " <> n
+    w <- get
+    let v = w ^. world . gameInfo . activities . at n
+    maybe (sayDbgLn $ "couldn't find activity " <> n) (\(CompiledActivity x) -> do
+        _ <- x params
+        pass) v

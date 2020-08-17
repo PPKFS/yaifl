@@ -7,24 +7,38 @@ Yet another interactive fiction library.
 -}
 module Yaifl
 (
-    Entity, Store, Object, System, GameInfo,
+    Entity, Store, Object, System, GameInfo, MessageBuffer,
     blankGameInfo, emptyStore,
     gameInfo, title, setTitle,
-    Has, HasGameInfo,
-
-    Player, Physical, RoomData,    
+    Has, HasGameInfo, HasMessageBuffer, store, messageBuffer, blankMessageBuffer, msgBuffer,
+    printMessageBuffer,
+    say, sayLn, sayDbg, sayDbgLn,
+    printName,
+    Player, Physical, RoomData, Enclosing,
     newEntity, addComponent,
-    makePlayer, makeThing, makeThingNoDesc, makeRoom,
+    makePlayer, makeThing, makeThingWithoutDescription, makeRoom,
     makeWorld,   
     UncompiledRulebook(..), Rulebook(..),
     blankRulebook, rules, 
-    defaultWorld
+    rulebooks,
+    defaultWorld, entityCounter,
+    objectComponent, world,
+    description,
+    HasStd', HasStd, HasWorld, world,
+    mapObjects, mapObjects2,
+    WorldBuildInfo(..), WorldBuilder, blankBuildInfo,
+    addRoom, addRule, addWhenPlayBeginsRule,
+    whenPlayBeginsName, printNameName, printDarkRoomNameName,
+    buildWorld,
+    introText
 ) where
 
 import Relude
 import Yaifl.Common
 import Yaifl.Std
+import Yaifl.Say
 import Yaifl.TH
+import Yaifl.WorldBuilder
 
 data NameProperness = ImproperNamed | ProperNamed deriving Show
 data NamePlurality = SingularNamed | PluralNamed deriving Show

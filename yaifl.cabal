@@ -23,13 +23,15 @@ source-repository head
 common common-options
   build-depends:       base-noprelude ^>= 4.13.0.0
                      , relude
-                     , microlens-platform
+                     , lens
                      , prettyprinter
                      , prettyprinter-ansi-terminal
                      , template-haskell
                      , containers
                      , mtl  
                      , text
+                     , tasty
+                     , tasty-hunit
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -48,13 +50,13 @@ common common-options
     ghc-options:       
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances
+  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds
 
 library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     Yaifl, Yaifl.Common, Yaifl.Say, Yaifl.Std
-  other-modules:       Yaifl.TH
+  other-modules:       Yaifl.TH, Yaifl.WorldBuilder Yaifl.Utils
 
 executable yaifl
   import:              common-options
