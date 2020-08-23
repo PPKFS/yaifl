@@ -18,7 +18,7 @@ module Yaifl.Common
     Has, HasMessageBuffer,
     HasWorld, HasWorld', HasGameInfo, HasGameInfo', HasComponent,
     missingRoom, missingPlayer, firstRoom, actions,
-    getDescription,
+    getDescription, _firstRoom,
     
     addComponent, component, setComponent, getComponent,
     newEntity, makeObject, makeRule,
@@ -126,7 +126,8 @@ newtype Activity w = CompiledActivity ([Entity] -> RuleEvaluation w)
 
 data NumberOfArguments = Exactly Int | NoArgs | AnyNumber | AtLeast Int
 
-data RoomDescriptions = AbbreviatedRoomDescriptions | SometimesAbbreviatedRoomDescriptions deriving (Eq, Show)
+data RoomDescriptions = AbbreviatedRoomDescriptions | SometimesAbbreviatedRoomDescriptions
+                            | NeverAbbreviatedRoomDescriptions deriving (Eq, Show)
 -- | p is the parameters, r is any rulebook specific arguments
 data UncompiledAction w r p = Action
     {
@@ -243,7 +244,7 @@ blankRulebookVars :: Text -> r -> UncompiledRulebook w r
 blankRulebookVars n r = Rulebook n (const r) []
 
 blankGameInfo :: GameInfo w
-blankGameInfo = GameInfo "" Nothing blankMessageBuffer 1 Map.empty Map.empty Map.empty AbbreviatedRoomDescriptions False
+blankGameInfo = GameInfo "" Nothing blankMessageBuffer 1 Map.empty Map.empty Map.empty NeverAbbreviatedRoomDescriptions False
 
 globalComponent :: Entity
 globalComponent = 0

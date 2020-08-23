@@ -86,6 +86,7 @@ makeVoid = do
     e <- use $ _1 . world . gameInfo . entityCounter
     _1 . world . gameInfo . entityCounter .= missingRoom
     _ <- addRoom "The void"
+    _1 . world . gameInfo . firstRoom .= Nothing
     _1 . world . gameInfo . entityCounter .= e
     
 -- | what is this atrocious mess
@@ -96,7 +97,7 @@ compileActivity a = CompiledActivity (\e -> do
     let args = unboxArguments e
     whenJust args (\defArgs ->
         zoomOut (do
-            getRule $ compileRulebookWithResult (_beforeRules a (defArgs, initRules))
+            _ <- getRule $ compileRulebookWithResult (_beforeRules a (defArgs, initRules))
             (_, (_, r)) <- get
             getRule $ compileRulebookWithResult (_forRules a (defArgs, r)) 
             (_, (_, r)) <- get

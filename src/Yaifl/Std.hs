@@ -257,6 +257,7 @@ printDarkRoomNameName :: Text
 printDarkRoomNameName = "printing the name of a dark room"
 printDarkRoomDescriptionName :: Text
 printDarkRoomDescriptionName = "printing the description of a dark room"
+describingLocaleActivityName :: Text
 describingLocaleActivityName = "printing the locale description of something"
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
@@ -350,10 +351,10 @@ lookingActionImpl = makeAction lookingActionName visrule [] [] [
         setStyle (Just PPTTY.bold)
         v <- use lookingVarLens
         (w, _) <- get
-        whenJust (playerLocation w) (\loc -> case v of
-            _ | _visibilityLevel v == 0 -> doActivity printDarkRoomNameName 
-            _ | _visibilityCeiling v == loc -> printName $ _visibilityCeiling v
-            _ -> printNameEx (_visibilityCeiling v) capitalThe)
+        whenJust (playerLocation w) (\loc ->
+            if | _visibilityLevel v == 0 -> doActivity printDarkRoomNameName 
+               | _visibilityCeiling v == loc -> printName $ _visibilityCeiling v
+               | True -> printNameEx (_visibilityCeiling v) capitalThe)
         mapM_ foreachVisibilityHolder $ take (_visibilityLevel v - 1) $ iterate (findVisibilityHolder w) $ getPlayer w
         sayLn ""
         setStyle Nothing
@@ -362,48 +363,24 @@ lookingActionImpl = makeAction lookingActionName visrule [] [] [
     makeRuleWithArgs "room description body rule" (do
         (w, (_, v)) <- get
         let gi = w ^. gameInfo
-        whenJust (playerLocation w) (\loc -> case v of
-            _ | _visibilityLevel v == 0 ->
+        sayDbgLn $ show v
+        whenJust (playerLocation w) (\loc ->
+            if | _visibilityLevel v == 0 ->
                     unless (_roomDescriptions gi == AbbreviatedRoomDescriptions || 
                          (_roomDescriptions gi == SometimesAbbreviatedRoomDescriptions && _darknessWitnessed gi))
                             (doActivity printDarkRoomDescriptionName)
-            _ | _visibilityCeiling v == loc -> 
+                | _visibilityCeiling v == loc -> 
                     unless (_roomDescriptions gi == AbbreviatedRoomDescriptions || 
                          (_roomDescriptions gi == SometimesAbbreviatedRoomDescriptions 
                                 && _roomDescribingAction v /= lookingActionName))
-                            (whenJust (getComponent w objectComponent loc) (say . getDescription w))
-            _ -> pass)
+                            (whenJust (getComponent w objectComponent loc) (sayLn . getDescription w))
+                | True -> pass)
         return Nothing
         ),
-    {-
-    function desc_obj_rule(world::World, r::Rulebook)
-        if r.variables[:visibility_level] == 0
-            return
-        end
-        imd_lvl = actor(r)
-        ip_cnt = r.variables[:visibility_level]
-        while ip_cnt > 0
-            marked_for_listing(imd_lvl, true)
-            imd_lvl = find_visibility_holder(w, imd_lvl)
-            ip_cnt -= 1
-        end
-        ip_cnt2 = r.variables[:visibility_level]
-        while ip_cnt2 > 0
-            imd_lvl = actor(r)
-            ip_cnt = 0
-            while ip_cnt < ip_cnt2
-                imd_lvl = find_visibility_holder(w, imd_lvl)
-                ip_cnt += 1
-                do_activity!(w, :describing_locale, imd_lvl)
-                ip_cnt2 -= 1
-            end
-        end
-    end
-    -}
     makeRuleWithArgs "room description paragraphs about objects rule" (do
         (w, (_, v)) <- get
         when (_visibilityLevel v > 0) (
-            mapM_ (\e -> whenJust e (\e' -> doActivityWithArgs describingLocaleActivityName [e'])) 
+            mapM_ (`whenJust` (\e' -> doActivityWithArgs describingLocaleActivityName [e'])) 
                     $ take (_visibilityLevel v - 1) $ iterate (findVisibilityHolder w) $ getPlayer w
             )
         return Nothing)] []
