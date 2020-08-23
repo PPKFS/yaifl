@@ -8,30 +8,41 @@ Yet another interactive fiction library.
 
 module Yaifl.Common 
 (
-    Entity, Store, Object, System, GameInfo,
+    Entity, Store, Object, System, GameInfo, Description(..),
     Activity(..), UncompiledActivity(..),
+    Action(..), UncompiledAction(..), RoomDescriptions(..),
     blankGameInfo, emptyStore, globalComponent,
     gameInfo, title, setTitle, store, msgBuffer, world,
     activities,
     HasID, objID,
     Has, HasMessageBuffer,
     HasWorld, HasWorld', HasGameInfo, HasGameInfo', HasComponent,
-    missingRoom, missingPlayer, firstRoom,
+    missingRoom, missingPlayer, firstRoom, actions,
+    getDescription,
     
     addComponent, component, setComponent, getComponent,
     newEntity, makeObject, makeRule,
     rulebooks,
     UncompiledRulebook(..), Rulebook(..),
     RuleOutcome, RuleEvaluation,
-    blankRulebook, blankRulebookVars, rules, tryAction, description,
+    blankRulebook, blankRulebookVars, rules, tryAction, description, roomDescriptions, _roomDescriptions,
     objectComponent, entityCounter,
     mapObjects, mapObjects2,
+    _darknessWitnessed,
     getWorld,
-    _name, _objectID, _description
+    badArguments, isBad,
+    ActionArgs, unboxArguments, RulebookArgs, defaultRulebookArguments,
+    makeActivity, makeBlankRule, defaultArguments, makeRuleWithArgs,
+    NumberOfArguments(..),
+    _name, _objectID, _description,
+    isComponent,
+
+    compileRulebook, compileRulebookWithResult
 ) where
 
 import Relude
 import Yaifl.Say
+import Yaifl.Utils
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Map as Map
 import qualified Text.Show
@@ -49,7 +60,20 @@ emptyStore :: Store a
 emptyStore = IM.empty
 
 type Name = Text
-type Description = Text
+data Description = PlainDescription Text | DynamicDescription (forall w. w -> Entity -> Text)
+
+instance IsString Description where
+    fromString = PlainDescription . fromString
+
+instance Semigroup Description where
+    (<>) (PlainDescription e) (PlainDescription e2) = PlainDescription (e <> e2)
+    (<>) (PlainDescription e) (DynamicDescription e2) = DynamicDescription (\w e1 -> e <> e2 w e1)
+    (<>) (DynamicDescription e2) (PlainDescription e)  = DynamicDescription (\w e1 -> e2 w e1 <> e)
+    (<>) (DynamicDescription e) (DynamicDescription e2) = DynamicDescription (\w e1 -> e w e1 <> e2 w e1)
+
+instance Show Description where
+    show (PlainDescription t) = show t
+    show (DynamicDescription _) = "dynamicdescription" 
 
 -- | possibly the most basic component, a name.
 data Object = Object
@@ -74,41 +98,66 @@ data UncompiledRulebook w r = Rulebook
         _rules :: [(Text, RuleEvaluation (w, r))]
     }
 
-newtype Rulebook w = CompiledRulebook (RuleEvaluation w)
+newtype Rulebook w = CompiledRulebook { getRule :: RuleEvaluation w }
 
 data GameInfo w = GameInfo 
     {
         _title :: Text,
-        _firstRoom :: Entity,
+        _firstRoom :: Maybe Entity,
         _msgBuffer :: MessageBuffer,
         _entityCounter :: Entity,
         _activities :: Map.Map Text (Activity w),
-        _rulebooks :: Map.Map Text (Rulebook w)
+        _rulebooks :: Map.Map Text (Rulebook w),
+        _actions :: Map.Map Text (Action w),
+        _roomDescriptions :: RoomDescriptions,
+        _darknessWitnessed :: Bool
     } deriving Show
 
-data UncompiledActivity w r = Activity
+data UncompiledActivity w r p = Activity
     {
         _activityName :: Text,
-        _appliesTo :: Int,
         _initActivity :: w -> r,
-        _beforeRules :: ([Entity], r) -> UncompiledRulebook w ([Entity], r),
-        _forRules :: ([Entity], r) -> UncompiledRulebook w ([Entity], r),
-        _afterRules :: ([Entity], r) -> UncompiledRulebook w ([Entity], r)
+        _beforeRules :: (p, r) -> UncompiledRulebook w (p, r),
+        _forRules :: (p, r) -> UncompiledRulebook w (p, r),
+        _afterRules :: (p, r) -> UncompiledRulebook w (p, r)
     }
 
 newtype Activity w = CompiledActivity ([Entity] -> RuleEvaluation w)
+
+data NumberOfArguments = Exactly Int | NoArgs | AnyNumber | AtLeast Int
+
+data RoomDescriptions = AbbreviatedRoomDescriptions | SometimesAbbreviatedRoomDescriptions deriving (Eq, Show)
+-- | p is the parameters, r is any rulebook specific arguments
+data UncompiledAction w r p = Action
+    {
+        _actionName :: Text,
+        _understandAs :: [Text],
+        _setActionVariables :: p -> UncompiledRulebook w (p, r),
+        _beforeActionRules :: (p, r) -> UncompiledRulebook w (p, r),
+        _checkActionRules :: (p, r) -> UncompiledRulebook w (p, r),
+        _carryOutActionRules :: (p, r) -> UncompiledRulebook w (p, r),
+        _reportActionRules :: (p, r) -> UncompiledRulebook w (p, r)
+    }
+
+newtype Action w = CompiledAction ([Entity] -> RuleEvaluation w)
+
 {- TYPECLASSES -}
 
 instance Show (UncompiledRulebook w r) where
     show (Rulebook n _ r) = toString n <> concatMap (toString . fst) r
 
+instance Show (UncompiledAction w r p) where
+    show = show . _actionName
 instance Show (Rulebook w) where
     show _ = "compiled rulebook"
 
 instance Show (Activity w) where
     show _ = "compiled activity"
 
-instance Show (UncompiledActivity w r) where
+instance Show (Action w) where
+    show _ = "compiled action"
+
+instance Show (UncompiledActivity w r p) where
     show = show . _activityName
 
 class HasGameInfo u w => HasWorld u w | u -> w where
@@ -124,7 +173,7 @@ class HasGameInfo u w | u -> w where
     gameInfo :: Lens' u (GameInfo w)
     title :: Lens' u Text
     title = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_title = x'}) <$> f _title
-    firstRoom :: Lens' u Entity
+    firstRoom :: Lens' u (Maybe Entity)
     firstRoom = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_firstRoom = x'}) <$> f _firstRoom
     msgBuffer :: Lens' u MessageBuffer
     msgBuffer = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_msgBuffer = x'}) <$> f _msgBuffer
@@ -134,6 +183,10 @@ class HasGameInfo u w | u -> w where
     rulebooks = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_rulebooks = x'}) <$> f _rulebooks
     activities :: Lens' u (Map.Map Text (Activity w))
     activities = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_activities = x'}) <$> f _activities
+    actions :: Lens' u (Map.Map Text (Action w))
+    actions = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_actions = x'}) <$> f _actions
+    roomDescriptions :: Lens' u RoomDescriptions
+    roomDescriptions = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_roomDescriptions = x'}) <$> f _roomDescriptions
 
 type HasGameInfo' w = HasGameInfo w w
 
@@ -157,6 +210,32 @@ instance HasID Object where
 -- A UNIVERSE u (some type containing a WORLD w) has stores for a COMPONENT c
 type HasComponent u w c = (HasWorld' w, HasWorld u w, Has w c)
 
+class Eq a => ActionArgs a where
+    unboxArguments :: [Entity] -> Maybe a
+    defaultArguments :: a
+    isBad :: a -> Bool
+    isBad = (== defaultArguments)
+
+class RulebookArgs a where
+    defaultRulebookArguments :: a
+
+instance ActionArgs Entity where
+    unboxArguments [a] = Just a
+    unboxArguments _ = Nothing
+    defaultArguments = badArguments
+
+instance ActionArgs () where
+    
+    unboxArguments [] = Just ()
+    unboxArguments _ = Nothing
+    defaultArguments = ()
+    isBad _ = False
+
+getDescription :: w -> Object -> Text
+getDescription w o = case _description o of
+    PlainDescription t -> t
+    DynamicDescription p -> p w (_objectID o)
+
 blankRulebook :: Text -> UncompiledRulebook w ()
 blankRulebook n = Rulebook n (const ()) []
 
@@ -164,10 +243,16 @@ blankRulebookVars :: Text -> r -> UncompiledRulebook w r
 blankRulebookVars n r = Rulebook n (const r) []
 
 blankGameInfo :: GameInfo w
-blankGameInfo = GameInfo "" missingRoom blankMessageBuffer 1 Map.empty Map.empty
+blankGameInfo = GameInfo "" Nothing blankMessageBuffer 1 Map.empty Map.empty Map.empty AbbreviatedRoomDescriptions False
 
 globalComponent :: Entity
 globalComponent = 0
+
+badArguments :: Entity
+badArguments = -100
+
+missingThing :: Entity
+missingThing = -1
 
 missingPlayer :: Entity
 missingPlayer = -2
@@ -202,7 +287,7 @@ getComponentST t e = do
 setComponent :: HasComponent u w c => u -> Proxy c -> Entity -> c -> u
 setComponent w p e v = w & world . store p . at e ?~ v
 
-makeObject :: (HasMessageBuffer w, HasComponent u w Object) => Text -> Text -> System u Entity
+makeObject :: (HasMessageBuffer w, HasComponent u w Object) => Text -> Description -> System u Entity
 makeObject n d = zoom world (do
     e <- newEntity
     addComponent e (Object n d e)
@@ -218,8 +303,12 @@ makeRuleWithArgs = (,)
 getWorld :: System (w, r) w
 getWorld = fst <$> get
 
-tryAction :: HasMessageBuffer x => p -> y -> State x ()
-tryAction action args = sayDbgLn "doing an action"
+tryAction :: (HasWorld' w, HasMessageBuffer w) => Text -> [Entity] -> State w (Maybe Bool)
+tryAction action args = do
+    w <- get
+    let ac = Map.lookup action $ w ^. world . gameInfo . actions
+    when (isNothing ac) (sayDbgLn $ "couldn't find the action " <> action)
+    maybe (return $ Just False) (\(CompiledAction e) -> e args) ac 
 
 mapObjects :: HasComponent u w a => Proxy a -> (a -> System u a) -> System u ()
 mapObjects c1 func = do
@@ -241,9 +330,43 @@ mapObjects2 (c1, c2) func = do
                         world . store c1 . at k ?= r1
                         world . store c2 . at k ?= r2)) evs
 
-doActivity :: (HasMessageBuffer u, HasWorld u w) => Text -> [Entity] -> System u ()
-doActivity n l = do
-    sayDbgLn "hi"
-    pass
+makeActivity :: Text -> RuleEvaluation (w, (p, ())) -> UncompiledActivity w () p
+makeActivity n r = Activity n (const ()) (blankRulebookVars ("before " <> n)) 
+                    (\r1 -> (blankRulebookVars ("for " <> n) r1) 
+                        {
+                            _rules = [("", r)]
+                        })
+                            (blankRulebookVars ("after " <> n))
+
+makeBlankRule :: Text -> (Text, RuleEvaluation (w, r))
+makeBlankRule n = makeRuleWithArgs n (return Nothing)
+
+--makeAction n r = Action n [n] (const blankRulebook)
+compileRulebook :: HasMessageBuffer w => UncompiledRulebook w r -> Rulebook w
+compileRulebook r = CompiledRulebook (do
+    let (CompiledRulebook cr) = compileRulebookWithResult r
+    w <- get
+    let iv = _rulebookInit r w
+    zoomOut cr iv)
+
+compileRulebookWithResult :: HasMessageBuffer w => UncompiledRulebook w r -> Rulebook (w, r)
+compileRulebookWithResult (Rulebook n initVars rs) = CompiledRulebook (
+    if null rs then return Nothing else (do
+    (w, _) <- get
+    unless (n == "") $ sayDbgLn $ "Following the " <> n
+    indentDbg True
+    let iv = initVars w
+    _2 .= iv
+    result <- doUntilJustM (\r1 -> do
+        unless (fst r1 == "") $ sayDbgLn $ "Following the " <> fst r1
+        snd r1
+        ) rs
+    indentDbg False
+    sayDbgLn $ "Finished following the " <> n <> " with result " <> maybe "nothing" show result
+    return result))
+
+isComponent :: HasComponent u w c => u -> Proxy c -> Entity -> Bool
+isComponent u p e = isJust $ getComponent u p e
+
 makeLenses ''UncompiledRulebook
 makeLenses ''Object

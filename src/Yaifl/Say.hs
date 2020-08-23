@@ -12,6 +12,7 @@ module Yaifl.Say
     MessageBuffer(..),
     HasMessageBuffer,
     messageBuffer,
+    stdBuffer,
     printMessageBuffer,
     blankMessageBuffer
 ) where

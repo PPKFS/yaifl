@@ -13,8 +13,8 @@ module Yaifl
     Has, HasGameInfo, HasMessageBuffer, store, messageBuffer, blankMessageBuffer, msgBuffer,
     printMessageBuffer,
     say, sayLn, sayDbg, sayDbgLn,
-    printName,
-    Player, Physical, RoomData, Enclosing,
+    printName, getDescription,
+    Player, Physical, RoomData, Enclosing, Container, Openable, Supporter,
     newEntity, addComponent,
     makePlayer, makeThing, makeThingWithoutDescription, makeRoom,
     makeWorld,   
@@ -30,25 +30,15 @@ module Yaifl
     addRoom, addRule, addWhenPlayBeginsRule,
     whenPlayBeginsName, printNameName, printDarkRoomNameName,
     buildWorld,
-    introText
+    introText,
+    stdBuffer
 ) where
 
-import Relude
 import Yaifl.Common
 import Yaifl.Std
 import Yaifl.Say
 import Yaifl.TH
 import Yaifl.WorldBuilder
-
-data NameProperness = ImproperNamed | ProperNamed deriving Show
-data NamePlurality = SingularNamed | PluralNamed deriving Show
-
-data NamingOptions = NamingOptions
-    {
-        _nameProperness :: NameProperness,
-        _namePlurality :: NamePlurality,
-        _indefiniteArticle :: Text
-    }
 
 --rulebooks :: Has w (Rulebook w) => Lens' w (Store (Rulebook w))
 --rulebooks = store (Proxy :: Proxy (Rulebook w))

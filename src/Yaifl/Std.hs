@@ -8,16 +8,19 @@ Yet another interactive fiction library.
 
 module Yaifl.Std 
 (
-    Player, Physical, RoomData, Enclosing,
+    Player, Physical, RoomData, Enclosing, Container, Openable, Supporter,
     makePlayer, makeThing, makeThingWithoutDescription, makeRoom,
     whenPlayBeginsRulesImpl, printingNameImpl, HasStd, HasStd',
     printName,
     introText,
-    whenPlayBeginsName, printNameName, printDarkRoomNameName,
+    whenPlayBeginsName, printNameName, printDarkRoomNameName, printingNameOfADarkRoomImpl,
+    actionProcessingRulebookImpl,
+    LookingActionVariables, lookingActionImpl, lookingActionName,
     defaultWorld
 ) where
 
 import Relude
+import Data.String
 import Yaifl.Common
 import Yaifl.Say
 import Yaifl.Utils
@@ -30,7 +33,9 @@ import Control.Lens
 {- TYPES -}
 
 type HasStd a w = (HasWorld a w, HasWorld w w, HasGameInfo a w, HasGameInfo' w, Has w Object, Has w Physical, 
-                    Has w Player, Has w Enclosing, Has w RoomData, HasMessageBuffer w, HasMessageBuffer a)
+                    Has w Player, Has w Enclosing, Has w RoomData, 
+                    Has w Container, Has w Openable, Has w Supporter,
+                    HasMessageBuffer w, HasMessageBuffer a)
 type HasStd' w = HasStd w w
 
 data ThingLit = Lit | Unlit deriving Show
@@ -46,15 +51,16 @@ data Physical = Physical
         _edible :: Edibility,
         _portable :: Portability,
         _wearable :: Wearability,
-        _pushable :: Pushability
+        _pushable :: Pushability,
+        _enclosedBy :: Maybe Entity
     } deriving Show
 
 physicalComponent :: Proxy Physical
 physicalComponent = Proxy
 emptyPhysical :: Physical
-emptyPhysical = Physical missingRoom Lit Edible Portable Wearable PushableBetweenRooms
+emptyPhysical = Physical missingRoom Lit Edible Portable Wearable PushableBetweenRooms (Just missingRoom)
 
-makeThing :: HasStd a w => Text -> Text -> System a Entity
+makeThing :: HasStd a w => Text -> Description -> System a Entity
 makeThing n d = do
     e <- makeObject n d
     addComponent e emptyPhysical
@@ -75,14 +81,17 @@ data RoomData = RoomData
         _containingRegion :: ContainingRegion
     } deriving Show
 
+roomComponent :: Proxy RoomData
+roomComponent = Proxy :: (Proxy RoomData)
+
 makeRoom :: HasStd a w => Text -> System a Entity
 makeRoom n = do
-    e <- makeObject n ("It's the " <> n <> ".")
+    e <- makeObject n ("It's the " <> PlainDescription n <> ".")
     addComponent e (RoomData Unvisited emptyStore Nothing)
     addComponent e (Enclosing DS.empty)
     return e
 
-getFirstRoom :: HasGameInfo a w => a -> Entity
+getFirstRoom :: HasGameInfo a w => a -> Maybe Entity
 getFirstRoom w = w ^. gameInfo . firstRoom
 
 newtype Enclosing = Enclosing
@@ -92,7 +101,35 @@ newtype Enclosing = Enclosing
 enclosingComponent :: Proxy Enclosing
 enclosingComponent = Proxy
 
+data Container = Container
+    {
+        _enterable :: Bool,
+        _opacity :: Opacity,
+        _carryingCapacity :: Int
+    } deriving Show
+
+data Supporter = Supporter
+    {
+        _supporterEnterable :: Bool,
+        _supporterCarryingCapacity :: Int
+    } deriving Show
+data Opacity = Opaque | Transparent deriving (Eq, Show)
+
+containerComponent :: Proxy Container
+containerComponent = Proxy :: (Proxy Container)
+
+supporterComponent :: Proxy Supporter
+supporterComponent  = Proxy :: (Proxy Supporter)
+
 newtype Player = Player Int deriving Show
+
+data Openable = Open | Closed deriving (Eq, Show)
+
+openableComponent :: Proxy Openable
+openableComponent = Proxy :: (Proxy Openable)
+
+playerComponent :: Proxy Player
+playerComponent = Proxy :: Proxy Player
 
 makePlayer :: HasStd a w => System a Entity
 makePlayer = do
@@ -100,32 +137,35 @@ makePlayer = do
     addComponent globalComponent (Player e)
     return e
 
-getPlayer :: HasComponent a w Player => a -> Entity
-getPlayer w = maybe missingPlayer (\(Player p) -> p) $ 
-                w ^. world . store (Proxy :: Proxy Player) . at globalComponent
+getPlayer :: (HasWorld s w, Has w Player) => s -> Maybe Entity
+getPlayer w = coerce <$> (w ^. world . store (Proxy :: Proxy Player) . at globalComponent)
+
+playerLocation :: HasStd u w => u -> Maybe Entity
+playerLocation u = _location <$> (getComponent u physicalComponent =<< getPlayer u)
 
 makeLenses ''Physical
 makeLenses ''Enclosing
 defaultWorld :: [TH.Name]
-defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player]
+defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''Openable, ''Container, ''Supporter]
 
 move :: HasStd a w => Entity -> Entity -> System a Bool
-move t le = do
+move obj  le = do
     w <- get
-    let mp = getComponent w physicalComponent t
+    let mp = getComponent w physicalComponent obj
         mloc = getComponent w enclosingComponent le
         mcurrLoc = mp ^? _Just . location
-    sayDbgLn $ show le
-    doIfExists3 mp mloc mcurrLoc (show t <> " no physical thing to move") "no future loc" "no current loc" 
+    doIfExists3 mp mloc mcurrLoc (show obj <> " no physical thing to move") "no future loc" "no current loc" 
         (\_ _ c -> do
-            world . component physicalComponent t . _Just . location .= le
-            world . component enclosingComponent c . _Just . encloses %= DS.delete t
-            world . component enclosingComponent le . _Just . encloses %= DS.insert t
+            world . component physicalComponent obj . _Just . location .= le
+            world . component physicalComponent obj . _Just . enclosedBy ?= c
+            world . component enclosingComponent c . _Just . encloses %= DS.delete obj
+            world . component enclosingComponent le . _Just . encloses %= DS.insert obj
+
             return True
         )
 
 whenPlayBeginsRulesImpl :: (HasStd' w) => UncompiledRulebook w ()
-whenPlayBeginsRulesImpl = (blankRulebook "when play begins rulebook") {
+whenPlayBeginsRulesImpl = (blankRulebook whenPlayBeginsName) {
     _rules = 
         [
             makeRule "display banner rule" (do
@@ -134,10 +174,12 @@ whenPlayBeginsRulesImpl = (blankRulebook "when play begins rulebook") {
                 
             makeRule "position player in model world rule" (do
                 w <- get
-                _ <- move (getPlayer w) (getFirstRoom w)
+                whenJust (liftA2 move (getPlayer w) (getFirstRoom w)) (\e -> do
+                    _ <- e
+                    pass)
                 return Nothing),
             makeRule "initial room description rule" (do
-                tryAction "looking" []
+                tryAction lookingActionName []
                 return Nothing)
         ]
 }
@@ -157,43 +199,255 @@ sayIntroText = do
     setStyle Nothing
     pass
 
-printingNameOfADarkRoomImpl :: (HasMessageBuffer w) => UncompiledRulebook w ()
-printingNameOfADarkRoomImpl = (blankRulebook printDarkRoomNameName) {
+actionProcessingRulebookName :: Text
+actionProcessingRulebookName = "action processing rulebook"
+
+actionProcessingRulebookImpl :: (HasStd' w, ActionArgs p, RulebookArgs r) => UncompiledAction w r p -> [Entity] -> 
+                                UncompiledRulebook w (p, r)
+actionProcessingRulebookImpl actionRules e = (blankRulebookVars actionProcessingRulebookName ar) {
     _rules = [
-        makeRule "" (do
+        makeRuleWithArgs "set action variables rule" (do
+            (w, (p, _)) <- get
+            if isBad p then return (Just False) else (do
+                let arb = _setActionVariables actionRules p
+                _ <- getRule . compileRulebookWithResult $ arb
+                return Nothing)
+            ),
+        makeRuleWithArgs "before stage rule" (do
+            return Nothing
+            ),
+        makeBlankRule "carrying requirements rule",
+        makeBlankRule "basic visibility rule",
+        makeBlankRule "instead stage rule",
+        makeBlankRule "requested actions require persuasion rule",
+        makeBlankRule "carry out requested actions rule",
+        makeBlankRule "investigate player awareness rule",
+        makeBlankRule "check stage rule",
+        makeRuleWithArgs "carry out stage rule" (do
+            (_, (p, r)) <- get
+            getRule . compileRulebookWithResult $ _carryOutActionRules actionRules (p, r)
+            ),
+        makeBlankRule "after stage rule",
+        makeBlankRule "investigate player awareness after rule",
+        makeBlankRule "report stage rule",
+        makeBlankRule "clean actions rule",
+        makeBlankRule "end action processing rule"
+    ]
+} where ar = (fromMaybe defaultArguments (unboxArguments e), defaultRulebookArguments)
+
+printingNameOfADarkRoomImpl :: (HasMessageBuffer w) => UncompiledActivity w () ()
+printingNameOfADarkRoomImpl = makeActivity printDarkRoomNameName (do
             say "Darkness"
-            return Nothing)]
-}
+            return Nothing)
 
-printingNameImpl :: HasStd' w => UncompiledActivity w ()
-printingNameImpl = makeActivity printNameName 1 (do
+printingDescriptionOfADarkRoomImpl :: (HasMessageBuffer w) => UncompiledActivity w () ()
+printingDescriptionOfADarkRoomImpl = makeActivity printDarkRoomDescriptionName (do
+            sayLn "It is pitch dark, and you can't see a thing."
+            return Nothing)
+
+printingNameImpl :: HasStd' w => UncompiledActivity w () Entity
+printingNameImpl = makeActivity printNameName (do
     (w, (e, ())) <- get
-    whenJust (getComponent w objectComponent =<< viaNonEmpty head e) (say . _name)
+    whenJust (getComponent w objectComponent e) (say . _name)
     return $ Just True)
-
-makeActivity :: Text -> Int -> RuleEvaluation (w, ([Entity], ())) -> UncompiledActivity w ()
-makeActivity n numObj r = Activity n numObj (const ()) (blankRulebookVars ("before " <> n)) 
-                    (\r1 -> (blankRulebookVars ("for " <> n) r1) 
-                        {
-                            _rules = [("", r)]
-                        })
-                            (blankRulebookVars ("after " <> n))
 
 printNameName :: Text
 printNameName = "printing the name"
 printDarkRoomNameName :: Text
 printDarkRoomNameName = "printing the name of a dark room"
+printDarkRoomDescriptionName :: Text
+printDarkRoomDescriptionName = "printing the description of a dark room"
+describingLocaleActivityName = "printing the locale description of something"
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-printName :: (HasStd u w, HasID o) => o -> System u ()
-printName o = zoom world $ doActivity printNameName [objID o]
+lookingActionName :: Text
+lookingActionName = "looking"
 
-doActivity :: HasStd' w => Text -> [Entity] -> System w ()
-doActivity n params = do
+data NameProperness = ImproperNamed | ProperNamed deriving Show
+data NamePlurality = SingularNamed | PluralNamed deriving Show
+
+data SayOptions = NoOptions | SayOptions Article Capitalisation
+data Article = Indefinite | Definite
+data Capitalisation = Capitalised | Uncapitalised
+
+noSayOptions :: SayOptions
+noSayOptions = NoOptions
+
+capitalThe :: SayOptions
+capitalThe = SayOptions Definite Capitalised
+printName :: (HasStd u w, HasID o) => o -> System u ()
+printName o = printNameEx o noSayOptions
+
+printNameEx :: (HasStd u w, HasID o) => o -> SayOptions -> StateT u Identity ()
+printNameEx o p = let pr = zoom world $ doActivityWithArgs printNameName [objID o] in
+    case p of
+        NoOptions -> pr 
+        SayOptions Indefinite Capitalised -> do say "A "; pr
+        SayOptions Definite Capitalised -> do say "The "; pr
+        SayOptions Indefinite Uncapitalised -> do say "a "; pr
+        SayOptions Definite Uncapitalised -> do say "the "; pr
+
+doActivity :: HasStd u w => Text -> System u ()
+doActivity n = doActivityWithArgs n []
+
+doActivityWithArgs :: HasStd u w => Text -> [Entity] -> System u ()
+doActivityWithArgs n params = zoom world $ do
     sayDbgLn $ "running activity " <> n
     w <- get
-    let v = w ^. world . gameInfo . activities . at n
     maybe (sayDbgLn $ "couldn't find activity " <> n) (\(CompiledActivity x) -> do
         _ <- x params
-        pass) v
+        pass) (w ^. gameInfo . activities . at n)
+
+data LookingActionVariables = LookingActionVariables
+    {
+        _visibilityCeiling :: Entity,
+        _visibilityLevel :: Int,
+        _roomDescribingAction :: Text
+    } deriving Show
+
+instance RulebookArgs LookingActionVariables where
+    defaultRulebookArguments = LookingActionVariables missingRoom 0 lookingActionName
+
+visrule :: HasStd' w => [(Text, RuleEvaluation (w, ((), LookingActionVariables))) ]
+visrule = [makeRuleWithArgs "determine visibility ceiling rule" (do
+        (w, _) <- get
+        let loc = playerLocation w
+            vis_lvl = 1
+            roomAction = lookingActionName
+        --TODO
+        maybe (do 
+                sayDbgLn "no player location found" 
+                return $ Just False) 
+            (\l -> do
+                lookingVarLens .= LookingActionVariables l vis_lvl roomAction
+                return Nothing) loc)]
+
+lookingVarLens :: Lens' (a, (b, c)) c
+lookingVarLens = _2 . _2
+
+makeAction :: RulebookArgs r => Text -> [(Text, RuleEvaluation (w, (a, r)))] -> 
+    [(Text, RuleEvaluation (w, (a, r)))] -> [(Text, RuleEvaluation (w, (a, r)))] -> 
+    [(Text, RuleEvaluation (w, (a, r)))] -> [(Text, RuleEvaluation (w, (a, r)))] -> UncompiledAction w r a
+makeAction n s b ch ca rep = Action n [n] (\p -> 
+                        (blankRulebookVars "set action variables rulebook" (p, defaultRulebookArguments)) { _rules = s})
+                        (\r -> (blankRulebookVars "before action rulebook" r) { _rules = b})
+                        (\r -> (blankRulebookVars "check action rulebook" r) { _rules = ch})
+                        (\r -> (blankRulebookVars "carry out action rulebook" r) { _rules = ca})
+                        (\r -> (blankRulebookVars "report action rulebook" r) { _rules = rep})
+
+lookingActionImpl :: HasStd' w => UncompiledAction w LookingActionVariables () 
+lookingActionImpl = makeAction lookingActionName visrule [] [] [
+    makeRuleWithArgs "room description heading rule" (let 
+        foreachVisibilityHolder :: HasStd u w => Maybe Entity -> System u ()
+        foreachVisibilityHolder Nothing = pass
+        foreachVisibilityHolder (Just e) = do
+            w <- get
+            if isComponent w supporterComponent e 
+            then do say "(on "; printName e; say ")"
+            else do say "(in "; printName e; say ")" in 
+        do
+        setStyle (Just PPTTY.bold)
+        v <- use lookingVarLens
+        (w, _) <- get
+        whenJust (playerLocation w) (\loc -> case v of
+            _ | _visibilityLevel v == 0 -> doActivity printDarkRoomNameName 
+            _ | _visibilityCeiling v == loc -> printName $ _visibilityCeiling v
+            _ -> printNameEx (_visibilityCeiling v) capitalThe)
+        mapM_ foreachVisibilityHolder $ take (_visibilityLevel v - 1) $ iterate (findVisibilityHolder w) $ getPlayer w
+        sayLn ""
+        setStyle Nothing
+        --TODO: "run paragraph on with special look spacing"?
+        return Nothing),
+    makeRuleWithArgs "room description body rule" (do
+        (w, (_, v)) <- get
+        let gi = w ^. gameInfo
+        whenJust (playerLocation w) (\loc -> case v of
+            _ | _visibilityLevel v == 0 ->
+                    unless (_roomDescriptions gi == AbbreviatedRoomDescriptions || 
+                         (_roomDescriptions gi == SometimesAbbreviatedRoomDescriptions && _darknessWitnessed gi))
+                            (doActivity printDarkRoomDescriptionName)
+            _ | _visibilityCeiling v == loc -> 
+                    unless (_roomDescriptions gi == AbbreviatedRoomDescriptions || 
+                         (_roomDescriptions gi == SometimesAbbreviatedRoomDescriptions 
+                                && _roomDescribingAction v /= lookingActionName))
+                            (whenJust (getComponent w objectComponent loc) (say . getDescription w))
+            _ -> pass)
+        return Nothing
+        ),
+    {-
+    function desc_obj_rule(world::World, r::Rulebook)
+        if r.variables[:visibility_level] == 0
+            return
+        end
+        imd_lvl = actor(r)
+        ip_cnt = r.variables[:visibility_level]
+        while ip_cnt > 0
+            marked_for_listing(imd_lvl, true)
+            imd_lvl = find_visibility_holder(w, imd_lvl)
+            ip_cnt -= 1
+        end
+        ip_cnt2 = r.variables[:visibility_level]
+        while ip_cnt2 > 0
+            imd_lvl = actor(r)
+            ip_cnt = 0
+            while ip_cnt < ip_cnt2
+                imd_lvl = find_visibility_holder(w, imd_lvl)
+                ip_cnt += 1
+                do_activity!(w, :describing_locale, imd_lvl)
+                ip_cnt2 -= 1
+            end
+        end
+    end
+    -}
+    makeRuleWithArgs "room description paragraphs about objects rule" (do
+        (w, (_, v)) <- get
+        when (_visibilityLevel v > 0) (
+            mapM_ (\e -> whenJust e (\e' -> doActivityWithArgs describingLocaleActivityName [e'])) 
+                    $ take (_visibilityLevel v - 1) $ iterate (findVisibilityHolder w) $ getPlayer w
+            )
+        return Nothing)] []
+
+findVisibilityHolder :: HasStd u w => u -> Maybe Entity -> Maybe Entity
+findVisibilityHolder w e = if ifMaybe isARoom e || ifMaybe isAContainer e then Nothing else parentOf e where
+    --if the entity is an opaque, closed container OR a room it's nothing
+    -- of course if the entity is a room we should never need to call this?
+        isARoom = isComponent w roomComponent
+        isAContainer = do
+            cont <- getComponent w containerComponent
+            op' <- getComponent w openableComponent
+            return $ (_opacity <$> cont) == Just Opaque && op' == Just Closed
+        parentOf v = _enclosedBy =<< getComponent w physicalComponent =<< v
+
+{-
+
+function create_looking!(w::World)
+    #abbbrv form allowed is "are we using go"
+
+    #I have 0 clue what this code does but it's what the spec says.
+
+    function check_arrival_rule(w::World, r::Rulebook)
+        if r.variables[:visibility_level] == 0
+            w.darkness_witnessed = true
+        else
+            visited(w, location(w.player))
+        end
+    end
+
+    function other_people_looking(world::World, r::Rulebook)
+        if actor(r) != id(world.player)
+            print_name!(w, actor(r))
+            sayln!(w, " looks around.")
+        end
+    end
+    c = look.carry_out_rules
+    add_rule!(c, :room_description_heading, desc_heading_rule, false)
+    add_rule!(c, :room_description_body, desc_body_rule, false)
+    add_rule!(c, :room_description_paragraphs_about_objects, desc_obj_rule, false)
+    add_rule!(c, :check_new_arrivals, check_arrival_rule, false)
+    add_rule!(look.report_rules, :other_people_looking, other_people_looking)
+
+    look
+end
+
+-}

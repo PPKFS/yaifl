@@ -35,6 +35,15 @@ instance HasMessageBuffer World where
 
 instance Has World Enclosing where
     store _ = enclosingStore
+
+instance Has World Container where
+    store _ = containerStore
+
+instance Has World Openable where
+    store _ = openableStore
+
+instance Has World Supporter where
+    store _ = supporterStore
     
 example1World :: WorldBuilder World
 example1World = do
@@ -46,7 +55,8 @@ example1World = do
     makeThing "napkin" "Slightly crumpled."
     addWhenPlayBeginsRule "run property checks at the start of play rule" (do
         mapObjects objectComponent (\o -> do
-            when (o ^. description == "") (do
+            w <- get
+            when (getDescription w o == "") (do
                 printName o
                 sayLn " has no description." ) 
             return o
@@ -67,9 +77,13 @@ ex1 = testCase "example 1" $ do
     print w2
     let w3 = (\(CompiledRulebook j) -> runState j w) <$> w2
     let v = fromMaybe (Nothing, w) w3
-    assertText ("Bic", ["Bic pen has no description."]) =<< runStateT printMessageBuffer (snd v)
+    assertText ("Bic", ["Bic pen has no description."]) (snd v)
     pass
 
-assertText :: (Text, [Text]) -> (Text, a) -> Assertion
-assertText (ti, xs) (x, _) = buildExpected ti xs @?= x
+assertText :: (Text, [Text]) -> World -> Assertion
+assertText (ti, xs) w = do
+    let x = reverse $ w ^. messageBuffer . stdBuffer
+    _ <- runStateT printMessageBuffer w
+    foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
+    pass
                 where buildExpected t x = mconcat $ introText t <> [unlines x]

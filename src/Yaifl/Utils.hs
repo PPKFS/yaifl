@@ -1,22 +1,21 @@
 module Yaifl.Utils
     (
         doIfExists, doIfExists2, doIfExists3,
-        zoomOut
+        zoomOut, doUntilJustM, whenJustM_, ifMaybeEq, ifMaybe
     ) where
 
 import Yaifl.Say
 import Relude
-import Yaifl.Common
 
-doIfExists :: HasMessageBuffer w => Maybe a -> Text -> (a -> System w Bool) -> System w Bool
+
+doIfExists :: HasMessageBuffer x => Maybe t -> Text -> (t -> StateT x Identity Bool) -> StateT x Identity Bool
 doIfExists c1 err1 f = do
     when (isNothing c1) $ sayDbg err1 
     case c1 of
         Just jc1 -> f jc1
         _ -> return False
 
-doIfExists2 :: HasMessageBuffer w => Maybe a -> Maybe b -> Text -> Text 
-    -> (a -> b -> System w Bool) -> System w Bool
+doIfExists2 :: HasMessageBuffer x => Maybe t1 -> Maybe t2 -> Text -> Text -> (t1 -> t2 -> StateT x Identity Bool) -> StateT x Identity Bool
 doIfExists2 c1 c2 err1 err2 f = do
     when (isNothing c1) $ sayDbg err1 
     when (isNothing c2) $ sayDbg err2
@@ -24,8 +23,8 @@ doIfExists2 c1 c2 err1 err2 f = do
         (Just jc1, Just jc2) -> f jc1 jc2
         _ -> return False
 
-doIfExists3 :: HasMessageBuffer w => Maybe a -> Maybe b -> Maybe c -> Text -> Text 
-    -> Text -> (a -> b -> c -> System w Bool) -> System w Bool
+
+doIfExists3 :: HasMessageBuffer x => Maybe t1 -> Maybe t2 -> Maybe t3 -> Text -> Text -> Text -> (t1 -> t2 -> t3 -> StateT x Identity Bool) -> StateT x Identity Bool
 doIfExists3 c1 c2 c3 err1 err2 err3 f = do
     when (isNothing c1) $ sayDbg err1 
     when (isNothing c2) $ sayDbg err2
@@ -38,3 +37,17 @@ zoomOut :: Monad m => StateT (b1, b2) m a -> b2 -> StateT b1 m a
 zoomOut stabc b = StateT $ \a -> do 
     (c, (a', b')) <- runStateT stabc (a, b)
     pure (c, a')
+
+doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
+doUntilJustM f = runMaybeT . asumMap (MaybeT . f)
+
+whenJustM_ :: Monad m => m (Maybe a) -> (a -> m ()) -> ()
+whenJustM_ f = do
+    _ <- whenJustM f
+    pass
+
+ifMaybeEq :: Eq a => a -> Maybe a -> Bool
+ifMaybeEq a = maybe False (a ==)
+
+ifMaybe :: (a -> Bool) -> Maybe a -> Bool
+ifMaybe = maybe False
