@@ -7,6 +7,7 @@ import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc.Render.Terminal
 import Test.Tasty
 import Test.Tasty.HUnit
+import Data.Map as DM
 
 
 makeWorld "World" defaultWorld
@@ -84,6 +85,59 @@ assertText :: (Text, [Text]) -> World -> Assertion
 assertText (ti, xs) w = do
     let x = reverse $ w ^. messageBuffer . stdBuffer
     _ <- runStateT printMessageBuffer w
-    foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
+    Relude.foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
     pass
                 where buildExpected t x = mconcat $ introText t <> [unlines x]
+
+data Holder = Holder
+    {
+        aStore :: DM.Map Int Bool,
+        bStore :: DM.Map Int Text,
+        cStore :: DM.Map Int Int,
+        dStore :: DM.Map Int (Bool, Bool),
+        currentID :: Int
+    }
+
+
+newtype GuaranteedKey (a :: [k]) = GuaranteedKey Int -- ???
+
+data BoxedKey where
+    Box :: GuaranteedKey a -> BoxedKey
+
+--unboxKey :: BoxedKey -> Proxy a -> Maybe (GuaranteedKey a)
+--unboxKey (Box (a :: GuaranteedKey a)) _ = Just a
+
+type family Contains' (list :: [Type]) (single :: Type) where
+  Contains' (x ': xs) (x) = 'True
+  Contains' '[]       (x) = 'False
+  Contains' (x ': xs) (y) = Contains' xs (y)
+
+makeAC :: Holder -> Bool -> Int -> (GuaranteedKey ('[Bool, Int]), Holder)
+makeAC h b i = runState (do
+    h1 <- get
+    let cid = currentID h1
+    put $ h1 {currentID = cid+1, aStore = insert cid b (aStore h), cStore = insert cid i (cStore h)}
+    return $ GuaranteedKey cid) h
+
+makeAB :: Holder -> Bool -> Text -> (GuaranteedKey ('[Bool, Text]), Holder)
+makeAB h b i = runState (do
+    h1 <- get
+    let cid = currentID h1
+    put $ h1 {currentID = cid+1, aStore = insert cid b (aStore h), bStore = insert cid i (bStore h)}
+    return $ GuaranteedKey cid) h
+
+knownType :: (Contains' k Text ~ 'True) => GuaranteedKey k -> Holder -> Text
+knownType (GuaranteedKey a) h = case DM.lookup a (bStore h) of
+    Just x -> x
+    Nothing -> error "congrats, you broke it all"
+testFunc :: IO ()
+testFunc = do
+    let h = Holder DM.empty DM.empty DM.empty DM.empty 0
+    let (k1, h') = makeAC h False 5
+    --print $ knownType k1 --doesn't compile!
+    let (k2, h'') = makeAB h' True "test"
+    let someList = [Box k1, Box k2]
+    --print $ knownType (head someList) h''
+    pass
+    --print $ knownType k2 h
+    --print $ knownType k1 

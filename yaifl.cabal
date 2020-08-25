@@ -32,7 +32,7 @@ common common-options
                      , text
                      , tasty
                      , tasty-hunit
-                     , singletons
+                     , simple-atom
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -51,7 +51,8 @@ common common-options
     ghc-options:       
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables StandaloneKindSignatures TypeApplications TypeFamilies ScopedTypeVariables MultiWayIf
+  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables StandaloneKindSignatures TypeApplications TypeFamilies ScopedTypeVariables MultiWayIf PolyKinds TypeOperators
+  UndecidableInstances
 
 library
   import:              common-options

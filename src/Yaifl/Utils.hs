@@ -23,7 +23,6 @@ doIfExists2 c1 c2 err1 err2 f = do
         (Just jc1, Just jc2) -> f jc1 jc2
         _ -> return False
 
-
 doIfExists3 :: HasMessageBuffer x => Maybe t1 -> Maybe t2 -> Maybe t3 -> Text -> Text -> Text -> (t1 -> t2 -> t3 -> StateT x Identity Bool) -> StateT x Identity Bool
 doIfExists3 c1 c2 c3 err1 err2 err3 f = do
     when (isNothing c1) $ sayDbg err1 

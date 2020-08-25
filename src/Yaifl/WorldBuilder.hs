@@ -16,7 +16,6 @@ module Yaifl.WorldBuilder
 import Relude
 import Yaifl.Common
 import Control.Lens
-import Yaifl.Std
 import Yaifl.Utils
 import Yaifl.Say
 import Data.Map as DM

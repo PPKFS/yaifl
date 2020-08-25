@@ -35,7 +35,6 @@ module Yaifl
 ) where
 
 import Yaifl.Common
-import Yaifl.Std
 import Yaifl.Say
 import Yaifl.TH
 import Yaifl.WorldBuilder
