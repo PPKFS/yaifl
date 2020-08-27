@@ -12,7 +12,7 @@ module Yaifl.Components
     ThingLit(..),
     Physical, physicalComponent, _enclosedBy, mentioned, _mentioned, _markedForListing, markedForListing,
     isWearable, _lit, lit, wornBy, _wornBy, isWorn, isLit, described, Describable(..), _described, _handled,
-    handled, _initialAppearance, initialAppearance,
+    handled, _initialAppearance, initialAppearance, _scenery, scenery, _concealedBy, concealedBy,
     Enclosing, enclosingComponent, _encloses, 
     RoomData(..), roomComponent,
     Container(..), containerComponent, Opacity(..),
@@ -156,9 +156,11 @@ data Physical = Physical
         _mentioned :: Bool,
         _markedForListing :: Bool,
         _wornBy :: Maybe Entity,
+        _concealedBy :: Maybe Entity,
         _described :: Describable,
         _handled :: Bool,
-        _initialAppearance :: Maybe Description
+        _initialAppearance :: Maybe Description,
+        _scenery :: Bool
     } deriving Show
 makeLenses ''Physical
 
@@ -166,7 +168,7 @@ physicalComponent :: Proxy Physical
 physicalComponent = Proxy
 
 blankPhysical :: Entity -> Physical
-blankPhysical e = Physical e Lit Edible Portable Wearable PushableBetweenRooms e False False Nothing Described False Nothing
+blankPhysical e = Physical e Lit Edible Portable Wearable PushableBetweenRooms e False False Nothing Nothing Described False Nothing False
 
 isWearable :: HasComponent u w Physical => u -> Entity -> Bool
 isWearable = isX Wearable _wearable physicalComponent

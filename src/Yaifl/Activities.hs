@@ -139,12 +139,22 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
                     (w', _) <- get
                     whenJust (fmap (getDescription w' e) (_initialAppearance phy)) (\d' -> unless (d' == "") (do say $ show d'; _2 . _2 .= True))
                     let isSup = getComponent w' supporterComponent e
+                        --get the things (maybe) on the supporter
                         enc = fmap (const $ _encloses $ getComponent' w' enclosingComponent e) isSup
+                        -- filter to just things that are locale supported
                         locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w' sceneryComponent it || isX True _mentioned physicalComponent w' it || isX NotDescribed _described physicalComponent w' it)) enc
                         isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
-                    whenJust locSuppStuff (\l -> do
+                    --get rid of any mentioned flags if they're still around
+                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w' i) (component' physicalComponent i . markedForListing .= False)
+                        ))
+                    whenJust isAnyStuff (\_ -> do
                         say "On "
-                        printName e (SayOptions Definite Uncapitalised)
+                        _2 . _2 .= True
+                        _ <- printName e (SayOptions Definite Uncapitalised)
+                        doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
+                        component' physicalComponent e . mentioned .= True
+                        say ".\n\n"
+                        {-
                         mapM_ (\(a, v) -> do
                             printName a (SayOptions Indefinite Uncapitalised)
                             when (v < length l - 1) (say ", ")
@@ -152,14 +162,74 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
                             --TODO: listing contents of
                             component' physicalComponent a . mentioned .= True
                             ) $ zip (toList l) [0..]
+                        -}
+                        )
+                    pass
+                    )
+                return Nothing),
+            makeRule " describe what’s on scenery supporters in room descriptions rule" (do
+                (w, (e, _)) <- get
+                phy <- use $ component' physicalComponent e
+                when (_scenery phy && not (ifMaybe (DS.member (getPlayer' w) . _encloses) (getComponent w enclosingComponent e))) (do
+                    let isSup = getComponent w supporterComponent e
+                        enc = fmap (const $ _encloses $ getComponent' w enclosingComponent e) isSup
+                        locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w sceneryComponent it || isX True _mentioned physicalComponent w it || isX NotDescribed _described physicalComponent w it)) enc
+                        isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
+                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w i) (component' physicalComponent i . markedForListing .= False)))
+
+                    whenJust isAnyStuff (\_ -> do -- we don't care if there's actual stuff, we do that later.
+                        say "On "
+                        _2 . _2 .= True
+                        _ <- printName e (SayOptions Definite Uncapitalised)
+                        doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
+                        component' physicalComponent e . mentioned .= True
+                        say ".\n\n"
+                        {-
+                        
+                        -}
                         )
                     pass
                     )
                 return Nothing)
-            --TODO: describe what’s on scenery supporters in room descriptions rule
-            -- but I'm waiting until I do the listing contents function first
         ])
         (\r1 -> makeRulebook "" r1 [])
+
+data ListingContentsArgs = ListingContentsArgs
+    {
+        _entity :: Entity,
+        _isMarkedOnly :: Bool,
+        _isIgnoringConcealed :: Bool
+    } deriving (Eq, Show)
+
+instance ActionArgs ListingContentsArgs where
+    unboxArguments [] = Nothing
+    unboxArguments [x] = Just $ ListingContentsArgs x False False
+    unboxArguments (x:xs) = Just $ ListingContentsArgs x (Relude.elem markedOnlyFlag xs) (Relude.elem noConcealedFlag xs)
+    defaultActionArguments = ListingContentsArgs (-100) False False
+
+listingContentsOfSomethingName :: Text
+listingContentsOfSomethingName = "listing the contents of something activity"
+
+listingContentsOfSomethingImpl :: HasStd w w => UncompiledActivity w () ListingContentsArgs
+listingContentsOfSomethingImpl = makeActivity' listingContentsOfSomethingName (do
+    (w, ListingContentsArgs e mo igcon) <- get
+    l <- use $ component' enclosingComponent e
+    let markedPred x = not mo || isX True _markedForListing physicalComponent w x
+        ignoreConPred x = not igcon || isX Nothing _concealedBy physicalComponent w x
+        stuff = DS.filter (\x -> markedPred x && ignoreConPred x) $ _encloses l
+    mapM_ (\(a, v) -> do
+        printName a (SayOptions Indefinite Uncapitalised)
+        when (v < length stuff - 1) (say ", ")
+        when (v == length stuff - 2) (say "and ")
+        component' physicalComponent a . mentioned .= True
+        ) $ zip (toList stuff) [0..]
+    return $ Just True
+    )
+markedOnlyFlag :: Entity
+markedOnlyFlag = -690
+
+noConcealedFlag :: Entity
+noConcealedFlag = -691
 
 writingParagraphAboutName :: Text
 writingParagraphAboutName = "writing a paragraph about activity"
