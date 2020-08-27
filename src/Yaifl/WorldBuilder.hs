@@ -9,12 +9,16 @@ Yet another interactive fiction library.
 module Yaifl.WorldBuilder
 (
     WorldBuildInfo(..), WorldBuilder, blankBuildInfo,
-    addRoom, addRule, addWhenPlayBeginsRule,
+    addRoom, addRule, addWhenPlayBeginsRule, addThing, addThing',
     buildWorld
 ) where
 
 import Relude
 import Yaifl.Common
+import Yaifl.Actions
+import Yaifl.Components
+import Yaifl.Activities
+import Yaifl.Rulebooks
 import Control.Lens
 import Yaifl.Utils
 import Yaifl.Say
@@ -33,14 +37,18 @@ data RulebookCache w = RulebookCache
         _actionProcessingRules :: forall r p. (RulebookArgs r, ActionArgs p) => UncompiledAction w r p -> [Entity] ->  UncompiledRulebook w (p, r),
         _printingNameActivity :: UncompiledActivity w () Entity,
         _printingDarkRoomNameActivity :: UncompiledActivity w () (),
-        _lookingAction :: UncompiledAction w LookingActionVariables ()
+        _lookingAction :: UncompiledAction w LookingActionVariables (),
+        _printingDescriptionOfADarkRoom :: UncompiledActivity w () (),
+        _describingLocaleActivity :: UncompiledActivity w LocaleDescription Entity,
+        _choosingNotableLocaleObjectsActivity :: UncompiledActivity w () Entity,
+        _printingLocaleParagraphAboutActivity :: UncompiledActivity w Bool Entity
     }
 
 instance Show (RulebookCache w) where
     show _ = "rulebooks"
 
 blankBuildInfo :: (HasStd' w) => WorldBuildInfo w
-blankBuildInfo = WBI 0 (RulebookCache whenPlayBeginsRulesImpl actionProcessingRulebookImpl printingNameImpl printingNameOfADarkRoomImpl lookingActionImpl)
+blankBuildInfo = WBI 0 (RulebookCache whenPlayBeginsRulesImpl actionProcessingRulebookImpl printingNameOfSomethingImpl printingNameOfADarkRoomImpl lookingActionImpl printingDescriptionOfADarkRoomImpl describingLocaleActivityImpl choosingNotableLocaleObjectsActivityImpl printingLocaleParagraphAboutActivityImpl)
 
 makeLenses ''WorldBuildInfo
 makeLenses ''RulebookCache
@@ -62,11 +70,19 @@ type WorldBuilderStep w = State (w, WorldBuildInfo w) Entity
 addRoom :: HasStd' w => Text -> WorldBuilderStep w
 addRoom n = do
     e <- zoom _1 (do
-        e <- makeRoom n 
+        e <- makeRoom' n 
         gameInfo . firstRoom %= (\x -> if Relude.null x then Just e else x)
         return e)
     _2 . currentRoom .= e
     return e
+
+addThing' :: HasStd' w => Text -> WorldBuilderStep w
+addThing' n = addThing n ""
+
+addThing :: HasStd' w => Text -> Description -> WorldBuilderStep w
+addThing n d = do
+    (_, wbi) <- get
+    zoom _1 $ makeThing n d (_currentRoom wbi)
 
 buildWorld :: HasStd' w => WorldBuilder w -> w -> w
 buildWorld wb blw = compileRulebooks (_rulebookCache (snd execWB)) (fst execWB)
@@ -76,42 +92,22 @@ buildWorld wb blw = compileRulebooks (_rulebookCache (snd execWB)) (fst execWB)
 
 initWorld :: HasStd' w => System (w, WorldBuildInfo w) ()
 initWorld = do
-    makeVoid
-    makePlayer
+    e <- makeVoid
+    makePlayer e
     pass
 
-makeVoid :: HasStd' w => System (w, WorldBuildInfo w) ()
+missingRoom :: Int
+missingRoom = -3
+
+makeVoid :: HasStd' w => System (w, WorldBuildInfo w) Entity
 makeVoid = do
     e <- use $ _1 . world . gameInfo . entityCounter
     _1 . world . gameInfo . entityCounter .= missingRoom
     _ <- addRoom "The void"
     _1 . world . gameInfo . firstRoom .= Nothing
     _1 . world . gameInfo . entityCounter .= e
+    return e
     
--- | what is this atrocious mess
-compileActivity :: (HasMessageBuffer w, ActionArgs p) => UncompiledActivity w r p -> Activity w
-compileActivity a = CompiledActivity (\e -> do
-    w <- get
-    let initRules = _initActivity a w
-    let args = unboxArguments e
-    whenJust args (\defArgs ->
-        zoomOut (do
-            _ <- getRule $ compileRulebookWithResult (_beforeRules a (defArgs, initRules))
-            (_, (_, r)) <- get
-            getRule $ compileRulebookWithResult (_forRules a (defArgs, r)) 
-            (_, (_, r)) <- get
-            getRule $ compileRulebookWithResult (_afterRules a (defArgs,  r))
-            pass) (defArgs, initRules))
-    return Nothing
-    )
-
-compileAction ::HasStd' w => UncompiledAction w r p
-                                 -> (UncompiledAction w r p -> [Entity] ->  UncompiledRulebook w (p, r)) -> Action w
-compileAction action aprules = CompiledAction (\e -> do
-    sayDbgLn $ "doing action " <> _actionName action
-    let (CompiledRulebook r) = compileRulebook (aprules action e) 
-    r)
-
 compileRulebooks :: (HasStd u w) => RulebookCache w -> u -> u
 compileRulebooks rbs = execState (do
     let addAction = addCompiledAction (_actionProcessingRules rbs)
@@ -119,6 +115,10 @@ compileRulebooks rbs = execState (do
     addCompiledActivity (_printingNameActivity rbs)
     addCompiledActivity (_printingDarkRoomNameActivity rbs)
     addAction (_lookingAction rbs)
+    addCompiledActivity (_printingDescriptionOfADarkRoom rbs)
+    addCompiledActivity (_describingLocaleActivity rbs)
+    addCompiledActivity (_choosingNotableLocaleObjectsActivity rbs)
+    addCompiledActivity (_printingLocaleParagraphAboutActivity rbs)
     pass)
 
 addCompiledInfo :: HasStd u w => Lens' (GameInfo w) (DM.Map Text x) -> Text -> x -> System u ()
@@ -128,7 +128,7 @@ addCompiledActivity :: (ActionArgs p, HasStd u w) => UncompiledActivity w r p ->
 addCompiledActivity r = addCompiledInfo activities  (_activityName r) $ compileActivity r
 
 addCompiledRulebook :: HasStd u w => UncompiledRulebook w r -> System u ()
-addCompiledRulebook r = addCompiledInfo rulebooks (_rulebookName r) $ compileRulebook r
+addCompiledRulebook r = addCompiledInfo rulebooks (_rulebookName r) $ compileRulebook' r Full
 
 addCompiledAction :: HasStd u w => (UncompiledAction w r p -> [Entity] -> UncompiledRulebook w (p, r)) -> UncompiledAction w r p -> System u ()
 addCompiledAction ap r = addCompiledInfo actions (_actionName r) $ compileAction r ap

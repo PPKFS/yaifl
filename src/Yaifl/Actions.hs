@@ -1,6 +1,7 @@
 module Yaifl.Actions
 (
-
+    LookingActionVariables(..), compileAction,
+    actionProcessingRulebookImpl, lookingActionImpl
 ) where
 
 import Relude
@@ -23,7 +24,7 @@ actionProcessingRulebookImpl actionRules e = case unboxArguments e of
         makeRule "set action variables rule" (do
             (_, (p', _)) <- get
             let arb = _setActionVariables actionRules p'
-            _ <- (getRule . compileRulebook) arb
+            _ <- getRule $ compileRulebook arb Full
             return Nothing),
         makeBlankRule "before stage rule",
         makeBlankRule "carrying requirements rule",
@@ -35,7 +36,7 @@ actionProcessingRulebookImpl actionRules e = case unboxArguments e of
         makeBlankRule "check stage rule",
         makeRule"carry out stage rule" (do
             (_, (p, r)) <- get
-            (getRule . compileRulebook) (_carryOutActionRules actionRules (p, r))
+            getRule $ compileRulebook (_carryOutActionRules actionRules (p, r)) Full
             ),
         makeBlankRule "after stage rule",
         makeBlankRule "investigate player awareness after rule",
@@ -52,6 +53,13 @@ makeAction n s b ch ca rep = Action n [n] (\p ->
                         (\r -> makeRulebook "check action rulebook" r ch)
                         (\r -> makeRulebook "carry out action rulebook" r ca)
                         (\r -> makeRulebook "report action rulebook" r rep)
+
+compileAction ::HasStd' w => UncompiledAction w r p
+                                 -> (UncompiledAction w r p -> [Entity] ->  UncompiledRulebook w (p, r)) -> Action w
+compileAction action aprules = CompiledAction (\e -> do
+    sayDbgLn $ "doing action " <> _actionName action
+    let (CompiledRulebook r) = compileRulebook' (aprules action e) Full
+    r)
 
 data LookingActionVariables = LookingActionVariables
     {
@@ -87,7 +95,7 @@ findVisibilityHolder w (Just e) = if isARoom e || isAContainer e then Nothing el
         parentOf v = _enclosedBy <$> getComponent w physicalComponent v
 
 visibilityLvls :: HasStd u w => Int -> u -> Entity -> [Maybe Entity]
-visibilityLvls lvl w player = take (lvl - 1) $ iterate (findVisibilityHolder w) (Just player)
+visibilityLvls lvl w player = take lvl $ drop 1 $ iterate (findVisibilityHolder w) (Just player)
 
 lookingActionImpl :: HasStd w w => UncompiledAction w LookingActionVariables () 
 lookingActionImpl = makeAction lookingActionName 
@@ -106,7 +114,7 @@ lookingActionImpl = makeAction lookingActionName
             if | lvl == 0 -> doActivity' printingNameOfADarkRoomName
                | ceil == loc -> printName' ceil
                | True -> printName ceil capitalThe
-            mapM_ foreachVisibilityHolder $ visibilityLvls lvl w player
+            mapM_ foreachVisibilityHolder $ drop 1 $ visibilityLvls lvl w player
             sayLn ""
             setStyle Nothing
             --TODO: "run paragraph on with special look spacing"?
@@ -118,15 +126,15 @@ lookingActionImpl = makeAction lookingActionName
                 abbrev = _roomDescriptions gi == AbbreviatedRoomDescriptions
                 someAbbrev = _roomDescriptions gi == SometimesAbbreviatedRoomDescriptions
             if | lvl == 0 -> unless (abbrev || (someAbbrev && _darknessWitnessed gi)) 
-                    (doActivity' printingDescriptionOfADarkRoomName)
+                    (do doActivity' printingDescriptionOfADarkRoomName ; pass)
                | ceil == loc -> 
                     unless (abbrev || (someAbbrev && ac /= lookingActionName))
-                            ((sayLn . getDescription w) (getComponent' w objectComponent loc))
+                            ((sayLn . getDescription' w) (getComponent' w objectComponent loc))
                | True -> pass
             return Nothing),
         makeRule "room description paragraphs about objects rule" (do
             (w, (_, LookingActionVariables _ lvl _)) <- get
-            when (lvl > 0) (mapM_ (`whenJust` (\e' -> doActivity describingLocaleActivityName [e'])) 
-                        $ visibilityLvls lvl w (getPlayer' w)
+            let lvls = visibilityLvls lvl w (getPlayer' w)
+            when (lvl > 0) (mapM_ (`whenJust` (\e' -> do doActivity describingLocaleActivityName [e']; pass)) lvls
                 )
             return Nothing)] []

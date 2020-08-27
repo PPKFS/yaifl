@@ -2,21 +2,28 @@ module Yaifl.Components
 (
     HasComponent, addComponent,
     getComponent, getComponent',
-    getDescription,
-    isComponent,
+    getDescription, getDescription',
+    isComponent, isX,
     component, component',
     getPlayer', playerLocation',
     move,
     Object(..), objectComponent, --updateObjectPromise,
+    getName,
+    ThingLit(..),
     Physical, physicalComponent, _enclosedBy, mentioned, _mentioned, _markedForListing, markedForListing,
-    Enclosing, enclosingComponent, _encloses,
+    isWearable, _lit, lit, wornBy, _wornBy, isWorn, isLit, described, Describable(..), _described, _handled,
+    handled, _initialAppearance, initialAppearance,
+    Enclosing, enclosingComponent, _encloses, 
     RoomData(..), roomComponent,
     Container(..), containerComponent, Opacity(..),
     Openable(..), openableComponent,
     Player, playerComponent,
     Supporter(..), supporterComponent,
-    makeObject,
-    HasStd
+    sceneryComponent,
+    makeObject, makeRoom, makeRoom', makePlayer, makeThing,
+    mapObjects, mapObjects2,
+    HasStd, HasStd',
+    defaultWorld
 ) where
 
 import Relude
@@ -112,11 +119,17 @@ instance HasID Object where
 objectComponent :: Proxy Object
 objectComponent = Proxy
 
+getName :: HasComponent u w Object => u -> Entity -> Name
+getName w e = _name $ getComponent' w objectComponent e 
 -- | the 'correct' show
-getDescription :: w -> Object -> Text
-getDescription w o = case _description o of
+
+getDescription :: w -> Entity -> Description -> Text
+getDescription w o d =  case d of
     PlainDescription t -> t
-    DynamicDescription p -> p w (_objectID o)
+    DynamicDescription p -> p w o
+
+getDescription' :: w -> Object -> Text
+getDescription' w o = getDescription w (_objectID o) (_description o)
 
 makeObject :: HasComponent u w Object => Text -> Description -> System u Entity
 makeObject n d = do
@@ -129,8 +142,8 @@ data ThingLit = Lit | Unlit deriving (Eq, Show)
 data Edibility = Edible | Inedible deriving (Eq, Show)
 data Portability = FixedInPlace | Portable deriving (Eq, Show)
 data Wearability = Wearable | Unwearable deriving (Eq, Show)
-data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving Show
-
+data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving (Eq, Show)
+data Describable = Described | NotDescribed deriving (Eq, Show)
 data Physical = Physical
     {
         _location :: Entity,
@@ -141,7 +154,11 @@ data Physical = Physical
         _pushable :: Pushability,
         _enclosedBy :: Entity,
         _mentioned :: Bool,
-        _markedForListing :: Bool
+        _markedForListing :: Bool,
+        _wornBy :: Maybe Entity,
+        _described :: Describable,
+        _handled :: Bool,
+        _initialAppearance :: Maybe Description
     } deriving Show
 makeLenses ''Physical
 
@@ -149,22 +166,19 @@ physicalComponent :: Proxy Physical
 physicalComponent = Proxy
 
 blankPhysical :: Entity -> Physical
-blankPhysical e = Physical e Lit Edible Portable Wearable PushableBetweenRooms e False False
+blankPhysical e = Physical e Lit Edible Portable Wearable PushableBetweenRooms e False False Nothing Described False Nothing
 
 isWearable :: HasComponent u w Physical => u -> Entity -> Bool
 isWearable = isX Wearable _wearable physicalComponent
+
+isWorn :: HasComponent u w Physical => u -> Entity -> Bool
+isWorn u e = not $ isX Nothing _wornBy physicalComponent u e
 
 isLit :: HasComponent u w Physical => u -> Entity -> Bool
 isLit = isX Lit _lit physicalComponent
 
 isEdible :: HasComponent u w Physical => u -> Entity -> Bool
 isEdible = isX Wearable _wearable physicalComponent
-
-makeThing :: HasComponent u w Physical => Text -> Description -> Entity -> System u Entity
-makeThing n d loc = do
-    e <- makeObject n d
-    addComponent e (blankPhysical loc)
-    return e
 
 newtype Enclosing = Enclosing
     {
@@ -174,6 +188,13 @@ makeLenses ''Enclosing
 
 enclosingComponent :: Proxy Enclosing
 enclosingComponent = Proxy
+
+makeThing :: (HasComponent u w Enclosing, HasComponent u w Physical) => Text -> Description -> Entity -> System u Entity
+makeThing n d loc = do
+    e <- makeObject n d
+    addComponent e (blankPhysical loc)
+    component' enclosingComponent loc . encloses %= DS.insert e
+    return e
 
 data Darkness = Lighted | Dark deriving (Eq, Show)
 data IsVisited = Visited | Unvisited deriving (Eq, Show)
@@ -198,7 +219,7 @@ makeRoom n d = do
     return e
 
 makeRoom' :: (HasComponent u w Enclosing, HasComponent u w RoomData) => Text -> System u Entity
-makeRoom' n = makeRoom n $ "It's the " <> PlainDescription n <> "."
+makeRoom' n = makeRoom n $ "It's " <> PlainDescription n <> "."
 
 data Opacity = Opaque | Transparent deriving (Eq, Show)
 
@@ -233,22 +254,28 @@ getPlayer' w = maybe (error "missing player") coerce (w ^. world . store (Proxy 
 playerLocation' :: (HasComponent u w Player, HasComponent u w Physical) => u -> Entity
 playerLocation' u = _location $ getComponent' u physicalComponent $ getPlayer' u
 
-makePlayer :: (HasComponent u w Player, HasComponent u w Physical) => Entity -> System u Entity
+makePlayer :: (HasComponent u w Enclosing, HasComponent u w Player, HasComponent u w Physical) => Entity -> System u Entity
 makePlayer e' = do
     e <- makeThing "yourself" "it's you." e'
+    component' physicalComponent e . described .= NotDescribed
     addComponent globalComponent (Player e)
     return e
-
+-- TODO
+sceneryComponent :: Proxy Openable
+sceneryComponent = Proxy
 move :: (HasComponent u w Physical, HasComponent u w Enclosing) => Entity -> Entity -> System u Bool
 move obj le = do
     w <- get
+    --mp is the thing we're moving
     let mp = getComponent w physicalComponent obj
+    --mloc is the new place to put it
         mloc = getComponent w enclosingComponent le
+    --mcurrloc is the existing location
         mcurrLoc = _location <$> mp
     doIfExists3 mp mloc mcurrLoc (show obj <> " no physical thing to move") "no future loc" "no current loc" 
         (\_ _ c -> do
             component' physicalComponent obj . location .= le
-            component' physicalComponent obj . enclosedBy .= c
+            component' physicalComponent obj . enclosedBy .= le
             component' enclosingComponent c . encloses %= DS.delete obj
             component' enclosingComponent le . encloses %= DS.insert obj
             return True
@@ -260,3 +287,4 @@ defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''Opena
 type HasStd u w = (HasComponent u w Object, HasComponent u w RoomData, HasComponent u w Physical, 
                     HasComponent u w Enclosing, HasComponent u w Player, HasComponent u w Openable, 
                     HasComponent u w Container, HasComponent u w Supporter)
+type HasStd' w = HasStd w w

@@ -1,11 +1,15 @@
 module Yaifl.Activities
 (
     makeActivity', makeActivity,
-    doActivity', doActivity,
+    doActivity', doActivity, compileActivity,
     printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
-    describingLocaleActivityName,
+    describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
+    LocaleDescription(..),
     printName', printName,
-    capitalThe
+    capitalThe,
+    printingNameOfSomethingImpl, printingDescriptionOfADarkRoomImpl, printingNameOfADarkRoomImpl,
+     describingLocaleActivityImpl, choosingNotableLocaleObjectsActivityImpl,
+    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName
 ) where
 
 import Relude
@@ -16,6 +20,7 @@ import Yaifl.Components
 import Yaifl.Rulebooks
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Map as Map
+import qualified Data.Set as DS
 import qualified Text.Show
 import Data.List
 import Control.Lens
@@ -29,16 +34,32 @@ makeActivity n iniActivity r = Activity n iniActivity
                     (\r1 -> makeRulebook ("for " <> n) r1 [("", r)]) 
                     (\p -> makeRulebook ("before " <> n) p []) 
 
-doActivity' :: (HasWorld u w) => Text -> System u ()
+doActivity' :: (HasWorld u w) => Text -> System u (Maybe Bool)
 doActivity' n = doActivity n []
 
-doActivity :: HasWorld u w => Text -> [Entity] -> System u ()
+doActivity :: HasWorld u w => Text -> [Entity] -> System u (Maybe Bool)
 doActivity n params = do
-    sayDbgLn $ "running activity " <> n
+    --sayDbgLn $ "Running activity " <> n
     w <- get
-    maybe (sayDbgLn $ "couldn't find activity " <> n) (\(CompiledActivity x) -> do
-        _ <- zoom world $ x params
-        pass) (w ^. activities . at n)
+    maybe (do sayDbgLn $ "couldn't find activity " <> n; return $ Just False) (\(CompiledActivity x) -> 
+        zoom world $ x params) (w ^. activities . at n)
+
+-- | what is this atrocious mess
+compileActivity :: (HasMessageBuffer w, ActionArgs p) => UncompiledActivity w r p -> Activity w
+compileActivity a = CompiledActivity (\e -> do
+    w <- get
+    let initRules = _initActivity a w
+    let args = unboxArguments e
+    whenJust args (\defArgs ->
+        zoomOut (do
+            _ <- getRule $ compileRulebook (_beforeRules a (defArgs, initRules)) Silent
+            (_, (_, r)) <- get
+            getRule $ compileRulebook (_forRules a (defArgs, r)) Silent
+            (_, (_, r')) <- get
+            getRule $ compileRulebook (_afterRules a (defArgs,  r')) Silent
+            pass) (defArgs, initRules))
+    return Nothing
+    )
 
 printingNameOfADarkRoomName :: Text
 printingNameOfADarkRoomName = "printing the name of a dark room activity"
@@ -72,10 +93,10 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
-printName' :: (HasComponent u w Object, HasID o) => o -> System u ()
+printName' :: (HasComponent u w Object, HasID o) => o -> System u (Maybe Bool)
 printName' o = printName o noSayOptions
 
-printName :: (HasComponent u w Object, HasID o) => o -> SayOptions -> StateT u Identity ()
+printName :: (HasComponent u w Object, HasID o) => o -> SayOptions -> StateT u Identity (Maybe Bool)
 printName o p = let pr = doActivity printingNameOfSomethingName [objID o] in
     case p of
         NoOptions -> pr 
@@ -87,9 +108,66 @@ printName o p = let pr = doActivity printingNameOfSomethingName [objID o] in
 printingLocaleParagraphAboutActivityName :: Text
 printingLocaleParagraphAboutActivityName = "printing locale paragraph about activity"
 
+printingLocaleParagraphAboutActivityImpl :: HasStd w w => UncompiledActivity w Bool Entity
+printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAboutActivityName (const False)
+        (\r1 -> makeRulebook "" r1 [])
+        (\r1 -> makeRulebook "" r1 [
+            makeRule "don’t mention player’s supporter in room descriptions rule" (do
+                (w, (e, _)) <- get
+                when (_enclosedBy (getComponent' w physicalComponent (getPlayer' w)) == e) (gameInfo . localePriorities . at e ?= 0)
+                return Nothing),
+            makeRule "don’t mention scenery in room descriptions rule" (do
+                (w, (e, _)) <- get
+                when (isComponent w sceneryComponent e) (gameInfo . localePriorities . at e ?= 0)
+                return Nothing),
+            makeRule "don’t mention undescribed items in room descriptions rule" (do
+                (w, (e, _)) <- get
+                when (isX NotDescribed _described physicalComponent w e) (gameInfo . localePriorities . at e ?= 0)
+                return Nothing),
+            makeRule "offer items to writing a paragraph about rule" (do
+                (w, (e, _)) <- get
+                when (isX False _mentioned physicalComponent w e) (do
+                    res <- doActivity writingParagraphAboutName [e]
+                    when (res == Just True) (do
+                        component' physicalComponent e . mentioned .= True
+                        _2 . _2 .= True))
+                return Nothing),
+            makeRule "use initial appearance in room descriptions rule" (do
+                (_, (e, _)) <- get
+                phy <- use $ component' physicalComponent e
+                unless (_mentioned phy || _handled phy || isNothing (_initialAppearance phy)) (do
+                    (w', _) <- get
+                    whenJust (fmap (getDescription w' e) (_initialAppearance phy)) (\d' -> unless (d' == "") (do say $ show d'; _2 . _2 .= True))
+                    let isSup = getComponent w' supporterComponent e
+                        enc = fmap (const $ _encloses $ getComponent' w' enclosingComponent e) isSup
+                        locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w' sceneryComponent it || isX True _mentioned physicalComponent w' it || isX NotDescribed _described physicalComponent w' it)) enc
+                        isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
+                    whenJust locSuppStuff (\l -> do
+                        say "On "
+                        printName e (SayOptions Definite Uncapitalised)
+                        mapM_ (\(a, v) -> do
+                            printName a (SayOptions Indefinite Uncapitalised)
+                            when (v < length l - 1) (say ", ")
+                            when (v == length l - 2) (say "and ")
+                            --TODO: listing contents of
+                            component' physicalComponent a . mentioned .= True
+                            ) $ zip (toList l) [0..]
+                        )
+                    pass
+                    )
+                return Nothing)
+            --TODO: describe what’s on scenery supporters in room descriptions rule
+            -- but I'm waiting until I do the listing contents function first
+        ])
+        (\r1 -> makeRulebook "" r1 [])
+
+writingParagraphAboutName :: Text
+writingParagraphAboutName = "writing a paragraph about activity"
+
 describingLocaleActivityName :: Text
 describingLocaleActivityName = "printing the locale description of something"
-newtype LocaleDescription = LocaleDescription Int
+newtype LocaleDescription = LocaleDescription { _paragraphCount :: Int }
+makeLenses ''LocaleDescription
 describingLocaleActivityImpl :: HasStd w w => UncompiledActivity w LocaleDescription Entity
 describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ LocaleDescription 0) 
         (\r1 -> makeRulebook "" r1 [
@@ -102,7 +180,9 @@ describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ Lo
                 makeRule "interesting locale paragraphs rule" (do
                     lp <- use $ world . gameInfo . localePriorities
                     let sorted = Relude.sortBy (\(_, a) (_, b) -> compare a b) (Map.toAscList lp)
-                    mapM_ (doActivity printingLocaleParagraphAboutActivityName . one . fst) sorted
+                    sayDbgLn $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
+                    res <- mapM (doActivity printingLocaleParagraphAboutActivityName . one . fst) sorted
+                    _2 . _2 . paragraphCount += length (filter (Just True==) res)
                     return Nothing
                     ),
                 makeRule "you can also see rule" (do
@@ -127,16 +207,54 @@ describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ Lo
                         say "can "
                         when (e > 0) $ say "also "
                         say "see "
-                        --let vs = fmapToSnd (getComponent w physicalComponent) lp
-                        -- now what we want is to make a bunch of partitions of the list of marked for listing things
-                        -- depending on whether they have a common holder
-                        -- inform has yet another "if it's mentioned..." check that seems completely unnecessary.
-                        pass
+                        --I'm going to completely ignore what inform does here because trying to parse their
+                        --object list handling is a pain. 
+                        --so instead I think it makes the most sense, to me, to run two groupings
+                        --first, identical things should be grouped as "there are 2 Xs"
+                        --no idea how to decide if two things are equal.
+                        --inform decries this as "they have identical parser rhetoric"
+                        --then see if anything wants to tag itself as part of a group (groupablecomponent)
+                        --and then group them according to that?
+
+                        --first group the marked for listing elements
+                        --then group the groups by the grouping
+                        --this second thing can be a TODO.
+                        let groupedList = groupBy (groupingEquivalenceRelation w) notMent
+                        mapM_ (\(a, v) -> do
+                            case a of
+                                [] -> pass
+                                [e'] -> do printName e' (SayOptions Indefinite Uncapitalised); pass
+                                e':_ -> do say $ show $ length a; printName e' (SayOptions Indefinite Uncapitalised); pass
+                            when (v < length groupedList - 1) (say ", ")
+                            when (v == length groupedList - 2) (say "and ")) $ zip groupedList [0..]
+                        when (p == playerLocation' w) (say " here")
+                        say ".\n\n"
                         )
                     return Nothing
                     )
             ])
         (\r1 -> makeRulebook "" r1 [])
+
+groupingEquivalenceRelation :: HasStd u w => u -> Entity -> Entity -> Bool
+groupingEquivalenceRelation u e1 e2 = 
+    if | hasChildren u e1 && willRecurse u e1 -> False
+       | hasChildren u e2 && willRecurse u e2 -> False
+       --something about having omit contents from listing here
+       | isWorn u e1 /= isWorn u e2 -> False
+       | isLit u e1 /= isLit u e2 -> False
+       | isMatchingContainers u e1 e2 -> False --are identically named TODO
+       | otherwise -> getName u e1 == getName u e2
+
+hasChildren :: (HasComponent u w Enclosing) => u -> Entity -> Bool
+hasChildren u = ifMaybe (not . null . _encloses) . getComponent u enclosingComponent
+
+willRecurse :: (HasComponent u w Supporter, HasComponent u w Openable, HasComponent u w Container) => u -> Entity -> Bool
+willRecurse u e1 = isComponent u supporterComponent e1 || 
+                        ifMaybe (\e -> _opacity e == Transparent || getComponent' u openableComponent e1 == Open)
+                                        (getComponent u containerComponent e1)
+
+isMatchingContainers :: (HasComponent u w Openable) => u -> Entity -> Entity -> Bool
+isMatchingContainers u e1 e2 = getComponent u openableComponent e2 == getComponent u openableComponent e1
 
 choosingNotableLocaleObjectsActivityName :: Text
 choosingNotableLocaleObjectsActivityName = "choosing notable locale objects activity"
@@ -158,34 +276,7 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
 --or if it's an open/transparent container.
 --if one is worn or is giving off light and the other isn't
 --if one's a container and the other isn't and the containers are different
-groupingEquivalenceRelation :: HasStd u w => u -> Entity -> Entity -> Bool
-groupingEquivalenceRelation u e1 e2 = 
-    if | hasChildren u e1 && willRecurse u e1 -> False
-       | hasChildren u e2 && willRecurse u e2 -> False
-       --something about having omit contents from listing here
-       | isWorn u e1 /= isWorn u e2 -> False
-       | isEmittingLight u e1 /= isEmittingLight u e2 -> False
-       | isMatchingContainers u e1 e2 -> False
-       | otherwise -> True
 
-hasChildren :: (HasWorld w w, HasWorld u w, Has w Enclosing) => u -> Entity -> Bool
-hasChildren u = ifMaybe (not . null . _encloses) . getComponent u enclosingComponent
-
-willRecurse :: (HasWorld u w, HasWorld w w, Has w Supporter, Has w Openable, Has w Container) => u -> Entity -> Bool
-willRecurse u e1 = isComponent u supporterComponent e1 || 
-                        ifMaybe (\e -> _opacity e == Transparent || 
-                                    ifMaybe (== Open) (getComponent u openableComponent e1))
-                                        (getComponent u containerComponent e1)
-
-isWorn :: (HasWorld w w, HasWorld u w, Has w Physical) => u -> Entity -> Bool
-isWorn u = ifMaybe (\e -> Wearable == _wearable e) . getComponent u physicalComponent
-
-isEmittingLight :: (HasWorld w w, HasWorld u w, Has w Physical) => u -> Entity -> Bool
-isEmittingLight u = ifMaybe (\e -> Lit == _lit e) . getComponent u physicalComponent
-
-isMatchingContainers :: (HasWorld u w, HasWorld w w, Has w Openable) => u -> Entity -> Entity -> Bool
-isMatchingContainers u e1 e2 = ifMaybe (\e1' -> ifMaybe (e1' ==) (getComponent u openableComponent e2)) 
-            (getComponent u openableComponent e1)
 
 combineStuff [] _ _ ys rj = pass
 combineStuff ((_, Nothing):xs) h f ys rj = pass

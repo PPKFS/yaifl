@@ -1,6 +1,12 @@
 module Main (main) where
 
-import Yaifl
+import Yaifl.Components
+import Yaifl.TH
+import Yaifl.Common
+import Yaifl.Say
+import Yaifl.WorldBuilder
+import Yaifl.Activities
+import Yaifl.Rulebooks
 import Relude
 import Control.Lens
 import qualified Data.Text as Text
@@ -50,15 +56,15 @@ example1World :: WorldBuilder World
 example1World = do
     setTitle "Bic"
     addRoom "The Staff Break Room"
-    makeThingWithoutDescription "Bic pen"
-    makeThing "orange" 
+    addThing' "Bic pen"
+    addThing "orange" 
         "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    makeThing "napkin" "Slightly crumpled."
+    addThing "napkin" "Slightly crumpled."
     addWhenPlayBeginsRule "run property checks at the start of play rule" (do
         mapObjects objectComponent (\o -> do
             w <- get
-            when (getDescription w o == "") (do
-                printName o
+            when (getDescription' w o == "") (do
+                printName' o
                 sayLn " has no description." ) 
             return o
             )
@@ -88,56 +94,3 @@ assertText (ti, xs) w = do
     Relude.foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
     pass
                 where buildExpected t x = mconcat $ introText t <> [unlines x]
-
-data Holder = Holder
-    {
-        aStore :: DM.Map Int Bool,
-        bStore :: DM.Map Int Text,
-        cStore :: DM.Map Int Int,
-        dStore :: DM.Map Int (Bool, Bool),
-        currentID :: Int
-    }
-
-
-newtype GuaranteedKey (a :: [k]) = GuaranteedKey Int -- ???
-
-data BoxedKey where
-    Box :: GuaranteedKey a -> BoxedKey
-
---unboxKey :: BoxedKey -> Proxy a -> Maybe (GuaranteedKey a)
---unboxKey (Box (a :: GuaranteedKey a)) _ = Just a
-
-type family Contains' (list :: [Type]) (single :: Type) where
-  Contains' (x ': xs) (x) = 'True
-  Contains' '[]       (x) = 'False
-  Contains' (x ': xs) (y) = Contains' xs (y)
-
-makeAC :: Holder -> Bool -> Int -> (GuaranteedKey ('[Bool, Int]), Holder)
-makeAC h b i = runState (do
-    h1 <- get
-    let cid = currentID h1
-    put $ h1 {currentID = cid+1, aStore = insert cid b (aStore h), cStore = insert cid i (cStore h)}
-    return $ GuaranteedKey cid) h
-
-makeAB :: Holder -> Bool -> Text -> (GuaranteedKey ('[Bool, Text]), Holder)
-makeAB h b i = runState (do
-    h1 <- get
-    let cid = currentID h1
-    put $ h1 {currentID = cid+1, aStore = insert cid b (aStore h), bStore = insert cid i (bStore h)}
-    return $ GuaranteedKey cid) h
-
-knownType :: (Contains' k Text ~ 'True) => GuaranteedKey k -> Holder -> Text
-knownType (GuaranteedKey a) h = case DM.lookup a (bStore h) of
-    Just x -> x
-    Nothing -> error "congrats, you broke it all"
-testFunc :: IO ()
-testFunc = do
-    let h = Holder DM.empty DM.empty DM.empty DM.empty 0
-    let (k1, h') = makeAC h False 5
-    --print $ knownType k1 --doesn't compile!
-    let (k2, h'') = makeAB h' True "test"
-    let someList = [Box k1, Box k2]
-    --print $ knownType (head someList) h''
-    pass
-    --print $ knownType k2 h
-    --print $ knownType k1 

@@ -1,7 +1,10 @@
 module Yaifl.Rulebooks
 (
     makeRulebook', makeRulebook, makeRule', makeRule, makeBlankRule,
-    compileRulebook', compileRulebook
+    compileRulebook', compileRulebook,
+    whenPlayBeginsName, introText,
+
+    whenPlayBeginsRulesImpl
 ) where
 
 import Relude
@@ -23,39 +26,38 @@ makeBlankRule :: Text -> (Text, RuleEvaluation (w, r))
 makeBlankRule n = makeRule n (return Nothing)
 
 makeRulebook' :: Text -> [(Text, RuleEvaluation (w, ()))] -> UncompiledRulebook w ()
-makeRulebook' n r = makeRulebook n () r--(map (second $ zoom _1) r)
+makeRulebook' n = makeRulebook n ()--(map (second $ zoom _1) r)
 
 makeRulebook :: Text -> r -> [(Text, RuleEvaluation (w, r))] -> UncompiledRulebook w r
 makeRulebook n ini = Rulebook n (const ini)
 
-compileRulebook' :: HasMessageBuffer w => UncompiledRulebook w r -> Rulebook w
-compileRulebook' r = CompiledRulebook (do
-    let (CompiledRulebook cr) = compileRulebook r
+compileRulebook' :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook w
+compileRulebook' r db = CompiledRulebook (do
+    let (CompiledRulebook cr) = compileRulebook r db
     w <- get
     let iv = _rulebookInit r w
     zoomOut cr iv)
 
-compileRulebook :: HasMessageBuffer w => UncompiledRulebook w r -> Rulebook (w, r)
-compileRulebook (Rulebook n initVars rs) = CompiledRulebook (
+compileRulebook :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook (w, r)
+compileRulebook (Rulebook n initVars rs) db = CompiledRulebook (
     if null rs then return Nothing else (do
     (w, _) <- get
-    unless (n == "") $ sayDbgLn $ "Following the " <> n
+    unless (n == "" || db == Silent) $ sayDbgLn $ "Following the " <> n
     indentDbg True
     let iv = initVars w
     _2 .= iv
     result <- doUntilJustM (\r1 -> do
-        unless (fst r1 == "") $ sayDbgLn $ "Following the " <> fst r1
+        unless (fst r1 == "" || db == Silent) $ sayDbgLn $ "Following the " <> fst r1
         snd r1
         ) rs
     indentDbg False
-    sayDbgLn $ "Finished following the " <> n <> " with result " <> maybe "nothing" show result
+    unless (db == Silent) $ sayDbgLn $ "Finished following the " <> n <> " with result " <> maybe "nothing" show result
     return result))
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-whenPlayBeginsRulesImpl :: (HasMessageBuffer w, HasWorld' w, Has w Physical, Has w Object,
-                                Has w Player, Has w Enclosing) => UncompiledRulebook w ()
+whenPlayBeginsRulesImpl :: (HasWorld' w, Has w Physical, Has w Object, Has w Player, Has w Enclosing) => UncompiledRulebook w ()
 whenPlayBeginsRulesImpl = makeRulebook' whenPlayBeginsName [
             makeRule' "display banner rule" (do
                 sayIntroText
@@ -77,7 +79,7 @@ introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder<>
                   totalLength = 2 * Text.length shortBorder + Text.length w + 2
                   longBorder = foldr (<>) "" $ replicate totalLength ("-" :: Text)
 
-sayIntroText :: (HasMessageBuffer u, HasGameInfo u w) => System u ()
+sayIntroText :: HasGameInfo u w => System u ()
 sayIntroText = do
     w <- get
     setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))

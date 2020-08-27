@@ -13,7 +13,7 @@ module Yaifl.Common
     --rulebooks
     RuleOutcome, RuleEvaluation, System, UncompiledRulebook(..), Rulebook(..),
     Activity(..), UncompiledActivity(..),
-    Action(..), UncompiledAction(..),
+    Action(..), UncompiledAction(..), RulebookDebugPrinting(..),
     
     --game info fields and lenses
     GameInfo, RoomDescriptions(..), blankGameInfo, gameInfo,
@@ -21,10 +21,13 @@ module Yaifl.Common
     _roomDescriptions, _darknessWitnessed, _localePriorities,
     title, firstRoom, activities, rulebooks, actions, 
     roomDescriptions, darknessWitnessed, localePriorities,
+    entityCounter, msgBuffer,
     setTitle,
 
     ActionArgs, unboxArguments, RulebookArgs, defaultArguments, defaultActionArguments,
     Has,HasWorld, HasWorld', HasGameInfo, HasGameInfo',
+
+    rules,
 
     world, store,
 
@@ -122,6 +125,8 @@ newtype Action w = CompiledAction ([Entity] -> RuleEvaluation w)
 blankGameInfo :: GameInfo w
 blankGameInfo = GameInfo "" Nothing blankMessageBuffer 1 Map.empty Map.empty Map.empty 
                     NeverAbbreviatedRoomDescriptions False Map.empty
+
+data RulebookDebugPrinting = Full | Silent deriving (Eq, Show)
 
 instance Show (UncompiledRulebook w r) where
     show (Rulebook n _ r) = toString n <> concatMap (toString . fst) r
