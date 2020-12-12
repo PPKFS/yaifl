@@ -22,7 +22,7 @@ module Yaifl.Common
     title, firstRoom, activities, rulebooks, actions, 
     roomDescriptions, darknessWitnessed, localePriorities,
     entityCounter, msgBuffer,
-    setTitle,
+    setTitle, setLocalePriority,
 
     ActionArgs, unboxArguments, RulebookArgs, defaultArguments, defaultActionArguments,
     Has,HasWorld, HasWorld', HasGameInfo, HasGameInfo',
@@ -187,7 +187,10 @@ class HasMessageBuffer u => HasGameInfo u w | u -> w where
     roomDescriptions = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_roomDescriptions = x'}) <$> f _roomDescriptions
     localePriorities :: Lens' u (Map.Map Entity Int)
     localePriorities = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_localePriorities = x'}) <$> f _localePriorities
-    
+
+setLocalePriority :: (MonadState s m, HasGameInfo s w) => Entity -> Int -> m ()
+setLocalePriority e p = gameInfo . localePriorities . at e ?= p
+
 -- | some lens typeclasses for world access
 -- the general form is a (u)niverse has a (w)orld for HasWorld 
 -- but we can zoom in and specify that our universe is just the world and nothing else

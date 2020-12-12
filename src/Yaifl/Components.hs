@@ -12,9 +12,15 @@ module Yaifl.Components
     ThingLit(..),
     Physical, physicalComponent, _enclosedBy, mentioned, _mentioned, _markedForListing, markedForListing,
     isWearable, _lit, lit, wornBy, _wornBy, isWorn, isLit, described, Describable(..), _described, _handled,
-    handled, _initialAppearance, initialAppearance, _scenery, scenery, _concealedBy, concealedBy,
+    handled, _initialAppearance, initialAppearance, _scenery, scenery, _concealedBy, concealedBy, isConcealed,
+    isEnclosedBy,
+    makeDirections, Direction(..), directionComponent,
     Enclosing, enclosingComponent, _encloses, 
-    RoomData(..), roomComponent,
+
+    north, northeast, east, southeast, south, southwest, west, northwest, up, down, insideDirection, outsideDirection,
+
+    physicalLens, physicalLens', enclosesLens', mentionedLens',
+    RoomData(..), roomComponent, mapConnections,
     Container(..), containerComponent, Opacity(..),
     Openable(..), openableComponent,
     Player, playerComponent,
@@ -66,7 +72,7 @@ getComponent w t e = IM.lookup (objID e) $ w ^. world . store t
 
 -- | if we're ~sure~ it exists but it's only user-invariant, we can use this to save time and maybes.
 getComponent' :: (HasComponent u w c, HasID o) => u -> Proxy c -> o -> c
-getComponent' w t e = fromMaybe (error "the component was missing") (getComponent w t e)
+getComponent' w t e = fromMaybe (error $ "the component " <> show (objID e) <> " was missing") (getComponent w t e)
 
 -- | a lens to /maybe/ a certain component from an entity
 component :: HasComponent u w c => Proxy c -> Entity -> Lens' u (Maybe c)
@@ -85,9 +91,9 @@ mapObjects c1 func = do
         res <- func v
         world . store c1 . at k ?= res) evs
 
-mapObjects2 :: (HasComponent u w a, HasComponent u w b) => (Proxy a, Proxy b) -> (a -> b -> System u (a, b)) 
+mapObjects2 :: (HasComponent u w a, HasComponent u w b) => Proxy a -> Proxy b -> (a -> b -> System u (a, b)) 
                     ->  System u ()
-mapObjects2 (c1, c2) func = do
+mapObjects2 c1 c2 func = do
     g <- get
     let evs = IM.assocs (g ^. world . store c1)
     mapM_ (\(k, v) -> do
@@ -138,6 +144,73 @@ makeObject n d = do
     sayDbgLn $ "made an object called " <> n <> " with id " <> show e
     return e
 
+newtype Direction = Direction { _opposite :: Entity } deriving (Eq, Show)
+
+directionBlockIDs :: Entity
+directionBlockIDs = -100
+
+north :: Entity
+north = directionBlockIDs
+northeast :: Entity
+northeast = directionBlockIDs + 1
+east :: Entity
+east = directionBlockIDs + 2
+southeast :: Entity
+southeast = directionBlockIDs + 3
+south :: Entity
+south = directionBlockIDs + 4
+southwest :: Entity
+southwest = directionBlockIDs + 5
+west :: Entity
+west = directionBlockIDs + 6
+northwest :: Entity
+northwest = directionBlockIDs + 7
+up :: Entity
+up = directionBlockIDs + 8
+down :: Entity
+down = directionBlockIDs + 9
+insideDirection :: Entity
+insideDirection = directionBlockIDs + 10
+outsideDirection :: Entity
+outsideDirection = directionBlockIDs + 11
+
+makeDirections ::  HasComponent u w Direction => System u ()
+makeDirections = do
+    oldID <- setEntityCounter directionBlockIDs
+    n <- makeDirection "north" Nothing
+    ne <- makeDirection "north-east" Nothing
+    e <- makeDirection "east" Nothing
+    se <- makeDirection "south-east" Nothing
+    s <- makeDirection "south" $ Just n
+    sw <- makeDirection "south-west" $ Just ne
+    w <- makeDirection "west" $ Just e
+    nw <- makeDirection "north-west" $ Just se
+    u <- makeDirection "up" Nothing
+    d <- makeDirection "down" $ Just u
+    i <- makeDirection "inside" Nothing
+    o <- makeDirection "outside" $ Just i
+    _ <- setEntityCounter oldID
+    pass
+
+setEntityCounter :: HasGameInfo u w => Entity -> System u Entity
+setEntityCounter n = do
+    oldID <- use $ gameInfo . entityCounter
+    gameInfo . entityCounter .= n
+    return oldID
+
+makeDirection :: HasComponent u w Direction => Text -> Maybe Entity -> System u Entity
+makeDirection n o = do
+    e <- makeObject n ""
+    whenJust o (setOpposite e)
+    return e
+
+setOpposite :: HasComponent u w Direction => Entity -> Entity -> System u ()
+setOpposite e o = do
+    addComponent e (Direction o)
+    addComponent o (Direction e)
+
+directionComponent :: Proxy Direction
+directionComponent = Proxy
 data ThingLit = Lit | Unlit deriving (Eq, Show)
 data Edibility = Edible | Inedible deriving (Eq, Show)
 data Portability = FixedInPlace | Portable deriving (Eq, Show)
@@ -164,6 +237,20 @@ data Physical = Physical
     } deriving Show
 makeLenses ''Physical
 
+isConcealed :: HasComponent u w Physical => u -> Entity -> Bool
+isConcealed u e = not $ isX Nothing _concealedBy physicalComponent u e
+
+physicalLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Physical)
+physicalLens = component physicalComponent 
+
+physicalLens' :: HasComponent u w Physical => Entity -> Lens' u Physical
+physicalLens' = component' physicalComponent 
+
+--mentionedLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Bool)
+--mentionedLens e = physicalLens e . _Just . mentioned
+
+mentionedLens' :: HasComponent u w Physical => Entity -> Lens' u Bool
+mentionedLens' e = physicalLens' e . mentioned
 physicalComponent :: Proxy Physical
 physicalComponent = Proxy
 
@@ -182,6 +269,9 @@ isLit = isX Lit _lit physicalComponent
 isEdible :: HasComponent u w Physical => u -> Entity -> Bool
 isEdible = isX Wearable _wearable physicalComponent
 
+isEnclosedBy :: (HasComponent u w Physical) => u -> Entity -> Entity -> Bool
+isEnclosedBy w e encl = _enclosedBy (getComponent' w physicalComponent e) == encl
+
 newtype Enclosing = Enclosing
     {
         _encloses :: Set Entity
@@ -190,6 +280,9 @@ makeLenses ''Enclosing
 
 enclosingComponent :: Proxy Enclosing
 enclosingComponent = Proxy
+
+enclosesLens' :: HasComponent u w Enclosing => Entity -> Lens' u (Set Entity)
+enclosesLens' e = component' enclosingComponent e . encloses
 
 makeThing :: (HasComponent u w Enclosing, HasComponent u w Physical) => Text -> Description -> Entity -> System u Entity
 makeThing n d loc = do
@@ -209,6 +302,7 @@ data RoomData = RoomData
         _mapConnections :: MapConnections,
         _containingRegion :: ContainingRegion
     } deriving Show
+makeLenses ''RoomData
 
 roomComponent :: Proxy RoomData
 roomComponent = Proxy :: (Proxy RoomData)
@@ -284,9 +378,9 @@ move obj le = do
         )
 
 defaultWorld :: [TH.Name]
-defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''Openable, ''Container, ''Supporter]
+defaultWorld = [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''Openable, ''Container, ''Supporter, ''Direction]
 
 type HasStd u w = (HasComponent u w Object, HasComponent u w RoomData, HasComponent u w Physical, 
                     HasComponent u w Enclosing, HasComponent u w Player, HasComponent u w Openable, 
-                    HasComponent u w Container, HasComponent u w Supporter)
+                    HasComponent u w Container, HasComponent u w Supporter, HasComponent u w Direction)
 type HasStd' w = HasStd w w

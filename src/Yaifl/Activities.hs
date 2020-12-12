@@ -114,22 +114,22 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
         (\r1 -> makeRulebook "" r1 [
             makeRule "don’t mention player’s supporter in room descriptions rule" (do
                 (w, (e, _)) <- get
-                when (_enclosedBy (getComponent' w physicalComponent (getPlayer' w)) == e) (gameInfo . localePriorities . at e ?= 0)
+                when (isEnclosedBy w (getPlayer' w) e) (setLocalePriority e 0)
                 return Nothing),
             makeRule "don’t mention scenery in room descriptions rule" (do
                 (w, (e, _)) <- get
-                when (isComponent w sceneryComponent e) (gameInfo . localePriorities . at e ?= 0)
+                when (isComponent w sceneryComponent e) (setLocalePriority e 0)
                 return Nothing),
             makeRule "don’t mention undescribed items in room descriptions rule" (do
                 (w, (e, _)) <- get
-                when (isX NotDescribed _described physicalComponent w e) (gameInfo . localePriorities . at e ?= 0)
+                when (isX NotDescribed _described physicalComponent w e) (setLocalePriority e 0)
                 return Nothing),
             makeRule "offer items to writing a paragraph about rule" (do
                 (w, (e, _)) <- get
                 when (isX False _mentioned physicalComponent w e) (do
                     res <- doActivity writingParagraphAboutName [e]
                     when (res == Just True) (do
-                        component' physicalComponent e . mentioned .= True
+                        mentionedLens' e .= True
                         _2 . _2 .= True))
                 return Nothing),
             makeRule "use initial appearance in room descriptions rule" (do
@@ -145,24 +145,17 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
                         locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w' sceneryComponent it || isX True _mentioned physicalComponent w' it || isX NotDescribed _described physicalComponent w' it)) enc
                         isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
                     --get rid of any mentioned flags if they're still around
-                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w' i) (component' physicalComponent i . markedForListing .= False)
+                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w' i) 
+                            (physicalLens' i . markedForListing .= False)
                         ))
                     whenJust isAnyStuff (\_ -> do
                         say "On "
+                        
                         _2 . _2 .= True
                         _ <- printName e (SayOptions Definite Uncapitalised)
                         doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
-                        component' physicalComponent e . mentioned .= True
+                        --mentionedLens' e .= True
                         say ".\n\n"
-                        {-
-                        mapM_ (\(a, v) -> do
-                            printName a (SayOptions Indefinite Uncapitalised)
-                            when (v < length l - 1) (say ", ")
-                            when (v == length l - 2) (say "and ")
-                            --TODO: listing contents of
-                            component' physicalComponent a . mentioned .= True
-                            ) $ zip (toList l) [0..]
-                        -}
                         )
                     pass
                     )
@@ -175,14 +168,14 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
                         enc = fmap (const $ _encloses $ getComponent' w enclosingComponent e) isSup
                         locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w sceneryComponent it || isX True _mentioned physicalComponent w it || isX NotDescribed _described physicalComponent w it)) enc
                         isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
-                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w i) (component' physicalComponent i . markedForListing .= False)))
-
+                    --whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w i) (component' physicalComponent i . markedForListing .= False)))
+                    
                     whenJust isAnyStuff (\_ -> do -- we don't care if there's actual stuff, we do that later.
                         say "On "
                         _2 . _2 .= True
                         _ <- printName e (SayOptions Definite Uncapitalised)
                         doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
-                        component' physicalComponent e . mentioned .= True
+                        mentionedLens' e .= True
                         say ".\n\n"
                         {-
                         
@@ -249,6 +242,7 @@ describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ Lo
         (\r1 -> makeRulebook "" r1 [
                 makeRule "interesting locale paragraphs rule" (do
                     lp <- use $ world . gameInfo . localePriorities
+                    sayDbgLn $ show lp
                     let sorted = Relude.sortBy (\(_, a) (_, b) -> compare a b) (Map.toAscList lp)
                     sayDbgLn $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
                     res <- mapM (doActivity printingLocaleParagraphAboutActivityName . one . fst) sorted
@@ -334,7 +328,7 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
     (w, e) <- get    
     let r = getComponent w enclosingComponent e
     whenJust r (mapM_ (\e' -> do
-        gameInfo . localePriorities . at e' ?= 5
+        setLocalePriority e' 5
         component' physicalComponent e' . mentioned .= False) . _encloses)
     return Nothing
     )

@@ -126,7 +126,7 @@ lookingActionImpl = makeAction lookingActionName
                 abbrev = _roomDescriptions gi == AbbreviatedRoomDescriptions
                 someAbbrev = _roomDescriptions gi == SometimesAbbreviatedRoomDescriptions
             if | lvl == 0 -> unless (abbrev || (someAbbrev && _darknessWitnessed gi)) 
-                    (do doActivity' printingDescriptionOfADarkRoomName ; pass)
+                    (do _ <- doActivity' printingDescriptionOfADarkRoomName ; pass)
                | ceil == loc -> 
                     unless (abbrev || (someAbbrev && ac /= lookingActionName))
                             ((sayLn . getDescription' w) (getComponent' w objectComponent loc))

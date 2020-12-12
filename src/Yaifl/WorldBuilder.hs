@@ -9,7 +9,8 @@ Yet another interactive fiction library.
 module Yaifl.WorldBuilder
 (
     WorldBuildInfo(..), WorldBuilder, blankBuildInfo,
-    addRoom, addRule, addWhenPlayBeginsRule, addThing, addThing',
+    addRoom, addRoom', addRule, addWhenPlayBeginsRule, addThing, addThing',
+    isLocated, isWestOf,
     buildWorld
 ) where
 
@@ -67,10 +68,18 @@ addWhenPlayBeginsRule = addRule whenPlayBeginsRules
 type WorldBuilder w = State (w, WorldBuildInfo w) ()
 type WorldBuilderStep w = State (w, WorldBuildInfo w) Entity
 
-addRoom :: HasStd' w => Text -> WorldBuilderStep w
-addRoom n = do
+addRoom' n = do
     e <- zoom _1 (do
-        e <- makeRoom' n 
+        e <- makeRoom' n
+        gameInfo . firstRoom %= (\x -> if Relude.null x then Just e else x)
+        return e)
+    _2 . currentRoom .= e
+    return e
+
+addRoom :: HasStd' w => Text -> Description -> WorldBuilderStep w
+addRoom n d = do
+    e <- zoom _1 (do
+        e <- makeRoom n d
         gameInfo . firstRoom %= (\x -> if Relude.null x then Just e else x)
         return e)
     _2 . currentRoom .= e
@@ -93,17 +102,30 @@ buildWorld wb blw = compileRulebooks (_rulebookCache (snd execWB)) (fst execWB)
 initWorld :: HasStd' w => System (w, WorldBuildInfo w) ()
 initWorld = do
     e <- makeVoid
+    makeDirections
     makePlayer e
     pass
 
 missingRoom :: Int
 missingRoom = -3
 
+isWestOf :: HasStd' w => Entity -> WorldBuilder w
+isWestOf e = do
+   r <- use $ _2 . currentRoom
+   isLocated e west r
+
+--TODO: one way connections
+isLocated :: HasStd' w => Entity -> Entity -> Entity -> WorldBuilder w
+isLocated e1 dir e2 = do
+    component' roomComponent e1 . mapConnections . at dir ?= e2
+    (Direction opp) <- use $ component' directionComponent dir
+    component' roomComponent e1 . mapConnections . ix dir .= e2
+
 makeVoid :: HasStd' w => System (w, WorldBuildInfo w) Entity
 makeVoid = do
     e <- use $ _1 . world . gameInfo . entityCounter
     _1 . world . gameInfo . entityCounter .= missingRoom
-    _ <- addRoom "The void"
+    _ <- addRoom "The void" "you really shouldn't be here."
     _1 . world . gameInfo . firstRoom .= Nothing
     _1 . world . gameInfo . entityCounter .= e
     return e
