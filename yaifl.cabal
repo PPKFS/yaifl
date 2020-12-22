@@ -21,23 +21,26 @@ source-repository head
   location:            https://github.com/PPKFS/yaifl.git
 
 common common-options
-  build-depends:       base-noprelude ^>= 4.13.0.0
+  build-depends:
+                     base
                      , relude
-                     , lens
+                     , optics
                      , prettyprinter
                      , prettyprinter-ansi-terminal
                      , template-haskell
-                     , containers
-                     , mtl  
+                     , containers 
                      , text
-                     , tasty
-                     , tasty-hunit
-                     , raw-strings-qq 
+                     , raw-strings-qq
+                     , polysemy
+                     , polysemy-plugin
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
+                       -O2
+                       -flate-specialise -fspecialise-aggressively
+                       -fplugin=Polysemy.Plugin
                        ---ddump-splices
                        ---ddump-to-file
   if impl(ghc >= 8.0)
@@ -51,22 +54,24 @@ common common-options
     ghc-options:       
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables StandaloneKindSignatures ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes
+  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables StandaloneKindSignatures ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes PolyKinds TypeApplications TypeOperators TypeFamilies BlockArguments UndecidableInstances GeneralizedNewtypeDeriving
 library
   import:              common-options
   hs-source-dirs:      src
-  exposed-modules:     Yaifl, Yaifl.Common, Yaifl.Say, Yaifl.TH, Yaifl.WorldBuilder Yaifl.Utils, Yaifl.Components, Yaifl.Actions, Yaifl.Activities, Yaifl.Rulebooks
-  other-modules:       
-
-executable yaifl
-  import:              common-options
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  build-depends:       yaifl
-  ghc-options:         -threaded
-                       -rtsopts
-                       -with-rtsopts=-N
-
+  exposed-modules:     
+                         Yaifl.Common2
+                       , Yaifl.Prelude
+                       , Yaifl.Say2
+                       , Yaifl.World
+                       , Yaifl.Components2
+                       , Yaifl.WorldBuilder2
+                       , Yaifl.Rulebooks2
+                       , Yaifl.PolysemyOptics
+  other-modules:         Yaifl.Components.Object
+                       , Yaifl.Components.Direction
+                       , Yaifl.Components.Room
+                       , Yaifl.Components.Enclosing
+                       , Yaifl.Components.Physical
 
 test-suite yaifl-test
   import:              common-options
@@ -74,6 +79,7 @@ test-suite yaifl-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       yaifl
+                    ,  HUnit
   ghc-options:         -threaded
                        -rtsopts
                        -with-rtsopts=-N

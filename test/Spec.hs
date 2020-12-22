@@ -1,20 +1,161 @@
-module Main (main) where
+module Main
+    (
+        main
+    )
+where
+import           Yaifl.Prelude
+import           Yaifl.Common2
+import           Yaifl.Say2
+import           Yaifl.Components2
+import           Yaifl.World
+import           Yaifl.WorldBuilder2
+import           Data.Text.Prettyprint.Doc.Render.Terminal
+import           Test.HUnit hiding (State)
+import qualified Data.IntMap.Strict            as IM
+import qualified Data.Map.Strict            as Map
+import Polysemy
+import Polysemy.State
+import Polysemy.Error
+import Polysemy.Output
+import Yaifl.PolysemyOptics
+import qualified Prettyprinter.Render.Terminal as PPTTY
+import qualified Data.Text.Prettyprint.Doc     as PP
 
-import Yaifl.Components
-import Yaifl.TH
-import Yaifl.Common
-import Yaifl.Say
-import Yaifl.WorldBuilder
-import Yaifl.Activities
-import Yaifl.Rulebooks
-import Relude
-import Control.Lens
-import qualified Data.Text as Text
-import Data.Text.Prettyprint.Doc.Render.Terminal
-import Test.Tasty
-import Test.Tasty.HUnit
-import qualified Data.Map as DM
-import Text.RawString.QQ
+
+data TestWorld = TestWorld
+    {
+        _objects :: Store Object,
+        _enclosing :: Store Enclosing,
+        _roomData :: Store RoomData,
+        _physical :: Store Physical
+    , _ec      :: Int
+    }
+
+makeLenses ''TestWorld
+
+instance HasStore TestWorld Object where
+    store _ = castOptic objects
+
+instance HasStore TestWorld Enclosing where
+    store _ = castOptic enclosing
+
+instance HasStore TestWorld RoomData where
+    store _ = castOptic roomData
+
+instance HasStore TestWorld Physical where
+    store _ = physical
+
+instance EntityProducer TestWorld where
+    entityCounter = ec
+
+--type TestingMonadStack a = Sem TypeList a
+
+type WorldOutput a = (Either Text ([SayOutput], ([PP.Doc AnsiStyle], ())))
+
+runWorldTest :: Int -> Sem r () -> (Sem r () -> Sem '[Final IO] (WorldOutput ())) -> Assertion
+runWorldTest i w h' = do
+        putStrLn $ "Example " <> show i
+        v <- h' w
+             & runFinal
+        _ <- a v
+        pass
+
+a v = case v of
+           Left e -> print e
+           Right (e, (e2, _)) -> PPTTY.putDoc $ PP.vcat (coerce e) <> PP.vcat e2
+h w = w 
+            & worldToMapStore
+            & evalState (TestWorld IM.empty IM.empty IM.empty IM.empty 0)
+            & logToOutput
+            & runOutputList
+            & evalState (LoggingContext [] mempty)
+            & sayToOutput
+            & runOutputList
+            & evalState (WorldBuildInfo (-5))
+            & evalState (GameSettings "Untitled" Nothing Map.empty)
+            & errorToIOFinal
+            
+
+main :: IO ()
+main = do
+    _ <- runTestTT tests
+    pass
+
+tests :: Test
+tests = makeTests [example1World]
+
+makeTests lst = TestList $
+    zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x h)) [1 ..] lst
+        where mkName i = "example " <> show i
+{-}
+testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
+testExampleBlank w1 ts = testExample w1 [] ts
+
+testExample :: WorldBuilder World -> [Text] -> (Text -> Either Assertion Text) -> IO ()
+testExample worldbuilder actions ts = do
+    let w = buildWorld worldbuilder blankWorld
+        w2 = w ^? gameInfo . rulebooks . ix whenPlayBeginsName
+    let w4 = (\(CompiledRulebook j) -> runState j w) <$> w2
+        w4' = snd $ fromMaybe (Nothing, w) w4
+        --v = runActions actions $ snd w4'
+        x = Relude.foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w4' ^. messageBuffer . stdBuffer
+    _ <- runStateT printMessageBuffer w4'
+    putStrLn "-------------\n"
+    case (Right x >>= ts) of 
+        Left res -> res
+        Right "" -> pass
+        Right x' -> assertFailure $ "Was left with " <> toString x'
+-}
+
+example1World :: HasStdWorld TestWorld r => Sem r ()
+example1World = do
+    title .= "Bic"
+    addRoom' "The Staff Break Room"
+    addThing' "Bic pen" ""
+    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
+    sayLn "aaaa"
+    addThing' "napkin" "Slightly crumpled."
+
+    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
+        sayLn "aaaaa2"
+        return Nothing)
+    g <- get
+    sayLn (show $ Map.keys $ g ^. rulebooks)
+    pass{-(do
+        mapObjects2 physicalComponent objectComponent (\v o -> do
+            w <- get
+            when (getDescription' w o == "") (do
+                printName' o
+                sayLn " has no description." ) 
+            return (v, o)
+            )
+        return Nothing)
+    -}
+mapObjects2 :: t0 -> Proxy Object -> (a1 -> b0 -> Sem r0 (a1, b0)) -> m0 a2
+mapObjects2 = error "not implemented"
+
+{-
+
+
+
+
+
+ex1 :: Assertion
+ex1 = makeTestWorld
+
+main :: IO ()
+main = defaultMain tests
+
+tests :: TestTree
+tests = makeTests [ex1]
+
+makeTests :: [Assertion] -> TestTree
+makeTests lst = testGroup "Tests" $ map
+    (\(i, x) -> after AllFinish (mkName (i - 1)) $ testCase (mkName i) x)
+    (zip [1 ..] lst)
+    where mkName i = "example " <> show i
+
+        )
 
 
 makeWorld "World" defaultWorld
@@ -56,24 +197,7 @@ instance Has World Supporter where
 instance Has World Direction where
     store _ = directionStore
     
-example1World :: WorldBuilder World
-example1World = do
-    setTitle "Bic"
-    addRoom' "The Staff Break Room"
-    addThing' "Bic pen"
-    addThing "orange" 
-        "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    addThing "napkin" "Slightly crumpled."
-    addWhenPlayBeginsRule "run property checks at the start of play rule" (do
-        mapObjects2 physicalComponent objectComponent (\v o -> do
-            w <- get
-            when (getDescription' w o == "") (do
-                printName' o
-                sayLn " has no description." ) 
-            return (v, o)
-            )
-        return Nothing
-        )
+
 
 example2World :: WorldBuilder World
 example2World = do
@@ -85,17 +209,7 @@ The Men's Restroom is immediately west of this point."|]
     addRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence."|]
     isWestOf w
     pass
-
-main :: IO ()
-main = defaultMain tests
-
-tests :: TestTree
-tests = makeTests [ex1, ex2]
-
-makeTests :: [Assertion] -> TestTree
-makeTests lst = testGroup "Tests" $ map (\(i, x) -> after AllFinish (mkName (i-1)) $ testCase (mkName i) x) (zip [1 .. ] lst)
-    where mkName i = "example " <> show i
-
+    
 ex1 :: Assertion
 ex1 = testExampleBlank example1World (\z -> consumeTitle "Bic" z >>=
             consumeLine "The Staff Break Room" >>=
@@ -110,22 +224,6 @@ ex2 = testExample example2World [] (\v -> consumeTitle "Verbosity" v >>=
 
 The Men's Restroom is immediately west of this point."|])
     
-testExampleBlank :: WorldBuilder World -> (Text -> Either Assertion Text) -> IO ()
-testExampleBlank w1 ts = testExample w1 [] ts
-testExample :: WorldBuilder World -> [Text] -> (Text -> Either Assertion Text) -> IO ()
-testExample worldbuilder actions ts = do
-    let w = buildWorld worldbuilder blankWorld
-        w2 = w ^? gameInfo . rulebooks . ix whenPlayBeginsName
-    let w4 = (\(CompiledRulebook j) -> runState j w) <$> w2
-        w4' = snd $ fromMaybe (Nothing, w) w4
-        --v = runActions actions $ snd w4'
-        x = Relude.foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w4' ^. messageBuffer . stdBuffer
-    _ <- runStateT printMessageBuffer w4'
-    putStrLn "-------------\n"
-    case (Right x >>= ts) of 
-        Left res -> res
-        Right "" -> pass
-        Right x' -> assertFailure $ "Was left with " <> toString x'
 
 --parse the input
 --run the input
@@ -166,3 +264,4 @@ assertText (ti, xs) w = do
     Relude.foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
     pass
     where buildExpected t x = mconcat $ introText t <> [unlines x]
+-}

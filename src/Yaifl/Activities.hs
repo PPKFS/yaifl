@@ -30,7 +30,7 @@ makeActivity' n r = makeActivity n (const ()) (zoom (alongside id _1) r)
 
 makeActivity :: Text -> (w -> r) -> RuleEvaluation (w, (p, r)) -> UncompiledActivity w r p
 makeActivity n iniActivity r = Activity n iniActivity 
-                    (\p -> makeRulebook ("before " <> n) p []) 
+                (\p -> makeRulebook ("before " <> n) p []) 
                     (\r1 -> makeRulebook ("for " <> n) r1 [("", r)]) 
                     (\p -> makeRulebook ("before " <> n) p []) 
 

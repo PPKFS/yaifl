@@ -144,145 +144,12 @@ makeObject n d = do
     sayDbgLn $ "made an object called " <> n <> " with id " <> show e
     return e
 
-newtype Direction = Direction { _opposite :: Entity } deriving (Eq, Show)
-
-directionBlockIDs :: Entity
-directionBlockIDs = -100
-
-north :: Entity
-north = directionBlockIDs
-northeast :: Entity
-northeast = directionBlockIDs + 1
-east :: Entity
-east = directionBlockIDs + 2
-southeast :: Entity
-southeast = directionBlockIDs + 3
-south :: Entity
-south = directionBlockIDs + 4
-southwest :: Entity
-southwest = directionBlockIDs + 5
-west :: Entity
-west = directionBlockIDs + 6
-northwest :: Entity
-northwest = directionBlockIDs + 7
-up :: Entity
-up = directionBlockIDs + 8
-down :: Entity
-down = directionBlockIDs + 9
-insideDirection :: Entity
-insideDirection = directionBlockIDs + 10
-outsideDirection :: Entity
-outsideDirection = directionBlockIDs + 11
-
-makeDirections ::  HasComponent u w Direction => System u ()
-makeDirections = do
-    oldID <- setEntityCounter directionBlockIDs
-    n <- makeDirection "north" Nothing
-    ne <- makeDirection "north-east" Nothing
-    e <- makeDirection "east" Nothing
-    se <- makeDirection "south-east" Nothing
-    s <- makeDirection "south" $ Just n
-    sw <- makeDirection "south-west" $ Just ne
-    w <- makeDirection "west" $ Just e
-    nw <- makeDirection "north-west" $ Just se
-    u <- makeDirection "up" Nothing
-    d <- makeDirection "down" $ Just u
-    i <- makeDirection "inside" Nothing
-    o <- makeDirection "outside" $ Just i
-    _ <- setEntityCounter oldID
-    pass
-
 setEntityCounter :: HasGameInfo u w => Entity -> System u Entity
 setEntityCounter n = do
     oldID <- use $ gameInfo . entityCounter
     gameInfo . entityCounter .= n
     return oldID
 
-makeDirection :: HasComponent u w Direction => Text -> Maybe Entity -> System u Entity
-makeDirection n o = do
-    e <- makeObject n ""
-    whenJust o (setOpposite e)
-    return e
-
-setOpposite :: HasComponent u w Direction => Entity -> Entity -> System u ()
-setOpposite e o = do
-    addComponent e (Direction o)
-    addComponent o (Direction e)
-
-directionComponent :: Proxy Direction
-directionComponent = Proxy
-data ThingLit = Lit | Unlit deriving (Eq, Show)
-data Edibility = Edible | Inedible deriving (Eq, Show)
-data Portability = FixedInPlace | Portable deriving (Eq, Show)
-data Wearability = Wearable | Unwearable deriving (Eq, Show)
-data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving (Eq, Show)
-data Describable = Described | NotDescribed deriving (Eq, Show)
-data Physical = Physical
-    {
-        _location :: Entity,
-        _lit :: ThingLit,
-        _edible :: Edibility,
-        _portable :: Portability,
-        _wearable :: Wearability,
-        _pushable :: Pushability,
-        _enclosedBy :: Entity,
-        _mentioned :: Bool,
-        _markedForListing :: Bool,
-        _wornBy :: Maybe Entity,
-        _concealedBy :: Maybe Entity,
-        _described :: Describable,
-        _handled :: Bool,
-        _initialAppearance :: Maybe Description,
-        _scenery :: Bool
-    } deriving Show
-makeLenses ''Physical
-
-isConcealed :: HasComponent u w Physical => u -> Entity -> Bool
-isConcealed u e = not $ isX Nothing _concealedBy physicalComponent u e
-
-physicalLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Physical)
-physicalLens = component physicalComponent 
-
-physicalLens' :: HasComponent u w Physical => Entity -> Lens' u Physical
-physicalLens' = component' physicalComponent 
-
---mentionedLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Bool)
---mentionedLens e = physicalLens e . _Just . mentioned
-
-mentionedLens' :: HasComponent u w Physical => Entity -> Lens' u Bool
-mentionedLens' e = physicalLens' e . mentioned
-physicalComponent :: Proxy Physical
-physicalComponent = Proxy
-
-blankPhysical :: Entity -> Physical
-blankPhysical e = Physical e Lit Edible Portable Wearable PushableBetweenRooms e False False Nothing Nothing Described False Nothing False
-
-isWearable :: HasComponent u w Physical => u -> Entity -> Bool
-isWearable = isX Wearable _wearable physicalComponent
-
-isWorn :: HasComponent u w Physical => u -> Entity -> Bool
-isWorn u e = not $ isX Nothing _wornBy physicalComponent u e
-
-isLit :: HasComponent u w Physical => u -> Entity -> Bool
-isLit = isX Lit _lit physicalComponent
-
-isEdible :: HasComponent u w Physical => u -> Entity -> Bool
-isEdible = isX Wearable _wearable physicalComponent
-
-isEnclosedBy :: (HasComponent u w Physical) => u -> Entity -> Entity -> Bool
-isEnclosedBy w e encl = _enclosedBy (getComponent' w physicalComponent e) == encl
-
-newtype Enclosing = Enclosing
-    {
-        _encloses :: Set Entity
-    } deriving Show
-makeLenses ''Enclosing
-
-enclosingComponent :: Proxy Enclosing
-enclosingComponent = Proxy
-
-enclosesLens' :: HasComponent u w Enclosing => Entity -> Lens' u (Set Entity)
-enclosesLens' e = component' enclosingComponent e . encloses
 
 makeThing :: (HasComponent u w Enclosing, HasComponent u w Physical) => Text -> Description -> Entity -> System u Entity
 makeThing n d loc = do
@@ -291,31 +158,7 @@ makeThing n d loc = do
     component' enclosingComponent loc . encloses %= DS.insert e
     return e
 
-data Darkness = Lighted | Dark deriving (Eq, Show)
-data IsVisited = Visited | Unvisited deriving (Eq, Show)
-type MapConnections = Store Entity
-type ContainingRegion = Maybe Entity
 
-data RoomData = RoomData
-    {
-        _isVisited :: IsVisited,
-        _mapConnections :: MapConnections,
-        _containingRegion :: ContainingRegion
-    } deriving Show
-makeLenses ''RoomData
-
-roomComponent :: Proxy RoomData
-roomComponent = Proxy :: (Proxy RoomData)
-
-makeRoom :: (HasComponent u w Enclosing, HasComponent u w RoomData) => Text -> Description -> System u Entity
-makeRoom n d = do
-    e <- makeObject n d
-    addComponent e (RoomData Unvisited emptyStore Nothing)
-    addComponent e (Enclosing DS.empty)
-    return e
-
-makeRoom' :: (HasComponent u w Enclosing, HasComponent u w RoomData) => Text -> System u Entity
-makeRoom' n = makeRoom n $ "It's " <> PlainDescription n <> "."
 
 data Opacity = Opaque | Transparent deriving (Eq, Show)
 
