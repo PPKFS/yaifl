@@ -26,7 +26,7 @@ import Yaifl.Common
 import Yaifl.PolysemyOptics
 import Polysemy.State
 
-data WorldBuildInfo = WorldBuildInfo
+newtype WorldBuildInfo = WorldBuildInfo
     {
         _currentRoom :: Entity
     } deriving Show
@@ -66,16 +66,7 @@ addRulebook n r' = do
 compileRulebook :: Rulebook w v res -> RuleEvaluation w
 compileRulebook r = do
     return Nothing
-{-
 
-
-setTitle :: HasGameSettings r => Text -> Cxt r ()
-setTitle t = title .= t
-
-
-
-
--}
 {-
 data WorldBuildInfo w = WBI
     {

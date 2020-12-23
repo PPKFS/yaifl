@@ -3,3 +3,5 @@ resolver: nightly-2020-11-22
 extra-deps:
   - polysemy-1.4.0.0@sha256:0245a046eaf936557d4208b5a355df1a20799c9e274f91fa889ab2644ecbabae,6541
   - polysemy-plugin-0.2.5.2@sha256:649cea55749c38af841e9f3750ccf65be351e597f3085234e28e3491e78d1f78,3155
+
+allow-newer: true

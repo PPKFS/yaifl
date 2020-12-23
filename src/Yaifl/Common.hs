@@ -134,7 +134,7 @@ data Rule w v r where
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
 data Rulebook w v r where
     Rulebook :: Text -> Maybe r -> [Rule w () r] -> Rulebook w () r
-    RulebookWithVariables ::Text -> Maybe r -> SemWorld w v -> [Rule w v r] -> Rulebook w v r
+    RulebookWithVariables :: Text -> Maybe r -> SemWorld w v -> [Rule w v r] -> Rulebook w v r
 
 type PlainRule w = Rule w () RuleOutcome
 type PlainRulebook w = Rulebook w () RuleOutcome

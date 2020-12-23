@@ -55,7 +55,7 @@ common common-options
     ghc-options:       
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables StandaloneKindSignatures ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes PolyKinds TypeApplications TypeOperators TypeFamilies BlockArguments UndecidableInstances GeneralizedNewtypeDeriving
+  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes PolyKinds TypeApplications TypeOperators TypeFamilies BlockArguments UndecidableInstances GeneralizedNewtypeDeriving
 library
   import:              common-options
   hs-source-dirs:      src

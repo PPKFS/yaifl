@@ -18,24 +18,6 @@ makeRule' = Rule
 
 makeRulebook' :: Text -> [PlainRule r] -> PlainRulebook r
 makeRulebook' n = Rulebook n Nothing
-{-
-
-data Rule w v r = Rule Text (Sem (State v ': SemWorldList w) (Maybe r))
-
--- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook w v r = Rulebook
-    {
-    -- | printed name of the rulebook
-      _rulebookName :: Text
-    , _defaultOutcome :: Maybe r
-    -- | a way to construct the initial rulebook variables
-    ,  _rulebookInit :: SemWorld w v
-    -- | the list of rules and their name
-    , _rules :: [Rule w v r]
-    }
-
-type PlainRule w = Rule w () RuleOutcome
--}
 
 compileRulebook :: Rulebook w v RuleOutcome -> RuleEvaluation w
 compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
