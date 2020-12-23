@@ -7,7 +7,7 @@ module Yaifl.Prelude
 )
 where
 
-import Relude hiding (State, get, put, modify, evalState)
+import Relude hiding (State, get, put, modify, evalState, runState)
 import Optics.TH
 import Optics as Op hiding (assign, modifying, zoom, uncons, use)
 import Polysemy

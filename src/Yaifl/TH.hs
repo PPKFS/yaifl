@@ -32,10 +32,10 @@ makeWorld typeName componentStores = do
       dataDef = DataD [] worldType [] Nothing [records] [DerivClause Nothing [ConT ''Show]]
       makeRecord t = (mkLensName t, bangDef, 
         ConT (mkName "Store") `AppT` ConT t)
-      records = RecC worldType (map makeRecord componentStores -- <> 
+      records = RecC worldType (map makeRecord componentStores) -- <> 
           --[(mkName "_rulebookStore", bangDef, ConT (mkName "Store") `AppT` 
           --AppT (ConT $ mkName "Rulebook") (ConT worldType))]
-          <> [gameinfo (ConT worldType)])
+          -- <> [gameinfo (ConT worldType)])
       blankWorldCtr = FunD (blankName worldType) [Clause [] (NormalB (AppE (iterExpr expr) (VarE $ mkName "blankGameInfo"))) []]
       expr = AppE (ConE worldType) (VarE $ mkName "emptyStore")
       iterExpr = foldr (.) id $ replicate (length componentStores - 1) (\x -> AppE x (VarE $ mkName "emptyStore"))
@@ -44,5 +44,5 @@ makeWorld typeName componentStores = do
 blankName :: Name -> Name
 blankName n = mkName $ "blank" <> nameBase n
 
-gameinfo :: TH.Type -> (Name, Bang, TH.Type)
-gameinfo w = (mkName "_worldGameInfo", bangDef, AppT (ConT $ mkName "GameInfo") w)
+--gameinfo :: TH.Type -> (Name, Bang, TH.Type)
+--gameinfo w = (mkName "_worldGameInfo", bangDef, AppT (ConT $ mkName "GameInfo") w)

@@ -4,19 +4,19 @@ module Main
     )
 where
 import           Yaifl.Prelude
-import           Yaifl.Common2
-import           Yaifl.Say2
-import           Yaifl.Components2
-import           Yaifl.World
-import           Yaifl.WorldBuilder2
+import           Yaifl.Common
+import           Yaifl.Say
+import           Yaifl.Components
+import           Yaifl.WorldBuilder
 import           Data.Text.Prettyprint.Doc.Render.Terminal
 import           Test.HUnit hiding (State)
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
-import Polysemy
 import Polysemy.State
 import Polysemy.Error
 import Polysemy.Output
+import Polysemy.IO
+import Polysemy.Trace
 import Yaifl.PolysemyOptics
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import qualified Data.Text.Prettyprint.Doc     as PP
@@ -50,30 +50,32 @@ instance EntityProducer TestWorld where
 
 --type TestingMonadStack a = Sem TypeList a
 
-type WorldOutput a = (Either Text ([SayOutput], ([PP.Doc AnsiStyle], ())))
+type WorldOutput = Either Text ([PP.Doc PPTTY.AnsiStyle], ())
 
-runWorldTest :: Int -> Sem r () -> (Sem r () -> Sem '[Final IO] (WorldOutput ())) -> Assertion
+runWorldTest :: Int -> Sem r () -> (Sem r () -> IO WorldOutput) -> Assertion
 runWorldTest i w h' = do
         putStrLn $ "Example " <> show i
-        v <- h' w
-             & runFinal
-        _ <- a v
+        Right (v, _) <- h' w
+        PPTTY.putDoc "\n------------\n"
+        PPTTY.putDoc $ PP.fillCat v
         pass
 
-a v = case v of
-           Left e -> print e
-           Right (e, (e2, _)) -> PPTTY.putDoc $ PP.vcat (coerce e) <> PP.vcat e2
+h :: Sem '[World TestWorld, Log, State LoggingContext, Say,
+                             State (GameSettings TestWorld), Error Text, State WorldBuildInfo,
+                             Embed IO] () -> IO WorldOutput
 h w = w 
             & worldToMapStore
             & evalState (TestWorld IM.empty IM.empty IM.empty IM.empty 0)
             & logToOutput
-            & runOutputList
+            & prettyprintOutputToIO
             & evalState (LoggingContext [] mempty)
             & sayToOutput
             & runOutputList
-            & evalState (WorldBuildInfo (-5))
             & evalState (GameSettings "Untitled" Nothing Map.empty)
-            & errorToIOFinal
+            & runError
+            & evalState (WorldBuildInfo (-5))
+            & runM
+            
             
 
 main :: IO ()
@@ -115,7 +117,7 @@ example1World = do
     addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
     sayLn "aaaa"
     addThing' "napkin" "Slightly crumpled."
-
+    sayLn "moo"
     addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
         sayLn "aaaaa2"
         return Nothing)

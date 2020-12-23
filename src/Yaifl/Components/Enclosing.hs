@@ -4,11 +4,8 @@ module Yaifl.Components.Enclosing
     enclosingComponent
 ) where
 
-import           Yaifl.Common2
-import           Yaifl.Say2
+import           Yaifl.Common
 import           Yaifl.Prelude
-import           Yaifl.World
-import Yaifl.Components.Object
 
 newtype Enclosing = Enclosing
     {

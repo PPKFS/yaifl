@@ -11,11 +11,13 @@ module Yaifl.Components.Object
     )
 where
 
-import           Yaifl.Common2
-import           Yaifl.Say2
+import           Yaifl.Common
+import           Yaifl.Say
 import           Yaifl.Prelude
-import           Yaifl.World
 import qualified Text.Show
+import Yaifl.PolysemyOptics
+import Polysemy.State
+import qualified Data.IntMap.Strict as IM
 
 -- the printed name of something
 type Name = Text
@@ -72,3 +74,35 @@ makeObject n d t = do
     addComponent e (Object n d e t)
     logMsg Info $ "Made a new " <> t <> " with ID " <> show e <> " called " <> n
     return e
+
+
+mapObjects :: HasWorld w '[c] r => Proxy c -> (c -> Sem r c) -> Sem r ()
+mapObjects c1 func = do
+    g <- getStore c1
+    mapM_ (\(k, v) -> do
+        res <- func v
+        setComponent c1 k res) $ IM.assocs g
+
+mapObjects2 :: HasWorld w '[c1, c2] r => Proxy c1 -> Proxy c2 -> (c1 -> c2 -> Sem r (c1, c2)) -> Sem r ()
+mapObjects2 c1 c2 func = do
+    g <- getStore c1
+    mapM_ (\(k, v) -> do
+        comp2 <- getComponent c2 k
+        whenJust comp2 (\co2 -> do
+                        (r1, r2) <- func v co2
+                        setComponent c1 k r1
+                        setComponent c2 k r2)) $ IM.assocs g
+
+mapObjects3 :: HasWorld w '[c1, c2, c3] r => Proxy c1 -> Proxy c2 -> Proxy c3 -> (c1 -> c2 -> c3 -> Sem r (c1, c2, c3)) -> Sem r ()
+mapObjects3 c1 c2 c3 func = do
+    g <- getStore c1
+    mapM_ (\(k, v) -> do
+        comp2 <- getComponent c2 k
+        comp3 <- getComponent c3 k
+        whenJust comp2 (\co2 -> whenJust comp3 
+                    (\co3 -> do
+                        (r1, r2, r3) <- func v co2 co3
+                        setComponent c1 k r1
+                        setComponent c2 k r2
+                        setComponent c3 k r3))) $ IM.assocs g                        
+                        

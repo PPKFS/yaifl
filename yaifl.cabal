@@ -39,7 +39,8 @@ common common-options
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
                        -O2
-                       -flate-specialise -fspecialise-aggressively
+                       -flate-specialise 
+                       -fspecialise-aggressively
                        -fplugin=Polysemy.Plugin
                        ---ddump-splices
                        ---ddump-to-file
@@ -59,20 +60,19 @@ library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     
-                         Yaifl.Common2
+                         Yaifl.Common
                        , Yaifl.Prelude
-                       , Yaifl.Say2
-                       , Yaifl.World
-                       , Yaifl.Components2
-                       , Yaifl.WorldBuilder2
-                       , Yaifl.Rulebooks2
+                       , Yaifl.Say
+                       , Yaifl.Components
+                       , Yaifl.WorldBuilder
+                       , Yaifl.Rulebooks
                        , Yaifl.PolysemyOptics
   other-modules:         Yaifl.Components.Object
                        , Yaifl.Components.Direction
                        , Yaifl.Components.Room
                        , Yaifl.Components.Enclosing
                        , Yaifl.Components.Physical
-
+                       , Yaifl.Utils
 test-suite yaifl-test
   import:              common-options
   type:                exitcode-stdio-1.0

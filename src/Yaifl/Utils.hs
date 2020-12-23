@@ -1,12 +1,19 @@
 module Yaifl.Utils
     (
-        doIfExists, doIfExists2, doIfExists3,
-        zoomOut, doUntilJustM, whenJustM_, ifMaybeEq, ifMaybe
+        doUntilJustM
     ) where
 
 import Yaifl.Say
-import Relude
+import Yaifl.Prelude
 
+doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
+doUntilJustM f = runMaybeT . asumMap (MaybeT . f)
+
+{-
+whenJustM_ :: Monad m => m (Maybe a) -> (a -> m ()) -> ()
+whenJustM_ f = do
+    _ <- whenJustM f
+    pass
 
 doIfExists :: HasMessageBuffer x => Maybe t -> Text -> (t -> StateT x Identity Bool) -> StateT x Identity Bool
 doIfExists c1 err1 f = do
@@ -37,8 +44,7 @@ zoomOut stabc b = StateT $ \a -> do
     (c, (a', b')) <- runStateT stabc (a, b)
     pure (c, a')
 
-doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
-doUntilJustM f = runMaybeT . asumMap (MaybeT . f)
+
 
 whenJustM_ :: Monad m => m (Maybe a) -> (a -> m ()) -> ()
 whenJustM_ f = do
@@ -49,4 +55,4 @@ ifMaybeEq :: Eq a => a -> Maybe a -> Bool
 ifMaybeEq a = maybe False (a ==)
 
 ifMaybe :: (a -> Bool) -> Maybe a -> Bool
-ifMaybe = maybe False
+ifMaybe = maybe False-}

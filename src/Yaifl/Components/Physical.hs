@@ -7,15 +7,16 @@ module Yaifl.Components.Physical
     , Describable(..)
     , Physical(..)
     , defaultPhysical
+    , physicalComponent
     , makeThing
     , makeThing'
+    , described
     )
 where
 
 import Yaifl.Prelude
-import Yaifl.World
-import Yaifl.Common2
-import Yaifl.Say2
+import Yaifl.Common
+import Yaifl.Say
 import Yaifl.Components.Object
 
 data ThingLit = Lit | Unlit deriving (Eq, Show)
@@ -83,6 +84,23 @@ makeThing n d p t = do
     return e
 
 {-
+move :: (HasComponent u w Physical, HasComponent u w Enclosing) => Entity -> Entity -> System u Bool
+move obj le = do
+    w <- get
+    --mp is the thing we're moving
+    let mp = getComponent w physicalComponent obj
+    --mloc is the new place to put it
+        mloc = getComponent w enclosingComponent le
+    --mcurrloc is the existing location
+        mcurrLoc = _location <$> mp
+    doIfExists3 mp mloc mcurrLoc (show obj <> " no physical thing to move") "no future loc" "no current loc" 
+        (\_ _ c -> do
+            component' physicalComponent obj . location .= le
+            component' physicalComponent obj . enclosedBy .= le
+            component' enclosingComponent c . encloses %= DS.delete obj
+            component' enclosingComponent le . encloses %= DS.insert obj
+            return True
+        )
 physicalLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Physical)
 physicalLens = component physicalComponent
 

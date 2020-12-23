@@ -6,225 +6,163 @@ Maintainer: Avery <thecommunistduck@hotmail.co.uk>
 Yet another interactive fiction library.
 -}
 
-module Yaifl.Common 
-(
-    --basic components
-    Entity, Store, emptyStore, Name, Description(..), --_entityID, _entityType, entityID, entityType, 
-    --rulebooks
-    RuleOutcome, RuleEvaluation, System, UncompiledRulebook(..), Rulebook(..),
-    Activity(..), UncompiledActivity(..),
-    Action(..), UncompiledAction(..), RulebookDebugPrinting(..),
-    
-    --game info fields and lenses
-    GameInfo, RoomDescriptions(..), blankGameInfo, gameInfo,
-    _title, _firstRoom, _activities, _rulebooks, _actions, 
-    _roomDescriptions, _darknessWitnessed, _localePriorities,
-    title, firstRoom, activities, rulebooks, actions, 
-    roomDescriptions, darknessWitnessed, localePriorities,
-    entityCounter, msgBuffer,
-    setTitle, setLocalePriority,
+module Yaifl.Common
+    ( Entity
+    , Store
+    , emptyStore
+    , RuleOutcome
+    , RuleEvaluation
+    , rules
+    , Rulebook(..)
+    , Rule(..)
+    , PlainRule
+    , PlainRulebook
+    , World(..)
+    , worldToMapStore
+    , newEntity
+    , HasStore
+    , store
+    , EntityProducer
+    , entityCounter
+    , getEntityCounter
+    , setEntityCounter
+    , withEntityIDBlock
+    , getStore
+    , getComponent
+    , getComponent'
+    , setComponent
+    , addComponent
+    , adjustComponent
+    , isX
+    , GameSettings(..)
+    , HasGameSettings
+    , HasGameSettings'
+    , title
+    , rulebooks
+    , globalComponent
+    , firstRoom
+    , SemWorld
+    , SemWorldList
+    ) where
 
-    ActionArgs, unboxArguments, RulebookArgs, defaultArguments, defaultActionArguments,
-    Has,HasWorld, HasWorld', HasGameInfo, HasGameInfo',
-
-    rules,
-
-    world, store,
-
-    HasID, objID,
-    newEntity,
-
-    tryAction,
-    lookingActionName
-) where
-
-import Relude
-import Yaifl.Say
-import qualified Data.IntMap.Strict as IM
-import qualified Data.Map as Map
-import qualified Text.Show
-import Control.Lens
+import qualified Data.IntMap.Strict            as IM
+import qualified Data.Map.Strict               as Map
+import           Polysemy.State
+import           Polysemy.Error
+import           Yaifl.Prelude
+import           Yaifl.Say
+import Yaifl.PolysemyOptics
 
 {- TYPES -}
 
--- | an entity is just an ID that is loosely associated with components.
-{-
-data Entity = Entity
-    {
-        -- | the ID of an entity 
-        _entityID :: Int,
-        -- | a semi-optional 'promise' that allows for lookups of multiple types or kinds
-        -- where the 'promise' is a userspace invariant. Assuming nobody starts wrongly deleting
-        -- things, then we can use partial functions.
-        _entityType :: Atom.Symbol
-    } deriving Show
--}
+-- | An Entity is just an ID that is loosely associated with components. 
 type Entity = Int
 
---instance Eq Entity where
---    (==) a b = _entityID a == _entityID b
-
--- | Store a is a container of components of type a, indexed by entity ID
+-- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
-type Store a = IntMap a
+type Store a = IM.IntMap a
+
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
 
--- the printed name of something
-type Name = Text
+globalComponent :: Int
+globalComponent = 0
 
--- | rules either give no outcome, true, or false.
-type RuleOutcome = Maybe Bool
-
--- | systems are just state monads over a world w (or maybe a world with extra stuff) that return a
-type System w a = StateT w Identity a
-
--- | evaluating a rule is a state over a world with a rule outcome.
-type RuleEvaluation w = System w RuleOutcome
-
--- | a rulebook over a world w with rulebook variables r.
-data UncompiledRulebook w r = Rulebook
-    {
-        -- | printed name of the rulebook
-        _rulebookName :: Text,
-        -- | a way to construct the initial rulebook variables
-        _rulebookInit :: w -> r,
-        -- | the list of rules and their name
-        _rules :: [(Text, RuleEvaluation (w, r))]
-    }
--- | we can compile rulebooks down to avoid internal state
-newtype Rulebook w = CompiledRulebook { getRule :: RuleEvaluation w }
-
--- | an activity running in world w with rulebook variables r and with parameters p
-data UncompiledActivity w r p = Activity
-    {
-        _activityName :: Text,
-        _initActivity :: w -> r,
-        _beforeRules :: (p, r) -> UncompiledRulebook w (p, r),
-        _forRules :: (p, r) -> UncompiledRulebook w (p, r),
-        _afterRules :: (p, r) -> UncompiledRulebook w (p, r)
-    }
-newtype Activity w = CompiledActivity ([Entity] -> RuleEvaluation w)
-
--- | an action running in world w with rulebook variables r and with parameters p
--- very similar to an activity, except with more rulebooks and a whole rulebook
--- to set the variables 
-data UncompiledAction w r p = Action
-    {
-        _actionName :: Text,
-        _understandAs :: [Text],
-        _setActionVariables :: p -> UncompiledRulebook w (p, r),
-        _beforeActionRules :: (p, r) -> UncompiledRulebook w (p, r),
-        _checkActionRules :: (p, r) -> UncompiledRulebook w (p, r),
-        _carryOutActionRules :: (p, r) -> UncompiledRulebook w (p, r),
-        _reportActionRules :: (p, r) -> UncompiledRulebook w (p, r)
-    }
-newtype Action w = CompiledAction ([Entity] -> RuleEvaluation w)
-
-blankGameInfo :: GameInfo w
-blankGameInfo = GameInfo "" Nothing blankMessageBuffer 1 Map.empty Map.empty Map.empty 
-                    NeverAbbreviatedRoomDescriptions False Map.empty
-
-data RulebookDebugPrinting = Full | Silent deriving (Eq, Show)
-
-instance Show (UncompiledRulebook w r) where
-    show (Rulebook n _ r) = toString n <> concatMap (toString . fst) r
-instance Show (UncompiledActivity w r p) where
-    show = show . _activityName
-instance Show (UncompiledAction w r p) where
-    show = show . _actionName
-
-instance Show (Rulebook w) where
-    show _ = "compiled rulebook"
-instance Show (Activity w) where
-    show _ = "compiled activity"
-instance Show (Action w) where
-    show _ = "compiled action"
-
--- | big container of general game /stuff/
-data GameInfo w = GameInfo 
-    {
-        _title :: Text,
-        _firstRoom :: Maybe Entity,
-        _msgBuffer :: MessageBuffer,
-        _entityCounter :: Int,
-        _activities :: Map.Map Text (Activity w),
-        _rulebooks :: Map.Map Text (Rulebook w),
-        _actions :: Map.Map Text (Action w),
-        _roomDescriptions :: RoomDescriptions,
-        _darknessWitnessed :: Bool,
-        _localePriorities :: Map.Map Entity Int
-    } deriving Show
-
-data RoomDescriptions = AbbreviatedRoomDescriptions | SometimesAbbreviatedRoomDescriptions
-                            | NeverAbbreviatedRoomDescriptions deriving (Eq, Show)
-
-setTitle :: HasGameInfo a w  => Text -> System a ()
-setTitle t = gameInfo . title .= t
-
--- | basically just manually writing a lens typeclass for...reasons I cannot remember
--- I really don't know why, but it's sort of necessary to manually write it out.
-class HasMessageBuffer u => HasGameInfo u w | u -> w where
-    gameInfo :: Lens' u (GameInfo w)
-    title :: Lens' u Text
-    title = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_title = x'}) <$> f _title
-    firstRoom :: Lens' u (Maybe Entity)
-    firstRoom = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_firstRoom = x'}) <$> f _firstRoom
-    msgBuffer :: Lens' u MessageBuffer
-    msgBuffer = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_msgBuffer = x'}) <$> f _msgBuffer
-    entityCounter :: Lens' u Int
-    entityCounter = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_entityCounter = x'}) <$> f _entityCounter
-    rulebooks :: Lens' u (Map.Map Text (Rulebook w))
-    rulebooks = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_rulebooks = x'}) <$> f _rulebooks
-    activities :: Lens' u (Map.Map Text (Activity w))
-    activities = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_activities = x'}) <$> f _activities
-    actions :: Lens' u (Map.Map Text (Action w))
-    actions = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_actions = x'}) <$> f _actions
-    darknessWitnessed :: Lens' u Bool
-    darknessWitnessed = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_darknessWitnessed = x'}) <$> f _darknessWitnessed
-    roomDescriptions :: Lens' u RoomDescriptions
-    roomDescriptions = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_roomDescriptions = x'}) <$> f _roomDescriptions
-    localePriorities :: Lens' u (Map.Map Entity Int)
-    localePriorities = gameInfo . go where go f g@GameInfo{..} = (\x' -> g {_localePriorities = x'}) <$> f _localePriorities
-
-setLocalePriority :: (MonadState s m, HasGameInfo s w) => Entity -> Int -> m ()
-setLocalePriority e p = gameInfo . localePriorities . at e ?= p
-
--- | some lens typeclasses for world access
--- the general form is a (u)niverse has a (w)orld for HasWorld 
--- but we can zoom in and specify that our universe is just the world and nothing else
-class HasGameInfo u w => HasWorld u w | u -> w where
-    world :: Lens' u w
-
-instance HasWorld w w => HasWorld (w, b) w where
-    world = _1 . world
-
-type HasWorld' w = (HasWorld w w, HasGameInfo' w)
-type HasGameInfo' w = HasGameInfo w w
-
-instance HasGameInfo w w => HasGameInfo (w, a) w where
-    gameInfo = _1 . gameInfo
-instance HasGameInfo (GameInfo w) w where
-    gameInfo = id
-instance HasMessageBuffer (GameInfo w) where
-    messageBuffer = msgBuffer
-
--- | component lookup typeclass
-class Has w c where
+class HasStore w c where
     store :: Proxy c -> Lens' w (Store c)
 
--- | allows us to treat object components and entities identically
-class HasID o where
-    objID :: o -> Int
-instance HasID Entity where
-    objID = id --_entityID
+class EntityProducer w where
+    entityCounter :: Lens' w Entity
 
--- | Action args are a way to move from a list of entities to, maybe, the correct
--- number of arguments for an action
+data World w m k where
+    GetStore :: HasStore w c => Proxy c -> World w m (Store c)
+    SetComponent :: HasStore w c => Proxy c -> Entity -> c -> World w m ()
+    GetEntityCounter :: World w m Entity
+    SetEntityCounter :: Entity -> World w m Entity
+
+makeSem ''World
+
+worldToMapStore :: EntityProducer w => Sem (World w ': r) a -> Sem (State w ': r) a
+worldToMapStore = reinterpret $ \case
+    GetStore p -> use $ store p
+    SetComponent p e v -> store p % at' e ?= v
+    GetEntityCounter   -> use entityCounter
+    SetEntityCounter e -> do
+        ec <- use entityCounter
+        entityCounter .= e
+        return ec
+
+getComponent :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> Sem r (Maybe c)
+getComponent p e = do
+    s <- getStore p
+    return $ IM.lookup e s
+
+getComponent' :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> Sem r c
+getComponent' p e = do
+    s <- getStore p
+    let res = maybeToRight "Somehow couldn't find the component" (IM.lookup e s)
+    when (isLeft res) (
+        logMsg Error $ "Attempted to find a component of " <>  show e <> " but couldn't find it")
+    fromEither res
+
+adjustComponent :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> (c -> c) -> Sem r ()
+adjustComponent p e f = do
+    c <- getComponent p e
+    whenJust c (setComponent p e . f)
+
+type SemWorldList w = '[World w, Log, State LoggingContext, Say, State (GameSettings w), Error Text]
+
+type SemWorld w r = Sem (SemWorldList w) r
+
+data GameSettings w = GameSettings
+    { _title     :: Text
+    , _firstRoom :: Maybe Entity
+    , _rulebooks :: Map.Map Text (RuleEvaluation w)
+    }
+type HasGameSettings w r = Members (SemWorldList w) r
+type HasGameSettings' w = HasGameSettings w (SemWorldList w)
+
+-- | rules either give no outcome, true, or false.
+type RuleOutcome = Bool
+type RuleEvaluation w = SemWorld w (Maybe RuleOutcome)
+
+data Rule w v r where
+    Rule :: Text -> SemWorld w (Maybe r) -> Rule w () r
+    RuleWithVariables :: Text -> Sem (State v ': SemWorldList w) (Maybe r) -> Rule w v r
+
+-- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
+data Rulebook w v r where
+    Rulebook :: Text -> Maybe r -> [Rule w () r] -> Rulebook w () r
+    RulebookWithVariables ::Text -> Maybe r -> SemWorld w v -> [Rule w v r] -> Rulebook w v r
+
+type PlainRule w = Rule w () RuleOutcome
+type PlainRulebook w = Rulebook w () RuleOutcome
+rules :: Lens' (Rulebook w v r) [Rule w v r]
+rules = lensVL $ \f s -> case s of
+  Rulebook n d r -> fmap (Rulebook n d) (f r)
+  RulebookWithVariables n d i r -> fmap (RulebookWithVariables n d i) (f r)
+
+data Activity w v = Activity
+    { _activityName :: Text
+    , _initActivity :: [Entity] -> SemWorld w (Maybe v)
+    , _beforeRules  :: Rulebook w v (v, RuleOutcome)
+    , _forRules     :: Rulebook w v (v, RuleOutcome)
+    , _afterRules   :: Rulebook w v (v, RuleOutcome)
+    }
+
+data Action w v r = Action
+    { _actionName          :: Text
+    , _understandAs        :: [Text]
+    , _setActionVariables  :: [Entity] -> Rulebook w v (Maybe v)
+    , _beforeActionRules   :: Rulebook w v (v, RuleOutcome)
+    , _checkActionRules    :: Rulebook w v (v, RuleOutcome)
+    , _carryOutActionRules :: Rulebook w v (v, RuleOutcome)
+    , _reportActionRules   :: Rulebook w v RuleOutcome
+    }
+
 class Eq a => ActionArgs a where
     unboxArguments :: [Entity] -> Maybe a
-    defaultActionArguments :: a
 
 -- | just default arguments
 class RulebookArgs a where
@@ -232,45 +170,32 @@ class RulebookArgs a where
 
 instance ActionArgs Entity where
     unboxArguments [a] = Just a
-    unboxArguments _ = Nothing
-    defaultActionArguments = -1
+    unboxArguments _   = Nothing
 
 instance ActionArgs () where
     unboxArguments [] = Just ()
-    unboxArguments _ = Nothing
-    defaultActionArguments = ()
+    unboxArguments _  = Nothing
 
--- | descriptions are either plain, or they can be dynamically updated via
--- some function (e.g. slightly wrong.)
-data Description = PlainDescription Text | DynamicDescription (forall w. w -> Entity -> Text)
--- | for overloadedstrings
-instance IsString Description where
-    fromString = PlainDescription . fromString
+withEntityIDBlock :: Member (World w) r => Entity -> Sem r a -> Sem r a
+withEntityIDBlock idblock x = do
+    ec <- setEntityCounter idblock
+    v  <- x
+    _  <- setEntityCounter ec
+    return v
 
--- | also for overloadedstrings
-instance Semigroup Description where
-    (<>) (PlainDescription e) (PlainDescription e2) = PlainDescription (e <> e2)
-    (<>) (PlainDescription e) (DynamicDescription e2) = DynamicDescription (\w e1 -> e <> e2 w e1)
-    (<>) (DynamicDescription e2) (PlainDescription e)  = DynamicDescription (\w e1 -> e2 w e1 <> e)
-    (<>) (DynamicDescription e) (DynamicDescription e2) = DynamicDescription (\w e1 -> e w e1 <> e2 w e1)
--- | we define a show instance just for debug purposes.
-instance Show Description where
-    show (PlainDescription t) = show t
-    show (DynamicDescription _) = "dynamic description"
+newEntity :: Member (World w) r => Sem r Entity
+newEntity = do
+    ec <- getEntityCounter
+    _  <- setEntityCounter (ec + 1)
+    return ec
 
--- | generate a new entity ID
-newEntity :: HasGameInfo u w => System u Int
-newEntity = gameInfo . entityCounter <<%= (+1)
+-- TODO: check it doesn't have the component to begin with
+addComponent :: (Member (World w) r, HasStore w c) => Entity -> c -> Sem r ()
+addComponent = setComponent (Proxy :: Proxy c)
 
-tryAction :: (HasWorld' w) => Text -> [Entity] -> State w (Maybe Bool)
-tryAction action args = do
-    w <- get
-    let ac = Map.lookup action $ w ^. world . gameInfo . actions
-    when (isNothing ac) (sayDbgLn $ "couldn't find the action " <> action)
-    maybe (return $ Just False) (\(CompiledAction e) -> e args) ac
+isX :: (Eq b, Members (SemWorldList w) r, HasStore w c) => b -> (c -> b) -> Proxy c -> Entity -> Sem r Bool
+isX p recordField comp e =
+    (Just p ==) . fmap recordField <$> getComponent comp e
 
--- it's common so it can be saved for when play begins.
-lookingActionName :: Text
-lookingActionName = "looking"
-
-makeLenses ''UncompiledRulebook
+makeLenses ''Rulebook
+makeLenses ''GameSettings

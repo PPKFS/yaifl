@@ -16,7 +16,7 @@ import Polysemy
 
 
 
-infix 4 .=, %=
+infix 4 .=, %=, ?=
 
 use :: (Is k A_Getter, Member (State s) r) => Optic' k is s a -> Sem r a
 use l = view l <$> get

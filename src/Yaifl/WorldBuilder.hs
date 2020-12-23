@@ -8,24 +8,75 @@ Yet another interactive fiction library.
 
 module Yaifl.WorldBuilder
 (
-    WorldBuildInfo(..), WorldBuilder, blankBuildInfo,
-    addRoom, addRoom', addRule, addWhenPlayBeginsRule, addThing, addThing',
-    isLocated, isWestOf,
-    buildWorld
+    HasStdWorld,
+    addRoom',
+    addThing,
+    addThing',
+    addWhenPlayBeginsRule',
+    WorldBuildInfo(..)
+  --  addThing
+  --, addThing'
 ) where
 
-import Relude
-import Yaifl.Common
-import Yaifl.Actions
+import Yaifl.Prelude
 import Yaifl.Components
-import Yaifl.Activities
 import Yaifl.Rulebooks
-import Control.Lens
-import Yaifl.Utils
 import Yaifl.Say
-import Data.Map as DM
-import qualified Text.Show
+import Yaifl.Common
+import Yaifl.PolysemyOptics
+import Polysemy.State
 
+data WorldBuildInfo = WorldBuildInfo
+    {
+        _currentRoom :: Entity
+    } deriving Show
+
+makeLenses ''WorldBuildInfo
+
+type HasWorldBuildInfo w r = (HasGameSettings w r, Member (State WorldBuildInfo) r)
+
+type HasStdWorld w r = (HasWorldBuildInfo w r, HasWorld w '[RoomData, Enclosing, Physical] r)
+
+addRoom' :: (HasWorld w '[RoomData, Enclosing] r, HasWorldBuildInfo w r) => Name -> Sem r Entity
+addRoom' n = do
+    e <- makeRoom' n
+    firstRoom %= Just . fromMaybe e
+    currentRoom .= e
+    return e
+
+addThing' :: (HasWorldBuildInfo w r, HasWorld w '[Physical] r) => Text -> Description -> Sem r Entity
+addThing' n d = do 
+    c <- use currentRoom
+    makeThing' n d c
+
+addThing :: (HasWorld w '[Physical] r) => Text -> Description -> Physical -> Text -> Sem r Entity
+addThing = makeThing
+
+addWhenPlayBeginsRule' :: (HasGameSettings w r) => Text -> RuleEvaluation w -> Sem r (PlainRulebook w)
+addWhenPlayBeginsRule' n r = do
+    addContext "blah" Nothing
+    logMsg Info "aaaa"
+    addRulebook whenPlayBeginsName $ whenPlayBeginsRules & rules %~ (\x -> x ++ [makeRule' n r])
+
+addRulebook :: HasGameSettings w r => Text -> Rulebook w v res -> Sem r (Rulebook w v res)
+addRulebook n r' = do
+    rulebooks % at' n ?= compileRulebook r'
+    return r'
+
+compileRulebook :: Rulebook w v res -> RuleEvaluation w
+compileRulebook r = do
+    return Nothing
+{-
+
+
+setTitle :: HasGameSettings r => Text -> Cxt r ()
+setTitle t = title .= t
+
+
+
+
+-}
+{-
 data WorldBuildInfo w = WBI
     {
         _currentRoom :: Entity,
@@ -62,19 +113,12 @@ addRule :: Lens' (RulebookCache w) (UncompiledRulebook w ()) -> Text
             -> System w (Maybe Bool) -> System (w, WorldBuildInfo w) ()
 addRule rb n r = addRuleWithArgs rb n (zoom _1 r)
 
-addWhenPlayBeginsRule :: Text -> System w (Maybe Bool) -> System (w, WorldBuildInfo w) ()
-addWhenPlayBeginsRule = addRule whenPlayBeginsRules
+
 
 type WorldBuilder w = State (w, WorldBuildInfo w) ()
 type WorldBuilderStep w = State (w, WorldBuildInfo w) Entity
 
-addRoom' n = do
-    e <- zoom _1 (do
-        e <- makeRoom' n
-        gameInfo . firstRoom %= (\x -> if Relude.null x then Just e else x)
-        return e)
-    _2 . currentRoom .= e
-    return e
+
 
 addRoom :: HasStd' w => Text -> Description -> WorldBuilderStep w
 addRoom n d = do
@@ -84,14 +128,6 @@ addRoom n d = do
         return e)
     _2 . currentRoom .= e
     return e
-
-addThing' :: HasStd' w => Text -> WorldBuilderStep w
-addThing' n = addThing n ""
-
-addThing :: HasStd' w => Text -> Description -> WorldBuilderStep w
-addThing n d = do
-    (_, wbi) <- get
-    zoom _1 $ makeThing n d (_currentRoom wbi)
 
 buildWorld :: HasStd' w => WorldBuilder w -> w -> w
 buildWorld wb blw = compileRulebooks (_rulebookCache (snd execWB)) (fst execWB)
@@ -154,3 +190,4 @@ addCompiledRulebook r = addCompiledInfo rulebooks (_rulebookName r) $ compileRul
 
 addCompiledAction :: HasStd u w => (UncompiledAction w r p -> [Entity] -> UncompiledRulebook w (p, r)) -> UncompiledAction w r p -> System u ()
 addCompiledAction ap r = addCompiledInfo actions (_actionName r) $ compileAction r ap
+-}

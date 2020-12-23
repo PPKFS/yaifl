@@ -6,10 +6,9 @@ module Yaifl.Components.Room
     )
 where
 
-import           Yaifl.Common2
-import           Yaifl.Say2
+import           Yaifl.Common
+import           Yaifl.Say
 import           Yaifl.Prelude
-import           Yaifl.World
 import Yaifl.Components.Object
 import Yaifl.Components.Enclosing
 import qualified Data.Set as DS

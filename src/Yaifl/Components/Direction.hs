@@ -5,10 +5,9 @@ module Yaifl.Components.Direction
   , north, northeast, east, southeast, south, southwest, west, northwest, up, down, insideDirection, outsideDirection
 ) where
 
-import Yaifl.Common2
+import Yaifl.Common
 import Yaifl.Prelude
-import Yaifl.World
-import Yaifl.Say2
+import Yaifl.Say
 import Yaifl.Components.Object
 
 newtype Direction = Direction { _opposite :: Entity } deriving (Eq, Show)
@@ -61,12 +60,12 @@ makeDirections = do
         ne <- makeDirection "north-east" Nothing
         e <- makeDirection "east" Nothing
         se <- makeDirection "south-east" Nothing
-        s <- makeDirection "south" $ Just n
-        sw <- makeDirection "south-west" $ Just ne
-        w <- makeDirection "west" $ Just e
-        nw <- makeDirection "north-west" $ Just se
+        _ <- makeDirection "south" $ Just n
+        _ <- makeDirection "south-west" $ Just ne
+        _ <- makeDirection "west" $ Just e
+        _ <- makeDirection "north-west" $ Just se
         u <- makeDirection "up" Nothing
-        d <- makeDirection "down" $ Just u
+        _ <- makeDirection "down" $ Just u
         i <- makeDirection "inside" Nothing
-        o <- makeDirection "outside" $ Just i
+        _ <- makeDirection "outside" $ Just i
         pass)
