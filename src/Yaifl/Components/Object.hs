@@ -2,12 +2,17 @@ module Yaifl.Components.Object
     ( Name
     , Description(..)
     , Object(..)
+    , descriptionOf
+    , HasDescription
     , objectComponent
     , makeObject
     , HasWorld
     , HasComponents
     , nameOf
     , HasName
+    , mapObjects
+    , mapObjects2
+    , mapObjects3
     )
 where
 
@@ -57,6 +62,13 @@ class HasName a where
 instance HasName Entity where
     nameOf e = do
         _name <$> getComponent' objectComponent e
+    
+class HasDescription a where
+    descriptionOf :: (HasWorld w '[Object] r) => a -> Sem r Description
+
+instance HasDescription Entity where
+    descriptionOf e = do
+        _description <$> getComponent' objectComponent e
 
 type HasWorld w c r
     = (Members (SemWorldList w) r, HasComponents w c)
@@ -74,7 +86,6 @@ makeObject n d t = do
     addComponent e (Object n d e t)
     logMsg Info $ "Made a new " <> t <> " with ID " <> show e <> " called " <> n
     return e
-
 
 mapObjects :: HasWorld w '[c] r => Proxy c -> (c -> Sem r c) -> Sem r ()
 mapObjects c1 func = do

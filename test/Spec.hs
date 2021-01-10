@@ -1,23 +1,45 @@
 module Main
     (
         main
-    )
-where
+    ) where
 import           Yaifl.Prelude
-import           Yaifl.Common
 import           Yaifl.Say
+import Control.Carrier.State.Lazy
+import Control.Carrier.Writer.Strict
+import Control.Carrier.Lift
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal
+                                               as PPTTY
+import qualified Data.Text.Prettyprint.Doc     as PP
+main :: IO ()
+main = do
+    v <- runApplication $ do
+        addContext "blah" Nothing 
+        logMsg Error "hi"
+        sayLn "test"
+        logMsg Debug "hi again"
+    let (a, (b, ())) = v
+    PPTTY.putDoc b
+runApplication :: _ () -> _
+runApplication v = evalState (LoggingContext [] mempty) . runWriter @SayOutput . runWriter @(PP.Doc PPTTY.AnsiStyle) $ v
+
+{-
+where
+
+import           Yaifl.Common
+
 import           Yaifl.Components
 import           Yaifl.WorldBuilder
-import           Data.Text.Prettyprint.Doc.Render.Terminal
+import           Data.Text.Prettyprint.Doc.Render.Terminal\
 import           Test.HUnit hiding (State)
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
+
 import Polysemy.State
 import Polysemy.Error
 import Polysemy.Output
 import Polysemy.IO
+import Control.Lens
 import Polysemy.Trace
-import Yaifl.PolysemyOptics
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import qualified Data.Text.Prettyprint.Doc     as PP
 
@@ -89,7 +111,7 @@ tests = makeTests [example1World]
 makeTests lst = TestList $
     zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x h)) [1 ..] lst
         where mkName i = "example " <> show i
-{-}
+
 testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
 testExampleBlank w1 ts = testExample w1 [] ts
 
@@ -107,9 +129,9 @@ testExample worldbuilder actions ts = do
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x'
--}
 
-example1World :: HasStdWorld TestWorld r => Sem r ()
+
+example1World :: (Member Say r, HasStdWorld TestWorld r) => Sem r ()
 example1World = do
     title .= "Bic"
     addRoom' "The Staff Break Room"
@@ -119,25 +141,17 @@ example1World = do
     addThing' "napkin" "Slightly crumpled."
     sayLn "moo"
     addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
-        sayLn "aaaaa2"
-        return Nothing)
-    g <- get
-    sayLn (show $ Map.keys $ g ^. rulebooks)
-    pass{-(do
         mapObjects2 physicalComponent objectComponent (\v o -> do
-            w <- get
-            when (getDescription' w o == "") (do
-                printName' o
-                sayLn " has no description." ) 
+            when (descriptionOf o == "") (do
+                --printName' o
+                sayLn " has no description.")
             return (v, o)
             )
         return Nothing)
-    -}
-mapObjects2 :: t0 -> Proxy Object -> (a1 -> b0 -> Sem r0 (a1, b0)) -> m0 a2
-mapObjects2 = error "not implemented"
+    g <- get
+    sayLn (show $ Map.keys $ g ^. rulebooks)
 
-{-
-
+    pass
 
 
 

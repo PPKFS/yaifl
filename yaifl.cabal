@@ -24,15 +24,15 @@ common common-options
   build-depends:
                      base
                      , relude
-                     , optics
+                     , lens
                      , prettyprinter
                      , prettyprinter-ansi-terminal
                      , template-haskell
                      , containers 
                      , text
+                     , fused-effects
+                     , fused-effects-lens
                      , raw-strings-qq
-                     , polysemy
-                     , polysemy-plugin
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -41,7 +41,7 @@ common common-options
                        -O2
                        -flate-specialise 
                        -fspecialise-aggressively
-                       -fplugin=Polysemy.Plugin
+                       -fno-warn-unused-do-bind
                        ---ddump-splices
                        ---ddump-to-file
   if impl(ghc >= 8.0)
@@ -55,24 +55,26 @@ common common-options
     ghc-options:       
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes PolyKinds TypeApplications TypeOperators TypeFamilies BlockArguments UndecidableInstances GeneralizedNewtypeDeriving
+  default-extensions: NoImplicitPrelude OverloadedStrings MultiParamTypeClasses RankNTypes FlexibleContexts TemplateHaskell FlexibleInstances FunctionalDependencies RecordWildCards ConstraintKinds KindSignatures DataKinds GADTs DataKinds DefaultSignatures EmptyCase ExistentialQuantification ScopedTypeVariables ScopedTypeVariables MultiWayIf LambdaCase QuasiQuotes PolyKinds TypeApplications TypeOperators TypeFamilies BlockArguments UndecidableInstances GeneralizedNewtypeDeriving AllowAmbiguousTypes PartialTypeSignatures
 library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     
-                         Yaifl.Common
-                       , Yaifl.Prelude
+                         ---Yaifl.Common
+                       Yaifl.Prelude
                        , Yaifl.Say
-                       , Yaifl.Components
-                       , Yaifl.WorldBuilder
-                       , Yaifl.Rulebooks
-                       , Yaifl.PolysemyOptics
-  other-modules:         Yaifl.Components.Object
-                       , Yaifl.Components.Direction
-                       , Yaifl.Components.Room
-                       , Yaifl.Components.Enclosing
-                       , Yaifl.Components.Physical
-                       , Yaifl.Utils
+                       --, Yaifl.Components
+                       --, Yaifl.WorldBuilder
+                       --, Yaifl.Rulebooks
+                       --, Yaifl.Actions
+                       --, Yaifl.Activities
+  other-modules:       
+                       -- Yaifl.Components.Object
+                       --, Yaifl.Components.Direction
+                       --, Yaifl.Components.Room
+                       --, Yaifl.Components.Enclosing
+                       --, Yaifl.Components.Physical
+                       --, Yaifl.Utils
 test-suite yaifl-test
   import:              common-options
   type:                exitcode-stdio-1.0

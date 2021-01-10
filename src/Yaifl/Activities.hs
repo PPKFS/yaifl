@@ -1,5 +1,6 @@
 module Yaifl.Activities
 (
+    {-
     makeActivity', makeActivity,
     doActivity', doActivity, compileActivity,
     printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
@@ -9,9 +10,9 @@ module Yaifl.Activities
     capitalThe,
     printingNameOfSomethingImpl, printingDescriptionOfADarkRoomImpl, printingNameOfADarkRoomImpl,
      describingLocaleActivityImpl, choosingNotableLocaleObjectsActivityImpl,
-    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName
+    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
 ) where
-
+{-
 import Relude
 import Yaifl.Say
 import Yaifl.Utils
@@ -23,7 +24,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as DS
 import qualified Text.Show
 import Data.List
-import Control.Lens
+
 
 makeActivity' :: Text -> RuleEvaluation (w, p) -> UncompiledActivity w () p
 makeActivity' n r = makeActivity n (const ()) (zoom (alongside id _1) r)
@@ -333,7 +334,7 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
     return Nothing
     )
 
-{-
+
 --there's something about making sure they can be pluralised which I'm ignoring
 --if it has children and won't make the parser recurse?
 --the parser will recurse if "always" is true (idfk) or if it's a supporter
@@ -344,12 +345,12 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
 
 combineStuff [] _ _ ys rj = pass
 combineStuff ((_, Nothing):xs) h f ys rj = pass
-{-
+
 combineStuff ((e, Just p):xs) h f ys rj = if (_enclosedBy p) \= h 
     then 
         if isNothing h
             then combineStuff xs (_enclosedBy p) f ((e, Just p):ys) rj
             else combineStuff xs (_enclosedBy p) False ys ((e, Just p):rj)
     else 
--}
+
 -}

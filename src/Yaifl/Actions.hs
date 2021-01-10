@@ -1,24 +1,32 @@
 module Yaifl.Actions
 (
-    LookingActionVariables(..), compileAction,
-    actionProcessingRulebookImpl, lookingActionImpl
 ) where
 
-import Relude
+import Yaifl.Prelude
 import Yaifl.Say
 import Yaifl.Common
 import Yaifl.Rulebooks
 import Yaifl.Components
 import Yaifl.Activities
-import Control.Lens
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-
+{-
 actionProcessingRulebookName :: Text
 actionProcessingRulebookName = "action processing rulebook"
 
-actionProcessingRulebookImpl :: (HasMessageBuffer w, ActionArgs p, RulebookArgs r) => 
-                UncompiledAction w r p -> [Entity] -> UncompiledRulebook w (p, r)
-actionProcessingRulebookImpl actionRules e = case unboxArguments e of
+actionProcessingRulebook :: Action w v -> Rulebook w v RuleOutcome
+actionProcessingRulebook action = RulebookWithVariables 
+    actionProcessingRulebookName
+    (Just True)
+    setActionVarsRulebook
+    actionProcessingRules
+
+setActionVarsRulebook :: SemWorld w (Maybe v)
+setActionVarsRulebook = do
+    --somehow obtain the arguments
+    --do something with them
+    --then run the action's set action variables rulebook
+    {-
+    case unboxArguments e of
     Nothing -> makeRulebook actionProcessingRulebookName (defaultActionArguments, defaultArguments) [] --todo, nicer?
     Just p -> makeRulebook actionProcessingRulebookName (p, defaultArguments) [
         makeRule "set action variables rule" (do
@@ -26,23 +34,33 @@ actionProcessingRulebookImpl actionRules e = case unboxArguments e of
             let arb = _setActionVariables actionRules p'
             _ <- getRule $ compileRulebook arb Full
             return Nothing),
-        makeBlankRule "before stage rule",
-        makeBlankRule "carrying requirements rule",
-        makeBlankRule "basic visibility rule",
-        makeBlankRule "instead stage rule",
-        makeBlankRule "requested actions require persuasion rule",
-        makeBlankRule "carry out requested actions rule",
-        makeBlankRule "investigate player awareness rule",
-        makeBlankRule "check stage rule",
-        makeRule"carry out stage rule" (do
-            (_, (p, r)) <- get
-            getRule $ compileRulebook (_carryOutActionRules actionRules (p, r)) Full
+    -}
+    return Nothing
+
+actionProcessingRules :: [Rule w v Bool]
+actionProcessingRules = [
+        makeBlankRuleWithVariables "before stage rule",
+        makeBlankRuleWithVariables "carrying requirements rule",
+        makeBlankRuleWithVariables "basic visibility rule",
+        makeBlankRuleWithVariables "instead stage rule",
+        makeBlankRuleWithVariables "requested actions require persuasion rule",
+        makeBlankRuleWithVariables "carry out requested actions rule",
+        makeBlankRuleWithVariables "investigate player awareness rule",
+        makeBlankRuleWithVariables "check stage rule",
+        RuleWithVariables "carry out stage rule" (do
+            return Nothing
             ),
-        makeBlankRule "after stage rule",
-        makeBlankRule "investigate player awareness after rule",
-        makeBlankRule "report stage rule",
-        makeBlankRule "clean actions rule",
-        makeBlankRule "end action processing rule"]
+        makeBlankRuleWithVariables "after stage rule",
+        makeBlankRuleWithVariables "investigate player awareness after rule",
+        makeBlankRuleWithVariables "report stage rule",
+        makeBlankRuleWithVariables "clean actions rule",
+        makeBlankRuleWithVariables "end action processing rule"]
+
+-}
+
+
+{-
+
     
 makeAction :: RulebookArgs r => Text -> [(Text, RuleEvaluation (w, (a, r)))] -> 
     [(Text, RuleEvaluation (w, (a, r)))] -> [(Text, RuleEvaluation (w, (a, r)))] -> 
@@ -138,3 +156,4 @@ lookingActionImpl = makeAction lookingActionName
             when (lvl > 0) (mapM_ (`whenJust` (\e' -> do doActivity describingLocaleActivityName [e']; pass)) lvls
                 )
             return Nothing)] []
+-}

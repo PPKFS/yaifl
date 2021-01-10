@@ -6,7 +6,8 @@ Maintainer: Avery <thecommunistduck@hotmail.co.uk>
 Yet another interactive fiction library.
 -}
 
-module Yaifl.Common
+module Yaifl.Common () where
+{-
     ( Entity
     , Store
     , emptyStore
@@ -18,6 +19,7 @@ module Yaifl.Common
     , PlainRule
     , PlainRulebook
     , World(..)
+    , Action(..)
     , worldToMapStore
     , newEntity
     , HasStore
@@ -47,11 +49,8 @@ module Yaifl.Common
 
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict               as Map
-import           Polysemy.State
-import           Polysemy.Error
 import           Yaifl.Prelude
 import           Yaifl.Say
-import Yaifl.PolysemyOptics
 
 {- TYPES -}
 
@@ -134,7 +133,7 @@ data Rule w v r where
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
 data Rulebook w v r where
     Rulebook :: Text -> Maybe r -> [Rule w () r] -> Rulebook w () r
-    RulebookWithVariables :: Text -> Maybe r -> SemWorld w v -> [Rule w v r] -> Rulebook w v r
+    RulebookWithVariables :: Text -> Maybe r -> SemWorld w (Maybe v) -> [Rule w v r] -> Rulebook w v r
 
 type PlainRule w = Rule w () RuleOutcome
 type PlainRulebook w = Rulebook w () RuleOutcome
@@ -151,7 +150,7 @@ data Activity w v = Activity
     , _afterRules   :: Rulebook w v (v, RuleOutcome)
     }
 
-data Action w v r = Action
+data Action w v = Action
     { _actionName          :: Text
     , _understandAs        :: [Text]
     , _setActionVariables  :: [Entity] -> Rulebook w v (Maybe v)
@@ -199,3 +198,4 @@ isX p recordField comp e =
 
 makeLenses ''Rulebook
 makeLenses ''GameSettings
+-}

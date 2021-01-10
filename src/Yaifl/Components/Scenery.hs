@@ -1,6 +1,6 @@
 module Yaifl.Components.Supporter
     ( Scenery(..)
-    , supporterComponent
+    , sceneryComponent
     )
 where
 

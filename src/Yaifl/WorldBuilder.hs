@@ -23,7 +23,7 @@ import Yaifl.Components
 import Yaifl.Rulebooks
 import Yaifl.Say
 import Yaifl.Common
-import Yaifl.PolysemyOptics
+{-
 import Polysemy.State
 
 newtype WorldBuildInfo = WorldBuildInfo
@@ -66,7 +66,7 @@ addRulebook n r' = do
 compileRulebook :: Rulebook w v res -> RuleEvaluation w
 compileRulebook r = do
     return Nothing
-
+-}
 {-
 data WorldBuildInfo w = WBI
     {

@@ -3,7 +3,6 @@ module Yaifl.Utils
         doUntilJustM
     ) where
 
-import Yaifl.Say
 import Yaifl.Prelude
 
 doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)

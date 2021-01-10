@@ -1,20 +1,31 @@
 module Yaifl.Rulebooks
 (
-    makeRulebook', makeRule',
+    makeRulebook', makeRule', makeBlankRule', makeBlankRuleWithVariables,
     whenPlayBeginsName, whenPlayBeginsRules, introText
 ) where
 
 import Yaifl.Prelude
-import Yaifl.PolysemyOptics
 import Yaifl.Say
 import Yaifl.Common
 import Yaifl.Utils
+{-
 import Polysemy.State
 import qualified Data.Text as Text
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 
 makeRule' :: Text -> RuleEvaluation w -> PlainRule w
 makeRule' = Rule
+
+makeBlankRule' :: Text -> PlainRule w
+makeBlankRule' n = makeRule' n (do
+    logMsg Info $ n <> " needs implementing"
+    return Nothing)
+
+makeBlankRuleWithVariables :: Text -> Rule w v RuleOutcome
+makeBlankRuleWithVariables n = RuleWithVariables n (do
+    logMsg Info $ n <> " needs implementing"
+    return Nothing)
+
 
 makeRulebook' :: Text -> [PlainRule r] -> PlainRulebook r
 makeRulebook' n = Rulebook n Nothing
@@ -25,15 +36,16 @@ compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
         unless (n == "") $ logMsg Info $ "Following the " <> n <> " rulebook"
         unless (n == "") $ addContext n (Just $ PPTTY.color PPTTY.Blue)
         iv <- i
-        res <- evalState iv (doUntilJustM (\case 
-                RuleWithVariables rn rf -> do
-                    unless (rn == "") (logMsg Info $ "Following the " <> rn)
-                    rf
-                Rule _ _ -> do
-                    logMsg Error "Hit argumentless rule in rulebook with args"
-                    return def) r)
-        logMsg Info $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
-        return $ res <|> def
+        maybe (return (Just False)) (\args -> do
+            res <- evalState args (doUntilJustM (\case 
+                    RuleWithVariables rn rf -> do
+                        unless (rn == "") (logMsg Info $ "Following the " <> rn)
+                        rf
+                    Rule _ _ -> do
+                        logMsg Error "Hit argumentless rule in rulebook with args"
+                        return def) r)
+            logMsg Info $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+            return $ res <|> def) iv
 compileRulebook (Rulebook n def r) = if null r then pure def else
     do
         unless (n == "") $ logMsg Info $ "Following the " <> n <> " rulebook"
@@ -86,7 +98,6 @@ sayIntroText = do
     setStyle Nothing
     pass
 
-{-
 compileRulebook' :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook w
 compileRulebook' r db = CompiledRulebook (do
     let (CompiledRulebook cr) = compileRulebook r db
