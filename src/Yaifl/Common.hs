@@ -6,18 +6,17 @@ Maintainer: Avery <thecommunistduck@hotmail.co.uk>
 Yet another interactive fiction library.
 -}
 
-module Yaifl.Common () where
-{-
+module Yaifl.Common
     ( Entity
     , Store
     , emptyStore
     , RuleOutcome
     , RuleEvaluation
-    , rules
     , Rulebook(..)
     , Rule(..)
     , PlainRule
     , PlainRulebook
+    {-
     , World(..)
     , Action(..)
     , worldToMapStore
@@ -45,12 +44,16 @@ module Yaifl.Common () where
     , firstRoom
     , SemWorld
     , SemWorldList
+    -}
     ) where
 
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict               as Map
 import           Yaifl.Prelude
 import           Yaifl.Say
+import Control.Effect.Lens
+import Control.Lens hiding (use)
+import Control.Effect.State
 
 {- TYPES -}
 
@@ -74,6 +77,33 @@ class HasStore w c where
 class EntityProducer w where
     entityCounter :: Lens' w Entity
 
+type HasWorld w sig m = Has (State w) sig m
+-- | rules either give no outcome, true, or false.
+type RuleOutcome = Bool
+type RuleEvaluation m = m (Maybe RuleOutcome)
+
+data Rule m v r where
+    Rule :: Text -> m (Maybe r) -> Rule m () r
+    RuleWithVariables :: Text -> State v m (Maybe r) -> Rule m v r
+
+-- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
+data Rulebook m v r where
+    Rulebook :: Text -> Maybe r -> [Rule m () r] -> Rulebook m () r
+    RulebookWithVariables :: Text -> Maybe r -> m (Maybe v) -> [Rule m v r] -> Rulebook m v r
+
+type PlainRule m = Rule m () RuleOutcome
+type PlainRulebook m = Rulebook m () RuleOutcome
+
+getStore :: forall w sig m c. (Has (State w) sig m, HasStore w c) => Proxy c -> m (Store c)
+getStore p = (use @w) $ store p
+
+{-
+rules :: Lens' (Rulebook w v r) [Rule w v r]
+rules = lensVL $ \f s -> case s of
+  Rulebook n d r -> fmap (Rulebook n d) (f r)
+  RulebookWithVariables n d i r -> fmap (RulebookWithVariables n d i) (f r)
+-}
+{-
 data World w m k where
     GetStore :: HasStore w c => Proxy c -> World w m (Store c)
     SetComponent :: HasStore w c => Proxy c -> Entity -> c -> World w m ()
@@ -122,25 +152,7 @@ data GameSettings w = GameSettings
 type HasGameSettings w r = Members (SemWorldList w) r
 type HasGameSettings' w = HasGameSettings w (SemWorldList w)
 
--- | rules either give no outcome, true, or false.
-type RuleOutcome = Bool
-type RuleEvaluation w = SemWorld w (Maybe RuleOutcome)
 
-data Rule w v r where
-    Rule :: Text -> SemWorld w (Maybe r) -> Rule w () r
-    RuleWithVariables :: Text -> Sem (State v ': SemWorldList w) (Maybe r) -> Rule w v r
-
--- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook w v r where
-    Rulebook :: Text -> Maybe r -> [Rule w () r] -> Rulebook w () r
-    RulebookWithVariables :: Text -> Maybe r -> SemWorld w (Maybe v) -> [Rule w v r] -> Rulebook w v r
-
-type PlainRule w = Rule w () RuleOutcome
-type PlainRulebook w = Rulebook w () RuleOutcome
-rules :: Lens' (Rulebook w v r) [Rule w v r]
-rules = lensVL $ \f s -> case s of
-  Rulebook n d r -> fmap (Rulebook n d) (f r)
-  RulebookWithVariables n d i r -> fmap (RulebookWithVariables n d i) (f r)
 
 data Activity w v = Activity
     { _activityName :: Text

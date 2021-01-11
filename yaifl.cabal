@@ -60,7 +60,7 @@ library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     
-                         ---Yaifl.Common
+                       Yaifl.Common
                        Yaifl.Prelude
                        , Yaifl.Say
                        --, Yaifl.Components
