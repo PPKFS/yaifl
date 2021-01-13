@@ -3,24 +3,93 @@ module Main
         main
     ) where
 import           Yaifl.Prelude
-import           Yaifl.Say
+import Yaifl
+import Control.Effect.Lens
 import Control.Carrier.State.Lazy
 import Control.Carrier.Writer.Strict
 import Control.Carrier.Lift
+import           Test.HUnit hiding (State)
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
 import qualified Data.Text.Prettyprint.Doc     as PP
+import qualified Data.IntMap.Strict            as IM
+import qualified Data.Map.Strict            as Map
+
 main :: IO ()
 main = do
-    v <- runApplication $ do
-        addContext "blah" Nothing 
-        logMsg Error "hi"
-        sayLn "test"
-        logMsg Debug "hi again"
-    let (a, (b, ())) = v
+    putStrLn $ "Example " <> show 1
+    let (a, b) = runApplication $ do
+            addContext "blah" Nothing 
+            logMsg Error "hi"
+            sayLn "test"
+            logMsg Debug "hi again"
     PPTTY.putDoc b
-runApplication :: _ () -> _
-runApplication v = evalState (LoggingContext [] mempty) . runWriter @SayOutput . runWriter @(PP.Doc PPTTY.AnsiStyle) $ v
+    PPTTY.putDoc "\n------------\n"
+    PPTTY.putDoc $ coerce a
+    PPTTY.putDoc "\n------------\n"
+
+    --_ <- runTestTT tests
+    pass
+{-
+tests :: Test
+tests = makeTests []
+
+makeTests :: _ -> _
+makeTests lst = TestList $
+    zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x)) [1 ..] lst
+        where mkName i = "example " <> show i
+-}
+type WorldOutput = (SayOutput, PP.Doc PPTTY.AnsiStyle)
+newtype ConcreteGameStack m a = CGS { getCarrier :: 
+                    WriterC (PP.Doc PPTTY.AnsiStyle)
+                    (WriterC SayOutput
+                    (StateC LoggingContext
+                    (StateC (GameSettings (ConcreteGameStack m)) Identity
+                   ))) a } deriving (Functor, Applicative, Monad)
+
+newtype GS m a = GS { getGS :: StateC (GameSettings (GS m)) m a}
+  deriving (Functor, Applicative, Monad)
+
+runApplication :: forall m. m () -> WorldOutput
+runApplication v = second fst x where x = run . evalState (GameSettings "Untitled" Nothing Map.empty) . evalState (LoggingContext [] mempty) . runWriter @SayOutput . runWriter @(PP.Doc PPTTY.AnsiStyle) $ v
+
+
+runWorldTest :: (WithLogging sig m, Has (Writer SayOutput) sig m) => Int -> m () -> (m () -> _ ()) -> Assertion
+runWorldTest i w h = do
+        putStrLn $ "Example " <> show i
+        let (a, b) = runApplication (h w) {-$ do
+            addContext "blah" Nothing 
+            logMsg Error "hi"
+            sayLn "test"
+            logMsg Debug "hi again"-}
+        PPTTY.putDoc b
+        PPTTY.putDoc "\n------------\n"
+        PPTTY.putDoc $ coerce a
+        PPTTY.putDoc "\n------------\n"
+        pass
+
+example1World :: HasGameSettings sig m => m ()
+example1World = do
+    title .= "Bic"
+    {-
+    addRoom' "The Staff Break Room"
+    addThing' "Bic pen" ""
+    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
+    sayLn "aaaa"
+    addThing' "napkin" "Slightly crumpled."
+    sayLn "moo"
+    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
+        mapObjects2 physicalComponent objectComponent (\v o -> do
+            when (descriptionOf o == "") (do
+                --printName' o
+                sayLn " has no description.")
+            return (v, o)
+            )
+        return Nothing)
+    g <- get
+    sayLn (show $ Map.keys $ g ^. rulebooks)
+    -}
+
 
 {-
 where
@@ -31,8 +100,7 @@ import           Yaifl.Components
 import           Yaifl.WorldBuilder
 import           Data.Text.Prettyprint.Doc.Render.Terminal\
 import           Test.HUnit hiding (State)
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.Map.Strict            as Map
+
 
 import Polysemy.State
 import Polysemy.Error
@@ -129,29 +197,6 @@ testExample worldbuilder actions ts = do
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x'
-
-
-example1World :: (Member Say r, HasStdWorld TestWorld r) => Sem r ()
-example1World = do
-    title .= "Bic"
-    addRoom' "The Staff Break Room"
-    addThing' "Bic pen" ""
-    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    sayLn "aaaa"
-    addThing' "napkin" "Slightly crumpled."
-    sayLn "moo"
-    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
-        mapObjects2 physicalComponent objectComponent (\v o -> do
-            when (descriptionOf o == "") (do
-                --printName' o
-                sayLn " has no description.")
-            return (v, o)
-            )
-        return Nothing)
-    g <- get
-    sayLn (show $ Map.keys $ g ^. rulebooks)
-
-    pass
 
 
 

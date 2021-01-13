@@ -20,8 +20,6 @@ import           Yaifl.Common
 import           Yaifl.Say
 import           Yaifl.Prelude
 import qualified Text.Show
-import Yaifl.PolysemyOptics
-import Polysemy.State
 import qualified Data.IntMap.Strict as IM
 
 -- the printed name of something

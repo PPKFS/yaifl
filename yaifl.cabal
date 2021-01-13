@@ -60,9 +60,10 @@ library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     
-                       Yaifl.Common
-                       Yaifl.Prelude
-                       , Yaifl.Say
+                        Yaifl
+                      , Yaifl.Common
+                      , Yaifl.Prelude
+                      , Yaifl.Say
                        --, Yaifl.Components
                        --, Yaifl.WorldBuilder
                        --, Yaifl.Rulebooks

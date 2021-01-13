@@ -16,6 +16,10 @@ module Yaifl.Common
     , Rule(..)
     , PlainRule
     , PlainRulebook
+    , GameSettings(..)
+    , HasGameSettings
+    , title
+    , rulebooks
     {-
     , World(..)
     , Action(..)
@@ -35,11 +39,9 @@ module Yaifl.Common
     , addComponent
     , adjustComponent
     , isX
-    , GameSettings(..)
-    , HasGameSettings
+    
     , HasGameSettings'
-    , title
-    , rulebooks
+    
     , globalComponent
     , firstRoom
     , SemWorld
@@ -94,9 +96,17 @@ data Rulebook m v r where
 type PlainRule m = Rule m () RuleOutcome
 type PlainRulebook m = Rulebook m () RuleOutcome
 
-getStore :: forall w sig m c. (Has (State w) sig m, HasStore w c) => Proxy c -> m (Store c)
+getStore :: forall w sig m c. (HasWorld w sig m, HasStore w c) => Proxy c -> m (Store c)
 getStore p = (use @w) $ store p
 
+data GameSettings (m :: * -> *) = GameSettings
+    { _title     :: Text
+    , _firstRoom :: Maybe Entity
+    , _rulebooks :: Map.Map Text (RuleEvaluation m)
+    }
+
+type HasGameSettings sig m = Has (State (GameSettings m)) sig m
+makeLenses ''GameSettings
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]
 rules = lensVL $ \f s -> case s of
@@ -144,13 +154,7 @@ type SemWorldList w = '[World w, Log, State LoggingContext, Say, State (GameSett
 
 type SemWorld w r = Sem (SemWorldList w) r
 
-data GameSettings w = GameSettings
-    { _title     :: Text
-    , _firstRoom :: Maybe Entity
-    , _rulebooks :: Map.Map Text (RuleEvaluation w)
-    }
-type HasGameSettings w r = Members (SemWorldList w) r
-type HasGameSettings' w = HasGameSettings w (SemWorldList w)
+
 
 
 
@@ -209,5 +213,5 @@ isX p recordField comp e =
     (Just p ==) . fmap recordField <$> getComponent comp e
 
 makeLenses ''Rulebook
-makeLenses ''GameSettings
+
 -}
