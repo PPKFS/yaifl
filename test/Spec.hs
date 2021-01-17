@@ -40,15 +40,6 @@ makeTests lst = TestList $
         where mkName i = "example " <> show i
 -}
 type WorldOutput = (SayOutput, PP.Doc PPTTY.AnsiStyle)
-newtype ConcreteGameStack m a = CGS { getCarrier :: 
-                    WriterC (PP.Doc PPTTY.AnsiStyle)
-                    (WriterC SayOutput
-                    (StateC LoggingContext
-                    (StateC (GameSettings (ConcreteGameStack m)) Identity
-                   ))) a } deriving (Functor, Applicative, Monad)
-
-newtype GS m a = GS { getGS :: StateC (GameSettings (GS m)) m a}
-  deriving (Functor, Applicative, Monad)
 
 runApplication :: forall m. m () -> WorldOutput
 runApplication v = second fst x where x = run . evalState (GameSettings "Untitled" Nothing Map.empty) . evalState (LoggingContext [] mempty) . runWriter @SayOutput . runWriter @(PP.Doc PPTTY.AnsiStyle) $ v

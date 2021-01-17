@@ -17,9 +17,8 @@ module Yaifl.Common
     , PlainRule
     , PlainRulebook
     , GameSettings(..)
-    , HasGameSettings
     , title
-    , rulebooks
+    , unwrapWorld
     {-
     , World(..)
     , Action(..)
@@ -51,11 +50,7 @@ module Yaifl.Common
 
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict               as Map
-import           Yaifl.Prelude
-import           Yaifl.Say
-import Control.Effect.Lens
-import Control.Lens hiding (use)
-import Control.Effect.State
+import           Yaifl.Prelude hiding (get)
 
 {- TYPES -}
 
@@ -66,6 +61,13 @@ type Entity = Int
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
 
+newtype Game w a = Game { unwrapGame :: ReaderT (RulebookStore (Game w))
+                                            (StateT GameSettings (
+                                            World w)) a } deriving (Functor, Applicative, Monad)
+                                            
+newtype World w a = World { unwrapWorld :: State w a }deriving (Functor, Applicative, Monad)
+
+type RulebookStore m = Map.Map Text (RuleEvaluation m)
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -73,39 +75,32 @@ emptyStore = IM.empty
 globalComponent :: Int
 globalComponent = 0
 
-class HasStore w c where
-    store :: Proxy c -> Lens' w (Store c)
-
 class EntityProducer w where
     entityCounter :: Lens' w Entity
 
-type HasWorld w sig m = Has (State w) sig m
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
 type RuleEvaluation m = m (Maybe RuleOutcome)
 
-data Rule m v r where
-    Rule :: Text -> m (Maybe r) -> Rule m () r
-    RuleWithVariables :: Text -> State v m (Maybe r) -> Rule m v r
+newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
+
+data Rule v m a where
+    Rule :: Text -> ReaderT (RulebookStore m) m (Maybe a) -> Rule () m a
+    RuleWithVariables :: Text -> ReaderT (RulebookStore (RuleVarsT v m)) m (Maybe a) -> Rule v m a
 
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook m v r where
-    Rulebook :: Text -> Maybe r -> [Rule m () r] -> Rulebook m () r
-    RulebookWithVariables :: Text -> Maybe r -> m (Maybe v) -> [Rule m v r] -> Rulebook m v r
+data Rulebook v m a where
+    Rulebook :: Text -> Maybe a -> [Rule () m a] -> Rulebook () m a
+    RulebookWithVariables :: Text -> Maybe a -> ReaderT (RulebookStore m) m (Maybe v) -> [Rule v m a] -> Rulebook v m a
 
-type PlainRule m = Rule m () RuleOutcome
-type PlainRulebook m = Rulebook m () RuleOutcome
+type PlainRule m = Rule () m RuleOutcome
+type PlainRulebook m = Rulebook () m RuleOutcome
 
-getStore :: forall w sig m c. (HasWorld w sig m, HasStore w c) => Proxy c -> m (Store c)
-getStore p = (use @w) $ store p
-
-data GameSettings (m :: * -> *) = GameSettings
+data GameSettings = GameSettings
     { _title     :: Text
     , _firstRoom :: Maybe Entity
-    , _rulebooks :: Map.Map Text (RuleEvaluation m)
     }
 
-type HasGameSettings sig m = Has (State (GameSettings m)) sig m
 makeLenses ''GameSettings
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]

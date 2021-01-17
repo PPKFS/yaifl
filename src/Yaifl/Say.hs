@@ -1,14 +1,8 @@
 module Yaifl.Say
   (
-    logMsg
-  , addContext
-  , removeContext
-  , LoggingContext(..)
-  , WithLogging
+    LoggingContext(..)
   , Severity(..)
   , SayOutput(..)
-  , say
-  , sayLn
   {-,, logToOutput
   , sayToOutput
   
@@ -23,10 +17,8 @@ module Yaifl.Say
   ) where
 
 import           Yaifl.Prelude
+import           Yaifl.Common
 
-import           Control.Carrier.State.Strict
-import           Control.Effect.Lens
-import           Control.Effect.Writer
 import           Control.Lens                   ( makeLenses )
 import qualified Data.Text                     as T
 import qualified Data.Text.Prettyprint.Doc     as PP
@@ -34,10 +26,28 @@ import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
 
 data LoggingContext = LoggingContext
-  { _context      :: [Text]
+  { _context      :: Text
   , _contextStyle :: PPTTY.AnsiStyle
   }
 makeLenses ''LoggingContext
+
+data Logging =
+  Logging
+    { _logError :: LoggingContext -> Text -> Base (),
+      _logDebug :: LoggingContext -> Text -> Base ()
+    }
+
+logError :: (Has LoggingContext w, Has Logging w) => Text -> WorldT w Base ()
+logError msg = do
+  l <- view $ get @Logging $ unwrapWorld
+  lp <- view $ get @LoggingContext
+  lift $ _logError l lp msg
+
+logDebug :: (Has LoggingContext w, Has Logging w) => Text -> WorldT w Base ()
+logDebug msg = do
+  l <- view $ get @Logging
+  lp <- view $ get @LoggingContext
+  lift $ _logDebug l lp msg
 
 data Severity = Info | Debug | Error deriving Show
 severityStyle :: Severity -> PPTTY.AnsiStyle
@@ -45,11 +55,8 @@ severityStyle Info  = PPTTY.colorDull PPTTY.Blue
 severityStyle Debug = PPTTY.color PPTTY.Green
 severityStyle Error = PPTTY.underlined <> PPTTY.color PPTTY.Red
 
-type HasLoggingContext sig m = Has (State LoggingContext) sig m
-type WithLogging sig m = (Has (Writer (PP.Doc PPTTY.AnsiStyle)) sig m, HasLoggingContext sig m)
-
 newtype SayOutput = SayOutput { _unsay :: PP.Doc PPTTY.AnsiStyle } deriving (Semigroup, Monoid)
-
+{-
 addContext :: HasLoggingContext sig m => Text -> Maybe PPTTY.AnsiStyle -> m ()
 addContext c s = do
   context %= (c :)
@@ -74,6 +81,7 @@ say t = tell @SayOutput $ SayOutput $ PP.pretty t
 
 sayLn :: Has (Writer SayOutput) sig m => Text -> m ()
 sayLn t = say (t <> "\n")
+-}
 {-
 
 
