@@ -12,11 +12,16 @@ module Yaifl.Common
     , emptyStore
     , RuleOutcome
     , RuleEvaluation
+    , Game(..)
+    , World(..)
+    {-
     , Rulebook(..)
     , Rule(..)
     , PlainRule
     , PlainRulebook
+    -}
     , GameSettings(..)
+    , GameData(..)
     , title
     , unwrapWorld
     {-
@@ -46,11 +51,14 @@ module Yaifl.Common
     , SemWorld
     , SemWorldList
     -}
-    ) where
+    , blankGameSettings) where
 
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict               as Map
 import           Yaifl.Prelude hiding (get)
+import Colog.Monad
+import Colog (HasLog(..), LogAction)
+import Colog.Message
 
 {- TYPES -}
 
@@ -61,19 +69,22 @@ type Entity = Int
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
 
-newtype Game w a = Game { unwrapGame :: ReaderT (RulebookStore (Game w))
-                                            (StateT GameSettings (
-                                            World w)) a } deriving (Functor, Applicative, Monad)
+newtype Game w m a = Game { unwrapGame :: LoggerT Message (ReaderT (RulebookStore (Game w m))
+                                            (World w m) ) a } deriving (Functor, Applicative, Monad)
                                             
-newtype World w a = World { unwrapWorld :: State w a }deriving (Functor, Applicative, Monad)
+newtype World w m a = World { unwrapWorld :: StateT (GameData w) m a } deriving (Functor, Applicative, Monad, MonadIO)
 
+instance MonadTrans (World w) where
+    lift = lift
+
+data GameData w = GameData
+    { _world :: w
+    , _gameSettings :: GameSettings
+    }
 type RulebookStore m = Map.Map Text (RuleEvaluation m)
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
-
-globalComponent :: Int
-globalComponent = 0
 
 class EntityProducer w where
     entityCounter :: Lens' w Entity
@@ -81,7 +92,7 @@ class EntityProducer w where
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
 type RuleEvaluation m = m (Maybe RuleOutcome)
-
+{-
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 data Rule v m a where
@@ -95,12 +106,14 @@ data Rulebook v m a where
 
 type PlainRule m = Rule () m RuleOutcome
 type PlainRulebook m = Rulebook () m RuleOutcome
-
+-}
 data GameSettings = GameSettings
     { _title     :: Text
     , _firstRoom :: Maybe Entity
     }
-
+    
+blankGameSettings :: GameSettings
+blankGameSettings = GameSettings "Untitled" Nothing
 makeLenses ''GameSettings
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]

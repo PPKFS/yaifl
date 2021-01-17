@@ -4,19 +4,33 @@ module Main
     ) where
 import           Yaifl.Prelude
 import Yaifl
-import Control.Effect.Lens
-import Control.Carrier.State.Lazy
-import Control.Carrier.Writer.Strict
-import Control.Carrier.Lift
 import           Test.HUnit hiding (State)
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
+import Colog.Monad
+import Colog (LogAction(..),Severity(..), logStringStdout, logPrint)
+import Colog.Message
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
+{-
+Game { unwrapGame :: ReaderT (RulebookStore (Game w))
+(LoggerT Text (World w)) a } deriving (Functor, Applicative, Monad)
+                                            
+newtype World w a = World 
+{ unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
+-}
+f :: WithLog env Message m => m ()
+f = logError "aaa"
+
+runWorld w i = evalStateT (unwrapWorld w) i
 main :: IO ()
-main = do
+main = runWorld (runReaderT (usingLoggerT (contramap (fmtMessage ) (LogAction (liftIO . TIO.putStrLn))) f) Map.empty)
+    (GameData True blankGameSettings)
+                 {-do
     putStrLn $ "Example " <> show 1
     let (a, b) = runApplication $ do
             addContext "blah" Nothing 
@@ -30,7 +44,7 @@ main = do
 
     --_ <- runTestTT tests
     pass
-{-
+
 tests :: Test
 tests = makeTests []
 
@@ -38,7 +52,7 @@ makeTests :: _ -> _
 makeTests lst = TestList $
     zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x)) [1 ..] lst
         where mkName i = "example " <> show i
--}
+
 type WorldOutput = (SayOutput, PP.Doc PPTTY.AnsiStyle)
 
 runApplication :: forall m. m () -> WorldOutput
@@ -62,7 +76,6 @@ runWorldTest i w h = do
 example1World :: HasGameSettings sig m => m ()
 example1World = do
     title .= "Bic"
-    {-
     addRoom' "The Staff Break Room"
     addThing' "Bic pen" ""
     addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."

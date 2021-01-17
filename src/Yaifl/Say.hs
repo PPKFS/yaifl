@@ -1,9 +1,10 @@
 module Yaifl.Say
   (
+    {-
     LoggingContext(..)
   , Severity(..)
   , SayOutput(..)
-  {-,, logToOutput
+  ,, logToOutput
   , sayToOutput
   
   , Say(..)
@@ -18,26 +19,24 @@ module Yaifl.Say
 
 import           Yaifl.Prelude
 import           Yaifl.Common
+import Colog.Monad
+import Colog.Message
 
 import           Control.Lens                   ( makeLenses )
 import qualified Data.Text                     as T
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
-
+{-
 data LoggingContext = LoggingContext
   { _context      :: Text
   , _contextStyle :: PPTTY.AnsiStyle
   }
 makeLenses ''LoggingContext
 
-data Logging =
-  Logging
-    { _logError :: LoggingContext -> Text -> Base (),
-      _logDebug :: LoggingContext -> Text -> Base ()
-    }
-
-logError :: (Has LoggingContext w, Has Logging w) => Text -> WorldT w Base ()
+formatLogMessage :: (Severity, Text) -> Text
+formatLogMessage (Info, t) = 
+logError :: WithLog env Text m => Text -> m ()
 logError msg = do
   l <- view $ get @Logging $ unwrapWorld
   lp <- view $ get @LoggingContext
@@ -54,7 +53,7 @@ severityStyle :: Severity -> PPTTY.AnsiStyle
 severityStyle Info  = PPTTY.colorDull PPTTY.Blue
 severityStyle Debug = PPTTY.color PPTTY.Green
 severityStyle Error = PPTTY.underlined <> PPTTY.color PPTTY.Red
-
+-}
 newtype SayOutput = SayOutput { _unsay :: PP.Doc PPTTY.AnsiStyle } deriving (Semigroup, Monoid)
 {-
 addContext :: HasLoggingContext sig m => Text -> Maybe PPTTY.AnsiStyle -> m ()
