@@ -24,13 +24,36 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 f :: WithLog env Message m => m ()
-f = logError "aaa"
+f = do
+    logError "aaa"
+    logInfo "moo"
 
 runWorld w i = evalStateT (unwrapWorld w) i
+{-
+example1WorldTest = do
+    setTitle "Bic"
+    thereIs Room "The Staff Break Room"
+    addThing' "Bic pen" ""
+    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
+    sayLn "aaaa"
+    addThing' "napkin" "Slightly crumpled."
+    sayLn "moo"
+    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
+        mapObjects2 physicalComponent objectComponent (\v o -> do
+            when (descriptionOf o == "") (do
+                --printName' o
+                sayLn " has no description.")
+            return (v, o)
+            )
+        return Nothing)
+    g <- get
+    sayLn (show $ Map.keys $ g ^. rulebooks)
+-}
 main :: IO ()
 main = print doTestStuff
+
     --runWorld (runReaderT (usingLoggerT (contramap (fmtMessage ) (LogAction (liftIO . TIO.putStrLn))) f) Map.empty)
-    --(GameData True blankGameSettings)
+    --(blankGameData (5 :: Int))
                  {-do
     putStrLn $ "Example " <> show 1
     let (a, b) = runApplication $ do

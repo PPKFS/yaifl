@@ -1,32 +1,25 @@
-{- |
-Copyright: (c) 2020 Avery
-SPDX-License-Identifier: MIT
-Maintainer: Avery <thecommunistduck@hotmail.co.uk>
-
-Yet another interactive fiction library.
--}
-
+-- |
+-- Copyright: (c) 2020 Avery
+-- SPDX-License-Identifier: MIT
+-- Maintainer: Avery <thecommunistduck@hotmail.co.uk>
+--
+-- Yet another interactive fiction library.
 module Yaifl.Common
-    ( Entity
-    , Store
-    , emptyStore
-    , RuleOutcome
-    , RuleEvaluation
-    , Game(..)
-    , World(..)
-    , TestLens(..)
-    , tl
+  ( Entity,
+    Store,
+    emptyStore,
+    RuleOutcome,
+    RuleEvaluation,
+    Game (..),
+    World (..),
     {-
     , Rulebook(..)
     , Rule(..)
     , PlainRule
     , PlainRulebook
     -}
-    , GameSettings(..)
-    , GameData(..)
-    , title
-    , unwrapWorld
-    , doTestStuff
+    GameData (..),
+    title,
     {-
     , World(..)
     , Action(..)
@@ -46,61 +39,81 @@ module Yaifl.Common
     , addComponent
     , adjustComponent
     , isX
-    
+
     , HasGameSettings'
-    
+
     , globalComponent
     , firstRoom
     , SemWorld
     , SemWorldList
     -}
-    , blankGameSettings) where
+    blankGameData
+  ,doTestStuff)
+where
 
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.Map.Strict               as Map
-import           Yaifl.Prelude hiding (get)
-import Colog.Monad
-import Colog (HasLog(..), LogAction)
+import Colog (HasLog (..), LogAction)
 import Colog.Message
+import Colog.Monad
+import qualified Data.IntMap.Strict as IM
+import qualified Data.Map.Strict as Map
+import Yaifl.Prelude hiding (get)
 
 {- TYPES -}
 
--- | An Entity is just an ID that is loosely associated with components. 
+-- | An Entity is just an ID that is loosely associated with components.
 type Entity = Int
 
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
 
-newtype Game w m a = Game { unwrapGame :: LoggerT Message (ReaderT (RulebookStore (Game w m))
-                                            (World w m) ) a } deriving (Functor, Applicative, Monad)
+newtype Game w m a = Game
+  { unwrapGame ::
+      LoggerT
+        Message
+        ( ReaderT
+            (RulebookStore (Game w m))
+            (World w m)
+        )
+        a
+  }
+  deriving (Functor, Applicative, Monad)
 
-newtype World w m a = World { unwrapWorld :: StateT (GameData w) m a } deriving (Functor, Applicative, Monad, MonadIO)
+newtype World w m a = World {unwrapWorld :: StateT (GameData w) m a} deriving (Functor, Applicative, Monad, MonadIO)
 
 data GameData w = GameData
-    { _world :: w
-    , _gameSettings :: GameSettings
-    }
+  { _world :: w,
+    _title :: Text,
+    _firstRoom :: Maybe Entity,
+    _entityCounter :: Entity
+  }
 
-data GameSettings = GameSettings
-    { _title     :: Text
-    , _firstRoom :: Maybe Entity
-    }
-
-blankGameSettings :: GameSettings
-blankGameSettings = GameSettings "Untitled" Nothing
+blankGameData :: w -> GameData w
+blankGameData w = GameData w "Untitled" Nothing 0
 
 type RulebookStore m = Map.Map Text (RuleEvaluation m)
+
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
 
-class EntityProducer w where
-    entityCounter :: Lens' w Entity
-
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
+
 type RuleEvaluation m = m (Maybe RuleOutcome)
+
+fanoutTraversal2 :: Traversal' s a -> Traversal' s b -> Traversal' s (a, b)
+fanoutTraversal2 t1 t2 fab s =
+  maybe (pure s) (fmap update . fab) mv
+  where
+    mv = liftA2 (,) (s ^? t1) (s ^? t2)
+    update (c, d) = s & t1 .~ c & t2 .~ d
+
+fanoutTraversal3 :: Traversal' s a -> Traversal' s b -> Traversal' s c -> Traversal' s ((a, b), c)
+fanoutTraversal3 t1 t2 = fanoutTraversal2 (fanoutTraversal2 t1 t2)
+
+makeLenses ''GameData
+
 
 data TestLens = TL
     { _foo1 :: Map.Map Text Int
@@ -113,35 +126,21 @@ tl = TL (Map.fromList [("a", 5), ("b", 6), ("c", 1), ("d", 3)])
          (Map.fromList [("c", "foo"), ("d", "bar")])
 
 makeLenses ''TestLens
-makeLenses ''GameSettings
-
 
 data Interim = Interim { _i1 :: Int, _i2 :: Bool, _i3 :: Text } deriving Show
 data Interim2 = Interim2 Int Bool deriving Show
 
 makeLenses ''Interim
-getOnePart s l k = s ^. l . at k
-
-fanoutTraversal :: Traversal' s a -> Traversal' s b -> Traversal' s (a,b)
-fanoutTraversal t1 t2 fab s =
-  maybe (pure s) (fmap update . fab) mv
-  where
-    mv = liftA2 (,) (s ^? t1) (s ^? t2)
-    update (c,d) = s & t1 .~ c & t2 .~ d
 
 interim :: Text -> Traversal' TestLens Interim
-interim k = (((foo1 . ix k) `fanoutTraversal` (foo2 . ix k)) `fanoutTraversal` (foo3 . ix k)) . interimIso
+interim k = fanoutTraversal3 (foo1 . ix k) (foo2 . ix k) (foo3 . ix k) . interimIso
   where
     interimIso = iso (\((a,b),c) -> Interim a b c) (\(Interim a b c) -> ((a,b),c))
 
-doTestStuff = tl & interim "c" %~ (\(Interim a b c) -> Interim (a*5) (not b) (c <> "oooo"))
+doTestStuff = tl & interim (tl ^.. foo1) %~ (\(Interim a b c) -> Interim (a*5) (not b) (c <> "oooo"))
+
+
 {-
-interim s k = Interim <$> getOnePart s foo1 k <*> getOnePart s foo2 k <*> getOnePart s foo3 k
-interim2 s k = Interim2 <$> getOnePart s foo1 k <*> getOnePart s foo2 k
-
-doTestStuff = tl ^.. folding (\s -> mapMaybe (interim s) (Map.keys $ s ^. foo1))
-doTestStuffOld = tl ^.. folding (\s -> mapMaybe (\k -> sequence (k, Interim <$> getOnePart s foo1 k <*> getOnePart s foo2 k <*> getOnePart s foo3 k)) (Map.keys $ s ^. foo1))
-
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 data Rule v m a where
@@ -156,7 +155,6 @@ data Rulebook v m a where
 type PlainRule m = Rule () m RuleOutcome
 type PlainRulebook m = Rulebook () m RuleOutcome
 -}
-
 
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]
@@ -204,10 +202,6 @@ adjustComponent p e f = do
 type SemWorldList w = '[World w, Log, State LoggingContext, Say, State (GameSettings w), Error Text]
 
 type SemWorld w r = Sem (SemWorldList w) r
-
-
-
-
 
 data Activity w v = Activity
     { _activityName :: Text
