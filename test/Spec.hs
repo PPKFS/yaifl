@@ -28,8 +28,9 @@ f = logError "aaa"
 
 runWorld w i = evalStateT (unwrapWorld w) i
 main :: IO ()
-main = runWorld (runReaderT (usingLoggerT (contramap (fmtMessage ) (LogAction (liftIO . TIO.putStrLn))) f) Map.empty)
-    (GameData True blankGameSettings)
+main = print doTestStuff
+    --runWorld (runReaderT (usingLoggerT (contramap (fmtMessage ) (LogAction (liftIO . TIO.putStrLn))) f) Map.empty)
+    --(GameData True blankGameSettings)
                  {-do
     putStrLn $ "Example " <> show 1
     let (a, b) = runApplication $ do

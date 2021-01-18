@@ -14,6 +14,8 @@ module Yaifl.Common
     , RuleEvaluation
     , Game(..)
     , World(..)
+    , TestLens(..)
+    , tl
     {-
     , Rulebook(..)
     , Rule(..)
@@ -24,6 +26,7 @@ module Yaifl.Common
     , GameData(..)
     , title
     , unwrapWorld
+    , doTestStuff
     {-
     , World(..)
     , Action(..)
@@ -71,16 +74,22 @@ type Store a = IM.IntMap a
 
 newtype Game w m a = Game { unwrapGame :: LoggerT Message (ReaderT (RulebookStore (Game w m))
                                             (World w m) ) a } deriving (Functor, Applicative, Monad)
-                                            
-newtype World w m a = World { unwrapWorld :: StateT (GameData w) m a } deriving (Functor, Applicative, Monad, MonadIO)
 
-instance MonadTrans (World w) where
-    lift = lift
+newtype World w m a = World { unwrapWorld :: StateT (GameData w) m a } deriving (Functor, Applicative, Monad, MonadIO)
 
 data GameData w = GameData
     { _world :: w
     , _gameSettings :: GameSettings
     }
+
+data GameSettings = GameSettings
+    { _title     :: Text
+    , _firstRoom :: Maybe Entity
+    }
+
+blankGameSettings :: GameSettings
+blankGameSettings = GameSettings "Untitled" Nothing
+
 type RulebookStore m = Map.Map Text (RuleEvaluation m)
 -- | A store with nothing in it
 emptyStore :: Store a
@@ -92,7 +101,47 @@ class EntityProducer w where
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
 type RuleEvaluation m = m (Maybe RuleOutcome)
+
+data TestLens = TL
+    { _foo1 :: Map.Map Text Int
+    , _foo2 :: Map.Map Text Bool
+    , _foo3 :: Map.Map Text Text
+    } deriving Show
+
+tl = TL (Map.fromList [("a", 5), ("b", 6), ("c", 1), ("d", 3)])
+         (Map.fromList [("b", True), ("c", False), ("d", True)])
+         (Map.fromList [("c", "foo"), ("d", "bar")])
+
+makeLenses ''TestLens
+makeLenses ''GameSettings
+
+
+data Interim = Interim { _i1 :: Int, _i2 :: Bool, _i3 :: Text } deriving Show
+data Interim2 = Interim2 Int Bool deriving Show
+
+makeLenses ''Interim
+getOnePart s l k = s ^. l . at k
+
+fanoutTraversal :: Traversal' s a -> Traversal' s b -> Traversal' s (a,b)
+fanoutTraversal t1 t2 fab s =
+  maybe (pure s) (fmap update . fab) mv
+  where
+    mv = liftA2 (,) (s ^? t1) (s ^? t2)
+    update (c,d) = s & t1 .~ c & t2 .~ d
+
+interim :: Text -> Traversal' TestLens Interim
+interim k = (((foo1 . ix k) `fanoutTraversal` (foo2 . ix k)) `fanoutTraversal` (foo3 . ix k)) . interimIso
+  where
+    interimIso = iso (\((a,b),c) -> Interim a b c) (\(Interim a b c) -> ((a,b),c))
+
+doTestStuff = tl & interim "c" %~ (\(Interim a b c) -> Interim (a*5) (not b) (c <> "oooo"))
 {-
+interim s k = Interim <$> getOnePart s foo1 k <*> getOnePart s foo2 k <*> getOnePart s foo3 k
+interim2 s k = Interim2 <$> getOnePart s foo1 k <*> getOnePart s foo2 k
+
+doTestStuff = tl ^.. folding (\s -> mapMaybe (interim s) (Map.keys $ s ^. foo1))
+doTestStuffOld = tl ^.. folding (\s -> mapMaybe (\k -> sequence (k, Interim <$> getOnePart s foo1 k <*> getOnePart s foo2 k <*> getOnePart s foo3 k)) (Map.keys $ s ^. foo1))
+
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 data Rule v m a where
@@ -107,14 +156,8 @@ data Rulebook v m a where
 type PlainRule m = Rule () m RuleOutcome
 type PlainRulebook m = Rulebook () m RuleOutcome
 -}
-data GameSettings = GameSettings
-    { _title     :: Text
-    , _firstRoom :: Maybe Entity
-    }
-    
-blankGameSettings :: GameSettings
-blankGameSettings = GameSettings "Untitled" Nothing
-makeLenses ''GameSettings
+
+
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]
 rules = lensVL $ \f s -> case s of
