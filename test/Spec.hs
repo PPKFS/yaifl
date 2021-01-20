@@ -4,12 +4,16 @@ module Main
     ) where
 import           Yaifl.Prelude
 import Yaifl
+import Yaifl.Components.Room
+import Yaifl.Components.Object
+import Yaifl.Components.Enclosing
 import           Test.HUnit hiding (State)
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
+import qualified Data.Set as DS
 import Colog.Monad
 import Colog (LogAction(..),Severity(..), logStringStdout, logPrint, HasLog)
 import Colog.Message
@@ -24,21 +28,13 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 
-data Room = Room
-    {
-        _name :: Text,
-        _t :: Int
-    } deriving Show
-makeLenses ''Room
-
 runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
 
 example1WorldTest :: WithLog env Message m => m ()
 example1WorldTest = do
     setTitle "Bic"
-    thereIs @Room $ do
+    thereIs @RoomObject $ do
         name .= "The Staff Break Room" 
-        t .= 2
     pass
 
 f = do
@@ -68,10 +64,10 @@ f = do
 
 class ThereIs t where
     defaultObject :: t
-    
 
-instance ThereIs Room where
-    defaultObject = Room "test" 3
+instance ThereIs RoomObject where
+    defaultObject = RoomObject (Object "" "" 0 "") 
+            (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty)
 
 thereIs :: (Show s, WithLog env Message m) => ThereIs s => State s a -> m s
 thereIs s = do

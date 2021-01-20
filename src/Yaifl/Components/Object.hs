@@ -4,8 +4,10 @@ module Yaifl.Components.Object
     , Object(..)
     , name
     , description
-    , objectID
-    , objectType
+    , objID
+    , objType
+    , HasObject
+    , object
     {-
     , descriptionOf
     , HasDescription
@@ -53,11 +55,11 @@ instance Show Description where
 data Object = Object
     { _name        :: Name
     , _description :: Description
-    , _objectID    :: Entity
-    , _objectType  :: Text
+    , _objID    :: Entity
+    , _objType  :: Text
     }
     deriving Show
-makeLenses ''Object
+makeClassy ''Object
 {-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name

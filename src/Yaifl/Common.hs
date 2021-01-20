@@ -16,7 +16,6 @@ module Yaifl.Common
     Env(..),
     HasStore,
     store,
-    getStore,
     {-
     , Rulebook(..)
     , Rule(..)
@@ -25,6 +24,12 @@ module Yaifl.Common
     -}
     GameData (..),
     title,
+    intersectStore,
+    intersectStore2,
+    intersectStore3,
+    setStore,
+    setStore2,
+    setStore3,
     {-
     , World(..)
     , Action(..)
@@ -62,6 +67,7 @@ import qualified Data.IntMap.Strict as IM
 import qualified Data.Map.Strict as Map
 import Yaifl.Prelude
 import qualified Data.Text.IO as TIO
+import Data.Functor.Apply (Apply(..), liftF3)
 
 {- TYPES -}
 
@@ -74,7 +80,6 @@ type Store a = IM.IntMap a
 
 class HasStore w c where
     store :: Lens' w (Store c)
-    getStore :: w -> Store c
 newtype Env m = Env { _envLogAction :: LogAction m Message } 
 
 instance HasLog (Env m) Message m where
@@ -128,6 +133,8 @@ type RuleOutcome = Bool
 
 type RuleEvaluation m = m (Maybe RuleOutcome)
 
+--this is some stackoverflow black fing magic
+--but idk if it's actually any easier to follow than the intersection one.
 fanoutTraversal2 :: Traversal' s a -> Traversal' s b -> Traversal' s (a, b)
 fanoutTraversal2 t1 t2 fab s =
   maybe (pure s) (fmap update . fab) mv
@@ -137,6 +144,24 @@ fanoutTraversal2 t1 t2 fab s =
 
 fanoutTraversal3 :: Traversal' s a -> Traversal' s b -> Traversal' s c -> Traversal' s ((a, b), c)
 fanoutTraversal3 t1 t2 = fanoutTraversal2 (fanoutTraversal2 t1 t2)
+
+intersectStore :: HasStore w a => (a -> b) -> w -> Store b
+intersectStore f w = f <$> w ^. store
+
+intersectStore2 :: (HasStore w a1, HasStore w a2) => (a1 -> a2 -> b) -> w -> Store b
+intersectStore2 f w = intersectStore f w <.> w ^. store
+
+intersectStore3 :: (HasStore w a1, HasStore w a2, HasStore w a) => (a1 -> a2 -> a -> b) -> w -> Store b
+intersectStore3 f w = intersectStore2 f w <.> w ^. store
+
+setStore :: HasStore w c => (a -> c) -> w -> Store a -> w
+setStore f w m = w & store .~  (f <$> m)
+
+setStore2 :: (HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> w -> Store a -> w
+setStore2 f f2 w m = setStore f2 (setStore f w m) m
+
+setStore3 :: (HasStore w c, HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> (a -> c) -> w -> Store a -> w
+setStore3 f f2 f3 w m = setStore f3 (setStore2 f f2 w m) m
 
 makeLenses ''GameData
 
