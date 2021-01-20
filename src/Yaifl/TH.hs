@@ -22,8 +22,7 @@ replaceFirst [] _ = []
 replaceFirst (x:xs) f = f x : xs
 
 mkLensName :: Name -> Name
-mkLensName t = mkName $ "_" <> replaceFirst oldName toLower
-    where oldName = nameBase t <> "Store"
+mkLensName t = mkName $ "_" <> replaceFirst (nameBase t <> "Store") toLower
 
 makeWorld :: Text -> [Name] -> Q [Dec]
 makeWorld typeName componentStores = do
@@ -33,10 +32,7 @@ makeWorld typeName componentStores = do
       makeRecord t = (mkLensName t, bangDef, 
         ConT (mkName "Store") `AppT` ConT t)
       records = RecC worldType (map makeRecord componentStores) -- <> 
-          --[(mkName "_rulebookStore", bangDef, ConT (mkName "Store") `AppT` 
-          --AppT (ConT $ mkName "Rulebook") (ConT worldType))]
-          -- <> [gameinfo (ConT worldType)])
-      blankWorldCtr = FunD (blankName worldType) [Clause [] (NormalB (AppE (iterExpr expr) (VarE $ mkName "blankGameInfo"))) []]
+      blankWorldCtr = FunD (blankName worldType) [Clause [] (NormalB (iterExpr expr)) []]
       expr = AppE (ConE worldType) (VarE $ mkName "emptyStore")
       iterExpr = foldr (.) id $ replicate (length componentStores - 1) (\x -> AppE x (VarE $ mkName "emptyStore"))
   return [dataDef, blankWorldCtr]

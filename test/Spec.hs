@@ -4,9 +4,7 @@ module Main
     ) where
 import           Yaifl.Prelude
 import Yaifl
-import Yaifl.Components.Room
-import Yaifl.Components.Object
-import Yaifl.Components.Enclosing
+import Yaifl.Components
 import           Test.HUnit hiding (State)
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
                                                as PPTTY
@@ -14,11 +12,15 @@ import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
 import qualified Data.Set as DS
+import Yaifl.TH
 import Colog.Monad
 import Colog (LogAction(..),Severity(..), logStringStdout, logPrint, HasLog)
 import Colog.Message
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Data.Text.IO as TIO
+import Language.Haskell.TH
+import Text.Pretty.Simple (pString)
 
 {-
 Game { unwrapGame :: ReaderT (RulebookStore (Game w))
@@ -28,21 +30,32 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 
+makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing]
+
 runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
 
-example1WorldTest :: WithLog env Message m => m ()
+example1WorldTest :: (Monad m, Show w) => World w m ()
 example1WorldTest = do
     setTitle "Bic"
     thereIs @RoomObject $ do
-        name .= "The Staff Break Room" 
+        name .= "The Staff Break Room"
+    thereIs @Thing $ do
+        name .= "Bic pen"
+    thereIs @Thing $ do
+        name .= "orange"
+        description .= "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
+    thereIs @Thing $ do
+        name .= "napkin"
+        description .= "Slightly crumpled."
     pass
 
+f :: (Monad m, Show w) => World w m ()
 f = do
-    logError "aaa"
-    logInfo "moo"
     example1WorldTest
     t <- showWorld
     logInfo t
+    logInfo "blah"
+    logInfo "test"
 {-
     addThing' "Bic pen" ""
     addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
@@ -62,25 +75,23 @@ f = do
 -}
 
 
-class ThereIs t where
-    defaultObject :: t
 
-instance ThereIs RoomObject where
-    defaultObject = RoomObject (Object "" "" 0 "") 
-            (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty)
-
-thereIs :: (Show s, WithLog env Message m) => ThereIs s => State s a -> m s
+thereIs :: (ThereIs s, Monad m, Show s) => State s a -> World w m s
 thereIs s = do
-    let x = defaultObject
-    let v = execState s x 
-    logInfo $ (show v)
+    e <- newEntity
+    let v = execState s $ defaultObject e
+    logInfo $ toStrict $ pString (show v)
     return v
 
+newEntity :: (Monad m) => World w m Entity
+newEntity = do entityCounter <<%= (+ 1)
+
+
 setTitle :: WithLog env Message m => Text -> m ()
-setTitle t = logInfo $ "setting title to" <> t
+setTitle t = logInfo $ "Set game title to " <> t <> "." <> "\n"
 
 main :: IO ()
-main = runWorld f (blankGameData (5 :: Int)) (Env (contramap fmtMessage (LogAction (liftIO . TIO.putStrLn))))
+main = runWorld f (blankGameData blankGameWorld) (Env ((LogAction (liftIO . TIO.putStrLn . fmtMessage ))))
 
 {-
 tests :: Test
@@ -130,10 +141,9 @@ example1World = do
         return Nothing)
     g <- get
     sayLn (show $ Map.keys $ g ^. rulebooks)
-    -}
 
 
-{-
+
 where
 
 import           Yaifl.Common

@@ -8,6 +8,8 @@ module Yaifl.Components.Object
     , objType
     , HasObject
     , object
+    , ObjType
+    , blankObject
     {-
     , descriptionOf
     , HasDescription
@@ -31,6 +33,7 @@ import qualified Data.IntMap.Strict as IM
 
 -- the printed name of something
 type Name = Text
+type ObjType = Text
 
 data Description = PlainDescription Text | DynamicDescription (forall w. w -> Entity -> Text)
 
@@ -59,6 +62,9 @@ data Object = Object
     , _objType  :: Text
     }
     deriving Show
+
+blankObject :: Entity -> ObjType -> Object
+blankObject = Object "" ""
 makeClassy ''Object
 {-
 class HasName a where

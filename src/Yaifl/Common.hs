@@ -16,6 +16,9 @@ module Yaifl.Common
     Env(..),
     HasStore,
     store,
+
+    ThereIs,
+    defaultObject,
     {-
     , Rulebook(..)
     , Rule(..)
@@ -30,6 +33,12 @@ module Yaifl.Common
     setStore,
     setStore2,
     setStore3,
+    storeLens,
+    storeLens2,
+    storeLens3,
+    isX,
+
+    entityCounter,
     {-
     , World(..)
     , Action(..)
@@ -63,11 +72,10 @@ where
 import Colog (LogAction, HasLog (..), LogAction)
 import Colog.Message
 import Colog.Monad
-import qualified Data.IntMap.Strict as IM
+import qualified Data.IntMap as IM
 import qualified Data.Map.Strict as Map
 import Yaifl.Prelude
-import qualified Data.Text.IO as TIO
-import Data.Functor.Apply (Apply(..), liftF3)
+import Data.Functor.Apply (Apply(..))
 
 {- TYPES -}
 
@@ -81,6 +89,15 @@ type Store a = IM.IntMap a
 class HasStore w c where
     store :: Lens' w (Store c)
 newtype Env m = Env { _envLogAction :: LogAction m Message } 
+
+data GameData w m = GameData
+  { _gameWorld :: w,
+    _title :: Text,
+    _firstRoom :: Maybe Entity,
+    _entityCounter :: Entity
+  } deriving Show
+
+makeLenses ''GameData
 
 instance HasLog (Env m) Message m where
     getLogAction :: Env m -> LogAction m Message
@@ -99,12 +116,20 @@ newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (
 
 class Monad m => MonadWorld m where
     showWorld :: m Text
+    --getComponent :: e -> m (Lens' w (Maybe c))
+
+getComponent :: (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
+getComponent e = use $ gameWorld . store . at e
+
+setComponent :: (Monad m, HasStore w c) => Entity -> c -> World w m ()
+setComponent e v = gameWorld . store . at e ?= v
 
 instance MonadTrans (World w) where
     lift = World . lift . lift
 
 instance (Monad m, Show w) => MonadWorld (World w m) where
     showWorld = show <$> get
+    --component p e = use $ gameWorld . store . at e
 
 instance MonadWorld m => MonadWorld (LoggerT msg m) where
     showWorld = lift showWorld
@@ -112,12 +137,6 @@ instance MonadWorld m => MonadWorld (LoggerT msg m) where
 instance MonadWorld m => MonadWorld (ReaderT r m) where
     showWorld = lift showWorld
 
-data GameData w m = GameData
-  { _world :: w,
-    _title :: Text,
-    _firstRoom :: Maybe Entity,
-    _entityCounter :: Entity
-  } deriving Show
 
 blankGameData :: w -> GameData w m
 blankGameData w = GameData w "Untitled" Nothing 0
@@ -129,9 +148,9 @@ emptyStore :: Store a
 emptyStore = IM.empty
 
 -- | rules either give no outcome, true, or false.
-type RuleOutcome = Bool
+type RuleOutcome = Maybe Bool
 
-type RuleEvaluation m = m (Maybe RuleOutcome)
+type RuleEvaluation m = m RuleOutcome
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -163,23 +182,35 @@ setStore2 f f2 w m = setStore f2 (setStore f w m) m
 setStore3 :: (HasStore w c, HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> (a -> c) -> w -> Store a -> w
 setStore3 f f2 f3 w m = setStore f3 (setStore2 f f2 w m) m
 
-makeLenses ''GameData
+storeLens :: HasStore w a => (a -> b) -> (b -> a) -> Lens' w (Store b)
+storeLens f a = lens (intersectStore f) (setStore a)
 
-{-
+storeLens2 :: (HasStore w a, HasStore w c) => (a -> c -> b) -> (b -> a) -> (b -> c) -> Lens' w (Store b)
+storeLens2 f a a2 = lens (intersectStore2 f) (setStore2 a a2)
+
+storeLens3 :: (HasStore w a, HasStore w c, HasStore w d) => (a -> c -> d -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> Lens' w (Store b)
+storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
+
+
+class ThereIs t where
+    defaultObject :: Entity -> t
+
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
-data Rule v m a where
-    Rule :: Text -> ReaderT (RulebookStore m) m (Maybe a) -> Rule () m a
-    RuleWithVariables :: Text -> ReaderT (RulebookStore (RuleVarsT v m)) m (Maybe a) -> Rule v m a
+data Rule w v m a where
+    Rule :: Text -> World w m a -> Rule w () m a
+    RuleWithVariables :: Text -> World w (RuleVarsT v m) (Maybe a) -> Rule w v m a
 
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook v m a where
-    Rulebook :: Text -> Maybe a -> [Rule () m a] -> Rulebook () m a
-    RulebookWithVariables :: Text -> Maybe a -> ReaderT (RulebookStore m) m (Maybe v) -> [Rule v m a] -> Rulebook v m a
+data Rulebook w v m a where
+    Rulebook :: Text -> Maybe a -> [Rule w () m a] -> Rulebook w () m a
+    RulebookWithVariables :: Text -> Maybe a -> World w (RuleVarsT v m) (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
 
-type PlainRule m = Rule () m RuleOutcome
-type PlainRulebook m = Rulebook () m RuleOutcome
--}
+type PlainRule w m = Rule w () m RuleOutcome
+type PlainRulebook w m = Rulebook w () m RuleOutcome
+
+isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
+isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
 
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]
@@ -278,9 +309,7 @@ newEntity = do
 addComponent :: (Member (World w) r, HasStore w c) => Entity -> c -> Sem r ()
 addComponent = setComponent (Proxy :: Proxy c)
 
-isX :: (Eq b, Members (SemWorldList w) r, HasStore w c) => b -> (c -> b) -> Proxy c -> Entity -> Sem r Bool
-isX p recordField comp e =
-    (Just p ==) . fmap recordField <$> getComponent comp e
+
 
 makeLenses ''Rulebook
 

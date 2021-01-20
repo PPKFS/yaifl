@@ -34,7 +34,6 @@ data RoomData = RoomData
         _containingRegion :: ContainingRegion
     } deriving Show
 
-
 data RoomObject = RoomObject
     {
         _roomObject :: Object 
@@ -42,28 +41,23 @@ data RoomObject = RoomObject
       , _roomEnclosing :: Enclosing
     } deriving Show
 
+instance ThereIs RoomObject where
+    defaultObject e = RoomObject (blankObject e "room") 
+            (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty)
+            
 makeClassy ''RoomData
 makeLenses ''RoomObject
 
 instance HasObject RoomObject where
     object = roomObject
-{-
-sa1 :: (HasStore w Object, HasStore w RoomData, HasStore w Enclosing) => w -> Store _
-sa1 w = IMerge.merge IMerge.dropMissing IMerge.dropMissing (IMerge.zipWithMatched (\_ x y -> x y)) (sa2 w) (getStore w) --Map.intersectionWith (.) 
 
-sa2 :: (HasStore w Object, HasStore w RoomData) => w -> Store _
-sa2 w = IMerge.merge IMerge.dropMissing IMerge.dropMissing (IMerge.zipWithMatched (const RoomObject)) (getStore w) (getStore w)
+type HasRoom w = (HasStore w Object, HasStore w RoomData, HasStore w Enclosing)
 
--}
+rooms :: HasRoom w => Lens' w (Store RoomObject)
+rooms = storeLens3 RoomObject _roomObject _roomObjData _roomEnclosing
 
-rooms :: (HasStore w Object, HasStore w RoomData, HasStore w Enclosing) => Lens' w (Store RoomObject)
-rooms = lens (intersectStore3 RoomObject) (setStore3 _roomObject _roomObjData _roomEnclosing)
-{-
-room :: Text -> Traversal' TestLens RoomObject
-interim k = (((foo1 . ix k) `fanoutTraversal` (foo2 . ix k)) `fanoutTraversal` (foo3 . ix k)) . interimIso
-  where
-    interimIso = iso (\((a,b),c) -> Interim a b c) (\(Interim a b c) -> ((a,b),c))
--}
+room :: HasRoom w => Entity -> Lens' w (Maybe RoomObject)
+room k = rooms . at k
 {-
 makeRoom :: HasWorld w '[Enclosing, RoomData] r => Text -> Description -> Sem r Entity
 makeRoom n d = do

@@ -6,10 +6,9 @@ module Yaifl.Components.Physical
     , Pushability(..)
     , Describable(..)
     , Physical(..)
-    , defaultPhysical
-    , physicalComponent
-    , makeThing
-    , makeThing'
+    , Thing
+    , thing
+    , things
     , described
     )
 where
@@ -41,18 +40,14 @@ data Physical = Physical
     , _handled           :: Bool
     , _initialAppearance :: Maybe Description
     , _scenery           :: Bool
-    }
-    deriving Show
+    } deriving Show
 makeLenses ''Physical
 
-physicalComponent :: Proxy Physical
-physicalComponent = Proxy
+isConcealed :: (Monad m, HasStore w Physical) => Entity -> World w m Bool
+isConcealed e = not <$> isX Nothing _concealedBy e
 
-isConcealed :: HasWorld w '[Physical] r => Entity -> Sem r Bool
-isConcealed e = not <$> isX Nothing _concealedBy physicalComponent e
-
-defaultPhysical :: Entity -> Physical
-defaultPhysical e = Physical e
+blankPhysical :: Entity -> Physical
+blankPhysical e = Physical e
                            Lit
                            Inedible
                            Portable
@@ -68,6 +63,28 @@ defaultPhysical e = Physical e
                            Nothing
                            False
 
+data Thing = Thing
+    {
+        _thingObject :: Object
+      , _thingPhysical :: Physical
+    } deriving Show
+
+makeLenses ''Thing
+
+instance HasObject Thing where
+    object = thingObject
+
+instance ThereIs Thing where
+    defaultObject e = Thing (blankObject e "thing") (blankPhysical e)
+
+type HasThing w = (HasStore w Object, HasStore w Physical)
+
+things :: HasThing w => Lens' w (Store Thing)
+things = storeLens2 Thing _thingObject _thingPhysical
+
+thing :: HasThing w => Entity -> Lens' w (Maybe Thing)
+thing k = things . at k
+{-
 makeThing' :: HasWorld w '[Physical] r => Name -> Description -> Entity -> Sem r Entity
 makeThing' n d l = do
     addContext "ThingConstruction" Nothing
@@ -83,7 +100,7 @@ makeThing n d p t = do
     logMsg Info ("Placed " <> n <> " in the " <> n2)
     return e
 
-{-
+
 move :: (HasComponent u w Physical, HasComponent u w Enclosing) => Entity -> Entity -> System u Bool
 move obj le = do
     w <- get

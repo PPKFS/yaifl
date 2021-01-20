@@ -34,6 +34,7 @@ common common-options
                      , mtl
                      , raw-strings-qq
                      , semigroupoids
+                     , pretty-simple
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -41,7 +42,7 @@ common common-options
                        -Wincomplete-record-updates
                        -O2
                        -flate-specialise 
-                       -fspecialise-aggressively
+                       ---fspecialise-aggressively
                        -fno-warn-unused-do-bind
                        ---ddump-splices
                        ---ddump-to-file
@@ -65,19 +66,19 @@ library
                       , Yaifl.Common
                       , Yaifl.Prelude
                       , Yaifl.Say
-                      , Yaifl.Components.Room
-                      , Yaifl.Components.Enclosing
-                      , Yaifl.Components.Object
-                       --, Yaifl.Components
+                      , Yaifl.TH
+                      , Yaifl.Components
                        --, Yaifl.WorldBuilder
                        --, Yaifl.Rulebooks
                        --, Yaifl.Actions
                        --, Yaifl.Activities
   other-modules:       
-                        
+                        Yaifl.Components.Room
+                      , Yaifl.Components.Enclosing
+                      , Yaifl.Components.Object
                        --, Yaifl.Components.Direction
                        --, Yaifl.Components.Room
-                       --, Yaifl.Components.Physical
+                      , Yaifl.Components.Physical
                        --, Yaifl.Utils
 test-suite yaifl-test
   import:              common-options
