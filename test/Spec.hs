@@ -11,7 +11,7 @@ import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
 import Colog.Monad
-import Colog (LogAction(..),Severity(..), logStringStdout, logPrint)
+import Colog (LogAction(..),Severity(..), logStringStdout, logPrint, HasLog)
 import Colog.Message
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -23,16 +23,31 @@ Game { unwrapGame :: ReaderT (RulebookStore (Game w))
 newtype World w a = World 
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
-f :: WithLog env Message m => m ()
+
+data Room = Room
+    {
+        _name :: Text,
+        _t :: Int
+    } deriving Show
+makeLenses ''Room
+
+runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
+
+example1WorldTest :: WithLog env Message m => m ()
+example1WorldTest = do
+    setTitle "Bic"
+    thereIs @Room $ do
+        name .= "The Staff Break Room" 
+        t .= 2
+    pass
+
 f = do
     logError "aaa"
     logInfo "moo"
-
-runWorld w i = evalStateT (unwrapWorld w) i
+    example1WorldTest
+    t <- showWorld
+    logInfo t
 {-
-example1WorldTest = do
-    setTitle "Bic"
-    thereIs Room "The Staff Break Room"
     addThing' "Bic pen" ""
     addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
     sayLn "aaaa"
@@ -49,26 +64,29 @@ example1WorldTest = do
     g <- get
     sayLn (show $ Map.keys $ g ^. rulebooks)
 -}
+
+
+class ThereIs t where
+    defaultObject :: t
+    
+
+instance ThereIs Room where
+    defaultObject = Room "test" 3
+
+thereIs :: (Show s, WithLog env Message m) => ThereIs s => State s a -> m s
+thereIs s = do
+    let x = defaultObject
+    let v = execState s x 
+    logInfo $ (show v)
+    return v
+
+setTitle :: WithLog env Message m => Text -> m ()
+setTitle t = logInfo $ "setting title to" <> t
+
 main :: IO ()
-main = print doTestStuff
+main = runWorld f (blankGameData (5 :: Int)) (Env (contramap fmtMessage (LogAction (liftIO . TIO.putStrLn))))
 
-    --runWorld (runReaderT (usingLoggerT (contramap (fmtMessage ) (LogAction (liftIO . TIO.putStrLn))) f) Map.empty)
-    --(blankGameData (5 :: Int))
-                 {-do
-    putStrLn $ "Example " <> show 1
-    let (a, b) = runApplication $ do
-            addContext "blah" Nothing 
-            logMsg Error "hi"
-            sayLn "test"
-            logMsg Debug "hi again"
-    PPTTY.putDoc b
-    PPTTY.putDoc "\n------------\n"
-    PPTTY.putDoc $ coerce a
-    PPTTY.putDoc "\n------------\n"
-
-    --_ <- runTestTT tests
-    pass
-
+{-
 tests :: Test
 tests = makeTests []
 

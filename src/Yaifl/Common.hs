@@ -10,8 +10,13 @@ module Yaifl.Common
     emptyStore,
     RuleOutcome,
     RuleEvaluation,
-    Game (..),
     World (..),
+    showWorld,
+    MonadWorld,
+    Env(..),
+    HasStore,
+    store,
+    getStore,
     {-
     , Rulebook(..)
     , Rule(..)
@@ -47,16 +52,16 @@ module Yaifl.Common
     , SemWorld
     , SemWorldList
     -}
-    blankGameData
-  ,doTestStuff)
+    blankGameData)
 where
 
-import Colog (HasLog (..), LogAction)
+import Colog (LogAction, HasLog (..), LogAction)
 import Colog.Message
 import Colog.Monad
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Map.Strict as Map
-import Yaifl.Prelude hiding (get)
+import Yaifl.Prelude
+import qualified Data.Text.IO as TIO
 
 {- TYPES -}
 
@@ -67,28 +72,49 @@ type Entity = Int
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
 
-newtype Game w m a = Game
-  { unwrapGame ::
-      LoggerT
-        Message
-        ( ReaderT
-            (RulebookStore (Game w m))
-            (World w m)
-        )
-        a
-  }
-  deriving (Functor, Applicative, Monad)
+class HasStore w c where
+    store :: Lens' w (Store c)
+    getStore :: w -> Store c
+newtype Env m = Env { _envLogAction :: LogAction m Message } 
 
-newtype World w m a = World {unwrapWorld :: StateT (GameData w) m a} deriving (Functor, Applicative, Monad, MonadIO)
+instance HasLog (Env m) Message m where
+    getLogAction :: Env m -> LogAction m Message
+    getLogAction = _envLogAction
+    {-# INLINE getLogAction #-}
 
-data GameData w = GameData
+    setLogAction :: LogAction m Message -> Env m -> Env m
+    setLogAction newLogAction env = env { _envLogAction = newLogAction }
+    {-# INLINE setLogAction #-}
+
+newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (GameData w (World w m)) m) a} 
+    deriving newtype (Functor, Applicative, Monad,
+        MonadState (GameData w (World w m)),
+        MonadReader (Env (World w m)),
+        MonadIO) 
+
+class Monad m => MonadWorld m where
+    showWorld :: m Text
+
+instance MonadTrans (World w) where
+    lift = World . lift . lift
+
+instance (Monad m, Show w) => MonadWorld (World w m) where
+    showWorld = show <$> get
+
+instance MonadWorld m => MonadWorld (LoggerT msg m) where
+    showWorld = lift showWorld
+
+instance MonadWorld m => MonadWorld (ReaderT r m) where
+    showWorld = lift showWorld
+
+data GameData w m = GameData
   { _world :: w,
     _title :: Text,
     _firstRoom :: Maybe Entity,
     _entityCounter :: Entity
-  }
+  } deriving Show
 
-blankGameData :: w -> GameData w
+blankGameData :: w -> GameData w m
 blankGameData w = GameData w "Untitled" Nothing 0
 
 type RulebookStore m = Map.Map Text (RuleEvaluation m)
@@ -113,32 +139,6 @@ fanoutTraversal3 :: Traversal' s a -> Traversal' s b -> Traversal' s c -> Traver
 fanoutTraversal3 t1 t2 = fanoutTraversal2 (fanoutTraversal2 t1 t2)
 
 makeLenses ''GameData
-
-
-data TestLens = TL
-    { _foo1 :: Map.Map Text Int
-    , _foo2 :: Map.Map Text Bool
-    , _foo3 :: Map.Map Text Text
-    } deriving Show
-
-tl = TL (Map.fromList [("a", 5), ("b", 6), ("c", 1), ("d", 3)])
-         (Map.fromList [("b", True), ("c", False), ("d", True)])
-         (Map.fromList [("c", "foo"), ("d", "bar")])
-
-makeLenses ''TestLens
-
-data Interim = Interim { _i1 :: Int, _i2 :: Bool, _i3 :: Text } deriving Show
-data Interim2 = Interim2 Int Bool deriving Show
-
-makeLenses ''Interim
-
-interim :: Text -> Traversal' TestLens Interim
-interim k = fanoutTraversal3 (foo1 . ix k) (foo2 . ix k) (foo3 . ix k) . interimIso
-  where
-    interimIso = iso (\((a,b),c) -> Interim a b c) (\(Interim a b c) -> ((a,b),c))
-
-doTestStuff = tl & interim (tl ^.. foo1) %~ (\(Interim a b c) -> Interim (a*5) (not b) (c <> "oooo"))
-
 
 {-
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)

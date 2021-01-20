@@ -5,5 +5,5 @@ module Yaifl.Prelude
 )
 where
 
-import Relude hiding (get)
-import Control.Lens hiding ((??), uncons)
+import Relude
+import Control.Lens hiding ((??), uncons, (<.>))

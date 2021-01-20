@@ -2,6 +2,11 @@ module Yaifl.Components.Object
     ( Name
     , Description(..)
     , Object(..)
+    , name
+    , description
+    , objectID
+    , objectType
+    {-
     , descriptionOf
     , HasDescription
     , objectComponent
@@ -12,7 +17,7 @@ module Yaifl.Components.Object
     , HasName
     , mapObjects
     , mapObjects2
-    , mapObjects3
+    , mapObjects3-}
     )
 where
 
@@ -53,7 +58,7 @@ data Object = Object
     }
     deriving Show
 makeLenses ''Object
-
+{-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name
 
@@ -114,4 +119,4 @@ mapObjects3 c1 c2 c3 func = do
                         setComponent c1 k r1
                         setComponent c2 k r2
                         setComponent c3 k r3))) $ IM.assocs g                        
-                        
+                        -}
