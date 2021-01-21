@@ -1,77 +1,75 @@
 module Yaifl.Rulebooks
 (
-    makeRulebook', makeRule', makeBlankRule', makeBlankRuleWithVariables,
-    whenPlayBeginsName, whenPlayBeginsRules, introText
+    makeBlankRule, compileRulebook
+  , whenPlayBeginsName, whenPlayBeginsRules, introText
 ) where
 
 import Yaifl.Prelude
 import Yaifl.Say
 import Yaifl.Common
 import Yaifl.Utils
-{-
-import Polysemy.State
-import qualified Data.Text as Text
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import Colog
+import qualified Data.Text as T
 
-makeRule' :: Text -> RuleEvaluation w -> PlainRule w
-makeRule' = Rule
-
-makeBlankRule' :: Text -> PlainRule w
-makeBlankRule' n = makeRule' n (do
-    logMsg Info $ n <> " needs implementing"
+makeBlankRule :: Monad m => Text -> PlainRule w m
+makeBlankRule n = Rule n (do
+    logInfo $ n <> " needs implementing"
     return Nothing)
 
-makeBlankRuleWithVariables :: Text -> Rule w v RuleOutcome
+
+
+makeBlankRuleWithVariables :: (Monad m, WithLog env Message (World w m) ) => Text -> Rule w v m a
 makeBlankRuleWithVariables n = RuleWithVariables n (do
-    logMsg Info $ n <> " needs implementing"
+    lift $ logInfo $ n <> " needs implementing"
     return Nothing)
 
+makeRulebook :: Text -> [Rule w () m a] -> Rulebook w () m a
+makeRulebook n = Rulebook n Nothing
 
-makeRulebook' :: Text -> [PlainRule r] -> PlainRulebook r
-makeRulebook' n = Rulebook n Nothing
+logRulebookName :: (MonadReader env m, WithLog env Message m) => Text -> m ()
+logRulebookName n = do
+    unless (n == "") $ logInfo $ "Following the " <> n <> " rulebook"
+    --todo: add context?
+    unless (n == "") pass
 
-compileRulebook :: Rulebook w v RuleOutcome -> RuleEvaluation w
+
+
+compileRulebook :: (WithLog (Env (World w m)) Message (World w m)) => Rulebook w s m Bool -> World w m (Maybe Bool)
 compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
-    do
-        unless (n == "") $ logMsg Info $ "Following the " <> n <> " rulebook"
-        unless (n == "") $ addContext n (Just $ PPTTY.color PPTTY.Blue)
-        iv <- i
-        maybe (return (Just False)) (\args -> do
-            res <- evalState args (doUntilJustM (\case 
-                    RuleWithVariables rn rf -> do
-                        unless (rn == "") (logMsg Info $ "Following the " <> rn)
-                        rf
-                    Rule _ _ -> do
-                        logMsg Error "Hit argumentless rule in rulebook with args"
-                        return def) r)
-            logMsg Info $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
-            return $ res <|> def) iv
+        do
+            logRulebookName n
+            iv <- i
+            maybe (return (Just False)) (\args -> do
+                let f = doUntilJustM (\case 
+                        RuleWithVariables rn rf -> do
+                            unless (rn == "") (lift $ logInfo $ "Following the " <> rn)
+                            rf
+                        Rule _ _ -> do
+                            lift $ logError "Hit argumentless rule in rulebook with args"
+                            return def) r
+                res <- evalStateT (unwrapRuleVars f) args 
+                logInfo $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+                return $ res <|> def) iv
+
 compileRulebook (Rulebook n def r) = if null r then pure def else
     do
-        unless (n == "") $ logMsg Info $ "Following the " <> n <> " rulebook"
-        unless (n == "") $ addContext n (Just $ PPTTY.color PPTTY.Blue)
+        logRulebookName n
         res <- doUntilJustM (\case 
                 Rule rn rf -> do
-                    unless (rn == "") (logMsg Info $ "Following the " <> rn)
+                    unless (rn == "") (logInfo $ "Following the " <> rn)
                     rf
                 RuleWithVariables _ _ -> do
-                    logMsg Error "Hit argument rule in rulebook without args"
+                    logError "Hit argument rule in rulebook without args"
                     return def) r
-        logMsg Info $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+        logInfo $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
         return $ res <|> def
-
-    {-CompiledRulebook (do
-    let (CompiledRulebook cr) = compileRulebook r db
-    w <- get
-    let iv = _rulebookInit r w
-    zoomOut cr iv)-}
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-whenPlayBeginsRules :: PlainRulebook w
-whenPlayBeginsRules = makeRulebook' whenPlayBeginsName [
-            makeRule' "display banner rule" (do
+whenPlayBeginsRules :: Monad m => PlainRulebook w m
+whenPlayBeginsRules = makeRulebook whenPlayBeginsName [
+            Rule "display banner rule" (do
                 sayIntroText
                 return Nothing){-,
             makeRule' "position player in model world rule" (do
@@ -84,20 +82,18 @@ whenPlayBeginsRules = makeRulebook' whenPlayBeginsName [
         ]
 
 introText :: Text -> [Text]
-introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder<>"\n",
-                longBorder<>"\n\n"]
+introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder <> "\n", longBorder<>"\n\n"]  
             where shortBorder = "------"
-                  totalLength = 2 * Text.length shortBorder + Text.length w + 2
-                  longBorder = foldr (<>) "" $ replicate totalLength ("-" :: Text)
-
-sayIntroText :: HasGameSettings w r => Sem r ()
+                  longBorder = foldr (<>) "" $ replicate (2 * T.length shortBorder + T.length w + 2) ("-" :: Text)
+--TODO; TYPE ALIAS THIS WHOLE LOGGING, MONAD M THING
+sayIntroText :: (WithLog (Env (World w m)) Message (World w m), Monad m) => World w m ()
 sayIntroText = do
-    setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
+    --setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
     t <- use title
-    mapM_ say (introText t)
-    setStyle Nothing
+    mapM_ logInfo (introText t) --replace w/say
+    --setStyle Nothing
     pass
-
+{-
 compileRulebook' :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook w
 compileRulebook' r db = CompiledRulebook (do
     let (CompiledRulebook cr) = compileRulebook r db

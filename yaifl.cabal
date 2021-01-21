@@ -69,7 +69,7 @@ library
                       , Yaifl.TH
                       , Yaifl.Components
                        --, Yaifl.WorldBuilder
-                       --, Yaifl.Rulebooks
+                      , Yaifl.Rulebooks
                        --, Yaifl.Actions
                        --, Yaifl.Activities
   other-modules:       
@@ -79,7 +79,7 @@ library
                        --, Yaifl.Components.Direction
                        --, Yaifl.Components.Room
                       , Yaifl.Components.Physical
-                       --, Yaifl.Utils
+                      , Yaifl.Utils
 test-suite yaifl-test
   import:              common-options
   type:                exitcode-stdio-1.0

@@ -21,6 +21,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.IO as TIO
 import Language.Haskell.TH
 import Text.Pretty.Simple (pString)
+import Yaifl.Rulebooks
 
 {-
 Game { unwrapGame :: ReaderT (RulebookStore (Game w))
@@ -34,7 +35,7 @@ makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing]
 
 runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
 
-example1WorldTest :: (Monad m, Show w) => World w m ()
+example1WorldTest :: (Monad m, Show w, WithLog (Env (World w m)) Message (World w m)) => World w m ()
 example1WorldTest = do
     setTitle "Bic"
     thereIs @RoomObject $ do
@@ -47,6 +48,7 @@ example1WorldTest = do
     thereIs @Thing $ do
         name .= "napkin"
         description .= "Slightly crumpled."
+    compileRulebook whenPlayBeginsRules
     pass
 
 f :: (Monad m, Show w) => World w m ()
@@ -75,8 +77,7 @@ f = do
 -}
 
 
-
-thereIs :: (ThereIs s, Monad m, Show s) => State s a -> World w m s
+thereIs :: (ThereIs s, Monad m, Show s, WithLog (Env (World w m)) Message (World w m)) => State s a -> World w m s
 thereIs s = do
     e <- newEntity
     let v = execState s $ defaultObject e

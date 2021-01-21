@@ -19,13 +19,13 @@ module Yaifl.Common
 
     ThereIs,
     defaultObject,
-    {-
-    , Rulebook(..)
+    Rulebook(..)
     , Rule(..)
     , PlainRule
     , PlainRulebook
-    -}
-    GameData (..),
+    , GameData (..),
+    RuleVarsT,
+    unwrapRuleVars,
     title,
     intersectStore,
     intersectStore2,
@@ -37,7 +37,8 @@ module Yaifl.Common
     storeLens2,
     storeLens3,
     isX,
-
+    PlainRule,
+    PlainRulebook,
     entityCounter,
     {-
     , World(..)
@@ -76,6 +77,7 @@ import qualified Data.IntMap as IM
 import qualified Data.Map.Strict as Map
 import Yaifl.Prelude
 import Data.Functor.Apply (Apply(..))
+import Control.Monad.State.Strict
 
 {- TYPES -}
 
@@ -137,20 +139,26 @@ instance MonadWorld m => MonadWorld (LoggerT msg m) where
 instance MonadWorld m => MonadWorld (ReaderT r m) where
     showWorld = lift showWorld
 
+instance MonadTrans (RuleVarsT v) where
+    lift = RuleVarsT . lift
+
+instance MonadReader r m => MonadReader r (RuleVarsT v m) where
+    ask = lift ask 
+    local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
 blankGameData :: w -> GameData w m
-blankGameData w = GameData w "Untitled" Nothing 0
+blankGameData w = GameData w "eat shit and die" Nothing 0
 
-type RulebookStore m = Map.Map Text (RuleEvaluation m)
+type RulebookStore w m = Map.Map Text (RuleEvaluation w m)
 
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
 
 -- | rules either give no outcome, true, or false.
-type RuleOutcome = Maybe Bool
+type RuleOutcome = Bool
 
-type RuleEvaluation m = m RuleOutcome
+type RuleEvaluation w m = World w m (Maybe RuleOutcome)
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -198,13 +206,13 @@ class ThereIs t where
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 data Rule w v m a where
-    Rule :: Text -> World w m a -> Rule w () m a
-    RuleWithVariables :: Text -> World w (RuleVarsT v m) (Maybe a) -> Rule w v m a
+    Rule :: WithLog env Message (World w m) => Text -> World w m (Maybe a) -> Rule w () m a
+    RuleWithVariables :: WithLog env Message (World w m) => Text -> RuleVarsT v (World w m) (Maybe a) -> Rule w v m a
 
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
 data Rulebook w v m a where
     Rulebook :: Text -> Maybe a -> [Rule w () m a] -> Rulebook w () m a
-    RulebookWithVariables :: Text -> Maybe a -> World w (RuleVarsT v m) (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
+    RulebookWithVariables :: Text -> Maybe a -> World w m (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
 
 type PlainRule w m = Rule w () m RuleOutcome
 type PlainRulebook w m = Rulebook w () m RuleOutcome
