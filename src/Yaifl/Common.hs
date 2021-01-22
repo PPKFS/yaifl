@@ -47,6 +47,7 @@ module Yaifl.Common
     rulebookName,
     messageBuffer,
     buffer,
+    setStyle,
     {-
     , World(..)
     , Action(..)
@@ -168,8 +169,8 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask 
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
-blankGameData :: w -> GameData w m
-blankGameData w = GameData w "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty
+blankGameData :: w -> (w -> w) -> GameData w m
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -248,6 +249,8 @@ sayLn a = say (a <> "\n")
 sayIf :: WithGameLog w m => Bool -> Text -> World w m ()
 sayIf iff a = when iff (say a)
 
+setStyle :: WithGameLog w m => Maybe PPTTY.AnsiStyle -> World w m ()
+setStyle sty = messageBuffer . msgStyle .= sty
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]
 rules = lensVL $ \f s -> case s of

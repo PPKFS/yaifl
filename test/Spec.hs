@@ -98,14 +98,14 @@ thereIs s = do
     e <- newEntity
     let v = execState s $ defaultObject e
     gameWorld . store . at e ?= v
-    logInfo $ toStrict $ pString (show v)
+    --logInfo $ toStrict $ pString (show v)
     return v
 
 newEntity :: (Monad m) => World w m Entity
 newEntity = do entityCounter <<%= (+ 1)
 
-setTitle :: WithLog env Message m => Text -> m ()
-setTitle t = logInfo $ "Set game title to " <> t <> "." <> "\n"
+setTitle :: WithGameLog w m => Text -> World w m ()
+setTitle t = title .= t
 
 consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
 consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
@@ -123,21 +123,21 @@ consumeTitle t = consumeText (mconcat $ introText t)
 consumeText :: Text -> Text -> Either Assertion Text 
 consumeText t1 t2 = case T.stripPrefix t1 t2 of
     Just x -> Right x
-    Nothing -> Left $ t1 @?= t2
+    Nothing -> Left $ t2 @?= t1
 
 main :: IO ()
 main = do
     v <- runTestTT tests
-    if (errors v + failures v == 0) then
+    if errors v + failures v == 0 then
       exitSuccess
     else
       die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
-
 tests :: Test
-tests = makeTests [(ex1World, ex1Test)]
+tests = makeTests [("Bic - 3.1.2", ex1World, ex1Test)]
 
+makeTests :: [(String, World GameWorld IO a, Text -> Either Assertion Text)] -> Test
 makeTests lst = TestList $
-    zipWith (\ i (x, y) -> TestLabel (mkName i)  $ TestCase (testExample x [] y)) [1 ..] lst where mkName i = "example " <> show i
+    map (\(z, x, y) -> TestLabel z  $ TestCase (testExample x [] y)) lst
 
 --testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
 --testExampleBlank w1 ts = testExample w1 [] ts
@@ -145,14 +145,16 @@ makeTests lst = TestList $
 testExample :: World GameWorld IO a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
 testExample w _ ts = do
     w2 <- runWorld (do
+        w
+        --when I write a proper game loop, this is where it needs to go
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
         fromMaybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") wpbr
-        ) (blankGameData blankGameWorld) (Env ((LogAction (liftIO . TIO.putStrLn . fmtMessage ))))
+        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
         --w4' = snd $ fromMaybe (Nothing, w) w4
         --v = runActions actions $ snd w4'
     let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
     --putStrLn "-------------\n"
-    case (Right x >>= ts) of 
+    case Right x >>= ts of 
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x'
