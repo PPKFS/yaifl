@@ -45,6 +45,8 @@ module Yaifl.Common
     rulebookStore,
     WithGameLog,
     rulebookName,
+    messageBuffer,
+    buffer,
     {-
     , World(..)
     , Action(..)
@@ -120,7 +122,7 @@ data GameData w m = GameData
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data MessageBuffer = MessageBuffer
     {
-        _stdBuffer :: [StyledDoc],
+        _buffer :: [StyledDoc],
         _msgStyle :: Maybe PPTTY.AnsiStyle
     } deriving Show
 
@@ -235,7 +237,7 @@ isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e
 sayInternal :: WithGameLog w m => StyledDoc -> World w m ()
 sayInternal a = do
     w <- use $ messageBuffer . msgStyle
-    messageBuffer . stdBuffer %= (:) (maybe id PP.annotate w a)
+    messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
 
 say :: WithGameLog w m => Text -> World w m ()
 say a = sayInternal (PP.pretty a)

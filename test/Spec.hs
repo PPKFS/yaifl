@@ -25,7 +25,6 @@ import qualified Data.Text.IO as TIO
 import Language.Haskell.TH
 import Text.Pretty.Simple (pString)
 import Yaifl.Rulebooks
-
 {-
 Game { unwrapGame :: ReaderT (RulebookStore (Game w))
 (LoggerT Text (World w)) a } deriving (Functor, Applicative, Monad)
@@ -48,7 +47,8 @@ instance HasStore GameWorld RoomData where
 
 instance HasStore GameWorld Enclosing where
     store = enclosingStore
-runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
+
+runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
 addRule :: WithGameLog w m => Rulebook w v m RuleOutcome -> Rule w v m RuleOutcome -> World w m ()
 addRule rb r= do
@@ -65,8 +65,8 @@ modifyingM t f = do
   s' <- t f s
   put s'
 
-example1WorldTest :: (HasThing w, HasStore w Thing, HasStore w RoomObject, WithGameLog w m) => World w m ()
-example1WorldTest = do
+ex1World :: (HasThing w, HasStore w Thing, HasStore w RoomObject, WithGameLog w m) => World w m ()
+ex1World = do
     setTitle "Bic"
     thereIs @RoomObject $ do
         name .= "The Staff Break Room"
@@ -86,24 +86,12 @@ example1WorldTest = do
         return Nothing)
     pass
 
-f :: (HasThing w, HasRoom w, WithGameLog w m) => World w m ()
-f = do
-    example1WorldTest
-    logInfo "blah"
-    logInfo "test"
-{-
-    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
-        mapObjects2 physicalComponent objectComponent (\v o -> do
-            when (descriptionOf o == "") (do
-                --printName' o
-                sayLn " has no description.")
-            return (v, o)
-            )
-        return Nothing)
-    g <- get
-    sayLn (show $ Map.keys $ g ^. rulebooks)
--}
-
+ex1Test :: Text -> Either Assertion Text
+ex1Test z = consumeTitle "Bic" z >>=
+            consumeLine "The Staff Break Room" >>=
+            consumeBlankRoomDescription "The Staff Break Room" >>=
+            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
+            consumeLine "Bic pen has no description."
 
 thereIs :: (ThereIs s, Show s, HasStore w s, WithGameLog w m) => State s a -> World w m s
 thereIs s = do
@@ -116,12 +104,59 @@ thereIs s = do
 newEntity :: (Monad m) => World w m Entity
 newEntity = do entityCounter <<%= (+ 1)
 
-
 setTitle :: WithLog env Message m => Text -> m ()
 setTitle t = logInfo $ "Set game title to " <> t <> "." <> "\n"
 
+consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
+consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
+
+listThings :: [Text] -> Text
+listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <> 
+                (if v == length t1 - 2 then "and " else "")) t1 [0..]
+
+consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
+consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
+consumeLine :: Text -> Text -> Either Assertion Text
+consumeLine t1 = consumeText (mconcat [t1, "\n"])
+consumeTitle :: Text -> Text -> Either Assertion Text 
+consumeTitle t = consumeText (mconcat $ introText t)
+consumeText :: Text -> Text -> Either Assertion Text 
+consumeText t1 t2 = case T.stripPrefix t1 t2 of
+    Just x -> Right x
+    Nothing -> Left $ t1 @?= t2
+
 main :: IO ()
-main = runWorld f (blankGameData blankGameWorld) (Env ((LogAction (liftIO . TIO.putStrLn . fmtMessage ))))
+main = do
+    v <- runTestTT tests
+    if (errors v + failures v == 0) then
+      exitSuccess
+    else
+      die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
+
+tests :: Test
+tests = makeTests [(ex1World, ex1Test)]
+
+makeTests lst = TestList $
+    zipWith (\ i (x, y) -> TestLabel (mkName i)  $ TestCase (testExample x [] y)) [1 ..] lst where mkName i = "example " <> show i
+
+--testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
+--testExampleBlank w1 ts = testExample w1 [] ts
+
+testExample :: World GameWorld IO a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
+testExample w _ ts = do
+    w2 <- runWorld (do
+        wpbr <- use $ rulebookStore . at whenPlayBeginsName
+        fromMaybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") wpbr
+        ) (blankGameData blankGameWorld) (Env ((LogAction (liftIO . TIO.putStrLn . fmtMessage ))))
+        --w4' = snd $ fromMaybe (Nothing, w) w4
+        --v = runActions actions $ snd w4'
+    let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
+    --putStrLn "-------------\n"
+    case (Right x >>= ts) of 
+        Left res -> res
+        Right "" -> pass
+        Right x' -> assertFailure $ "Was left with " <> toString x'
+
 
 {-
 tests :: Test
@@ -131,12 +166,6 @@ makeTests :: _ -> _
 makeTests lst = TestList $
     zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x)) [1 ..] lst
         where mkName i = "example " <> show i
-
-type WorldOutput = (SayOutput, PP.Doc PPTTY.AnsiStyle)
-
-runApplication :: forall m. m () -> WorldOutput
-runApplication v = second fst x where x = run . evalState (GameSettings "Untitled" Nothing Map.empty) . evalState (LoggingContext [] mempty) . runWriter @SayOutput . runWriter @(PP.Doc PPTTY.AnsiStyle) $ v
-
 
 runWorldTest :: (WithLogging sig m, Has (Writer SayOutput) sig m) => Int -> m () -> (m () -> _ ()) -> Assertion
 runWorldTest i w h = do
@@ -250,55 +279,7 @@ h w = w
             
             
 
-main :: IO ()
-main = do
-    _ <- runTestTT tests
-    pass
 
-tests :: Test
-tests = makeTests [example1World]
-
-makeTests lst = TestList $
-    zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x h)) [1 ..] lst
-        where mkName i = "example " <> show i
-
-testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
-testExampleBlank w1 ts = testExample w1 [] ts
-
-testExample :: WorldBuilder World -> [Text] -> (Text -> Either Assertion Text) -> IO ()
-testExample worldbuilder actions ts = do
-    let w = buildWorld worldbuilder blankWorld
-        w2 = w ^? gameInfo . rulebooks . ix whenPlayBeginsName
-    let w4 = (\(CompiledRulebook j) -> runState j w) <$> w2
-        w4' = snd $ fromMaybe (Nothing, w) w4
-        --v = runActions actions $ snd w4'
-        x = Relude.foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w4' ^. messageBuffer . stdBuffer
-    _ <- runStateT printMessageBuffer w4'
-    putStrLn "-------------\n"
-    case (Right x >>= ts) of 
-        Left res -> res
-        Right "" -> pass
-        Right x' -> assertFailure $ "Was left with " <> toString x'
-
-
-
-
-ex1 :: Assertion
-ex1 = makeTestWorld
-
-main :: IO ()
-main = defaultMain tests
-
-tests :: TestTree
-tests = makeTests [ex1]
-
-makeTests :: [Assertion] -> TestTree
-makeTests lst = testGroup "Tests" $ map
-    (\(i, x) -> after AllFinish (mkName (i - 1)) $ testCase (mkName i) x)
-    (zip [1 ..] lst)
-    where mkName i = "example " <> show i
-
-        )
 
 
 makeWorld "World" defaultWorld
@@ -382,29 +363,5 @@ runActions = error "not implemented"
         when (v == length stuff - 2) (say "and ")
         component' physicalComponent a . mentioned .= True
         ) $ zip (toList stuff) [0..]-}
-consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
-consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
 
-listThings :: [Text] -> Text
-listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <> 
-                (if v == length t1 - 2 then "and " else "")) t1 [0..]
-
-consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
-consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
-consumeLine :: Text -> Text -> Either Assertion Text
-consumeLine t1 = consumeText (mconcat [t1, "\n"])
-consumeTitle :: Text -> Text -> Either Assertion Text 
-consumeTitle t = consumeText (mconcat $ introText t)
-consumeText :: Text -> Text -> Either Assertion Text 
-consumeText t1 t2 = case Text.stripPrefix t1 t2 of
-    Just x -> Right x
-    Nothing -> Left $ t1 @?= t2
-
-assertText :: (Text, [Text]) -> World -> Assertion
-assertText (ti, xs) w = do
-    let x = reverse $ w ^. messageBuffer . stdBuffer
-    --_ <- runStateT printMessageBuffer w
-    Relude.foldl' (\v p -> v <> show p) ("" :: Text) x @?= buildExpected ti xs
-    pass
-    where buildExpected t x = mconcat $ introText t <> [unlines x]
 -}
