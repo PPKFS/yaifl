@@ -11,8 +11,6 @@ module Yaifl.Common
     RuleOutcome,
     RuleEvaluation,
     World (..),
-    showWorld,
-    MonadWorld,
     Env(..),
     HasStore,
     store,
@@ -37,9 +35,16 @@ module Yaifl.Common
     storeLens2,
     storeLens3,
     isX,
+    say,
+    sayLn,
+    sayIf,
     PlainRule,
     PlainRulebook,
     entityCounter,
+    gameWorld,
+    rulebookStore,
+    WithGameLog,
+    rulebookName,
     {-
     , World(..)
     , Action(..)
@@ -78,6 +83,8 @@ import qualified Data.Map.Strict as Map
 import Yaifl.Prelude
 import Data.Functor.Apply (Apply(..))
 import Control.Monad.State.Strict
+import qualified Data.Text.Prettyprint.Doc     as PP
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 
 {- TYPES -}
 
@@ -87,6 +94,15 @@ type Entity = Int
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
+type RulebookStore w m = Map.Map Text (RuleEvaluation w m)
+-- | A store with nothing in it
+emptyStore :: Store a
+emptyStore = IM.empty
+
+-- | rules either give no outcome, true, or false.
+type RuleOutcome = Bool
+
+type RuleEvaluation w m = World w m (Maybe RuleOutcome)
 
 class HasStore w c where
     store :: Lens' w (Store c)
@@ -96,9 +112,25 @@ data GameData w m = GameData
   { _gameWorld :: w,
     _title :: Text,
     _firstRoom :: Maybe Entity,
-    _entityCounter :: Entity
-  } deriving Show
+    _entityCounter :: Entity,
+    _messageBuffer :: MessageBuffer,
+    _rulebookStore :: RulebookStore w m
+  }
 
+type StyledDoc = PP.Doc PPTTY.AnsiStyle
+data MessageBuffer = MessageBuffer
+    {
+        _stdBuffer :: [StyledDoc],
+        _msgStyle :: Maybe PPTTY.AnsiStyle
+    } deriving Show
+
+newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (GameData w m) m) a} 
+    deriving newtype (Functor, Applicative, Monad,
+        MonadState (GameData w m),
+        MonadReader (Env (World w m)),
+        MonadIO) 
+
+makeLenses ''MessageBuffer
 makeLenses ''GameData
 
 instance HasLog (Env m) Message m where
@@ -110,16 +142,8 @@ instance HasLog (Env m) Message m where
     setLogAction newLogAction env = env { _envLogAction = newLogAction }
     {-# INLINE setLogAction #-}
 
-newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (GameData w (World w m)) m) a} 
-    deriving newtype (Functor, Applicative, Monad,
-        MonadState (GameData w (World w m)),
-        MonadReader (Env (World w m)),
-        MonadIO) 
 
-class Monad m => MonadWorld m where
-    showWorld :: m Text
-    --getComponent :: e -> m (Lens' w (Maybe c))
-
+type WithGameLog w m = (WithLog (Env (World w m)) Message (World w m), Monad m)
 getComponent :: (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
 getComponent e = use $ gameWorld . store . at e
 
@@ -128,17 +152,13 @@ setComponent e v = gameWorld . store . at e ?= v
 
 instance MonadTrans (World w) where
     lift = World . lift . lift
-
-instance (Monad m, Show w) => MonadWorld (World w m) where
-    showWorld = show <$> get
-    --component p e = use $ gameWorld . store . at e
-
+{-
 instance MonadWorld m => MonadWorld (LoggerT msg m) where
     showWorld = lift showWorld
 
 instance MonadWorld m => MonadWorld (ReaderT r m) where
     showWorld = lift showWorld
-
+-}
 instance MonadTrans (RuleVarsT v) where
     lift = RuleVarsT . lift
 
@@ -147,18 +167,7 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
 blankGameData :: w -> GameData w m
-blankGameData w = GameData w "eat shit and die" Nothing 0
-
-type RulebookStore w m = Map.Map Text (RuleEvaluation w m)
-
--- | A store with nothing in it
-emptyStore :: Store a
-emptyStore = IM.empty
-
--- | rules either give no outcome, true, or false.
-type RuleOutcome = Bool
-
-type RuleEvaluation w m = World w m (Maybe RuleOutcome)
+blankGameData w = GameData w "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -199,7 +208,6 @@ storeLens2 f a a2 = lens (intersectStore2 f) (setStore2 a a2)
 storeLens3 :: (HasStore w a, HasStore w c, HasStore w d) => (a -> c -> d -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> Lens' w (Store b)
 storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
 
-
 class ThereIs t where
     defaultObject :: Entity -> t
 
@@ -214,11 +222,29 @@ data Rulebook w v m a where
     Rulebook :: Text -> Maybe a -> [Rule w () m a] -> Rulebook w () m a
     RulebookWithVariables :: Text -> Maybe a -> World w m (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
 
+rulebookName :: Rulebook w v m a -> Text
+rulebookName (Rulebook t _ _) = t
+rulebookName (RulebookWithVariables t _ _ _) = t
 type PlainRule w m = Rule w () m RuleOutcome
 type PlainRulebook w m = Rulebook w () m RuleOutcome
 
 isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
 isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
+
+
+sayInternal :: WithGameLog w m => StyledDoc -> World w m ()
+sayInternal a = do
+    w <- use $ messageBuffer . msgStyle
+    messageBuffer . stdBuffer %= (:) (maybe id PP.annotate w a)
+
+say :: WithGameLog w m => Text -> World w m ()
+say a = sayInternal (PP.pretty a)
+
+sayLn ::  WithGameLog w m => Text -> World w m ()
+sayLn a = say (a <> "\n")
+
+sayIf :: WithGameLog w m => Bool -> Text -> World w m ()
+sayIf iff a = when iff (say a)
 
 {-
 rules :: Lens' (Rulebook w v r) [Rule w v r]

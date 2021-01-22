@@ -10,12 +10,12 @@ module Yaifl.Components.Physical
     , thing
     , things
     , described
+    , HasThing
     )
 where
 
 import Yaifl.Prelude
 import Yaifl.Common
-import Yaifl.Say
 import Yaifl.Components.Object
 
 data ThingLit = Lit | Unlit deriving (Eq, Show)
@@ -77,6 +77,8 @@ instance HasObject Thing where
 instance ThereIs Thing where
     defaultObject e = Thing (blankObject e "thing") (blankPhysical e)
 
+instance HasThing w => HasStore w Thing where
+    store = things
 type HasThing w = (HasStore w Object, HasStore w Physical)
 
 things :: HasThing w => Lens' w (Store Thing)

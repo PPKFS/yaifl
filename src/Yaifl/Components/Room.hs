@@ -6,11 +6,11 @@ module Yaifl.Components.Room
       , IsVisited(..)
       , roomObject
       , rooms
+      , HasRoom
     )
 where
 
 import           Yaifl.Common
-import           Yaifl.Say
 import           Yaifl.Prelude
 import Yaifl.Components.Object
 import Yaifl.Components.Enclosing
@@ -50,6 +50,9 @@ makeLenses ''RoomObject
 
 instance HasObject RoomObject where
     object = roomObject
+
+instance HasRoom w => HasStore w RoomObject where
+    store = rooms
 
 type HasRoom w = (HasStore w Object, HasStore w RoomData, HasStore w Enclosing)
 

@@ -5,7 +5,6 @@ module Yaifl.Rulebooks
 ) where
 
 import Yaifl.Prelude
-import Yaifl.Say
 import Yaifl.Common
 import Yaifl.Utils
 import Colog
@@ -18,7 +17,7 @@ makeBlankRule n = Rule n (do
 
 
 
-makeBlankRuleWithVariables :: (Monad m, WithLog env Message (World w m) ) => Text -> Rule w v m a
+makeBlankRuleWithVariables :: WithGameLog w m => Text -> Rule w v m a
 makeBlankRuleWithVariables n = RuleWithVariables n (do
     lift $ logInfo $ n <> " needs implementing"
     return Nothing)
@@ -34,7 +33,7 @@ logRulebookName n = do
 
 
 
-compileRulebook :: (WithLog (Env (World w m)) Message (World w m)) => Rulebook w s m Bool -> World w m (Maybe Bool)
+compileRulebook :: WithGameLog w m => Rulebook w s m Bool -> World w m (Maybe Bool)
 compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
         do
             logRulebookName n
@@ -86,7 +85,7 @@ introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder <
             where shortBorder = "------"
                   longBorder = foldr (<>) "" $ replicate (2 * T.length shortBorder + T.length w + 2) ("-" :: Text)
 --TODO; TYPE ALIAS THIS WHOLE LOGGING, MONAD M THING
-sayIntroText :: (WithLog (Env (World w m)) Message (World w m), Monad m) => World w m ()
+sayIntroText :: WithGameLog w m => World w m ()
 sayIntroText = do
     --setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
     t <- use title

@@ -10,9 +10,10 @@ module Yaifl.Components.Object
     , object
     , ObjType
     , blankObject
-    {-
-    , descriptionOf
+
+    , evalDescription
     , HasDescription
+        {-
     , objectComponent
     , makeObject
     , HasWorld
@@ -26,7 +27,6 @@ module Yaifl.Components.Object
 where
 
 import           Yaifl.Common
-import           Yaifl.Say
 import           Yaifl.Prelude
 import qualified Text.Show
 import qualified Data.IntMap.Strict as IM
@@ -66,6 +66,21 @@ data Object = Object
 blankObject :: Entity -> ObjType -> Object
 blankObject = Object "" ""
 makeClassy ''Object
+
+class HasDescription w m a where
+    evalDescription :: a -> GameData w m -> Text
+
+instance (HasStore w Object) => HasDescription w m Entity where
+    evalDescription e gd = maybe "Uh oh." (`evalDescription` gd) v where
+        v :: Maybe Object
+        v = gd ^. gameWorld . store . at e
+
+instance HasObject i => HasDescription w m i where
+    evalDescription o = ed (o ^. object) where
+        ed Object{_description=PlainDescription t} _ = t
+        ed Object{_description=DynamicDescription f, _objID=i} g = f g i
+
+    
 {-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name
@@ -74,12 +89,7 @@ instance HasName Entity where
     nameOf e = do
         _name <$> getComponent' objectComponent e
     
-class HasDescription a where
-    descriptionOf :: (HasWorld w '[Object] r) => a -> Sem r Description
 
-instance HasDescription Entity where
-    descriptionOf e = do
-        _description <$> getComponent' objectComponent e
 
 type HasWorld w c r
     = (Members (SemWorldList w) r, HasComponents w c)

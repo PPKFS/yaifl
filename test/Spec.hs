@@ -12,6 +12,9 @@ import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.IntMap.Strict            as IM
 import qualified Data.Map.Strict            as Map
 import qualified Data.Set as DS
+import qualified Control.Monad.State.Lazy as MonState
+
+
 import Yaifl.TH
 import Colog.Monad
 import Colog (LogAction(..),Severity(..), logStringStdout, logPrint, HasLog)
@@ -32,10 +35,37 @@ newtype World w a = World
 -}
 
 makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing]
+makeLenses ''GameWorld
 
+instance HasStore GameWorld Object where
+    store = objectStore
+
+instance HasStore GameWorld Physical where
+    store = physicalStore
+
+instance HasStore GameWorld RoomData where
+    store = roomDataStore
+
+instance HasStore GameWorld Enclosing where
+    store = enclosingStore
 runWorld w i env = evalStateT (runReaderT (unwrapWorld w) env) i
 
-example1WorldTest :: (Monad m, Show w, WithLog (Env (World w m)) Message (World w m)) => World w m ()
+addRule :: WithGameLog w m => Rulebook w v m RuleOutcome -> Rule w v m RuleOutcome -> World w m ()
+addRule rb r= do
+    let r2 = addRuleLast rb r
+    rulebookStore . at (rulebookName rb) ?= compileRulebook r2
+    pass
+
+addRuleLast :: Rulebook w v m a -> Rule w v m a -> Rulebook w v m a 
+addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
+
+modifyingM :: MonadState s m => LensLike m s s a b -> (a -> m b) -> m ()
+modifyingM t f = do
+  s <- get
+  s' <- t f s
+  put s'
+
+example1WorldTest :: (HasThing w, HasStore w Thing, HasStore w RoomObject, WithGameLog w m) => World w m ()
 example1WorldTest = do
     setTitle "Bic"
     thereIs @RoomObject $ do
@@ -48,22 +78,20 @@ example1WorldTest = do
     thereIs @Thing $ do
         name .= "napkin"
         description .= "Slightly crumpled."
-    compileRulebook whenPlayBeginsRules
+    addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
+        modifyingM (gameWorld . things . traverse) (\t -> do
+            whenM (gets (evalDescription t) >>= return . (("") ==)) (do 
+                sayLn $ (t ^. name) <> " has no description.")
+            return t)
+        return Nothing)
     pass
 
-f :: (Monad m, Show w) => World w m ()
+f :: (HasThing w, HasRoom w, WithGameLog w m) => World w m ()
 f = do
     example1WorldTest
-    t <- showWorld
-    logInfo t
     logInfo "blah"
     logInfo "test"
 {-
-    addThing' "Bic pen" ""
-    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    sayLn "aaaa"
-    addThing' "napkin" "Slightly crumpled."
-    sayLn "moo"
     addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
         mapObjects2 physicalComponent objectComponent (\v o -> do
             when (descriptionOf o == "") (do
@@ -77,10 +105,11 @@ f = do
 -}
 
 
-thereIs :: (ThereIs s, Monad m, Show s, WithLog (Env (World w m)) Message (World w m)) => State s a -> World w m s
+thereIs :: (ThereIs s, Show s, HasStore w s, WithGameLog w m) => State s a -> World w m s
 thereIs s = do
     e <- newEntity
     let v = execState s $ defaultObject e
+    gameWorld . store . at e ?= v
     logInfo $ toStrict $ pString (show v)
     return v
 

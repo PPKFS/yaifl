@@ -65,7 +65,6 @@ library
                         Yaifl
                       , Yaifl.Common
                       , Yaifl.Prelude
-                      , Yaifl.Say
                       , Yaifl.TH
                       , Yaifl.Components
                        --, Yaifl.WorldBuilder
