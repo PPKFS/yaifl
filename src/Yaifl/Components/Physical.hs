@@ -11,12 +11,17 @@ module Yaifl.Components.Physical
     , things
     , described
     , HasThing
+    , move
     )
 where
 
 import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Components.Object
+import Yaifl.Components.Enclosing
+import qualified Data.Set as DS
+import Yaifl.Utils
+import Colog hiding (Lens')
 
 data ThingLit = Lit | Unlit deriving (Eq, Show)
 data Edibility = Edible | Inedible deriving (Eq, Show)
@@ -86,6 +91,24 @@ things = storeLens2 Thing _thingObject _thingPhysical
 
 thing :: HasThing w => Entity -> Lens' w (Maybe Thing)
 thing k = things . at k
+
+move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog w m) => Entity -> Entity -> World w m Bool
+move obj le = do
+    objToMove <- use $ gameWorld . thing obj
+    mloc <- use $ gameWorld . (store @w @Enclosing) . at le
+    -- todo: nicer errors here
+    doIfExists2 objToMove mloc (show obj <> " no physical thing to move") "no future loc"
+        (\o _ -> do
+            --todo: recalc the location?
+            -- todo: doesn't this mean the location is actually
+            -- a derived property?
+            --o . location .= le
+            let vl = o ^. thingPhysical . enclosedBy
+            gameWorld . store . at obj . _Just . enclosedBy .= le
+            gameWorld . store . at vl . _Just . encloses %= DS.delete obj
+            gameWorld . store . at le . _Just . encloses %= DS.insert obj
+            return True
+        )
 {-
 makeThing' :: HasWorld w '[Physical] r => Name -> Description -> Entity -> Sem r Entity
 makeThing' n d l = do
@@ -103,23 +126,7 @@ makeThing n d p t = do
     return e
 
 
-move :: (HasComponent u w Physical, HasComponent u w Enclosing) => Entity -> Entity -> System u Bool
-move obj le = do
-    w <- get
-    --mp is the thing we're moving
-    let mp = getComponent w physicalComponent obj
-    --mloc is the new place to put it
-        mloc = getComponent w enclosingComponent le
-    --mcurrloc is the existing location
-        mcurrLoc = _location <$> mp
-    doIfExists3 mp mloc mcurrLoc (show obj <> " no physical thing to move") "no future loc" "no current loc" 
-        (\_ _ c -> do
-            component' physicalComponent obj . location .= le
-            component' physicalComponent obj . enclosedBy .= le
-            component' enclosingComponent c . encloses %= DS.delete obj
-            component' enclosingComponent le . encloses %= DS.insert obj
-            return True
-        )
+
 physicalLens :: HasComponent u w Physical => Entity -> Lens' u (Maybe Physical)
 physicalLens = component physicalComponent
 

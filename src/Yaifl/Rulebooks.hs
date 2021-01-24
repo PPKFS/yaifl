@@ -5,6 +5,7 @@ module Yaifl.Rulebooks
 ) where
 
 import Yaifl.Prelude
+import Yaifl.Components
 import Yaifl.Common
 import Yaifl.Utils
 import Colog
@@ -66,14 +67,14 @@ compileRulebook (Rulebook n def r) = if null r then pure def else
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-whenPlayBeginsRules :: Monad m => PlainRulebook w m
+whenPlayBeginsRules :: (HasThing w, HasRoom w, WithGameLog w m) => PlainRulebook w m
 whenPlayBeginsRules = makeRulebook whenPlayBeginsName [
             Rule "display banner rule" (do
                 sayIntroText
                 return Nothing),
             Rule "position player in model world rule" (do
-                w <- get
-                maybe (logError "first room never set.") (move (getPlayer' w)) (w ^. gameInfo . firstRoom)
+                v <- (`move` 1) <$> use playerL                
+                when v (logError "first room never set.")
                 return Nothing){-,
             Rule "initial room description rule" (do
                 tryAction lookingActionName []
