@@ -14,9 +14,11 @@ module Yaifl.Common
     Env(..),
     HasStore,
     store,
-
+    firstRoom,
     ThereIs,
     defaultObject,
+    Deletable,
+    deleteObject,
     Rulebook(..)
     , Rule(..)
     , PlainRule
@@ -38,8 +40,6 @@ module Yaifl.Common
     say,
     sayLn,
     sayIf,
-    PlainRule,
-    PlainRulebook,
     entityCounter,
     gameWorld,
     rulebookStore,
@@ -48,6 +48,19 @@ module Yaifl.Common
     messageBuffer,
     buffer,
     setStyle,
+    getComponent,
+    uniqueComponent,
+    withEntityIDBlock,
+    defaultPlayerID,
+    newEntity,
+    component,
+    adjustComponent,
+    setComponent,
+    deleteComponent,
+    defaultVoidRoom,
+    tryAction,
+    Action(..),
+    ActionArgs(..),
     {-
     , World(..)
     , Action(..)
@@ -94,10 +107,23 @@ import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 -- | An Entity is just an ID that is loosely associated with components.
 type Entity = Int
 
+uniqueComponent :: Entity
+uniqueComponent = 0
+
+defaultPlayerID :: Entity
+defaultPlayerID = -10
+
+defaultdirectionBlockIDs :: Entity
+defaultdirectionBlockIDs = -100
+
+defaultVoidRoom :: Entity
+defaultVoidRoom = -20
+
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
 type RulebookStore w m = Map.Map Text (RuleEvaluation w m)
+type ActionStore w m = Map.Map Text (ActionEvaluation w m)
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -106,9 +132,11 @@ emptyStore = IM.empty
 type RuleOutcome = Bool
 
 type RuleEvaluation w m = World w m (Maybe RuleOutcome)
+newtype ActionEvaluation w m = CompiledAction ([Entity] -> World w m RuleOutcome)
 
 class HasStore w c where
     store :: Lens' w (Store c)
+    
 newtype Env m = Env { _envLogAction :: LogAction m Message } 
 
 data GameData w m = GameData
@@ -117,7 +145,9 @@ data GameData w m = GameData
     _firstRoom :: Maybe Entity,
     _entityCounter :: Entity,
     _messageBuffer :: MessageBuffer,
-    _rulebookStore :: RulebookStore w m
+    _actionProcessingRulebook :: forall v. Action w v m -> [Entity] -> Rulebook w v m RuleOutcome,
+    _rulebookStore :: RulebookStore w m,
+    _actionStore :: ActionStore w m
   }
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
@@ -133,9 +163,6 @@ newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (
         MonadReader (Env (World w m)),
         MonadIO) 
 
-makeLenses ''MessageBuffer
-makeLenses ''GameData
-
 instance HasLog (Env m) Message m where
     getLogAction :: Env m -> LogAction m Message
     getLogAction = _envLogAction
@@ -145,13 +172,8 @@ instance HasLog (Env m) Message m where
     setLogAction newLogAction env = env { _envLogAction = newLogAction }
     {-# INLINE setLogAction #-}
 
-
 type WithGameLog w m = (WithLog (Env (World w m)) Message (World w m), Monad m)
-getComponent :: (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
-getComponent e = use $ gameWorld . store . at e
 
-setComponent :: (Monad m, HasStore w c) => Entity -> c -> World w m ()
-setComponent e v = gameWorld . store . at e ?= v
 
 instance MonadTrans (World w) where
     lift = World . lift . lift
@@ -169,8 +191,8 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask 
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
-blankGameData :: w -> (w -> w) -> GameData w m
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty
+blankGameData :: w -> (w -> w) -> (forall v. Action w v m -> [Entity] -> Rulebook w v m RuleOutcome) -> GameData w m
+blankGameData w rbs a = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) a Map.empty Map.empty
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -193,8 +215,8 @@ intersectStore2 f w = intersectStore f w <.> w ^. store
 intersectStore3 :: (HasStore w a1, HasStore w a2, HasStore w a) => (a1 -> a2 -> a -> b) -> w -> Store b
 intersectStore3 f w = intersectStore2 f w <.> w ^. store
 
-setStore :: HasStore w c => (a -> c) -> w -> Store a -> w
-setStore f w m = w & store .~  (f <$> m)
+setStore :: forall c a w. HasStore w c => (a -> c) -> w -> Store a -> w
+setStore f w m = w & store %~ IM.union (f <$> m)
 
 setStore2 :: (HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> w -> Store a -> w
 setStore2 f f2 w m = setStore f2 (setStore f w m) m
@@ -214,6 +236,9 @@ storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
 class ThereIs t where
     defaultObject :: Entity -> t
 
+class Deletable w t where
+    deleteObject :: (HasStore w t, Monad m) => Entity -> World w m ()
+
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 data Rule w v m a where
@@ -231,89 +256,14 @@ rulebookName (RulebookWithVariables t _ _ _) = t
 type PlainRule w m = Rule w () m RuleOutcome
 type PlainRulebook w m = Rulebook w () m RuleOutcome
 
-isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
-isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
-
-
-sayInternal :: WithGameLog w m => StyledDoc -> World w m ()
-sayInternal a = do
-    w <- use $ messageBuffer . msgStyle
-    messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
-
-say :: WithGameLog w m => Text -> World w m ()
-say a = sayInternal (PP.pretty a)
-
-sayLn ::  WithGameLog w m => Text -> World w m ()
-sayLn a = say (a <> "\n")
-
-sayIf :: WithGameLog w m => Bool -> Text -> World w m ()
-sayIf iff a = when iff (say a)
-
-setStyle :: WithGameLog w m => Maybe PPTTY.AnsiStyle -> World w m ()
-setStyle sty = messageBuffer . msgStyle .= sty
-{-
-rules :: Lens' (Rulebook w v r) [Rule w v r]
-rules = lensVL $ \f s -> case s of
-  Rulebook n d r -> fmap (Rulebook n d) (f r)
-  RulebookWithVariables n d i r -> fmap (RulebookWithVariables n d i) (f r)
--}
-{-
-data World w m k where
-    GetStore :: HasStore w c => Proxy c -> World w m (Store c)
-    SetComponent :: HasStore w c => Proxy c -> Entity -> c -> World w m ()
-    GetEntityCounter :: World w m Entity
-    SetEntityCounter :: Entity -> World w m Entity
-
-makeSem ''World
-
-worldToMapStore :: EntityProducer w => Sem (World w ': r) a -> Sem (State w ': r) a
-worldToMapStore = reinterpret $ \case
-    GetStore p -> use $ store p
-    SetComponent p e v -> store p % at' e ?= v
-    GetEntityCounter   -> use entityCounter
-    SetEntityCounter e -> do
-        ec <- use entityCounter
-        entityCounter .= e
-        return ec
-
-getComponent :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> Sem r (Maybe c)
-getComponent p e = do
-    s <- getStore p
-    return $ IM.lookup e s
-
-getComponent' :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> Sem r c
-getComponent' p e = do
-    s <- getStore p
-    let res = maybeToRight "Somehow couldn't find the component" (IM.lookup e s)
-    when (isLeft res) (
-        logMsg Error $ "Attempted to find a component of " <>  show e <> " but couldn't find it")
-    fromEither res
-
-adjustComponent :: (HasStore w c, Members (SemWorldList w) r) => Proxy c -> Entity -> (c -> c) -> Sem r ()
-adjustComponent p e f = do
-    c <- getComponent p e
-    whenJust c (setComponent p e . f)
-
-type SemWorldList w = '[World w, Log, State LoggingContext, Say, State (GameSettings w), Error Text]
-
-type SemWorld w r = Sem (SemWorldList w) r
-
-data Activity w v = Activity
-    { _activityName :: Text
-    , _initActivity :: [Entity] -> SemWorld w (Maybe v)
-    , _beforeRules  :: Rulebook w v (v, RuleOutcome)
-    , _forRules     :: Rulebook w v (v, RuleOutcome)
-    , _afterRules   :: Rulebook w v (v, RuleOutcome)
-    }
-
-data Action w v = Action
+data Action w v m = Action
     { _actionName          :: Text
     , _understandAs        :: [Text]
-    , _setActionVariables  :: [Entity] -> Rulebook w v (Maybe v)
-    , _beforeActionRules   :: Rulebook w v (v, RuleOutcome)
-    , _checkActionRules    :: Rulebook w v (v, RuleOutcome)
-    , _carryOutActionRules :: Rulebook w v (v, RuleOutcome)
-    , _reportActionRules   :: Rulebook w v RuleOutcome
+    , _setActionVariables  :: v -> Rulebook w v m v
+    , _beforeActionRules   :: Rulebook w v m RuleOutcome
+    , _checkActionRules    :: Rulebook w v m RuleOutcome
+    , _carryOutActionRules :: Rulebook w v m RuleOutcome
+    , _reportActionRules   :: Rulebook w v m RuleOutcome
     }
 
 class Eq a => ActionArgs a where
@@ -331,24 +281,85 @@ instance ActionArgs () where
     unboxArguments [] = Just ()
     unboxArguments _  = Nothing
 
-withEntityIDBlock :: Member (World w) r => Entity -> Sem r a -> Sem r a
+makeLenses ''MessageBuffer
+makeLenses ''GameData
+
+getComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
+getComponent e = use $ gameWorld . store . at e
+
+setComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> c -> World w m ()
+setComponent e v = gameWorld . store . at e ?= v
+
+adjustComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> (c -> c) -> World w m ()
+adjustComponent e f = do
+    c <- getComponent e
+    whenJust c (setComponent e . f)
+
+deleteComponent :: forall c m w. (Monad m, HasStore w c) => Entity -> World w m ()
+deleteComponent e = do
+    gameWorld . store @w @c . at e .= Nothing
+    pass
+
+component :: forall c w. HasStore w c => Entity -> Lens' w (Maybe c)
+component e = lens (\w -> w ^. store . at e ) sc where
+    sc :: (w -> Maybe c -> w)
+    sc w v = set (store @w @c . at e) v w
+
+isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
+isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
+
+sayInternal :: WithGameLog w m => StyledDoc -> World w m ()
+sayInternal a = do
+    w <- use $ messageBuffer . msgStyle
+    messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
+
+say :: WithGameLog w m => Text -> World w m ()
+say a = sayInternal (PP.pretty a)
+
+sayLn ::  WithGameLog w m => Text -> World w m ()
+sayLn a = say (a <> "\n")
+
+sayIf :: WithGameLog w m => Bool -> Text -> World w m ()
+sayIf iff a = when iff (say a)
+
+setStyle :: WithGameLog w m => Maybe PPTTY.AnsiStyle -> World w m ()
+setStyle sty = messageBuffer . msgStyle .= sty
+
+withEntityIDBlock :: Monad m => Entity -> World w m a -> World w m a
 withEntityIDBlock idblock x = do
     ec <- setEntityCounter idblock
     v  <- x
     _  <- setEntityCounter ec
     return v
 
-newEntity :: Member (World w) r => Sem r Entity
-newEntity = do
-    ec <- getEntityCounter
-    _  <- setEntityCounter (ec + 1)
+setEntityCounter :: Monad m => Entity -> World w m Entity
+setEntityCounter e = do
+    ec <- use entityCounter
+    entityCounter .= e
     return ec
 
--- TODO: check it doesn't have the component to begin with
-addComponent :: (Member (World w) r, HasStore w c) => Entity -> c -> Sem r ()
-addComponent = setComponent (Proxy :: Proxy c)
+newEntity :: (Monad m) => World w m Entity
+newEntity = do entityCounter <<%= (+ 1)
 
 
+
+tryAction :: Monad m => Text -> [Entity] -> World w m Bool
+tryAction action args = do
+    ac <- use $ actionStore . at action
+    --v <- use actionProcessingRulebook
+    maybe (do
+        logError $ "Couldn't find the action called " <> action
+        return False) (\(CompiledAction a) -> a args) ac
+
+{-
+
+data Activity w v = Activity
+    { _activityName :: Text
+    , _initActivity :: [Entity] -> SemWorld w (Maybe v)
+    , _beforeRules  :: Rulebook w v (v, RuleOutcome)
+    , _forRules     :: Rulebook w v (v, RuleOutcome)
+    , _afterRules   :: Rulebook w v (v, RuleOutcome)
+    }
 
 makeLenses ''Rulebook
 

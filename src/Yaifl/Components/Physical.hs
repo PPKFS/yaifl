@@ -30,8 +30,7 @@ data Wearability = Wearable | Unwearable deriving (Eq, Show)
 data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving (Eq, Show)
 data Describable = Described | NotDescribed deriving (Eq, Show)
 data Physical = Physical
-    { _location          :: Entity
-    , _lit               :: ThingLit
+    { _lit               :: ThingLit
     , _edible            :: Edibility
     , _portable          :: Portability
     , _wearable          :: Wearability
@@ -46,13 +45,13 @@ data Physical = Physical
     , _initialAppearance :: Maybe Description
     , _scenery           :: Bool
     } deriving Show
-makeLenses ''Physical
+makeClassy ''Physical
 
 isConcealed :: (Monad m, HasStore w Physical) => Entity -> World w m Bool
 isConcealed e = not <$> isX Nothing _concealedBy e
 
 blankPhysical :: Entity -> Physical
-blankPhysical e = Physical e
+blankPhysical e = Physical
                            Lit
                            Inedible
                            Portable
@@ -79,8 +78,10 @@ makeLenses ''Thing
 instance HasObject Thing where
     object = thingObject
 
+instance HasPhysical Thing where
+    physical = thingPhysical
 instance ThereIs Thing where
-    defaultObject e = Thing (blankObject e "thing") (blankPhysical e)
+    defaultObject e = Thing (blankObject e "thing") (blankPhysical defaultVoidRoom)
 
 instance HasThing w => HasStore w Thing where
     store = things
@@ -96,17 +97,20 @@ move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog w m) => Enti
 move obj le = do
     objToMove <- use $ gameWorld . thing obj
     mloc <- use $ gameWorld . (store @w @Enclosing) . at le
-    -- todo: nicer errors here
-    doIfExists2 objToMove mloc (show obj <> " no physical thing to move") "no future loc"
+    locName <- getComponent @Object le 
+    doIfExists2 objToMove mloc (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.") 
+        (showMaybeObjDebug locName <> " has no enclosing component, so cannot move objects into it.")
         (\o _ -> do
             --todo: recalc the location?
             -- todo: doesn't this mean the location is actually
             -- a derived property?
             --o . location .= le
             let vl = o ^. thingPhysical . enclosedBy
-            gameWorld . store . at obj . _Just . enclosedBy .= le
-            gameWorld . store . at vl . _Just . encloses %= DS.delete obj
-            gameWorld . store . at le . _Just . encloses %= DS.insert obj
+            vlo <- getComponent @Object vl
+            logDebug $ "Moving " <> showObjDebug o <> " from " <> showMaybeObjDebug vlo <> " to " <> showMaybeObjDebug locName
+            adjustComponent @Physical obj (enclosedBy .~ le)
+            adjustComponent @Enclosing vl (encloses %~ DS.delete obj)
+            adjustComponent @Enclosing le (encloses %~ DS.insert obj)
             return True
         )
 {-

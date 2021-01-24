@@ -15,14 +15,14 @@ import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 
 makeBlankRule :: Monad m => Text -> PlainRule w m
 makeBlankRule n = Rule n (do
-    logInfo $ n <> " needs implementing"
+    logError $ n <> " needs implementing"
     return Nothing)
 
 
 
 makeBlankRuleWithVariables :: WithGameLog w m => Text -> Rule w v m a
 makeBlankRuleWithVariables n = RuleWithVariables n (do
-    lift $ logInfo $ n <> " needs implementing"
+    lift $ logError $ n <> " needs implementing"
     return Nothing)
 
 makeRulebook :: Text -> [Rule w () m a] -> Rulebook w () m a
@@ -30,7 +30,7 @@ makeRulebook n = Rulebook n Nothing
 
 logRulebookName :: (MonadReader env m, WithLog env Message m) => Text -> m ()
 logRulebookName n = do
-    unless (n == "") $ logInfo $ "Following the " <> n <> " rulebook"
+    unless (n == "") $ logDebug $ "Following the " <> n <> " rulebook"
     --todo: add context?
     unless (n == "") pass
 
@@ -48,7 +48,7 @@ compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
                             lift $ logError "Hit argumentless rule in rulebook with args"
                             return def) r
                 res <- evalStateT (unwrapRuleVars f) args 
-                logInfo $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+                logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
                 return $ res <|> def) iv
 
 compileRulebook (Rulebook n def r) = if null r then pure def else
@@ -56,29 +56,30 @@ compileRulebook (Rulebook n def r) = if null r then pure def else
         logRulebookName n
         res <- doUntilJustM (\case 
                 Rule rn rf -> do
-                    unless (rn == "") (logInfo $ "Following the " <> rn)
+                    unless (rn == "") (logDebug $ "Following the " <> rn)
                     rf
                 RuleWithVariables _ _ -> do
                     logError "Hit argument rule in rulebook without args"
                     return def) r
-        logInfo $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+        logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
         return $ res <|> def
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-whenPlayBeginsRules :: (HasThing w, HasRoom w, WithGameLog w m) => PlainRulebook w m
+whenPlayBeginsRules :: (HasStore w Enclosing, HasStore w Player, HasThing w, WithGameLog w m) => PlainRulebook w m
 whenPlayBeginsRules = makeRulebook whenPlayBeginsName [
             Rule "display banner rule" (do
                 sayIntroText
                 return Nothing),
             Rule "position player in model world rule" (do
-                v <- (`move` 1) <$> use playerL                
-                when v (logError "first room never set.")
-                return Nothing){-,
+                fr <- use firstRoom
+                v <- maybe (return False) movePlayer fr 
+                unless v (logError "first room never set.")
+                return Nothing),
             Rule "initial room description rule" (do
-                tryAction lookingActionName []
-                return Nothing)-}
+                tryAction "lookingActionName" []
+                return Nothing)
         ]
 
 introText :: Text -> [Text]
@@ -93,27 +94,3 @@ sayIntroText = do
     mapM_ say (introText t) --replace w/say
     --setStyle Nothing
     pass
-{-
-compileRulebook' :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook w
-compileRulebook' r db = CompiledRulebook (do
-    let (CompiledRulebook cr) = compileRulebook r db
-    w <- get
-    let iv = _rulebookInit r w
-    zoomOut cr iv)
-
-compileRulebook :: HasMessageBuffer w => UncompiledRulebook w r -> RulebookDebugPrinting -> Rulebook (w, r)
-compileRulebook (Rulebook n initVars rs) db = CompiledRulebook (
-    if null rs then return Nothing else (do
-    (w, _) <- get
-    unless (n == "" || db == Silent) $ sayDbgLn $ "Following the " <> n
-    indentDbg True
-    let iv = initVars w
-    _2 .= iv
-    result <- doUntilJustM (\r1 -> do
-        unless (fst r1 == "" || db == Silent) $ sayDbgLn $ "Following the " <> fst r1
-        snd r1
-        ) rs
-    indentDbg False
-    unless (db == Silent) $ sayDbgLn $ "Finished following the " <> n <> " with result " <> maybe "nothing" show result
-    return result))
--}

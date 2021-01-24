@@ -1,44 +1,40 @@
 module Yaifl.Actions
 (
+    actionProcessingRulebook
+  , addBaseActions
 ) where
 
 import Yaifl.Prelude
-import Yaifl.Say
 import Yaifl.Common
 import Yaifl.Rulebooks
 import Yaifl.Components
 import Yaifl.Activities
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-{-
+
 actionProcessingRulebookName :: Text
 actionProcessingRulebookName = "action processing rulebook"
 
-actionProcessingRulebook :: Action w v -> Rulebook w v RuleOutcome
-actionProcessingRulebook action = RulebookWithVariables 
+actionProcessingRulebook :: Monad m => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome
+actionProcessingRulebook action args = RulebookWithVariables 
     actionProcessingRulebookName
     (Just True)
-    setActionVarsRulebook
+    (setActionVars action args)
     actionProcessingRules
 
-setActionVarsRulebook :: SemWorld w (Maybe v)
-setActionVarsRulebook = do
-    --somehow obtain the arguments
-    --do something with them
-    --then run the action's set action variables rulebook
-    {-
+setActionVars :: (ActionArgs v, Monad m) => Action w v m -> [Entity] -> World w m (Maybe v)
+setActionVars a e = do
     case unboxArguments e of
-    Nothing -> makeRulebook actionProcessingRulebookName (defaultActionArguments, defaultArguments) [] --todo, nicer?
-    Just p -> makeRulebook actionProcessingRulebookName (p, defaultArguments) [
-        makeRule "set action variables rule" (do
-            (_, (p', _)) <- get
-            let arb = _setActionVariables actionRules p'
-            _ <- getRule $ compileRulebook arb Full
-            return Nothing),
-    -}
-    return Nothing
+        Nothing -> return Nothing
+        Just p -> (do
+                let av  = _setActionVariables a p
+                compileRulebook av)
 
-actionProcessingRules :: [Rule w v Bool]
-actionProcessingRules = [
+actionProcessingRules :: [Rule w v m Bool]
+actionProcessingRules = []
+
+addBaseActions :: Monad m => World w m ()
+addBaseActions = pass
+{-
         makeBlankRuleWithVariables "before stage rule",
         makeBlankRuleWithVariables "carrying requirements rule",
         makeBlankRuleWithVariables "basic visibility rule",

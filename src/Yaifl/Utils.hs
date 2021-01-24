@@ -2,10 +2,12 @@ module Yaifl.Utils
     (
         doUntilJustM
       , doIfExists2
+      , minimumNE
     ) where
 
 import Yaifl.Prelude
 import Yaifl.Common
+import Data.List
 import Colog
 
 doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
@@ -19,7 +21,9 @@ doIfExists2 c1 c2 err1 err2 f = do
         (Just jc1, Just jc2) -> f jc1 jc2
         _ -> return False
 
-
+minimumNE :: Ord a => NonEmpty a -> a
+minimumNE (a :| []) = a
+minimumNE (a :| as) = min a (Data.List.minimum as)
 {-
 whenJustM_ :: Monad m => m (Maybe a) -> (a -> m ()) -> ()
 whenJustM_ f = do

@@ -25,6 +25,7 @@ import qualified Data.Text.IO as TIO
 import Language.Haskell.TH
 import Text.Pretty.Simple (pString)
 import Yaifl.Rulebooks
+import Yaifl.Actions
 {-
 Game { unwrapGame :: ReaderT (RulebookStore (Game w))
 (LoggerT Text (World w)) a } deriving (Functor, Applicative, Monad)
@@ -33,7 +34,7 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 
-makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing]
+makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player]
 makeLenses ''GameWorld
 
 instance HasStore GameWorld Object where
@@ -47,6 +48,9 @@ instance HasStore GameWorld RoomData where
 
 instance HasStore GameWorld Enclosing where
     store = enclosingStore
+
+instance HasStore GameWorld Player where
+    store = playerStore
 
 runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
@@ -65,7 +69,7 @@ modifyingM t f = do
   s' <- t f s
   put s'
 
-ex1World :: (HasThing w, HasStore w Thing, HasStore w RoomObject, WithGameLog w m) => World w m ()
+ex1World :: forall w m. (HasStandardWorld w m, WithGameLog w m) => World w m ()
 ex1World = do
     setTitle "Bic"
     thereIs @RoomObject $ do
@@ -78,6 +82,8 @@ ex1World = do
     thereIs @Thing $ do
         name .= "napkin"
         description .= "Slightly crumpled."
+    thereIs @RoomObject $ do
+        name .= "The Staff Break Room2"
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
             whenM (gets (evalDescription t) >>= return . (("") ==)) (do 
@@ -92,17 +98,6 @@ ex1Test z = consumeTitle "Bic" z >>=
             consumeBlankRoomDescription "The Staff Break Room" >>=
             consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
             consumeLine "Bic pen has no description."
-
-thereIs :: (ThereIs s, Show s, HasStore w s, WithGameLog w m) => State s a -> World w m s
-thereIs s = do
-    e <- newEntity
-    let v = execState s $ defaultObject e
-    gameWorld . store . at e ?= v
-    --logInfo $ toStrict $ pString (show v)
-    return v
-
-newEntity :: (Monad m) => World w m Entity
-newEntity = do entityCounter <<%= (+ 1)
 
 setTitle :: WithGameLog w m => Text -> World w m ()
 setTitle t = title .= t
@@ -142,14 +137,26 @@ makeTests lst = TestList $
 --testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
 --testExampleBlank w1 ts = testExample w1 [] ts
 
+addExtrasToBeTH :: HasStandardWorld w m => World w m ()
+addExtrasToBeTH = do
+    updateFirstRoom
+    makePlayer defaultPlayerID
+    pass
 testExample :: World GameWorld IO a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
 testExample w _ ts = do
     w2 <- runWorld (do
+        logInfo "Started world building..."
+        addBaseActions
         w
+        addExtrasToBeTH
+        logInfo "Finished world building. Now validating..."
+        logInfo "No validation implemented."
+        logInfo "Finished validation, now running game..."
+        logInfo "\n-------------------"
         --when I write a proper game loop, this is where it needs to go
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
         fromMaybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") wpbr
-        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
+        ) (blankGameData blankGameWorld id actionProcessingRulebook) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
         --w4' = snd $ fromMaybe (Nothing, w) w4
         --v = runActions actions $ snd w4'
     let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer

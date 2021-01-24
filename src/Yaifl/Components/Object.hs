@@ -10,9 +10,11 @@ module Yaifl.Components.Object
     , object
     , ObjType
     , blankObject
-
+    , thereIs
     , evalDescription
     , HasDescription
+    , showObjDebug
+    , showMaybeObjDebug
         {-
     , objectComponent
     , makeObject
@@ -30,6 +32,7 @@ import           Yaifl.Common
 import           Yaifl.Prelude
 import qualified Text.Show
 import qualified Data.IntMap.Strict as IM
+import Colog
 
 -- the printed name of something
 type Name = Text
@@ -80,7 +83,19 @@ instance HasObject i => HasDescription w m i where
         ed Object{_description=PlainDescription t} _ = t
         ed Object{_description=DynamicDescription f, _objID=i} g = f g i
 
+thereIs :: (ThereIs s, HasStore w s, WithGameLog w m, HasObject s) => State s a -> World w m s
+thereIs s = do
+    e <- newEntity
+    let v = execState s $ defaultObject e
+    gameWorld . store . at e ?= v
+    logDebug $ "Made a new object at ID " <> show e <> " named " <> _name (v ^. object)
+    return v
     
+showObjDebug :: HasObject s => s -> Text
+showObjDebug s = "(" <> s ^. object . name <> ", ID: " <> show (s ^. object . objID) <> ", type: " <> s ^. object . objType <> ")"
+
+showMaybeObjDebug :: HasObject s => Maybe s -> Text
+showMaybeObjDebug = maybe "(No object)" showObjDebug
 {-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name
