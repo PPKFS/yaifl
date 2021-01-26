@@ -14,7 +14,7 @@ import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 actionProcessingRulebookName :: Text
 actionProcessingRulebookName = "action processing rulebook"
 
-actionProcessingRulebook :: Monad m => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome
+actionProcessingRulebook :: (ActionArgs v, Monad m) => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome
 actionProcessingRulebook action args = RulebookWithVariables 
     actionProcessingRulebookName
     (Just True)

@@ -34,12 +34,14 @@ logRulebookName n = do
     --todo: add context?
     unless (n == "") pass
 
-compileRulebook :: WithGameLog w m => Rulebook w s m Bool -> World w m (Maybe Bool)
+compileRulebook :: WithGameLog w m => Rulebook w s m v -> World w m (Maybe v)
 compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
         do
             logRulebookName n
             iv <- i
-            maybe (return (Just False)) (\args -> do
+            maybe (do
+                logError $ "Could not successfully parse arguments"
+                return def) (\args -> do
                 let f = doUntilJustM (\case 
                         RuleWithVariables rn rf -> do
                             unless (rn == "") (lift $ logInfo $ "Following the " <> rn)
@@ -48,7 +50,7 @@ compileRulebook (RulebookWithVariables n def i r) = if null r then pure def else
                             lift $ logError "Hit argumentless rule in rulebook with args"
                             return def) r
                 res <- evalStateT (unwrapRuleVars f) args 
-                logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+                logDebug $ "Finished following the " <> n -- <> " with result " <> maybe "nothing" show res
                 return $ res <|> def) iv
 
 compileRulebook (Rulebook n def r) = if null r then pure def else
@@ -61,7 +63,7 @@ compileRulebook (Rulebook n def r) = if null r then pure def else
                 RuleWithVariables _ _ -> do
                     logError "Hit argument rule in rulebook without args"
                     return def) r
-        logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
+        logDebug $ "Finished following the " <> n -- <> " with result " <> maybe "nothing" show res
         return $ res <|> def
 
 whenPlayBeginsName :: Text
