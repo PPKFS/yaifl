@@ -32,8 +32,20 @@ setActionVars a e = do
 actionProcessingRules :: [Rule w v m Bool]
 actionProcessingRules = []
 
+lookingActionName :: Text 
+lookingActionName = "looking"
+
+addAction :: (ActionArgs v, Monad m) => (Action w v m -> [Entity] -> Rulebook w v m RuleOutcome) -> Action w v m -> World w m ()
+addAction apr a = do
+    let compiled = apr a
+    --actionStore . at (_actionName a) ?= CompiledAction compiled
+    pass
+
+addAction' :: (ActionArgs v, Monad m) => Action w v m -> World w m ()
+addAction' = addAction actionProcessingRulebook
 addBaseActions :: Monad m => World w m ()
-addBaseActions = pass
+addBaseActions = pass --do
+    --addAction' lookingActionImpl
 {-
         makeBlankRuleWithVariables "before stage rule",
         makeBlankRuleWithVariables "carrying requirements rule",

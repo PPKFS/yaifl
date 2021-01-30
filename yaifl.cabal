@@ -70,7 +70,7 @@ library
                        --, Yaifl.WorldBuilder
                       , Yaifl.Rulebooks
                       , Yaifl.Actions
-                       --, Yaifl.Activities
+                      , Yaifl.Activities
   other-modules:       
                         Yaifl.Components.Room
                       , Yaifl.Components.Enclosing

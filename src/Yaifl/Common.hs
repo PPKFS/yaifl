@@ -61,6 +61,8 @@ module Yaifl.Common
     tryAction,
     Action(..),
     ActionArgs(..),
+    ActionEvaluation(..),
+    actionStore,
     {-
     , World(..)
     , Action(..)
@@ -139,13 +141,14 @@ class HasStore w c where
     
 newtype Env m = Env { _envLogAction :: LogAction m Message } 
 
+
 data GameData w m = GameData
   { _gameWorld :: w,
     _title :: Text,
     _firstRoom :: Maybe Entity,
     _entityCounter :: Entity,
     _messageBuffer :: MessageBuffer,
-    _actionProcessingRulebook :: forall v. Action w v m -> [Entity] -> Rulebook w v m RuleOutcome,
+    --_actionProcessingRulebook :: forall v. (ActionArgs v) => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome,
     _rulebookStore :: RulebookStore w m,
     _actionStore :: ActionStore w m
   }
@@ -191,8 +194,8 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask 
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
-blankGameData :: w -> (w -> w) -> (forall v. Action w v m -> [Entity] -> Rulebook w v m RuleOutcome) -> GameData w m
-blankGameData w rbs a = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) a Map.empty Map.empty
+blankGameData :: w -> (w -> w) -> GameData w m
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.

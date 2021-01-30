@@ -60,7 +60,7 @@ addRule rb r= do
     rulebookStore . at (rulebookName rb) ?= compileRulebook r2
     pass
 
-addRuleLast :: Rulebook w v m a -> Rule w v m a -> Rulebook w v m a 
+addRuleLast :: Rulebook w v m a -> Rule w v m a -> Rulebook w v m a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
 
 modifyingM :: MonadState s m => LensLike m s s a b -> (a -> m b) -> m ()
@@ -86,7 +86,7 @@ ex1World = do
         name .= "The Staff Break Room2"
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
-            whenM (gets (evalDescription t) >>= return . (("") ==)) (do 
+            whenM (gets (evalDescription t) <&> ("" ==)) (do
                 sayLn $ (t ^. name) <> " has no description.")
             return t)
         return Nothing)
@@ -106,16 +106,16 @@ consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
 consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
 
 listThings :: [Text] -> Text
-listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <> 
+listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
                 (if v == length t1 - 2 then "and " else "")) t1 [0..]
 
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
 consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
 consumeLine :: Text -> Text -> Either Assertion Text
 consumeLine t1 = consumeText (mconcat [t1, "\n"])
-consumeTitle :: Text -> Text -> Either Assertion Text 
+consumeTitle :: Text -> Text -> Either Assertion Text
 consumeTitle t = consumeText (mconcat $ introText t)
-consumeText :: Text -> Text -> Either Assertion Text 
+consumeText :: Text -> Text -> Either Assertion Text
 consumeText t1 t2 = case T.stripPrefix t1 t2 of
     Just x -> Right x
     Nothing -> Left $ t2 @?= t1
@@ -156,12 +156,12 @@ testExample w _ ts = do
         --when I write a proper game loop, this is where it needs to go
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
         fromMaybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") wpbr
-        ) (blankGameData blankGameWorld id actionProcessingRulebook) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
+        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
         --w4' = snd $ fromMaybe (Nothing, w) w4
         --v = runActions actions $ snd w4'
     let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
     --putStrLn "-------------\n"
-    case Right x >>= ts of 
+    case Right x >>= ts of
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x'
