@@ -1,7 +1,6 @@
 module Yaifl.Actions
 (
-    actionProcessingRulebook
-  , addBaseActions
+  addBaseActions
 ) where
 
 import Yaifl.Prelude
@@ -9,142 +8,94 @@ import Yaifl.Common
 import Yaifl.Rulebooks
 import Yaifl.Components
 import Yaifl.Activities
+import Colog
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 
-actionProcessingRulebookName :: Text
-actionProcessingRulebookName = "action processing rulebook"
 
-actionProcessingRulebook :: (ActionArgs v, Monad m) => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome
-actionProcessingRulebook action args = RulebookWithVariables 
-    actionProcessingRulebookName
-    (Just True)
-    (setActionVars action args)
-    actionProcessingRules
+addAction :: (Show v, Monad m) => Action w v m -> World w m ()
+addAction ac = do
+    actionStore . at (_actionName ac) ?= BoxedAction ac
 
-setActionVars :: (ActionArgs v, Monad m) => Action w v m -> [Entity] -> World w m (Maybe v)
-setActionVars a e = do
-    case unboxArguments e of
-        Nothing -> return Nothing
-        Just p -> (do
-                let av  = _setActionVariables a p
-                compileRulebook av)
+addBaseActions :: (HasContainer w, HasStore w Physical, Monad m) => World w m ()
+addBaseActions = do
+    actionProcessing .= defaultActionProcessingRules
+    addAction lookingActionImpl
 
-actionProcessingRules :: [Rule w v m Bool]
-actionProcessingRules = []
-
-lookingActionName :: Text 
-lookingActionName = "looking"
-
-addAction :: (ActionArgs v, Monad m) => (Action w v m -> [Entity] -> Rulebook w v m RuleOutcome) -> Action w v m -> World w m ()
-addAction apr a = do
-    let compiled = apr a
-    --actionStore . at (_actionName a) ?= CompiledAction compiled
-    pass
-
-addAction' :: (ActionArgs v, Monad m) => Action w v m -> World w m ()
-addAction' = addAction actionProcessingRulebook
-addBaseActions :: Monad m => World w m ()
-addBaseActions = pass --do
-    --addAction' lookingActionImpl
-{-
-        makeBlankRuleWithVariables "before stage rule",
-        makeBlankRuleWithVariables "carrying requirements rule",
-        makeBlankRuleWithVariables "basic visibility rule",
-        makeBlankRuleWithVariables "instead stage rule",
-        makeBlankRuleWithVariables "requested actions require persuasion rule",
-        makeBlankRuleWithVariables "carry out requested actions rule",
-        makeBlankRuleWithVariables "investigate player awareness rule",
-        makeBlankRuleWithVariables "check stage rule",
-        RuleWithVariables "carry out stage rule" (do
-            return Nothing
-            ),
-        makeBlankRuleWithVariables "after stage rule",
-        makeBlankRuleWithVariables "investigate player awareness after rule",
-        makeBlankRuleWithVariables "report stage rule",
-        makeBlankRuleWithVariables "clean actions rule",
-        makeBlankRuleWithVariables "end action processing rule"]
-
--}
-
-
-{-
-
-    
-makeAction :: RulebookArgs r => Text -> [(Text, RuleEvaluation (w, (a, r)))] -> 
-    [(Text, RuleEvaluation (w, (a, r)))] -> [(Text, RuleEvaluation (w, (a, r)))] -> 
-    [(Text, RuleEvaluation (w, (a, r)))] -> [(Text, RuleEvaluation (w, (a, r)))] -> UncompiledAction w r a
-makeAction n s b ch ca rep = Action n [n] (\p -> 
-                        makeRulebook "set action variables rulebook" (p, defaultArguments) s)
-                        (\r -> makeRulebook "before action rulebook" r b)
-                        (\r -> makeRulebook "check action rulebook" r ch)
-                        (\r -> makeRulebook "carry out action rulebook" r ca)
-                        (\r -> makeRulebook "report action rulebook" r rep)
-
-compileAction ::HasStd' w => UncompiledAction w r p
-                                 -> (UncompiledAction w r p -> [Entity] ->  UncompiledRulebook w (p, r)) -> Action w
-compileAction action aprules = CompiledAction (\e -> do
-    sayDbgLn $ "doing action " <> _actionName action
-    let (CompiledRulebook r) = compileRulebook' (aprules action e) Full
-    r)
+makeAction :: Monad m => Text -> Int -> [Rule w () m RuleOutcome] ->
+    [Rule w () m RuleOutcome] -> [Rule w () m RuleOutcome] ->
+    [Rule w () m RuleOutcome] -> Action w () m
+makeAction n app bef chec carr repor = Action n [n] app (\_ -> makeRulebook "set action variables rulebook" [Rule "set action variables" (return $ Just ())])
+                        (const $ makeRulebook "before action rulebook" bef)
+                        (const $ makeRulebook "check action rulebook" chec)
+                        (const $ makeRulebook "carry out action rulebook" carr)
+                        (const $ makeRulebook "report action rulebook" repor)
 
 data LookingActionVariables = LookingActionVariables
     {
-        _visibilityCeiling :: Entity,
-        _visibilityLevel :: Int,
+        _visibilityCount :: Int,
+        _visibilityLevels :: [Entity],
         _roomDescribingAction :: Text
     } deriving Show
 
-instance RulebookArgs LookingActionVariables where
-    defaultArguments = LookingActionVariables (-1) 0 lookingActionName
+lookingActionName = "looking"
 
-foreachVisibilityHolder :: HasComponent u w Supporter => Maybe Entity -> System u ()
-foreachVisibilityHolder Nothing = error "you broke it."
-foreachVisibilityHolder (Just e) = do
-            w <- get
-            if isComponent w supporterComponent e 
-            then do say "(on "; printName' e; say ")"
-            else do say "(in "; printName' e; say ")" 
+lookingActionImpl :: (HasContainer w, HasStore w Physical, Monad m) => Action w LookingActionVariables m
+lookingActionImpl = Action lookingActionName [lookingActionName] 0 (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
 
-lookingVarLens :: Lens' (a, (b, c)) c
-lookingVarLens = _2 . _2
-
-findVisibilityHolder :: HasStd u w => u -> Maybe Entity -> Maybe Entity
-findVisibilityHolder _ Nothing = Nothing
-findVisibilityHolder w (Just e) = if isARoom e || isAContainer e then Nothing else parentOf e where
-    --if the entity is an opaque, closed container OR a room it's nothing
-    -- of course if the entity is a room we should never need to call this?
-        isARoom = isComponent w roomComponent
-        isAContainer = do
-            cont <- getComponent w containerComponent
-            op' <- getComponent w openableComponent
-            return $ (_opacity <$> cont) == Just Opaque && op' == Just Closed
-        parentOf v = _enclosedBy <$> getComponent w physicalComponent v
-
-visibilityLvls :: HasStd u w => Int -> u -> Entity -> [Maybe Entity]
-visibilityLvls lvl w player = take lvl $ drop 1 $ iterate (findVisibilityHolder w) (Just player)
-
-lookingActionImpl :: HasStd w w => UncompiledAction w LookingActionVariables () 
-lookingActionImpl = makeAction lookingActionName 
-    [
-        makeRule "determine visibility ceiling rule" (do
-        (w, _) <- get
+lookingActionSet :: (HasContainer w, HasStore w Physical, Monad m) => Rulebook w () m LookingActionVariables
+lookingActionSet = makeRulebook "set action variables rulebook" [
+        Rule "determine visibility ceiling rule" (do
         --TODO - set properly?
-        lookingVarLens .= LookingActionVariables (playerLocation' w) 1 lookingActionName
-        return Nothing)
-    ] [] [] 
-    [makeRule "room description heading rule" (do
-            setStyle (Just PPTTY.bold)
-            (w, (_, LookingActionVariables ceil lvl _)) <- get
-            let loc = playerLocation' w
-                player = getPlayer' w
-            if | lvl == 0 -> doActivity' printingNameOfADarkRoomName
-               | ceil == loc -> printName' ceil
-               | True -> printName ceil capitalThe
-            mapM_ foreachVisibilityHolder $ drop 1 $ visibilityLvls lvl w player
-            sayLn ""
-            setStyle Nothing
+        actorID <- getActor
+        actorLocation <- getLocation actorID
+        vl <- traverse getVisibilityLevels actorLocation
+        lightLevels <- recalculateLightOfParent actorID
+        logDebug $ show vl
+        return $ fmap (\x -> LookingActionVariables lightLevels (take lightLevels x) lookingActionName) vl)
+    ]
+
+recalculateLightOfParent :: Monad m => Entity -> World w m Int
+recalculateLightOfParent _ = return 0
+
+getVisibilityLevels :: (HasContainer w, HasStore w Physical, Monad m) => Entity -> World w m [Entity]
+getVisibilityLevels e = do
+    a <- findVisibilityHolder e
+    case a of
+        Nothing -> return []
+        (Just a') -> if a' == e then return [e] else (do
+            logDebug $ "Visibility holder of " <> show e <> " was " <> show a'
+            a'' <- getVisibilityLevels a'
+            return $  a' : a'')
+
+findVisibilityHolder :: (HasContainer w, HasStore w Physical, Monad m) => Entity -> World w m (Maybe Entity)
+findVisibilityHolder e' = do
+    e_room <- e' `isType` "room"
+    e_cont <- isOpaqueClosedContainer e'
+    enclosing <- getComponent @Physical e'
+    -- the visibility holder of a room or an opaque, closed container is itself
+    -- otherwise, the enclosing entity
+    if e_room || e_cont then return (Just e') else return $ _enclosedBy <$> enclosing
+
+carryOutLookingRules :: (HasStore w Physical, Monad m) => LookingActionVariables -> Rulebook w LookingActionVariables m RuleOutcome
+carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook" 
+    [RuleWithVariables "room description heading rule" (do
+            lift $ setStyle (Just PPTTY.bold)
+            (LookingActionVariables cnt lvls _) <- getRulebookVariables
+            let visCeil = viaNonEmpty last lvls 
+            loc <- lift $ getActor >>= getLocation
+            if | cnt == 0 -> lift $ doActivity printingNameOfADarkRoomName --no light, print darkness
+               | isNothing visCeil -> logError "no visibility ceiling???"
+               | visCeil == loc -> lift $ printName ceil --if the ceiling is the location, then print [the location]
+               | True -> lift $ printNameEx ceil  --otherwise print [The visibility ceiling]
+            
+            mapM_ foreachVisibilityHolder (drop 1 lvls)
+            lift $ sayLn ""
+            lift $ setStyle Nothing
             --TODO: "run paragraph on with special look spacing"?
-            return Nothing),
+            return Nothing)]{-
+
+forEachVisibilityHolder :: Entity -> RuleVarsT LookingActionVariables (World w m) b0
+forEachVisibilityHolder = error "not implemented"
         makeRule "room description body rule" (do
             (w, (_, LookingActionVariables ceil lvl ac)) <- get
             let gi = w ^. gameInfo
@@ -163,5 +114,11 @@ lookingActionImpl = makeAction lookingActionName
             let lvls = visibilityLvls lvl w (getPlayer' w)
             when (lvl > 0) (mapM_ (`whenJust` (\e' -> do doActivity describingLocaleActivityName [e']; pass)) lvls
                 )
-            return Nothing)] []
--}
+            return Nothing)]-}
+        
+foreachVisibilityHolder :: Entity -> RuleVarsT LookingActionVariables (World w m) ()
+foreachVisibilityHolder e = do
+            sup <- lift $ e `isType` "supporter"
+            lift $ if sup then say "(on " else say "(in "
+            lift $ printName e
+            lift $ say ")"

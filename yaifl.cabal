@@ -67,7 +67,6 @@ library
                       , Yaifl.Prelude
                       , Yaifl.TH
                       , Yaifl.Components
-                       --, Yaifl.WorldBuilder
                       , Yaifl.Rulebooks
                       , Yaifl.Actions
                       , Yaifl.Activities
@@ -75,6 +74,8 @@ library
                         Yaifl.Components.Room
                       , Yaifl.Components.Enclosing
                       , Yaifl.Components.Object
+                      , Yaifl.Components.Container
+                      , Yaifl.Components.Openable
                        --, Yaifl.Components.Direction
                        --, Yaifl.Components.Room
                       , Yaifl.Components.Physical

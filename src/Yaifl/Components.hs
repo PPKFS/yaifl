@@ -5,6 +5,8 @@ module Yaifl.Components
     , module Yaifl.Components.Enclosing
     , module Yaifl.Components.Physical
     , module Yaifl.Components.Player
+    , module Yaifl.Components.Container
+    , module Yaifl.Components.Openable
     , HasStandardWorld
     ) where
 
@@ -16,5 +18,7 @@ import           Yaifl.Components.Physical
 import           Yaifl.Components.Player
 import           Yaifl.Prelude
 import           Yaifl.Common
+import           Yaifl.Components.Container
+import           Yaifl.Components.Openable
 
-type HasStandardWorld w m = (Monad m, HasThing w, HasRoom w, HasStore w Player) 
+type HasStandardWorld w m = (Monad m, HasThing w, HasRoom w, HasStore w Player, HasContainer w) 

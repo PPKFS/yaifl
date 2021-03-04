@@ -34,7 +34,7 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 
-makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player]
+makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable]
 makeLenses ''GameWorld
 
 instance HasStore GameWorld Object where
@@ -52,15 +52,21 @@ instance HasStore GameWorld Enclosing where
 instance HasStore GameWorld Player where
     store = playerStore
 
+instance HasStore GameWorld Openable where
+    store = openableStore
+
+instance HasStore GameWorld ContainerData where
+    store = containerDataStore
+
 runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
-addRule :: WithGameLog w m => Rulebook w v m RuleOutcome -> Rule w v m RuleOutcome -> World w m ()
-addRule rb r= do
+addRule :: WithGameLog w m => Rulebook w () m RuleOutcome -> Rule w () m RuleOutcome -> World w m ()
+addRule rb r = do
     let r2 = addRuleLast rb r
-    rulebookStore . at (rulebookName rb) ?= compileRulebook r2
+    rulebookStore . at (rulebookName rb) ?= BoxedRulebook r2
     pass
 
-addRuleLast :: Rulebook w v m a -> Rule w v m a -> Rulebook w v m a
+addRuleLast :: Rulebook w v m a -> Rule w () m a -> Rulebook w () m a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
 
 modifyingM :: MonadState s m => LensLike m s s a b -> (a -> m b) -> m ()
@@ -154,11 +160,10 @@ testExample w _ ts = do
         logInfo "Finished validation, now running game..."
         logInfo "\n-------------------"
         --when I write a proper game loop, this is where it needs to go
+        
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
-        fromMaybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") wpbr
+        maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
-        --w4' = snd $ fromMaybe (Nothing, w) w4
-        --v = runActions actions $ snd w4'
     let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
     --putStrLn "-------------\n"
     case Right x >>= ts of

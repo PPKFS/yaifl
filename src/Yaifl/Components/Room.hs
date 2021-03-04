@@ -44,7 +44,6 @@ data RoomObject = RoomObject
       , _roomEnclosing :: Enclosing
     } deriving Show
 
-
             
 makeClassy ''RoomData
 makeLenses ''RoomObject

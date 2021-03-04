@@ -24,8 +24,7 @@ module Yaifl.Common
     , PlainRule
     , PlainRulebook
     , GameData (..),
-    RuleVarsT,
-    unwrapRuleVars,
+    RuleVarsT(..),
     title,
     intersectStore,
     intersectStore2,
@@ -36,6 +35,7 @@ module Yaifl.Common
     storeLens,
     storeLens2,
     storeLens3,
+    storeLens4,
     isX,
     say,
     sayLn,
@@ -58,38 +58,15 @@ module Yaifl.Common
     setComponent,
     deleteComponent,
     defaultVoidRoom,
-    tryAction,
     Action(..),
-    ActionArgs(..),
     ActionEvaluation(..),
     actionStore,
-    {-
-    , World(..)
-    , Action(..)
-    , worldToMapStore
-    , newEntity
-    , HasStore
-    , store
-    , EntityProducer
-    , entityCounter
-    , getEntityCounter
-    , setEntityCounter
-    , withEntityIDBlock
-    , getStore
-    , getComponent
-    , getComponent'
-    , setComponent
-    , addComponent
-    , adjustComponent
-    , isX
-
-    , HasGameSettings'
-
-    , globalComponent
-    , firstRoom
-    , SemWorld
-    , SemWorldList
-    -}
+    BoxedRulebook(..),
+    BoxedAction(..),
+    actionProcessing,
+    getActor,
+    currentActionVars,
+    getRulebookVariables,
     blankGameData)
 where
 
@@ -124,8 +101,7 @@ defaultVoidRoom = -20
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
-type RulebookStore w m = Map.Map Text (RuleEvaluation w m)
-type ActionStore w m = Map.Map Text (ActionEvaluation w m)
+type RulebookStore w m = Map.Map Text (BoxedRulebook w m RuleOutcome) 
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -148,9 +124,10 @@ data GameData w m = GameData
     _firstRoom :: Maybe Entity,
     _entityCounter :: Entity,
     _messageBuffer :: MessageBuffer,
-    --_actionProcessingRulebook :: forall v. (ActionArgs v) => Action w v m -> [Entity] -> Rulebook w v m RuleOutcome,
     _rulebookStore :: RulebookStore w m,
-    _actionStore :: ActionStore w m
+    _actionStore :: Map.Map Text (BoxedAction w m),
+    _actionProcessing :: BoxedAction w m -> [Entity] -> World w m RuleOutcome,
+    _currentActionVars :: (Entity, [Entity])
   }
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
@@ -177,7 +154,6 @@ instance HasLog (Env m) Message m where
 
 type WithGameLog w m = (WithLog (Env (World w m)) Message (World w m), Monad m)
 
-
 instance MonadTrans (World w) where
     lift = World . lift . lift
 {-
@@ -194,8 +170,16 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask 
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
-blankGameData :: w -> (w -> w) -> GameData w m
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty
+instance Monad m => HasLog (Env m) Message (RuleVarsT v m) where
+    getLogAction e = liftLogAction (_envLogAction e) 
+    --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
+blankGameData :: Monad m => w -> (w -> w) -> GameData w m
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty blankActionProcessor (-1, [])
+
+blankActionProcessor :: Monad m => BoxedAction w m -> [Entity] -> World w m RuleOutcome
+blankActionProcessor _ _ = do
+    logError "No action processing rulebook given"
+    return False
 
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -218,6 +202,9 @@ intersectStore2 f w = intersectStore f w <.> w ^. store
 intersectStore3 :: (HasStore w a1, HasStore w a2, HasStore w a) => (a1 -> a2 -> a -> b) -> w -> Store b
 intersectStore3 f w = intersectStore2 f w <.> w ^. store
 
+intersectStore4 :: (HasStore w a1, HasStore w a2, HasStore w a3, HasStore w a) => (a1 -> a2 -> a3 -> a -> b) -> w -> Store b
+intersectStore4 f w = intersectStore3 f w <.> w ^. store
+
 setStore :: forall c a w. HasStore w c => (a -> c) -> w -> Store a -> w
 setStore f w m = w & store %~ IM.union (f <$> m)
 
@@ -226,6 +213,9 @@ setStore2 f f2 w m = setStore f2 (setStore f w m) m
 
 setStore3 :: (HasStore w c, HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> (a -> c) -> w -> Store a -> w
 setStore3 f f2 f3 w m = setStore f3 (setStore2 f f2 w m) m
+
+setStore4 :: (HasStore w c, HasStore w c1, HasStore w c2, HasStore w c3) => (a -> c1) -> (a -> c2) -> (a -> c3) -> (a -> c) -> w -> Store a -> w
+setStore4 f f2 f3 f4 w m = setStore f4 (setStore3 f f2 f3 w m) m
 
 storeLens :: HasStore w a => (a -> b) -> (b -> a) -> Lens' w (Store b)
 storeLens f a = lens (intersectStore f) (setStore a)
@@ -236,6 +226,9 @@ storeLens2 f a a2 = lens (intersectStore2 f) (setStore2 a a2)
 storeLens3 :: (HasStore w a, HasStore w c, HasStore w d) => (a -> c -> d -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> Lens' w (Store b)
 storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
 
+storeLens4 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e) => (a -> c -> d -> e -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> Lens' w (Store b)
+storeLens4 f a a2 a3 a4 = lens (intersectStore4 f) (setStore4 a a2 a3 a4)
+
 class ThereIs t where
     defaultObject :: Entity -> t
 
@@ -243,6 +236,9 @@ class Deletable w t where
     deleteObject :: (HasStore w t, Monad m) => Entity -> World w m ()
 
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
+
+getRulebookVariables :: Monad m => RuleVarsT v m v
+getRulebookVariables = RuleVarsT get
 
 data Rule w v m a where
     Rule :: WithLog env Message (World w m) => Text -> World w m (Maybe a) -> Rule w () m a
@@ -253,40 +249,35 @@ data Rulebook w v m a where
     Rulebook :: Text -> Maybe a -> [Rule w () m a] -> Rulebook w () m a
     RulebookWithVariables :: Text -> Maybe a -> World w m (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
 
+data BoxedRulebook w m a where
+    BoxedRulebook :: Rulebook w v m a -> BoxedRulebook w m a
+
+data BoxedAction w m where
+    BoxedAction :: (Show v, Monad m) => Action w v m -> BoxedAction w m
+
 rulebookName :: Rulebook w v m a -> Text
 rulebookName (Rulebook t _ _) = t
 rulebookName (RulebookWithVariables t _ _ _) = t
+
 type PlainRule w m = Rule w () m RuleOutcome
 type PlainRulebook w m = Rulebook w () m RuleOutcome
 
-data Action w v m = Action
-    { _actionName          :: Text
-    , _understandAs        :: [Text]
-    , _setActionVariables  :: v -> Rulebook w v m v
-    , _beforeActionRules   :: Rulebook w v m RuleOutcome
-    , _checkActionRules    :: Rulebook w v m RuleOutcome
-    , _carryOutActionRules :: Rulebook w v m RuleOutcome
-    , _reportActionRules   :: Rulebook w v m RuleOutcome
-    }
-
-class Eq a => ActionArgs a where
-    unboxArguments :: [Entity] -> Maybe a
-
--- | just default arguments
-class RulebookArgs a where
-    defaultArguments :: a
-
-instance ActionArgs Entity where
-    unboxArguments [a] = Just a
-    unboxArguments _   = Nothing
-
-instance ActionArgs () where
-    unboxArguments [] = Just ()
-    unboxArguments _  = Nothing
+data Action w v m where
+    Action ::  { _actionName          :: Text
+               , _understandAs        :: [Text]
+               , _appliesTo           :: Int
+               , _setActionVariables  :: [Entity] -> Rulebook w () m v
+               , _beforeActionRules   :: v -> Rulebook w v m RuleOutcome
+               , _checkActionRules    :: v -> Rulebook w v m RuleOutcome
+               , _carryOutActionRules :: v -> Rulebook w v m RuleOutcome
+               , _reportActionRules   :: v -> Rulebook w v m RuleOutcome
+               } -> Action w v m
 
 makeLenses ''MessageBuffer
 makeLenses ''GameData
 
+getActor :: Monad m => World w m Entity
+getActor = use $ currentActionVars . _1
 getComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
 getComponent e = use $ gameWorld . store . at e
 
@@ -346,13 +337,6 @@ newEntity = do entityCounter <<%= (+ 1)
 
 
 
-tryAction :: Monad m => Text -> [Entity] -> World w m Bool
-tryAction action args = do
-    ac <- use $ actionStore . at action
-    --v <- use actionProcessingRulebook
-    maybe (do
-        logError $ "Couldn't find the action called " <> action
-        return False) (\(CompiledAction a) -> a args) ac
 
 {-
 

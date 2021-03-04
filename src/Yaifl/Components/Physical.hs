@@ -12,6 +12,9 @@ module Yaifl.Components.Physical
     , described
     , HasThing
     , move
+    , getThing
+    , getLocation
+    , HasPhysical
     )
 where
 
@@ -93,10 +96,18 @@ things = storeLens2 Thing _thingObject _thingPhysical
 thing :: HasThing w => Entity -> Lens' w (Maybe Thing)
 thing k = things . at k
 
+getThing :: (Monad m, HasThing w) => Entity -> World w m (Maybe Thing)
+getThing o = use $ gameWorld . thing o
+
+getLocation :: (HasStore w Physical, Monad m) => Entity -> World w m (Maybe Entity)
+getLocation e = do
+    o <- getComponent @Physical e
+    return (_enclosedBy <$> o)
+
 move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog w m) => Entity -> Entity -> World w m Bool
 move obj le = do
-    objToMove <- use $ gameWorld . thing obj
-    mloc <- use $ gameWorld . (store @w @Enclosing) . at le
+    objToMove <- getThing obj
+    mloc <- getComponent @Enclosing le -- use $ gameWorld . (store @w @Enclosing) . at le
     locName <- getComponent @Object le 
     doIfExists2 objToMove mloc (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.") 
         (showMaybeObjDebug locName <> " has no enclosing component, so cannot move objects into it.")

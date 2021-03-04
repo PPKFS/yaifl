@@ -15,6 +15,7 @@ module Yaifl.Components.Object
     , HasDescription
     , showObjDebug
     , showMaybeObjDebug
+    , isType
         {-
     , objectComponent
     , makeObject
@@ -31,7 +32,6 @@ where
 import           Yaifl.Common
 import           Yaifl.Prelude
 import qualified Text.Show
-import qualified Data.IntMap.Strict as IM
 import Colog
 
 -- the printed name of something
@@ -96,6 +96,11 @@ showObjDebug s = "(" <> s ^. object . name <> ", ID: " <> show (s ^. object . ob
 
 showMaybeObjDebug :: HasObject s => Maybe s -> Text
 showMaybeObjDebug = maybe "(No object)" showObjDebug
+
+isType :: (HasStore w Object, Monad m) => Entity -> Text -> World w m Bool 
+isType e t = do
+    o <- getComponent @Object e
+    return $ fmap _objType o == Just t
 {-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name
