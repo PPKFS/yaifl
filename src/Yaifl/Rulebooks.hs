@@ -1,6 +1,7 @@
 module Yaifl.Rulebooks
 (
     makeBlankRule, runRulebook, makeRulebook, tryAction, makeRulebookWithVariables
+    , runRulebookEx
   , whenPlayBeginsName, whenPlayBeginsRules, introText,defaultActionProcessingRules
 ) where
 
@@ -39,8 +40,8 @@ addRulebook :: Monad m => Rulebook w v m RuleOutcome -> World w m ()
 addRulebook r = do
     rulebookStore . at (rulebookName r) ?= BoxedRulebook r
 
-runRulebook :: (Show v, WithGameLog w m) => Rulebook w s m v -> World w m (Maybe v)
-runRulebook (RulebookWithVariables n def i r) = if null r then pure def else
+runRulebookEx :: (Show v, WithGameLog w m) => Rulebook w s m v -> World w m (Maybe s, Maybe v)
+runRulebookEx (RulebookWithVariables n def i r) = if null r then pure (Nothing, def) else
         do
             logRulebookName n
             --attempt to set the rulebook variables
@@ -51,10 +52,9 @@ runRulebook (RulebookWithVariables n def i r) = if null r then pure def else
                         return def)
                     (processRuleList r def) iv
             logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
-            return $ res <|> def
-            
-                
-runRulebook (Rulebook n def r) = if null r then pure def else
+            let r' = res <|> def
+            return (iv, r')
+runRulebookEx (Rulebook n def r) = if null r then pure (Nothing, def) else
     do
         logRulebookName n
         res <- doUntilJustM (\case
@@ -65,7 +65,14 @@ runRulebook (Rulebook n def r) = if null r then pure def else
                     logError "Hit argument rule in rulebook without args"
                     return def) r
         logDebug $ "Finished following the " <> n <> " with result " <> maybe "nothing" show res
-        return $ res <|> def
+        let r' = res <|> def
+        return (Just (), r')
+
+runRulebook :: (Show v, WithGameLog w m) => Rulebook w s m v -> World w m (Maybe v)
+runRulebook r = do
+    (_, res) <- runRulebookEx r
+    return res
+
 processRuleList :: Monad m => [Rule w v m a] -> Maybe a -> v ->  World w m (Maybe a)
 processRuleList [] _ _ = return Nothing
 processRuleList (x:xs) def args  = case x of

@@ -67,6 +67,9 @@ module Yaifl.Common
     getActor,
     currentActionVars,
     getRulebookVariables,
+    activityStore,
+    BoxedActivity(..),
+    Activity(..),
     blankGameData)
 where
 
@@ -126,6 +129,7 @@ data GameData w m = GameData
     _messageBuffer :: MessageBuffer,
     _rulebookStore :: RulebookStore w m,
     _actionStore :: Map.Map Text (BoxedAction w m),
+    _activityStore :: Map.Map Text (BoxedActivity w m),
     _actionProcessing :: BoxedAction w m -> [Entity] -> World w m RuleOutcome,
     _currentActionVars :: (Entity, [Entity])
   }
@@ -174,7 +178,7 @@ instance Monad m => HasLog (Env m) Message (RuleVarsT v m) where
     getLogAction e = liftLogAction (_envLogAction e) 
     --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
 blankGameData :: Monad m => w -> (w -> w) -> GameData w m
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty blankActionProcessor (-1, [])
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor (-1, [])
 
 blankActionProcessor :: Monad m => BoxedAction w m -> [Entity] -> World w m RuleOutcome
 blankActionProcessor _ _ = do
@@ -255,6 +259,8 @@ data BoxedRulebook w m a where
 data BoxedAction w m where
     BoxedAction :: (Show v, Monad m) => Action w v m -> BoxedAction w m
 
+data BoxedActivity w m where
+    BoxedActivity :: (Show v, Monad m) => Activity w v m -> BoxedActivity w m
 rulebookName :: Rulebook w v m a -> Text
 rulebookName (Rulebook t _ _) = t
 rulebookName (RulebookWithVariables t _ _ _) = t
@@ -272,6 +278,15 @@ data Action w v m where
                , _carryOutActionRules :: v -> Rulebook w v m RuleOutcome
                , _reportActionRules   :: v -> Rulebook w v m RuleOutcome
                } -> Action w v m
+
+data Activity w v m = Activity
+    { _activityName         :: Text
+    , _activityappliesTo    :: Int
+    , _setActivityVariables :: [Entity] -> Rulebook w () m v
+    , _beforeRules  :: [Entity] -> v -> Rulebook w v m RuleOutcome
+    , _forRules     :: [Entity] -> v -> Rulebook w v m RuleOutcome
+    , _afterRules   :: [Entity] -> v -> Rulebook w v m RuleOutcome
+    }
 
 makeLenses ''MessageBuffer
 makeLenses ''GameData
@@ -334,20 +349,3 @@ setEntityCounter e = do
 
 newEntity :: (Monad m) => World w m Entity
 newEntity = do entityCounter <<%= (+ 1)
-
-
-
-
-{-
-
-data Activity w v = Activity
-    { _activityName :: Text
-    , _initActivity :: [Entity] -> SemWorld w (Maybe v)
-    , _beforeRules  :: Rulebook w v (v, RuleOutcome)
-    , _forRules     :: Rulebook w v (v, RuleOutcome)
-    , _afterRules   :: Rulebook w v (v, RuleOutcome)
-    }
-
-makeLenses ''Rulebook
-
--}

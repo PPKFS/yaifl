@@ -83,12 +83,13 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
             (LookingActionVariables cnt lvls _) <- getRulebookVariables
             let visCeil = viaNonEmpty last lvls 
             loc <- lift $ getActor >>= getLocation
+            {-
             if | cnt == 0 -> lift $ doActivity printingNameOfADarkRoomName --no light, print darkness
                | isNothing visCeil -> logError "no visibility ceiling???"
                | visCeil == loc -> lift $ printName ceil --if the ceiling is the location, then print [the location]
                | True -> lift $ printNameEx ceil  --otherwise print [The visibility ceiling]
             
-            mapM_ foreachVisibilityHolder (drop 1 lvls)
+            mapM_ foreachVisibilityHolder (drop 1 lvls) -}
             lift $ sayLn ""
             lift $ setStyle Nothing
             --TODO: "run paragraph on with special look spacing"?
@@ -116,9 +117,9 @@ forEachVisibilityHolder = error "not implemented"
                 )
             return Nothing)]-}
         
-foreachVisibilityHolder :: Entity -> RuleVarsT LookingActionVariables (World w m) ()
+foreachVisibilityHolder :: (HasStore w Object, Monad m) => Entity -> RuleVarsT LookingActionVariables (World w m) ()
 foreachVisibilityHolder e = do
             sup <- lift $ e `isType` "supporter"
             lift $ if sup then say "(on " else say "(in "
-            lift $ printName e
+            --lift $ printName e
             lift $ say ")"

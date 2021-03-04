@@ -1,9 +1,11 @@
 module Yaifl.Activities
 (
+    doActivity,
+
+    makeActivityEx, makeActivity,
+    doActivity',
+    --printingNameOfADarkRoomName--, printingDescriptionOfADarkRoomName,
     {-
-    makeActivity', makeActivity,
-    doActivity', doActivity, compileActivity,
-    printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
     describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
     LocaleDescription(..),
     printName', printName,
@@ -12,78 +14,70 @@ module Yaifl.Activities
      describingLocaleActivityImpl, choosingNotableLocaleObjectsActivityImpl,
     printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
 ) where
-{-
-import Relude
-import Yaifl.Say
-import Yaifl.Utils
+
+import Yaifl.Prelude
 import Yaifl.Common
-import Yaifl.Components
 import Yaifl.Rulebooks
-import qualified Data.IntMap.Strict as IM
-import qualified Data.Map as Map
-import qualified Data.Set as DS
-import qualified Text.Show
-import Data.List
+import Colog
 
 
-makeActivity' :: Text -> RuleEvaluation (w, p) -> UncompiledActivity w () p
-makeActivity' n r = makeActivity n (const ()) (zoom (alongside id _1) r)
+makeActivityEx :: Monad m => Text -> Int -> ([Entity] -> [Rule w () m RuleOutcome]) ->
+    ([Entity] -> [Rule w () m RuleOutcome]) -> ([Entity] -> [Rule w () m RuleOutcome]) -> Activity w () m
+makeActivityEx n app bef fo aft = Activity n app (\_ -> makeRulebook "set activity variables rulebook" [Rule "set activity variables" (return $ Just ())])
+                        (const . makeRulebook "before activity rulebook" . bef)
+                        (const . makeRulebook "for activity rulebook" . fo)
+                        (const . makeRulebook "after activity rulebook" . aft)
 
-makeActivity :: Text -> (w -> r) -> RuleEvaluation (w, (p, r)) -> UncompiledActivity w r p
-makeActivity n iniActivity r = Activity n iniActivity 
-                (\p -> makeRulebook ("before " <> n) p []) 
-                    (\r1 -> makeRulebook ("for " <> n) r1 [("", r)]) 
-                    (\p -> makeRulebook ("before " <> n) p []) 
+makeActivity :: Monad m => Text -> Int -> ([Entity] -> World w m (Maybe RuleOutcome)) -> Activity w () m
+makeActivity n app fo = makeActivityEx n app (const []) (\v -> [Rule "" (fo v)]) (const [])
 
-doActivity' :: (HasWorld u w) => Text -> System u (Maybe Bool)
+doActivity' :: Monad m => Text -> World w m (Maybe RuleOutcome)
 doActivity' n = doActivity n []
 
-doActivity :: HasWorld u w => Text -> [Entity] -> System u (Maybe Bool)
-doActivity n params = do
+doActivity :: Monad m => Text -> [Entity] -> World w m (Maybe RuleOutcome)
+doActivity n args = do
     --sayDbgLn $ "Running activity " <> n
-    w <- get
-    maybe (do sayDbgLn $ "couldn't find activity " <> n; return $ Just False) (\(CompiledActivity x) -> 
-        zoom world $ x params) (w ^. activities . at n)
-
--- | what is this atrocious mess
-compileActivity :: (HasMessageBuffer w, ActionArgs p) => UncompiledActivity w r p -> Activity w
-compileActivity a = CompiledActivity (\e -> do
-    w <- get
-    let initRules = _initActivity a w
-    let args = unboxArguments e
-    whenJust args (\defArgs ->
-        zoomOut (do
-            _ <- getRule $ compileRulebook (_beforeRules a (defArgs, initRules)) Silent
-            (_, (_, r)) <- get
-            getRule $ compileRulebook (_forRules a (defArgs, r)) Silent
-            (_, (_, r')) <- get
-            getRule $ compileRulebook (_afterRules a (defArgs,  r')) Silent
-            pass) (defArgs, initRules))
-    return Nothing
-    )
-
+    ac <- use $ activityStore . at n
+    maybe (do
+        logError $ "couldn't find activity " <> n
+        return $ Just False)
+          (\(BoxedActivity (Activity _ app setRb bef fo aft)) -> do
+              iv <- if length args == app then runRulebook (setRb args) else return Nothing
+              maybe (do
+                  logError "Couldn't parse activity arguments.."
+                  return $ Just False
+                ) (\x -> do
+                    (r1, _) <- runRulebookEx (bef args x)
+                    ry <- mapM (runRulebookEx . fo args) r1
+                    rz <- mapM (runRulebookEx . aft args) (fst =<< ry)
+                    return (snd =<< rz)
+                  ) iv) ac
+{-
 printingNameOfADarkRoomName :: Text
 printingNameOfADarkRoomName = "printing the name of a dark room activity"
-printingNameOfADarkRoomImpl :: HasMessageBuffer w => UncompiledActivity w () ()
-printingNameOfADarkRoomImpl = makeActivity' printingNameOfADarkRoomName (do
+printingNameOfADarkRoomImpl :: Monad m => Activity w () m
+printingNameOfADarkRoomImpl = makeActivity printingNameOfADarkRoomName 0 (const $ do
             say "Darkness"
             return Nothing)
 
 printingDescriptionOfADarkRoomName :: Text
 printingDescriptionOfADarkRoomName = "printing the description of a dark room activity"
-printingDescriptionOfADarkRoomImpl :: HasMessageBuffer w => UncompiledActivity w () ()
-printingDescriptionOfADarkRoomImpl = makeActivity' printingDescriptionOfADarkRoomName (do
+printingDescriptionOfADarkRoomImpl :: Monad m => Activity w () m
+printingDescriptionOfADarkRoomImpl = makeActivity printingDescriptionOfADarkRoomName 0 (const $ do
             sayLn "It is pitch dark, and you can't see a thing."
             return Nothing)
 
 printingNameOfSomethingName :: Text
 printingNameOfSomethingName = "printing the name of something activity"
-printingNameOfSomethingImpl :: HasComponent w w Object => UncompiledActivity w () Entity
-printingNameOfSomethingImpl = makeActivity' printingNameOfSomethingName (do
-    (w, e) <- get
-    say . _name $ getComponent' w objectComponent e
-    return $ Just True)
-
+printingNameOfSomethingImpl :: Monad m => Activity w () m
+printingNameOfSomethingImpl = makeActivity printingNameOfSomethingName 1 (\case
+    [] -> return Nothing
+    x:_ -> do
+        o <- getComponent @Object 
+        say . _name $ getComponent' w objectComponent e
+        return $ Just True)
+    -}
+{-
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 data Article = Indefinite | Definite
 data Capitalisation = Capitalised | Uncapitalised
@@ -105,7 +99,8 @@ printName o p = let pr = doActivity printingNameOfSomethingName [objID o] in
         SayOptions Definite Capitalised -> do say "The "; pr
         SayOptions Indefinite Uncapitalised -> do say "a "; pr
         SayOptions Definite Uncapitalised -> do say "the "; pr
-
+-}
+{-
 printingLocaleParagraphAboutActivityName :: Text
 printingLocaleParagraphAboutActivityName = "printing locale paragraph about activity"
 
