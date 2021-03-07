@@ -22,8 +22,7 @@ import Colog.Message
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.IO as TIO
-import Language.Haskell.TH
-import Text.Pretty.Simple (pString)
+import Yaifl.Activities
 import Yaifl.Rulebooks
 import Yaifl.Actions
 {-
@@ -153,6 +152,7 @@ testExample w _ ts = do
     w2 <- runWorld (do
         logInfo "Started world building..."
         addBaseActions
+        addBaseActivities
         w
         addExtrasToBeTH
         logInfo "Finished world building. Now validating..."

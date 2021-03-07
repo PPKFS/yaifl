@@ -104,7 +104,7 @@ getLocation e = do
     o <- getComponent @Physical e
     return (_enclosedBy <$> o)
 
-move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog w m) => Entity -> Entity -> World w m Bool
+move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog' w m) => Entity -> Entity -> World w m Bool
 move obj le = do
     objToMove <- getThing obj
     mloc <- getComponent @Enclosing le -- use $ gameWorld . (store @w @Enclosing) . at le

@@ -17,7 +17,7 @@ import Yaifl.Components.Enclosing
 newtype Player = Player Entity deriving Show
 
 -- UNSAFE. TODO: ERROR HANDLE.
-getPlayer :: forall w m. (HasStore w Player, WithGameLog w m) => World w m Entity
+getPlayer :: forall w m. (HasStore w Player, Monad m) => World w m Entity
 getPlayer = do
     p <- getComponent @Player uniqueComponent
     let res = maybeToRight "Somehow couldn't find the player. I think you deleted it." p
@@ -25,12 +25,12 @@ getPlayer = do
         logError v
         return 0) (return . coerce) res
 
-movePlayer :: (HasStore w Player, HasThing w, HasStore w Enclosing, Monad m) => Entity -> World w m Bool 
+movePlayer :: (HasStore w Player, HasThing w, HasStore w Enclosing, WithGameLog' w m) => Entity -> World w m Bool 
 movePlayer r = do
     p <- getPlayer
     move p r
 
-makePlayer :: (HasStore w Player, HasThing w, HasStore w Enclosing, Monad m) => Entity -> World w m Entity
+makePlayer :: (HasStore w Player, HasThing w, WithGameLog' w m) => Entity -> World w m Entity
 makePlayer e = do
     withEntityIDBlock e $ thereIs @Thing $ do
         name .= "yourself" 

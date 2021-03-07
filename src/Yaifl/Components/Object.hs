@@ -83,7 +83,7 @@ instance HasObject i => HasDescription w m i where
         ed Object{_description=PlainDescription t} _ = t
         ed Object{_description=DynamicDescription f, _objID=i} g = f g i
 
-thereIs :: (ThereIs s, HasStore w s, WithGameLog w m, HasObject s) => State s a -> World w m s
+thereIs :: (ThereIs s, HasStore w s, WithGameLog' w m, HasObject s) => State s a -> World w m s
 thereIs s = do
     e <- newEntity
     let v = execState s $ defaultObject e

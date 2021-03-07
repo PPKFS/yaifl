@@ -44,6 +44,7 @@ module Yaifl.Common
     gameWorld,
     rulebookStore,
     WithGameLog,
+    WithGameLog',
     rulebookName,
     messageBuffer,
     buffer,
@@ -112,7 +113,6 @@ emptyStore = IM.empty
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
 
-type RuleEvaluation w m = World w m (Maybe RuleOutcome)
 newtype ActionEvaluation w m = CompiledAction ([Entity] -> World w m RuleOutcome)
 
 class HasStore w c where
@@ -156,7 +156,9 @@ instance HasLog (Env m) Message m where
     setLogAction newLogAction env = env { _envLogAction = newLogAction }
     {-# INLINE setLogAction #-}
 
-type WithGameLog w m = (WithLog (Env (World w m)) Message (World w m), Monad m)
+type WithGameLog w m' m = (WithLog (Env (World w m')) Message m, WithLog (Env (World w m')) Message m', 
+                            MonadState (GameData w m') m, MonadState (GameData w m') m', Monad m)
+type WithGameLog' w m = WithGameLog w m m
 
 instance MonadTrans (World w) where
     lift = World . lift . lift
@@ -176,6 +178,12 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
 
 instance Monad m => HasLog (Env m) Message (RuleVarsT v m) where
     getLogAction e = liftLogAction (_envLogAction e) 
+
+instance Monad m => MonadState (GameData w m) (RuleVarsT v (World w m)) where
+    state = lift . state
+
+type RuleEvaluation w v m = RuleVarsT v (World w m) (Maybe RuleOutcome)
+
     --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
 blankGameData :: Monad m => w -> (w -> w) -> GameData w m
 blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor (-1, [])
@@ -265,6 +273,7 @@ rulebookName :: Rulebook w v m a -> Text
 rulebookName (Rulebook t _ _) = t
 rulebookName (RulebookWithVariables t _ _ _) = t
 
+
 type PlainRule w m = Rule w () m RuleOutcome
 type PlainRulebook w m = Rulebook w () m RuleOutcome
 
@@ -283,9 +292,9 @@ data Activity w v m = Activity
     { _activityName         :: Text
     , _activityappliesTo    :: Int
     , _setActivityVariables :: [Entity] -> Rulebook w () m v
-    , _beforeRules  :: [Entity] -> v -> Rulebook w v m RuleOutcome
-    , _forRules     :: [Entity] -> v -> Rulebook w v m RuleOutcome
-    , _afterRules   :: [Entity] -> v -> Rulebook w v m RuleOutcome
+    , _beforeRules  :: v -> Rulebook w v m RuleOutcome
+    , _forRules     :: v -> Rulebook w v m RuleOutcome
+    , _afterRules   :: v -> Rulebook w v m RuleOutcome
     }
 
 makeLenses ''MessageBuffer
@@ -293,7 +302,7 @@ makeLenses ''GameData
 
 getActor :: Monad m => World w m Entity
 getActor = use $ currentActionVars . _1
-getComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> World w m (Maybe c)
+getComponent :: forall c w m m'. (MonadState (GameData w m') m, HasStore w c) => Entity -> m (Maybe c)
 getComponent e = use $ gameWorld . store . at e
 
 setComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> c -> World w m ()
@@ -317,31 +326,31 @@ component e = lens (\w -> w ^. store . at e ) sc where
 isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
 isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
 
-sayInternal :: WithGameLog w m => StyledDoc -> World w m ()
+sayInternal :: (MonadState (GameData w m') m) => StyledDoc -> m ()
 sayInternal a = do
     w <- use $ messageBuffer . msgStyle
     messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
 
-say :: WithGameLog w m => Text -> World w m ()
+say :: (MonadState (GameData w m') m) => Text -> m ()
 say a = sayInternal (PP.pretty a)
 
-sayLn ::  WithGameLog w m => Text -> World w m ()
+sayLn :: (MonadState (GameData w m') m) => Text -> m ()
 sayLn a = say (a <> "\n")
 
-sayIf :: WithGameLog w m => Bool -> Text -> World w m ()
+sayIf :: (MonadState (GameData w m') m) => Bool -> Text -> m ()
 sayIf iff a = when iff (say a)
 
-setStyle :: WithGameLog w m => Maybe PPTTY.AnsiStyle -> World w m ()
+setStyle :: (MonadState (GameData w m') m) => Maybe PPTTY.AnsiStyle -> m ()
 setStyle sty = messageBuffer . msgStyle .= sty
 
-withEntityIDBlock :: Monad m => Entity -> World w m a -> World w m a
+withEntityIDBlock :: (MonadState (GameData w m') m) => Entity -> m a -> m a
 withEntityIDBlock idblock x = do
     ec <- setEntityCounter idblock
     v  <- x
     _  <- setEntityCounter ec
     return v
 
-setEntityCounter :: Monad m => Entity -> World w m Entity
+setEntityCounter :: (MonadState (GameData w m') m) => Entity -> m Entity
 setEntityCounter e = do
     ec <- use entityCounter
     entityCounter .= e
