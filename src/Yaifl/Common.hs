@@ -12,6 +12,8 @@ module Yaifl.Common
     RuleEvaluation,
     World (..),
     Env(..),
+    RoomDescriptions(..),
+    roomDescriptions,
     HasStore,
     store,
     firstRoom,
@@ -25,7 +27,10 @@ module Yaifl.Common
     , PlainRulebook
     , GameData (..),
     RuleVarsT(..),
+    HasID,
+    getID,
     title,
+    darknessWitnessed,
     intersectStore,
     intersectStore2,
     intersectStore3,
@@ -43,8 +48,6 @@ module Yaifl.Common
     entityCounter,
     gameWorld,
     rulebookStore,
-    WithGameLog,
-    WithGameLog',
     rulebookName,
     messageBuffer,
     buffer,
@@ -58,6 +61,8 @@ module Yaifl.Common
     adjustComponent,
     setComponent,
     deleteComponent,
+    MonadWorld,
+    liftWorld,
     defaultVoidRoom,
     Action(..),
     ActionEvaluation(..),
@@ -70,6 +75,7 @@ module Yaifl.Common
     getRulebookVariables,
     activityStore,
     BoxedActivity(..),
+    WithGameData,
     Activity(..),
     blankGameData)
 where
@@ -84,6 +90,7 @@ import Data.Functor.Apply (Apply(..))
 import Control.Monad.State.Strict
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import qualified Data.Text as T
 
 {- TYPES -}
 
@@ -105,7 +112,7 @@ defaultVoidRoom = -20
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
-type RulebookStore w m = Map.Map Text (BoxedRulebook w m RuleOutcome) 
+type RulebookStore w = Map.Map Text (BoxedRulebook w RuleOutcome) 
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -113,7 +120,7 @@ emptyStore = IM.empty
 -- | rules either give no outcome, true, or false.
 type RuleOutcome = Bool
 
-newtype ActionEvaluation w m = CompiledAction ([Entity] -> World w m RuleOutcome)
+newtype ActionEvaluation w = CompiledAction ([Entity] -> World w RuleOutcome)
 
 class HasStore w c where
     store :: Lens' w (Store c)
@@ -121,16 +128,18 @@ class HasStore w c where
 newtype Env m = Env { _envLogAction :: LogAction m Message } 
 
 
-data GameData w m = GameData
+data GameData w = GameData
   { _gameWorld :: w,
     _title :: Text,
     _firstRoom :: Maybe Entity,
     _entityCounter :: Entity,
     _messageBuffer :: MessageBuffer,
-    _rulebookStore :: RulebookStore w m,
-    _actionStore :: Map.Map Text (BoxedAction w m),
-    _activityStore :: Map.Map Text (BoxedActivity w m),
-    _actionProcessing :: BoxedAction w m -> [Entity] -> World w m RuleOutcome,
+    _rulebookStore :: RulebookStore w,
+    _actionStore :: Map.Map Text (BoxedAction w),
+    _activityStore :: Map.Map Text (BoxedActivity w),
+    _actionProcessing :: BoxedAction w -> [Entity] -> World w RuleOutcome,
+    _roomDescriptions :: RoomDescriptions,
+    _darknessWitnessed :: Bool,
     _currentActionVars :: (Entity, [Entity])
   }
 
@@ -141,12 +150,17 @@ data MessageBuffer = MessageBuffer
         _msgStyle :: Maybe PPTTY.AnsiStyle
     } deriving Show
 
-newtype World w m a = World { unwrapWorld :: ReaderT (Env (World w m)) (StateT (GameData w m) m) a} 
+newtype World w a = World { unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a} 
     deriving newtype (Functor, Applicative, Monad,
-        MonadState (GameData w m),
-        MonadReader (Env (World w m)),
+        MonadState (GameData w),
+        MonadReader (Env (World w)),
         MonadIO) 
 
+class MonadState (GameData w) m => HasID w e m where
+    getID :: e -> m Entity
+
+instance MonadState (GameData w) m => HasID w Entity m where
+    getID = return
 instance HasLog (Env m) Message m where
     getLogAction :: Env m -> LogAction m Message
     getLogAction = _envLogAction
@@ -156,12 +170,16 @@ instance HasLog (Env m) Message m where
     setLogAction newLogAction env = env { _envLogAction = newLogAction }
     {-# INLINE setLogAction #-}
 
-type WithGameLog w m' m = (WithLog (Env (World w m')) Message m, WithLog (Env (World w m')) Message m', 
-                            MonadState (GameData w m') m, MonadState (GameData w m') m', Monad m)
-type WithGameLog' w m = WithGameLog w m m
+class Monad m => MonadWorld w m where
+    liftWorld :: World w a -> m a
+    liftLogWorld :: LogAction (World w) Message -> LogAction m Message
 
-instance MonadTrans (World w) where
-    lift = World . lift . lift
+instance MonadWorld w (World w) where
+    liftWorld = id
+    liftLogWorld = id
+
+type WithGameData w m = (WithLog (Env (World w)) Message m, MonadState (GameData w) m, MonadWorld w m)
+
 {-
 instance MonadWorld m => MonadWorld (LoggerT msg m) where
     showWorld = lift showWorld
@@ -172,23 +190,19 @@ instance MonadWorld m => MonadWorld (ReaderT r m) where
 instance MonadTrans (RuleVarsT v) where
     lift = RuleVarsT . lift
 
+
 instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask 
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
-instance Monad m => HasLog (Env m) Message (RuleVarsT v m) where
-    getLogAction e = liftLogAction (_envLogAction e) 
+type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
 
-instance Monad m => MonadState (GameData w m) (RuleVarsT v (World w m)) where
-    state = lift . state
-
-type RuleEvaluation w v m = RuleVarsT v (World w m) (Maybe RuleOutcome)
-
+data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
     --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
-blankGameData :: Monad m => w -> (w -> w) -> GameData w m
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor (-1, [])
+blankGameData :: w -> (w -> w) -> GameData w
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, [])
 
-blankActionProcessor :: Monad m => BoxedAction w m -> [Entity] -> World w m RuleOutcome
+blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
 blankActionProcessor _ _ = do
     logError "No action processing rulebook given"
     return False
@@ -245,75 +259,85 @@ class ThereIs t where
     defaultObject :: Entity -> t
 
 class Deletable w t where
-    deleteObject :: (HasStore w t, Monad m) => Entity -> World w m ()
+    deleteObject :: (WithGameData w m, HasStore w t) => Entity -> m ()
 
 newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
 
 getRulebookVariables :: Monad m => RuleVarsT v m v
 getRulebookVariables = RuleVarsT get
 
-data Rule w v m a where
-    Rule :: WithLog env Message (World w m) => Text -> World w m (Maybe a) -> Rule w () m a
-    RuleWithVariables :: WithLog env Message (World w m) => Text -> RuleVarsT v (World w m) (Maybe a) -> Rule w v m a
+instance MonadState (GameData w) m => MonadState (GameData w) (RuleVarsT v m) where
+    state = lift . state
+
+instance (Monad m, MonadWorld w m) => MonadWorld w (RuleVarsT v m) where
+    liftWorld = lift . liftWorld
+
+instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (RuleVarsT v m) where
+    getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
+
+    
+data Rule w v a where
+    Rule :: Text -> World w (Maybe a) -> Rule w () a
+    RuleWithVariables :: Text -> RuleVarsT v (World w) (Maybe a) -> Rule w v a
 
 -- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook w v m a where
-    Rulebook :: Text -> Maybe a -> [Rule w () m a] -> Rulebook w () m a
-    RulebookWithVariables :: Text -> Maybe a -> World w m (Maybe v) -> [Rule w v m a] -> Rulebook w v m a
+data Rulebook w v a where
+    Rulebook :: Text -> Maybe a -> [Rule w () a] -> Rulebook w () a
+    RulebookWithVariables :: Text -> Maybe a -> World w (Maybe v) -> [Rule w v a] -> Rulebook w v a
 
-data BoxedRulebook w m a where
-    BoxedRulebook :: Rulebook w v m a -> BoxedRulebook w m a
+data BoxedRulebook w a where
+    BoxedRulebook :: Rulebook w v a -> BoxedRulebook w a
 
-data BoxedAction w m where
-    BoxedAction :: (Show v, Monad m) => Action w v m -> BoxedAction w m
+data BoxedAction w where
+    BoxedAction :: Show v => Action w v -> BoxedAction w
 
-data BoxedActivity w m where
-    BoxedActivity :: (Show v, Monad m) => Activity w v m -> BoxedActivity w m
-rulebookName :: Rulebook w v m a -> Text
+data BoxedActivity w where
+    BoxedActivity :: Show v => Activity w v -> BoxedActivity w
+rulebookName :: Rulebook w v a -> Text
 rulebookName (Rulebook t _ _) = t
 rulebookName (RulebookWithVariables t _ _ _) = t
 
 
-type PlainRule w m = Rule w () m RuleOutcome
-type PlainRulebook w m = Rulebook w () m RuleOutcome
+type PlainRule w m = Rule w () RuleOutcome
+type PlainRulebook w m = Rulebook w () RuleOutcome
 
-data Action w v m where
+data Action w v where
     Action ::  { _actionName          :: Text
                , _understandAs        :: [Text]
                , _appliesTo           :: Int
-               , _setActionVariables  :: [Entity] -> Rulebook w () m v
-               , _beforeActionRules   :: v -> Rulebook w v m RuleOutcome
-               , _checkActionRules    :: v -> Rulebook w v m RuleOutcome
-               , _carryOutActionRules :: v -> Rulebook w v m RuleOutcome
-               , _reportActionRules   :: v -> Rulebook w v m RuleOutcome
-               } -> Action w v m
+               , _setActionVariables  :: [Entity] -> Rulebook w () v
+               , _beforeActionRules   :: v -> Rulebook w v RuleOutcome
+               , _checkActionRules    :: v -> Rulebook w v RuleOutcome
+               , _carryOutActionRules :: v -> Rulebook w v RuleOutcome
+               , _reportActionRules   :: v -> Rulebook w v RuleOutcome
+               } -> Action w v
 
-data Activity w v m = Activity
+data Activity w v = Activity
     { _activityName         :: Text
     , _activityappliesTo    :: Int
-    , _setActivityVariables :: [Entity] -> Rulebook w () m v
-    , _beforeRules  :: v -> Rulebook w v m RuleOutcome
-    , _forRules     :: v -> Rulebook w v m RuleOutcome
-    , _afterRules   :: v -> Rulebook w v m RuleOutcome
+    , _setActivityVariables :: [Entity] -> Rulebook w () v
+    , _beforeRules  :: v -> Rulebook w v RuleOutcome
+    , _forRules     :: v -> Rulebook w v RuleOutcome
+    , _afterRules   :: v -> Rulebook w v RuleOutcome
     }
 
 makeLenses ''MessageBuffer
 makeLenses ''GameData
 
-getActor :: Monad m => World w m Entity
+getActor :: WithGameData w m => m Entity
 getActor = use $ currentActionVars . _1
-getComponent :: forall c w m m'. (MonadState (GameData w m') m, HasStore w c) => Entity -> m (Maybe c)
+getComponent :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m (Maybe c)
 getComponent e = use $ gameWorld . store . at e
 
-setComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> c -> World w m ()
+setComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> c -> m ()
 setComponent e v = gameWorld . store . at e ?= v
 
-adjustComponent :: forall c w m. (Monad m, HasStore w c) => Entity -> (c -> c) -> World w m ()
+adjustComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> (c -> c) -> m ()
 adjustComponent e f = do
     c <- getComponent e
     whenJust c (setComponent e . f)
 
-deleteComponent :: forall c m w. (Monad m, HasStore w c) => Entity -> World w m ()
+deleteComponent :: forall c m w. (WithGameData w m, HasStore w c) => Entity -> m ()
 deleteComponent e = do
     gameWorld . store @w @c . at e .= Nothing
     pass
@@ -323,38 +347,39 @@ component e = lens (\w -> w ^. store . at e ) sc where
     sc :: (w -> Maybe c -> w)
     sc w v = set (store @w @c . at e) v w
 
-isX :: (Eq d, Monad m, HasStore w c) => d -> (c -> d) -> Entity -> World w m Bool
-isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent e)
+isX :: forall c w d m. (Eq d, MonadState (GameData w) m, HasStore w c) => d -> (c -> d) -> Entity -> m Bool
+isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent @c @w e)
 
-sayInternal :: (MonadState (GameData w m') m) => StyledDoc -> m ()
+sayInternal :: WithGameData w m => StyledDoc -> m ()
 sayInternal a = do
     w <- use $ messageBuffer . msgStyle
+    logDebug (T.dropWhileEnd (== '\n') $ show a)
     messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
 
-say :: (MonadState (GameData w m') m) => Text -> m ()
+say :: WithGameData w m => Text -> m ()
 say a = sayInternal (PP.pretty a)
 
-sayLn :: (MonadState (GameData w m') m) => Text -> m ()
+sayLn :: WithGameData w m => Text -> m ()
 sayLn a = say (a <> "\n")
 
-sayIf :: (MonadState (GameData w m') m) => Bool -> Text -> m ()
+sayIf :: WithGameData w m => Bool -> Text -> m ()
 sayIf iff a = when iff (say a)
 
-setStyle :: (MonadState (GameData w m') m) => Maybe PPTTY.AnsiStyle -> m ()
+setStyle :: (MonadState (GameData w) m) => Maybe PPTTY.AnsiStyle -> m ()
 setStyle sty = messageBuffer . msgStyle .= sty
 
-withEntityIDBlock :: (MonadState (GameData w m') m) => Entity -> m a -> m a
+withEntityIDBlock :: (MonadState (GameData w) m) => Entity -> m a -> m a
 withEntityIDBlock idblock x = do
     ec <- setEntityCounter idblock
     v  <- x
     _  <- setEntityCounter ec
     return v
 
-setEntityCounter :: (MonadState (GameData w m') m) => Entity -> m Entity
+setEntityCounter :: (MonadState (GameData w) m) => Entity -> m Entity
 setEntityCounter e = do
     ec <- use entityCounter
     entityCounter .= e
     return ec
 
-newEntity :: (Monad m) => World w m Entity
+newEntity :: WithGameData w m => m Entity
 newEntity = do entityCounter <<%= (+ 1)

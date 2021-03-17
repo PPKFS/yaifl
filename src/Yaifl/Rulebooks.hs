@@ -23,38 +23,38 @@ singleArg = (0, \case
     _:_ -> Nothing)
 
 -- | Create a placeholder rule (no rulebook variables).
-makeBlankRule :: Monad m => Text -> Rule w () m a
+makeBlankRule :: Text -> Rule w () a
 makeBlankRule n = Rule n (do
     logError $ n <> " needs implementing"
     return Nothing)
 
 -- | Create a placeholder rule (with rulebook variables).
-makeBlankRuleWithVariables :: WithGameLog' w m => Text -> Rule w v m a
+makeBlankRuleWithVariables :: Text -> Rule w v a
 makeBlankRuleWithVariables n = RuleWithVariables n (do
     logError $ n <> " needs implementing"
     return Nothing)
 
 -- | Create a rulebook (no rulebook variables) from a name and a list of rules.
-makeRulebook :: Text -> [Rule w () m a] -> Rulebook w () m a
+makeRulebook :: Text -> [Rule w () a] -> Rulebook w () a
 makeRulebook n = Rulebook n Nothing
 
 -- | Create a rulebook (with rulebook variables) from a name and a list of rules. 
-makeRulebookWithVariables :: Monad m => Text -> [Rule w v m a] -> v -> Rulebook w v m a
+makeRulebookWithVariables :: Text -> [Rule w v a] -> v -> Rulebook w v a
 makeRulebookWithVariables n rs v = RulebookWithVariables n Nothing (return $ Just v) rs
 
-logRulebookName :: (MonadReader env m, WithLog env Message m) => Text -> m ()
+logRulebookName :: WithGameData w m => Text -> m ()
 logRulebookName n = unless (n == "") (do logDebug $ "Following the " <> n; pass)
 
-addRulebook :: Monad m => Rulebook w v m RuleOutcome -> World w m ()
+addRulebook :: WithGameData w m => Rulebook w v RuleOutcome -> m ()
 addRulebook r = do
     rulebookStore . at (rulebookName r) ?= BoxedRulebook r
 
-runRulebookEx :: (Show v, WithGameLog w m' m) => Rulebook w s m v -> m (Maybe s, Maybe v)
+runRulebookEx :: (Show v, WithGameData w m) => Rulebook w s v -> m (Maybe s, Maybe v)
 runRulebookEx (RulebookWithVariables n def i r) = if null r then pure (Nothing, def) else
         do
             logRulebookName n
             --attempt to set the rulebook variables
-            iv <- i
+            iv <- liftWorld i
             res <- maybe --if we were not able to set them
                     (do
                         logError "Could not successfully parse arguments"
@@ -69,7 +69,7 @@ runRulebookEx (Rulebook n def r) = if null r then pure (Nothing, def) else
         res <- doUntilJustM (\case
                 Rule rn rf -> do
                     --unless (rn == "") (logDebug $ "Following thee " <> rn)
-                    rf
+                    liftWorld rf
                 RuleWithVariables _ _ -> do
                     logError "Hit argument rule in rulebook without args"
                     return def) r
@@ -77,10 +77,10 @@ runRulebookEx (Rulebook n def r) = if null r then pure (Nothing, def) else
         let r' = res <|> def
         return (Just (), r')
 
-runRulebook :: (Show v, WithGameLog w m' m) => Rulebook w s m v -> m (Maybe v)
+runRulebook :: (Show v, WithGameData w m) => Rulebook w s v -> m (Maybe v)
 runRulebook r = fmap snd (runRulebookEx r)
 
-processRuleList :: Monad m => [Rule w v m a] -> Maybe a -> v ->  World w m (Maybe a)
+processRuleList :: WithGameData w m => [Rule w v a] -> Maybe a -> v -> m (Maybe a)
 processRuleList [] _ _ = return Nothing
 processRuleList (x:xs) def args  = case x of
             Rule _ _ -> do
@@ -89,12 +89,15 @@ processRuleList (x:xs) def args  = case x of
             RuleWithVariables rn (RuleVarsT rf) -> do
                 --unless (rn == "") (logInfo $ "Following the " <> rn)
                 let v = runStateT rf args
-                (res, s) <- v
+                (res, s) <- liftWorld v
                 maybe (processRuleList xs def s) (return . Just) res
+
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins rules"
 
-whenPlayBeginsRules :: (HasStore w Enclosing, HasStore w Player, HasThing w, WithGameLog' w m) => PlainRulebook w m
+
+
+whenPlayBeginsRules :: (HasStore w Enclosing, HasStore w Player, HasThing w) => Rulebook w () RuleOutcome 
 whenPlayBeginsRules = makeRulebook whenPlayBeginsName [
             Rule "display banner rule" (do
                 sayIntroText
@@ -114,7 +117,7 @@ introText w = [longBorder<>"\n", shortBorder <> " " <> w <> " " <> shortBorder <
             where shortBorder = "------"
                   longBorder = foldr (<>) "" $ replicate (2 * T.length shortBorder + T.length w + 2) ("-" :: Text)
 
-sayIntroText :: WithGameLog' w m => World w m ()
+sayIntroText :: WithGameData w m => m ()
 sayIntroText = do
     setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
     t <- use title
@@ -124,7 +127,7 @@ sayIntroText = do
 
 actionProcessingRulebookName = "action processing rulebook"
 
-tryAction :: (HasStore w Player, Monad m) => Text -> [Entity] -> World w m Bool
+tryAction :: (HasStore w Player, WithGameData w m) => Text -> [Entity] -> m Bool
 tryAction action args = do
     ac <- use $ actionStore . at action
     ap <- use actionProcessing
@@ -135,24 +138,24 @@ tryAction action args = do
         logDebug $ "Running action called " <> action
         p <- getPlayer
         currentActionVars .= (p, args)
-        ap act args
+        liftWorld $ ap act args
         ) ac
     logDebug $ "Action completed with result " <> show res
     return res
 
-defaultActionProcessingRules :: WithGameLog' w m => BoxedAction w m -> [Entity] -> World w m RuleOutcome
+defaultActionProcessingRules :: WithGameData w m => BoxedAction w -> [Entity] -> m RuleOutcome
 defaultActionProcessingRules (BoxedAction a) args = do
     res <- runRulebook (actionProcessingRulebookImpl a args)
     return $ fromMaybe False res
 
-actionProcessingRulebookImpl :: (Show v, WithGameLog' w m) =>  Action w v m -> [Entity] -> Rulebook w v m RuleOutcome
+actionProcessingRulebookImpl :: Show v => Action w v -> [Entity] -> Rulebook w v RuleOutcome
 actionProcessingRulebookImpl a args = RulebookWithVariables
     actionProcessingRulebookName
     (Just True)
     (if length args == _appliesTo a then runRulebook (_setActionVariables a args) else return Nothing)
     (actionProcessingRules a)
 
-actionProcessingRules :: WithGameLog' w m => Action w v m -> [Rule w v m Bool]
+actionProcessingRules :: Action w v -> [Rule w v Bool]
 actionProcessingRules a = [makeBlankRuleWithVariables "before stage rule",
         makeBlankRuleWithVariables "carrying requirements rule",
         makeBlankRuleWithVariables "basic visibility rule",
@@ -162,8 +165,8 @@ actionProcessingRules a = [makeBlankRuleWithVariables "before stage rule",
         makeBlankRuleWithVariables "investigate player awareness rule",
         makeBlankRuleWithVariables "check stage rule",
         RuleWithVariables "carry out stage rule" (do
-            v <- getRulebookVariables 
-            lift $ runRulebook (_carryOutActionRules a v)),
+            v <- getRulebookVariables
+            runRulebook (_carryOutActionRules a v)),
         makeBlankRuleWithVariables "after stage rule",
         makeBlankRuleWithVariables "investigate player awareness after rule",
         makeBlankRuleWithVariables "report stage rule",

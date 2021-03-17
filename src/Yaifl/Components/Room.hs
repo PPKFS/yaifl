@@ -37,9 +37,9 @@ data RoomData = RoomData
         _containingRegion :: ContainingRegion
     } deriving Show
 
-data RoomObject = RoomObject
+data RoomObject w = RoomObject
     {
-        _roomObject :: Object 
+        _roomObject :: Object w
       , _roomObjData :: RoomData
       , _roomEnclosing :: Enclosing
     } deriving Show
@@ -48,42 +48,42 @@ data RoomObject = RoomObject
 makeClassy ''RoomData
 makeLenses ''RoomObject
 
-instance HasObject RoomObject where
+instance HasObject (RoomObject w) w where
     object = roomObject
 
-instance HasRoom w => HasStore w RoomObject where
+instance HasRoom w => HasStore w (RoomObject w) where
     store = rooms
 
-instance ThereIs RoomObject where
+instance ThereIs (RoomObject w) where
     defaultObject e = RoomObject (blankObject e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty)
 
-instance HasRoom w => Deletable w RoomObject where
+instance HasRoom w => Deletable w (RoomObject w) where
     deleteObject e = do
-        deleteComponent @Object e
+        deleteComponent @(Object w) e
         deleteComponent @RoomData e
         deleteComponent @Enclosing e
         pass
 
-type HasRoom w = (HasStore w Object, HasStore w RoomData, HasStore w Enclosing)
-deleteRoom :: forall w m. (Monad m, HasRoom w) => Entity -> World w m ()
-deleteRoom = deleteObject @w @RoomObject
+type HasRoom w = (HasObjectStore w, HasStore w RoomData, HasStore w Enclosing)
+deleteRoom :: forall w m. (WithGameData w m, HasRoom w) => Entity -> m ()
+deleteRoom = deleteObject @w @(RoomObject w)
 
 
-rooms :: HasRoom w => Lens' w (Store RoomObject)
+rooms :: HasRoom w => Lens' w (Store (RoomObject w))
 rooms = storeLens3 RoomObject _roomObject _roomObjData _roomEnclosing
 
-room :: HasRoom w => Entity -> Lens' w (Maybe RoomObject)
+room :: HasRoom w => Entity -> Lens' w (Maybe (RoomObject w))
 room k = rooms . at k
 
 --UNSAFE.
-updateFirstRoom :: forall w m. Monad m => HasRoom w => World w m Entity
+updateFirstRoom :: forall w m. WithGameData w m => HasRoom w => m Entity
 updateFirstRoom = do
-    ks <- uses (gameWorld . store @w @RoomObject) (nonEmpty . IM.keys)
+    ks <- uses (gameWorld . store @w @(RoomObject w)) (nonEmpty . IM.keys)
     maybe (do
         logError "No rooms detected, so couldn't find first room."
         return (-10))  (\t -> do
         let v = minimumNE t
-        o <- getComponent @Object v
+        o <- getComponent @(Object w) v
         firstRoom ?= v
         logInfo $ "Added the first room " <> showMaybeObjDebug o
         return v) ks

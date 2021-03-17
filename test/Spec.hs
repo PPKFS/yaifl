@@ -36,10 +36,10 @@ newtype World w a = World
 makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable]
 makeLenses ''GameWorld
 
-instance HasStore GameWorld Object where
+instance HasStore GameWorld (Object GameWorld) where
     store = objectStore
 
-instance HasStore GameWorld Physical where
+instance HasStore GameWorld (Physical GameWorld) where
     store = physicalStore
 
 instance HasStore GameWorld RoomData where
@@ -57,16 +57,19 @@ instance HasStore GameWorld Openable where
 instance HasStore GameWorld ContainerData where
     store = containerDataStore
 
+
 runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
-addRule :: WithGameLog w m => Rulebook w () m RuleOutcome -> Rule w () m RuleOutcome -> World w m ()
+addRule :: Rulebook w () RuleOutcome -> Rule w () RuleOutcome -> World w ()
 addRule rb r = do
+    logDebug "added a rule.."
     let r2 = addRuleLast rb r
-    rulebookStore . at (rulebookName rb) ?= BoxedRulebook r2
+    rulebookStore . at (rulebookName r2) ?= BoxedRulebook r2
     pass
 
-addRuleLast :: Rulebook w v m a -> Rule w () m a -> Rulebook w () m a
+addRuleLast :: Rulebook w v a -> Rule w v a -> Rulebook w v a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
+addRuleLast (RulebookWithVariables n d s rs) r = RulebookWithVariables n d s ([r] <> rs)
 
 modifyingM :: MonadState s m => LensLike m s s a b -> (a -> m b) -> m ()
 modifyingM t f = do
@@ -74,24 +77,27 @@ modifyingM t f = do
   s' <- t f s
   put s'
 
-ex1World :: forall w m. (HasStandardWorld w m, WithGameLog w m) => World w m ()
+ex1World :: forall w. HasStandardWorld w => World w ()
 ex1World = do
     setTitle "Bic"
-    thereIs @RoomObject $ do
+    thereIs @(RoomObject w) $ do
         name .= "The Staff Break Room"
-    thereIs @Thing $ do
+    thereIs @(Thing w) $ do
         name .= "Bic pen"
-    thereIs @Thing $ do
+    thereIs @(Thing w) $ do
         name .= "orange"
         description .= "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    thereIs @Thing $ do
+    thereIs @(Thing w) $ do
         name .= "napkin"
         description .= "Slightly crumpled."
-    thereIs @RoomObject $ do
+    thereIs @(RoomObject w) $ do
         name .= "The Staff Break Room2"
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
-            whenM (gets (evalDescription t) <&> ("" ==)) (do
+            logDebug "moo"
+            whenM (do
+                desc <- evalDescription t
+                return $ "" == desc) (do
                 sayLn $ (t ^. name) <> " has no description.")
             return t)
         return Nothing)
@@ -104,7 +110,7 @@ ex1Test z = consumeTitle "Bic" z >>=
             consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
             consumeLine "Bic pen has no description."
 
-setTitle :: WithGameLog w m => Text -> World w m ()
+setTitle :: WithGameData w m => Text -> m ()
 setTitle t = title .= t
 
 consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
@@ -132,22 +138,23 @@ main = do
       exitSuccess
     else
       die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
+
 tests :: Test
 tests = makeTests [("Bic - 3.1.2", ex1World, ex1Test)]
 
-makeTests :: [(String, World GameWorld IO a, Text -> Either Assertion Text)] -> Test
+makeTests :: [(String, World GameWorld a, Text -> Either Assertion Text)] -> Test
 makeTests lst = TestList $
     map (\(z, x, y) -> TestLabel z  $ TestCase (testExample x [] y)) lst
 
 --testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
 --testExampleBlank w1 ts = testExample w1 [] ts
 
-addExtrasToBeTH :: HasStandardWorld w m => World w m ()
+addExtrasToBeTH :: HasStandardWorld w => World w ()
 addExtrasToBeTH = do
     updateFirstRoom
     makePlayer defaultPlayerID
     pass
-testExample :: World GameWorld IO a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
+testExample :: World GameWorld a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
 testExample w _ ts = do
     w2 <- runWorld (do
         logInfo "Started world building..."

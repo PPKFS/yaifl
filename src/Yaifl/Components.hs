@@ -21,4 +21,4 @@ import           Yaifl.Common
 import           Yaifl.Components.Container
 import           Yaifl.Components.Openable
 
-type HasStandardWorld w m = (Monad m, HasThing w, HasRoom w, HasStore w Player, HasContainer w) 
+type HasStandardWorld w = (HasThing w, HasRoom w, HasStore w Player, HasContainer w) 

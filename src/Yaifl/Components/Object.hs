@@ -16,6 +16,8 @@ module Yaifl.Components.Object
     , showObjDebug
     , showMaybeObjDebug
     , isType
+    , getDescription
+    , HasObjectStore
         {-
     , objectComponent
     , makeObject
@@ -38,69 +40,82 @@ import Colog
 type Name = Text
 type ObjType = Text
 
-data Description = PlainDescription Text | DynamicDescription (forall w. w -> Entity -> Text)
+data Description w = PlainDescription Text | DynamicDescription (Entity -> GameData w -> Text)
 
-instance IsString Description where
+instance IsString (Description w) where
     fromString = PlainDescription . fromString
 
 -- | also for overloadedstrings
-instance Semigroup Description where
+instance Semigroup (Description w) where
     (<>) (PlainDescription e) (PlainDescription e2) =
         PlainDescription (e <> e2)
     (<>) (PlainDescription e) (DynamicDescription e2) =
-        DynamicDescription (\w e1 -> e <> e2 w e1)
+        DynamicDescription (\e1 -> do
+            e' <- e2 e1
+            return $ e <> e')
     (<>) (DynamicDescription e2) (PlainDescription e) =
-        DynamicDescription (\w e1 -> e2 w e1 <> e)
+        DynamicDescription (\e1 -> do
+            e' <- e2 e1
+            return $ e' <> e)
     (<>) (DynamicDescription e) (DynamicDescription e2) =
-        DynamicDescription (\w e1 -> e w e1 <> e2 w e1)
+        DynamicDescription (\e1 -> do
+            e' <- e2 e1
+            e'' <- e e1
+            return $ e'' <> e')
 -- | we define a show instance just for debug purposes.
-instance Show Description where
+instance Show (Description w) where
     show (PlainDescription   t) = show t
     show (DynamicDescription _) = "dynamic description"
 
-data Object = Object
+data Object w = Object
     { _name        :: Name
-    , _description :: Description
+    , _description :: Description w
     , _objID    :: Entity
     , _objType  :: Text
     }
     deriving Show
 
-blankObject :: Entity -> ObjType -> Object
+blankObject :: Entity -> ObjType -> Object w
 blankObject = Object "" ""
 makeClassy ''Object
 
-class HasDescription w m a where
-    evalDescription :: a -> GameData w m -> Text
+type HasObjectStore w = HasStore w (Object w)
+class HasDescription a m where
+    evalDescription :: a -> m Text
 
-instance (HasStore w Object) => HasDescription w m Entity where
-    evalDescription e gd = maybe "Uh oh." (`evalDescription` gd) v where
-        v :: Maybe Object
-        v = gd ^. gameWorld . store . at e
+instance (MonadState (GameData w) m, HasStore w (Object w)) => HasDescription Entity m where
+    evalDescription e = do
+        v <- getComponent @(Object w) e
+        maybe (return "Uh oh.") evalDescription v
 
-instance HasObject i => HasDescription w m i where
-    evalDescription o = ed (o ^. object) where
-        ed Object{_description=PlainDescription t} _ = t
-        ed Object{_description=DynamicDescription f, _objID=i} g = f g i
+instance MonadState (GameData w) m => HasDescription (Object w) m where
+    evalDescription e = ed e <$> get where
+            ed Object{_description=PlainDescription t} = return t
+            ed Object{_description=DynamicDescription f, _objID=i} = f i
 
-thereIs :: (ThereIs s, HasStore w s, WithGameLog' w m, HasObject s) => State s a -> World w m s
+thereIs :: (ThereIs s, HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
 thereIs s = do
     e <- newEntity
     let v = execState s $ defaultObject e
     gameWorld . store . at e ?= v
     logDebug $ "Made a new object at ID " <> show e <> " named " <> _name (v ^. object)
     return v
-    
-showObjDebug :: HasObject s => s -> Text
+
+showObjDebug :: HasObject s w => s -> Text
 showObjDebug s = "(" <> s ^. object . name <> ", ID: " <> show (s ^. object . objID) <> ", type: " <> s ^. object . objType <> ")"
 
-showMaybeObjDebug :: HasObject s => Maybe s -> Text
+showMaybeObjDebug :: HasObject s w => Maybe s -> Text
 showMaybeObjDebug = maybe "(No object)" showObjDebug
 
-isType :: (HasStore w Object, Monad m) => Entity -> Text -> World w m Bool 
+isType :: forall w m. (MonadState (GameData w) m, HasObjectStore w) => Entity -> Text -> m Bool
 isType e t = do
-    o <- getComponent @Object e
+    o <- getComponent @(Object w) e
     return $ fmap _objType o == Just t
+
+getDescription :: forall w m. (HasObjectStore w, WithGameData w m) => Entity -> m (Maybe (Description w))
+getDescription e = do
+    o <- getComponent @(Object w) e
+    return (_description <$> o)
 {-
 class HasName a where
     nameOf :: (HasWorld w '[Object] r) => a -> Sem r Name

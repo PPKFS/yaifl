@@ -13,7 +13,7 @@ import Colog
 doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
 doUntilJustM f = runMaybeT . asumMap (MaybeT . f)
 
-doIfExists2 :: WithGameLog' w m => Maybe t1 -> Maybe t2 -> Text -> Text -> (t1 -> t2 -> World w m Bool) -> World w m Bool
+doIfExists2 :: WithGameData w m => Maybe t1 -> Maybe t2 -> Text -> Text -> (t1 -> t2 -> m Bool) -> m Bool
 doIfExists2 c1 c2 err1 err2 f = do
     when (isNothing c1) $ logError err1 
     when (isNothing c2) $ logError err2

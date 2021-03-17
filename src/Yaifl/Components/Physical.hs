@@ -15,6 +15,7 @@ module Yaifl.Components.Physical
     , getThing
     , getLocation
     , HasPhysical
+    , HasPhysicalStore
     )
 where
 
@@ -32,7 +33,7 @@ data Portability = FixedInPlace | Portable deriving (Eq, Show)
 data Wearability = Wearable | Unwearable deriving (Eq, Show)
 data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving (Eq, Show)
 data Describable = Described | NotDescribed deriving (Eq, Show)
-data Physical = Physical
+data Physical w = Physical
     { _lit               :: ThingLit
     , _edible            :: Edibility
     , _portable          :: Portability
@@ -45,15 +46,16 @@ data Physical = Physical
     , _concealedBy       :: Maybe Entity
     , _described         :: Describable
     , _handled           :: Bool
-    , _initialAppearance :: Maybe Description
+    , _initialAppearance :: Maybe (Description w)
     , _scenery           :: Bool
     } deriving Show
 makeClassy ''Physical
 
-isConcealed :: (Monad m, HasStore w Physical) => Entity -> World w m Bool
-isConcealed e = not <$> isX Nothing _concealedBy e
+isConcealed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
+isConcealed = isX @(Physical w) Nothing _concealedBy
 
-blankPhysical :: Entity -> Physical
+type HasPhysicalStore w = HasStore w (Physical w)
+blankPhysical :: Entity -> Physical w
 blankPhysical e = Physical
                            Lit
                            Inedible
@@ -70,46 +72,49 @@ blankPhysical e = Physical
                            Nothing
                            False
 
-data Thing = Thing
+data Thing w = Thing
     {
-        _thingObject :: Object
-      , _thingPhysical :: Physical
+        _thingObject :: Object w
+      , _thingPhysical :: Physical w
     } deriving Show
 
 makeLenses ''Thing
 
-instance HasObject Thing where
+instance HasObject (Thing w) w where
     object = thingObject
 
-instance HasPhysical Thing where
+instance HasPhysical (Thing w) w where
     physical = thingPhysical
-instance ThereIs Thing where
+instance ThereIs (Thing w) where
     defaultObject e = Thing (blankObject e "thing") (blankPhysical defaultVoidRoom)
 
-instance HasThing w => HasStore w Thing where
-    store = things
-type HasThing w = (HasStore w Object, HasStore w Physical)
+instance MonadState (GameData w) m => HasDescription (Thing w) m where
+    evalDescription (Thing o _) = evalDescription o
 
-things :: HasThing w => Lens' w (Store Thing)
+instance HasThing w => HasStore w (Thing w) where
+    store = things
+type HasThing w = (HasObjectStore w , HasPhysicalStore w)
+
+things :: HasThing w => Lens' w (Store (Thing w))
 things = storeLens2 Thing _thingObject _thingPhysical
 
-thing :: HasThing w => Entity -> Lens' w (Maybe Thing)
+thing :: HasThing w => Entity -> Lens' w (Maybe (Thing w))
 thing k = things . at k
 
-getThing :: (Monad m, HasThing w) => Entity -> World w m (Maybe Thing)
+getThing :: (WithGameData w m, HasThing w) => Entity -> m (Maybe (Thing w))
 getThing o = use $ gameWorld . thing o
 
-getLocation :: (HasStore w Physical, Monad m) => Entity -> World w m (Maybe Entity)
+getLocation :: forall w m. (HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe Entity)
 getLocation e = do
-    o <- getComponent @Physical e
+    o <- getComponent @(Physical w) e
     return (_enclosedBy <$> o)
 
-move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameLog' w m) => Entity -> Entity -> World w m Bool
+move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameData w m) => Entity -> Entity -> m Bool
 move obj le = do
     objToMove <- getThing obj
     mloc <- getComponent @Enclosing le -- use $ gameWorld . (store @w @Enclosing) . at le
-    locName <- getComponent @Object le 
-    doIfExists2 objToMove mloc (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.") 
+    locName <- getComponent @(Object w) le
+    doIfExists2 objToMove mloc (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.")
         (showMaybeObjDebug locName <> " has no enclosing component, so cannot move objects into it.")
         (\o _ -> do
             --todo: recalc the location?
@@ -117,9 +122,9 @@ move obj le = do
             -- a derived property?
             --o . location .= le
             let vl = o ^. thingPhysical . enclosedBy
-            vlo <- getComponent @Object vl
+            vlo <- getComponent @(Object w) vl
             logDebug $ "Moving " <> showObjDebug o <> " from " <> showMaybeObjDebug vlo <> " to " <> showMaybeObjDebug locName
-            adjustComponent @Physical obj (enclosedBy .~ le)
+            adjustComponent @(Physical w) obj (enclosedBy .~ le)
             adjustComponent @Enclosing vl (encloses %~ DS.delete obj)
             adjustComponent @Enclosing le (encloses %~ DS.insert obj)
             return True

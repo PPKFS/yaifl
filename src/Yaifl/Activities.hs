@@ -4,15 +4,13 @@ module Yaifl.Activities
 
     makeActivityEx, makeActivity,
     doActivity',
-    printingNameOfADarkRoomName, --printingDescriptionOfADarkRoomName,
-    {-
-    describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
-    LocaleDescription(..),
-    printName', printName,
+    printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
+    
+    --describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
+    --LocaleDescription(..),
+    printNameEx, printName,
     capitalThe,
-    printingNameOfSomethingImpl, printingDescriptionOfADarkRoomImpl, printingNameOfADarkRoomImpl,
-     describingLocaleActivityImpl, choosingNotableLocaleObjectsActivityImpl,
-    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
+    --printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
 ) where
 
 import Yaifl.Prelude
@@ -22,28 +20,28 @@ import Yaifl.Rulebooks
 import Colog
 
 
-addActivity :: (Show v, Monad m) => Activity w v m -> World w m ()
+addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
 addActivity ac = do
     activityStore . at (_activityName ac) ?= BoxedActivity ac
 
-addBaseActivities :: Monad m => World w m ()
+addBaseActivities :: WithGameData w m => m ()
 addBaseActivities = do
     addActivity printingNameOfADarkRoomImpl
 
-makeActivityEx :: Monad m => Text -> Int -> ([Entity] -> Maybe v) -> [Rule w v m RuleOutcome] ->
-    [Rule w v m RuleOutcome] -> [Rule w v m RuleOutcome] -> Activity w v m
+makeActivityEx :: Text -> Int -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
+    [Rule w v RuleOutcome] -> [Rule w v RuleOutcome] -> Activity w v
 makeActivityEx n appliesTo setVars before forRules after = Activity n appliesTo (\v -> makeRulebook "set activity variables rulebook" [Rule "set activity variables" (return $ setVars v)])
                         (makeRulebookWithVariables "before activity rulebook" before)
                         (makeRulebookWithVariables "for activity rulebook" forRules)
                         (makeRulebookWithVariables "after activity rulebook" after)
 
-makeActivity :: Monad m => Text -> (Int, [Entity] -> Maybe v) -> RuleEvaluation w v m -> Activity w v m
+makeActivity :: Text -> (Int, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
 makeActivity n (app, setVars) fo = makeActivityEx n app setVars [] [RuleWithVariables "" fo] []
 
-doActivity' :: Monad m => Text -> World w m (Maybe RuleOutcome)
+doActivity' :: WithGameData w m => Text -> m (Maybe RuleOutcome)
 doActivity' n = doActivity n []
 
-doActivity :: WithGameLog w m' m => Text -> [Entity] -> m (Maybe RuleOutcome)
+doActivity :: WithGameData w m => Text -> [Entity] -> m (Maybe RuleOutcome)
 doActivity n args = do
     --sayDbgLn $ "Running activity " <> n
     ac <- use $ activityStore . at n
@@ -64,24 +62,24 @@ doActivity n args = do
 
 printingNameOfADarkRoomName :: Text
 printingNameOfADarkRoomName = "printing the name of a dark room activity"
-printingNameOfADarkRoomImpl :: Monad m => Activity w () m
+printingNameOfADarkRoomImpl :: Activity w ()
 printingNameOfADarkRoomImpl = makeActivity printingNameOfADarkRoomName ignoreArgs (do
             say "Darkness"
             return Nothing)
 
 printingDescriptionOfADarkRoomName :: Text
 printingDescriptionOfADarkRoomName = "printing the description of a dark room activity"
-printingDescriptionOfADarkRoomImpl :: Monad m => Activity w () m
+printingDescriptionOfADarkRoomImpl :: Activity w ()
 printingDescriptionOfADarkRoomImpl = makeActivity printingDescriptionOfADarkRoomName ignoreArgs (do
             sayLn "It is pitch dark, and you can't see a thing."
             return Nothing)
 
 printingNameOfSomethingName :: Text
 printingNameOfSomethingName = "printing the name of something activity"
-printingNameOfSomethingImpl :: (HasStore w Object, Monad m) => Activity w Entity m
+printingNameOfSomethingImpl :: forall w. HasObjectStore w => Activity w Entity
 printingNameOfSomethingImpl = makeActivity printingNameOfSomethingName singleArg (do
         e <- getRulebookVariables 
-        o <- getComponent @Object e
+        o <- getComponent @(Object w) e
         traverse_ say (_name <$> o)
         return $ Just True)
 
@@ -96,14 +94,14 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
-class HasID e where
-    getID :: e -> Entity
-printName :: HasID e => e -> m ()
+
+printName :: (WithGameData w m, HasID w e m) => e -> m ()
 printName o = printNameEx o noSayOptions
 
-printNameEx ::  HasID e => e -> SayOptions -> m ()
+printNameEx :: (WithGameData w m, HasID w e m) => e -> SayOptions -> m ()
 printNameEx o p = do
-    let pr = doActivity printingNameOfSomethingName [getID o]
+    e <- getID o
+    let pr = doActivity printingNameOfSomethingName [e]
     case p of
         NoOptions -> pr 
         SayOptions Indefinite Capitalised -> do say "A "; pr
