@@ -16,6 +16,9 @@ module Yaifl.Components.Physical
     , getLocation
     , HasPhysical
     , HasPhysicalStore
+    , HasThingStore
+    , thingPhysical
+    , lit
     )
 where
 
@@ -54,13 +57,14 @@ makeClassy ''Physical
 isConcealed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
 isConcealed = isX @(Physical w) Nothing _concealedBy
 
-type HasPhysicalStore w = HasStore w (Physical w)
+type HasPhysicalStore w = (HasStore w (Object w), HasStore w (Physical w))
+type HasThingStore w = HasStore w (Thing w)
 blankPhysical :: Entity -> Physical w
 blankPhysical e = Physical
-                           Lit
+                           Unlit
                            Inedible
                            Portable
-                           Wearable
+                           Unwearable
                            PushableBetweenRooms
                            e
                            False

@@ -94,7 +94,6 @@ ex1World = do
         name .= "The Staff Break Room2"
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
-            logDebug "moo"
             whenM (do
                 desc <- evalDescription t
                 return $ "" == desc) (do

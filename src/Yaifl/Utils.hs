@@ -3,6 +3,7 @@ module Yaifl.Utils
         doUntilJustM
       , doIfExists2
       , minimumNE
+      , maybeM
     ) where
 
 import Yaifl.Prelude
@@ -15,7 +16,7 @@ doUntilJustM f = runMaybeT . asumMap (MaybeT . f)
 
 doIfExists2 :: WithGameData w m => Maybe t1 -> Maybe t2 -> Text -> Text -> (t1 -> t2 -> m Bool) -> m Bool
 doIfExists2 c1 c2 err1 err2 f = do
-    when (isNothing c1) $ logError err1 
+    when (isNothing c1) $ logError err1
     when (isNothing c2) $ logError err2
     case (c1, c2) of
         (Just jc1, Just jc2) -> f jc1 jc2
@@ -24,6 +25,9 @@ doIfExists2 c1 c2 err1 err2 f = do
 minimumNE :: Ord a => NonEmpty a -> a
 minimumNE (a :| []) = a
 minimumNE (a :| as) = min a (Data.List.minimum as)
+
+maybeM :: Monad m => b -> (a1 -> m b) -> Maybe a1 -> m b
+maybeM d = maybe (return d)
 {-
 whenJustM_ :: Monad m => m (Maybe a) -> (a -> m ()) -> ()
 whenJustM_ f = do
