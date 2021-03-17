@@ -84,8 +84,7 @@ modifyingM t f = do
 ex1World :: forall w. HasStandardWorld w => World w ()
 ex1World = do
     setTitle "Bic"
-    thereIs @(RoomObject w) $ do
-        name .= "The Staff Break Room"
+    makeRoom "The Staff Break Room"
     thereIs @(Thing w) $ do
         name .= "Bic pen"
     thereIs @(Thing w) $ do
@@ -94,8 +93,6 @@ ex1World = do
     thereIs @(Thing w) $ do
         name .= "napkin"
         description .= "Slightly crumpled."
-    thereIs @(RoomObject w) $ do
-        name .= "The Staff Break Room2"
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
             whenM (do

@@ -7,6 +7,7 @@ module Yaifl.Components.Room
       , roomObject
       , rooms
       , HasRoom
+      , makeRoom
       , updateFirstRoom
       , roomObjData
       , darkness
@@ -59,6 +60,10 @@ instance HasRoom w => HasStore w (RoomObject w) where
 instance ThereIs (RoomObject w) where
     defaultObject e = RoomObject (blankObject e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty Nothing)
 
+makeRoom :: forall w m. (HasRoom w, WithGameData w m) => Text -> m (RoomObject w)
+makeRoom n = thereIs @(RoomObject w) $ do
+    name .= n
+    description .= PlainDescription ("It's " <> n <> ".")
 instance HasRoom w => Deletable w (RoomObject w) where
     deleteObject e = do
         deleteComponent @(Object w) e

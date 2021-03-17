@@ -134,16 +134,17 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
             (LookingActionVariables cnt lvls _) <- getRulebookVariables
             let visCeil = viaNonEmpty last lvls
             loc <- getActor >>= getLocation
+            logDebug $ "Printing room description heading with visibility ceiling ID " <> show visCeil <> " and visibility count " <> show cnt
             if | cnt == 0 -> (do doActivity printingNameOfADarkRoomName []; pass) --no light, print darkness
                 | visCeil == loc -> traverse_ printName visCeil --if the ceiling is the location, then print [the location]
-                | True -> do traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
+                | True -> do traverse_ (`printNameEx` capitalThe) visCeil; --otherwise print [The visibility ceiling]
 
             mapM_ foreachVisibilityHolder (drop 1 lvls)
             lift $ sayLn ""
             lift $ setStyle Nothing
             --TODO: "run paragraph on with special look spacing"?
             return Nothing),
-        RuleWithVariables "room description body rule" (do
+         RuleWithVariables "room description body rule" (do
             LookingActionVariables cnt lvls ac <- getRulebookVariables
             let visCeil = viaNonEmpty last lvls
             loc <- getActor >>= getLocation
@@ -152,15 +153,13 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
             dw <- use darknessWitnessed
             let abbrev = roomDesc == AbbreviatedRoomDescriptions
                 someAbbrev = roomDesc == SometimesAbbreviatedRoomDescriptions
-
             if | cnt == 0 -> unless (abbrev || (someAbbrev && dw))
                     (do _ <- doActivity' printingDescriptionOfADarkRoomName ; pass)
                | visCeil == loc ->
                     unless (abbrev || (someAbbrev && ac /= lookingActionName))
                             (do
                                 desc <- traverse evalDescription loc
-                                whenJust desc sayLn )
-                                --(sayLn . getDescription w) (getComponent' w objectComponent loc))
+                                whenJust desc sayLn)
                | True -> pass
             return Nothing)]{-
         makeRule "room description paragraphs about objects rule" (do
