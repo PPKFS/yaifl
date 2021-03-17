@@ -11,13 +11,14 @@ import Yaifl.Activities
 import Colog
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 import qualified Data.List.NonEmpty as NE
+import Yaifl.Utils
 
 
 addAction :: (Show v, WithGameData w m) => Action w v -> m ()
 addAction ac = do
     actionStore . at (_actionName ac) ?= BoxedAction ac
 
-addBaseActions :: (HasContainer w, HasPhysicalStore w, WithGameData w m) => m ()
+addBaseActions :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => m ()
 addBaseActions = do
     actionProcessing .= defaultActionProcessingRules
     addAction lookingActionImpl
@@ -40,10 +41,10 @@ data LookingActionVariables = LookingActionVariables
 
 lookingActionName = "looking"
 
-lookingActionImpl :: (HasContainer w, HasPhysicalStore w) => Action w LookingActionVariables
+lookingActionImpl :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w) => Action w LookingActionVariables
 lookingActionImpl = Action lookingActionName [lookingActionName] 0 (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
 
-lookingActionSet :: (HasContainer w, HasPhysicalStore w) => Rulebook w () LookingActionVariables
+lookingActionSet :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w) => Rulebook w () LookingActionVariables
 lookingActionSet = makeRulebook "set action variables rulebook" [
         Rule "determine visibility ceiling rule" (do
         --TODO - set properly?
@@ -54,9 +55,44 @@ lookingActionSet = makeRulebook "set action variables rulebook" [
         lightLevels <- recalculateLightOfParent actorID
         return $ fmap (\x -> LookingActionVariables lightLevels (take lightLevels x) lookingActionName) vl')
     ]
+-- Inform Designer's Manual, Page 146
+-- we recalculate the light of the immediate holder of an object
+-- there is light exactly when the parent (p) "offers light"
 
-recalculateLightOfParent :: Monad m => Entity -> m Int
-recalculateLightOfParent _ = return 0
+---has light is if it's lit, or see through and it contains light
+-- offers light means it lights INTO itself
+-- has light means it lights OUT AWAY from itself
+recalculateLightOfParent :: (HasStore w Enclosing, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Int
+recalculateLightOfParent e = do
+    p <- getLocation e
+    maybe (return 0) (\p' -> ifM (offersLight p')
+        (do
+            v <- recalculateLightOfParent p'
+            return $ 1+v) (return 0)) p
+-- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
+offersLight :: forall w m. (HasStore w Enclosing, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Bool
+offersLight e = do
+    litObj <- objectItselfHasLight e
+    l3 <- getComponent @Enclosing e
+    l4 <- isSeeThrough e >>= (\x -> if x then getLocation e >>= maybeM False offersLight else return False)
+    containsLitObj <- maybeM False (anyM hasLight) $ l3 ^? _Just . encloses
+    return $ litObj || l4 || containsLitObj
+
+-- either a lit object or a lighted room
+objectItselfHasLight :: forall w m. (HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Bool
+objectItselfHasLight e = do
+    l1 <- getComponent @(Thing w) e
+    l2 <- getComponent @RoomData e
+    let givesLight = l1 ^? _Just . thingPhysical . lit == Just Lit
+        lightedRoom = l2 ^? _Just . darkness == Just Lighted
+    return $ givesLight || lightedRoom
+
+hasLight :: Entity -> m Bool
+hasLight = error "not implemented"
+
+--an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
+isSeeThrough :: Entity -> m Bool
+isSeeThrough e = error "not implemented"
 
 getVisibilityLevels :: (HasContainer w, HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe [Entity])
 getVisibilityLevels e = do
@@ -77,7 +113,7 @@ findVisibilityHolder e' = do
     -- otherwise, the enclosing entity
     if e_room || e_cont then return (Just e') else return $ _enclosedBy <$> enclosing
 
-carryOutLookingRules :: (HasObjectStore w, HasPhysicalStore w) => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
+carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
 carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
     [RuleWithVariables "room description heading rule" (do
             setStyle (Just PPTTY.bold)

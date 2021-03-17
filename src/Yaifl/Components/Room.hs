@@ -8,6 +8,8 @@ module Yaifl.Components.Room
       , rooms
       , HasRoom
       , updateFirstRoom
+      , roomObjData
+      , darkness
     )
 where
 
