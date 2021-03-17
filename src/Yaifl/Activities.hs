@@ -1,87 +1,88 @@
 module Yaifl.Activities
 (
-    makeActivity', makeActivity,
-    doActivity', doActivity, compileActivity,
+    doActivity, addBaseActivities,
+
+    makeActivityEx, makeActivity,
+    doActivity',
     printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
-    describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
-    LocaleDescription(..),
-    printName', printName,
+    
+    --describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
+    --LocaleDescription(..),
+    printNameEx, printName,
     capitalThe,
-    printingNameOfSomethingImpl, printingDescriptionOfADarkRoomImpl, printingNameOfADarkRoomImpl,
-     describingLocaleActivityImpl, choosingNotableLocaleObjectsActivityImpl,
-    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName
+    --printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
 ) where
 
-import Relude
-import Yaifl.Say
-import Yaifl.Utils
+import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Components
 import Yaifl.Rulebooks
-import qualified Data.IntMap.Strict as IM
-import qualified Data.Map as Map
-import qualified Data.Set as DS
-import qualified Text.Show
-import Data.List
-import Control.Lens
+import Colog
 
-makeActivity' :: Text -> RuleEvaluation (w, p) -> UncompiledActivity w () p
-makeActivity' n r = makeActivity n (const ()) (zoom (alongside id _1) r)
 
-makeActivity :: Text -> (w -> r) -> RuleEvaluation (w, (p, r)) -> UncompiledActivity w r p
-makeActivity n iniActivity r = Activity n iniActivity 
-                    (\p -> makeRulebook ("before " <> n) p []) 
-                    (\r1 -> makeRulebook ("for " <> n) r1 [("", r)]) 
-                    (\p -> makeRulebook ("before " <> n) p []) 
+addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
+addActivity ac = do
+    activityStore . at (_activityName ac) ?= BoxedActivity ac
 
-doActivity' :: (HasWorld u w) => Text -> System u (Maybe Bool)
+addBaseActivities :: WithGameData w m => m ()
+addBaseActivities = do
+    addActivity printingNameOfADarkRoomImpl
+
+makeActivityEx :: Text -> Int -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
+    [Rule w v RuleOutcome] -> [Rule w v RuleOutcome] -> Activity w v
+makeActivityEx n appliesTo setVars before forRules after = Activity n appliesTo (\v -> makeRulebook "set activity variables rulebook" [Rule "set activity variables" (return $ setVars v)])
+                        (makeRulebookWithVariables "before activity rulebook" before)
+                        (makeRulebookWithVariables "for activity rulebook" forRules)
+                        (makeRulebookWithVariables "after activity rulebook" after)
+
+makeActivity :: Text -> (Int, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
+makeActivity n (app, setVars) fo = makeActivityEx n app setVars [] [RuleWithVariables "" fo] []
+
+doActivity' :: WithGameData w m => Text -> m (Maybe RuleOutcome)
 doActivity' n = doActivity n []
 
-doActivity :: HasWorld u w => Text -> [Entity] -> System u (Maybe Bool)
-doActivity n params = do
+doActivity :: WithGameData w m => Text -> [Entity] -> m (Maybe RuleOutcome)
+doActivity n args = do
     --sayDbgLn $ "Running activity " <> n
-    w <- get
-    maybe (do sayDbgLn $ "couldn't find activity " <> n; return $ Just False) (\(CompiledActivity x) -> 
-        zoom world $ x params) (w ^. activities . at n)
-
--- | what is this atrocious mess
-compileActivity :: (HasMessageBuffer w, ActionArgs p) => UncompiledActivity w r p -> Activity w
-compileActivity a = CompiledActivity (\e -> do
-    w <- get
-    let initRules = _initActivity a w
-    let args = unboxArguments e
-    whenJust args (\defArgs ->
-        zoomOut (do
-            _ <- getRule $ compileRulebook (_beforeRules a (defArgs, initRules)) Silent
-            (_, (_, r)) <- get
-            getRule $ compileRulebook (_forRules a (defArgs, r)) Silent
-            (_, (_, r')) <- get
-            getRule $ compileRulebook (_afterRules a (defArgs,  r')) Silent
-            pass) (defArgs, initRules))
-    return Nothing
-    )
+    ac <- use $ activityStore . at n
+    maybe (do
+        logError $ "couldn't find activity " <> n
+        return $ Just False)
+          (\(BoxedActivity (Activity _ app setRb bef fo aft)) -> do
+              iv <- if length args == app then runRulebook (setRb args) else return Nothing
+              maybe (do
+                  logError "Couldn't parse activity arguments.."
+                  return $ Just False
+                ) (\x -> do
+                    (r1, _) <- runRulebookEx (bef x)
+                    ry <- (runRulebookEx . fo) $ fromMaybe x r1
+                    rz <- (runRulebookEx . aft) $ fromMaybe x (fst ry)
+                    return (snd rz)
+                  ) iv) ac
 
 printingNameOfADarkRoomName :: Text
 printingNameOfADarkRoomName = "printing the name of a dark room activity"
-printingNameOfADarkRoomImpl :: HasMessageBuffer w => UncompiledActivity w () ()
-printingNameOfADarkRoomImpl = makeActivity' printingNameOfADarkRoomName (do
+printingNameOfADarkRoomImpl :: Activity w ()
+printingNameOfADarkRoomImpl = makeActivity printingNameOfADarkRoomName ignoreArgs (do
             say "Darkness"
             return Nothing)
 
 printingDescriptionOfADarkRoomName :: Text
 printingDescriptionOfADarkRoomName = "printing the description of a dark room activity"
-printingDescriptionOfADarkRoomImpl :: HasMessageBuffer w => UncompiledActivity w () ()
-printingDescriptionOfADarkRoomImpl = makeActivity' printingDescriptionOfADarkRoomName (do
+printingDescriptionOfADarkRoomImpl :: Activity w ()
+printingDescriptionOfADarkRoomImpl = makeActivity printingDescriptionOfADarkRoomName ignoreArgs (do
             sayLn "It is pitch dark, and you can't see a thing."
             return Nothing)
 
 printingNameOfSomethingName :: Text
 printingNameOfSomethingName = "printing the name of something activity"
-printingNameOfSomethingImpl :: HasComponent w w Object => UncompiledActivity w () Entity
-printingNameOfSomethingImpl = makeActivity' printingNameOfSomethingName (do
-    (w, e) <- get
-    say . _name $ getComponent' w objectComponent e
-    return $ Just True)
+printingNameOfSomethingImpl :: forall w. HasObjectStore w => Activity w Entity
+printingNameOfSomethingImpl = makeActivity printingNameOfSomethingName singleArg (do
+        e <- getRulebookVariables 
+        o <- getComponent @(Object w) e
+        traverse_ say (_name <$> o)
+        return $ Just True)
+
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 data Article = Indefinite | Definite
@@ -93,18 +94,22 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
-printName' :: (HasComponent u w Object, HasID o) => o -> System u (Maybe Bool)
-printName' o = printName o noSayOptions
 
-printName :: (HasComponent u w Object, HasID o) => o -> SayOptions -> StateT u Identity (Maybe Bool)
-printName o p = let pr = doActivity printingNameOfSomethingName [objID o] in
+printName :: (WithGameData w m, HasID w e m) => e -> m ()
+printName o = printNameEx o noSayOptions
+
+printNameEx :: (WithGameData w m, HasID w e m) => e -> SayOptions -> m ()
+printNameEx o p = do
+    e <- getID o
+    let pr = doActivity printingNameOfSomethingName [e]
     case p of
         NoOptions -> pr 
         SayOptions Indefinite Capitalised -> do say "A "; pr
         SayOptions Definite Capitalised -> do say "The "; pr
         SayOptions Indefinite Uncapitalised -> do say "a "; pr
         SayOptions Definite Uncapitalised -> do say "the "; pr
-
+    pass
+{-
 printingLocaleParagraphAboutActivityName :: Text
 printingLocaleParagraphAboutActivityName = "printing locale paragraph about activity"
 
@@ -333,7 +338,7 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
     return Nothing
     )
 
-{-
+
 --there's something about making sure they can be pluralised which I'm ignoring
 --if it has children and won't make the parser recurse?
 --the parser will recurse if "always" is true (idfk) or if it's a supporter
@@ -344,12 +349,12 @@ choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleOb
 
 combineStuff [] _ _ ys rj = pass
 combineStuff ((_, Nothing):xs) h f ys rj = pass
-{-
+
 combineStuff ((e, Just p):xs) h f ys rj = if (_enclosedBy p) \= h 
     then 
         if isNothing h
             then combineStuff xs (_enclosedBy p) f ((e, Just p):ys) rj
             else combineStuff xs (_enclosedBy p) False ys ((e, Just p):rj)
     else 
--}
+
 -}

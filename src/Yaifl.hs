@@ -7,12 +7,10 @@ Yet another interactive fiction library.
 -}
 module Yaifl
 (
+    module Yaifl.Common
 ) where
 
 import Yaifl.Common
-import Yaifl.Say
-import Yaifl.TH
-import Yaifl.WorldBuilder
 
 --rulebooks :: Has w (Rulebook w) => Lens' w (Store (Rulebook w))
 --rulebooks = store (Proxy :: Proxy (Rulebook w))
