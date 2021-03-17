@@ -18,7 +18,7 @@ addAction :: (Show v, WithGameData w m) => Action w v -> m ()
 addAction ac = do
     actionStore . at (_actionName ac) ?= BoxedAction ac
 
-addBaseActions :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => m ()
+addBaseActions :: WithStandardWorld w m => m ()
 addBaseActions = do
     actionProcessing .= defaultActionProcessingRules
     addAction lookingActionImpl
@@ -41,10 +41,10 @@ data LookingActionVariables = LookingActionVariables
 
 lookingActionName = "looking"
 
-lookingActionImpl :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w) => Action w LookingActionVariables
+lookingActionImpl :: HasStandardWorld w => Action w LookingActionVariables
 lookingActionImpl = Action lookingActionName [lookingActionName] 0 (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
 
-lookingActionSet :: (HasContainer w, HasPhysicalStore w, HasStore w RoomData, HasThingStore w) => Rulebook w () LookingActionVariables
+lookingActionSet :: HasStandardWorld w => Rulebook w () LookingActionVariables
 lookingActionSet = makeRulebook "set action variables rulebook" [
         Rule "determine visibility ceiling rule" (do
         --TODO - set properly?
@@ -62,7 +62,7 @@ lookingActionSet = makeRulebook "set action variables rulebook" [
 ---has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
-recalculateLightOfParent :: (HasStore w Enclosing, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Int
+recalculateLightOfParent :: WithStandardWorld w m => Entity -> m Int
 recalculateLightOfParent e = do
     p <- getLocation e
     maybe (return 0) (\p' -> ifM (offersLight p')
@@ -70,7 +70,7 @@ recalculateLightOfParent e = do
             v <- recalculateLightOfParent p'
             return $ 1+v) (return 0)) p
 -- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
-offersLight :: forall w m. (HasStore w Enclosing, HasPhysicalStore w, HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Bool
+offersLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
 offersLight e = do
     litObj <- objectItselfHasLight e
     l3 <- getComponent @Enclosing e
@@ -79,7 +79,7 @@ offersLight e = do
     return $ litObj || l4 || containsLitObj
 
 -- either a lit object or a lighted room
-objectItselfHasLight :: forall w m. (HasStore w RoomData, HasThingStore w, WithGameData w m) => Entity -> m Bool
+objectItselfHasLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
 objectItselfHasLight e = do
     l1 <- getComponent @(Thing w) e
     l2 <- getComponent @RoomData e
@@ -87,12 +87,26 @@ objectItselfHasLight e = do
         lightedRoom = l2 ^? _Just . darkness == Just Lighted
     return $ givesLight || lightedRoom
 
-hasLight :: Entity -> m Bool
-hasLight = error "not implemented"
+hasLight :: WithStandardWorld w m => Entity -> m Bool
+hasLight e = do
+    litObj <- objectItselfHasLight e
+    l1 <- getComponent @Enclosing e
+    l2 <- isSeeThrough e
+    containsLitObj <- maybeM False (anyM hasLight) $ l1 ^? _Just . encloses
+    return $ litObj || l2 && containsLitObj
 
 --an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
-isSeeThrough :: Entity -> m Bool
-isSeeThrough e = error "not implemented"
+isSeeThrough :: WithStandardWorld w m => Entity -> m Bool
+isSeeThrough e = do
+    l1 <- getComponent @ContainerData e
+    l2 <- getComponent @Openable e
+    l3 <- getComponent @Supporter e
+    l4 <- getComponent @Enterable e
+    isContainer <- e `isType` "container"
+    let isTransparent = fmap _opacity l1 == Just Transparent 
+        isOpenContainer = l2 == Just Open && isJust l1
+        isEnterableNotContainer = l4 == Just Enterable && not isContainer
+    return $ isJust l3 || isTransparent || isEnterableNotContainer || isOpenContainer
 
 getVisibilityLevels :: (HasContainer w, HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe [Entity])
 getVisibilityLevels e = do
@@ -120,7 +134,6 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
             (LookingActionVariables cnt lvls _) <- getRulebookVariables
             let visCeil = viaNonEmpty last lvls
             loc <- getActor >>= getLocation
-            logError $ show visCeil
             if | cnt == 0 -> (do doActivity printingNameOfADarkRoomName []; pass) --no light, print darkness
                 | visCeil == loc -> traverse_ printName visCeil --if the ceiling is the location, then print [the location]
                 | True -> do traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]

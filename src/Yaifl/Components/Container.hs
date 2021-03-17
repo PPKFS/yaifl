@@ -12,15 +12,14 @@ import Yaifl.Common
 import Yaifl.Components.Enclosing
 import Yaifl.Components.Object
 import Yaifl.Components.Openable
+import Yaifl.Components.Enterable
 import qualified Data.Set as DS
 
 data Opacity = Opaque | Transparent deriving (Eq, Show)
 
 data ContainerData = ContainerData
     {
-        _enterable :: Bool,
-        _opacity :: Opacity,
-        _carryingCapacity :: Int
+        _opacity :: Opacity
     } deriving Show
 
 data ContainerObject w = ContainerObject
@@ -28,7 +27,8 @@ data ContainerObject w = ContainerObject
         _containerObject :: Object w,
         _containerObjData :: ContainerData,
         _containerEnclosing :: Enclosing,
-        _containerOpenable :: Openable
+        _containerOpenable :: Openable,
+        _containerEnterable :: Enterable
     } deriving Show
 
 makeClassy ''ContainerData
@@ -41,7 +41,7 @@ instance HasContainer w => HasStore w (ContainerObject w) where
     store = containers
 
 instance ThereIs (ContainerObject w) where
-    defaultObject e = ContainerObject (blankObject e "container") (ContainerData False Opaque (-1)) (Enclosing DS.empty) Closed
+    defaultObject e = ContainerObject (blankObject e "container") (ContainerData Opaque ) (Enclosing DS.empty Nothing) Closed NotEnterable
 
 instance HasContainer w => Deletable w (ContainerObject w) where
     deleteObject e = do
@@ -49,14 +49,15 @@ instance HasContainer w => Deletable w (ContainerObject w) where
         deleteComponent @ContainerData e
         deleteComponent @Enclosing e
         deleteComponent @Openable e
+        deleteComponent @Enterable e
         pass
 
-type HasContainer w = (HasObjectStore w, HasStore w ContainerData, HasStore w Enclosing, HasStore w Openable)
+type HasContainer w = (HasObjectStore w, HasStore w ContainerData, HasStore w Enclosing, HasStore w Openable, HasStore w Enterable)
 deleteContainer :: forall w m. (WithGameData w m, HasContainer w) => Entity -> m ()
 deleteContainer = deleteObject @w @(ContainerObject w)
 
 containers :: HasContainer w => Lens' w (Store (ContainerObject w))
-containers = storeLens4 ContainerObject _containerObject _containerObjData _containerEnclosing _containerOpenable
+containers = storeLens5 ContainerObject _containerObject _containerObjData _containerEnclosing _containerOpenable _containerEnterable
 
 container :: HasContainer w => Entity -> Lens' w (Maybe (ContainerObject w) )
 container k = containers . at k

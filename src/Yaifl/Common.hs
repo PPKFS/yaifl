@@ -41,6 +41,7 @@ module Yaifl.Common
     storeLens2,
     storeLens3,
     storeLens4,
+    storeLens5,
     isX,
     say,
     sayLn,
@@ -231,6 +232,9 @@ intersectStore3 f w = intersectStore2 f w <.> w ^. store
 intersectStore4 :: (HasStore w a1, HasStore w a2, HasStore w a3, HasStore w a) => (a1 -> a2 -> a3 -> a -> b) -> w -> Store b
 intersectStore4 f w = intersectStore3 f w <.> w ^. store
 
+intersectStore5 :: (HasStore w a1, HasStore w a2, HasStore w a3, HasStore w a4, HasStore w a) => (a1 -> a2 -> a3 -> a4 -> a -> b) -> w -> Store b
+intersectStore5 f w = intersectStore4 f w <.> w ^. store
+
 setStore :: forall c a w. HasStore w c => (a -> c) -> w -> Store a -> w
 setStore f w m = w & store %~ IM.union (f <$> m)
 
@@ -243,6 +247,9 @@ setStore3 f f2 f3 w m = setStore f3 (setStore2 f f2 w m) m
 setStore4 :: (HasStore w c, HasStore w c1, HasStore w c2, HasStore w c3) => (a -> c1) -> (a -> c2) -> (a -> c3) -> (a -> c) -> w -> Store a -> w
 setStore4 f f2 f3 f4 w m = setStore f4 (setStore3 f f2 f3 w m) m
 
+setStore5 :: (HasStore w c, HasStore w c1, HasStore w c2, HasStore w c3, HasStore w c4) => (a -> c1) -> (a -> c2) -> (a -> c3) -> (a -> c) -> (a -> c4) -> w -> Store a -> w
+setStore5 f f2 f3 f4 f5 w m = setStore f5 (setStore4 f f2 f3 f4 w m) m
+
 storeLens :: HasStore w a => (a -> b) -> (b -> a) -> Lens' w (Store b)
 storeLens f a = lens (intersectStore f) (setStore a)
 
@@ -254,6 +261,9 @@ storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
 
 storeLens4 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e) => (a -> c -> d -> e -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> Lens' w (Store b)
 storeLens4 f a a2 a3 a4 = lens (intersectStore4 f) (setStore4 a a2 a3 a4)
+
+storeLens5 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e, HasStore w f) => (a -> c -> d -> e -> f -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> (b -> f) -> Lens' w (Store b)
+storeLens5 f a a2 a3 a4 a5 = lens (intersectStore5 f) (setStore5 a a2 a3 a4 a5)
 
 class ThereIs t where
     defaultObject :: Entity -> t

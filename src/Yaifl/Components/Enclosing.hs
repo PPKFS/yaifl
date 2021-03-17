@@ -7,9 +7,10 @@ module Yaifl.Components.Enclosing
 import           Yaifl.Common
 import           Yaifl.Prelude
 
-newtype Enclosing = Enclosing
+data Enclosing = Enclosing
     {
         _encloses :: Set Entity
+        , _enclosingCapacity :: Maybe Int
     } deriving Show
 makeLenses ''Enclosing
 

@@ -33,7 +33,7 @@ newtype World w a = World
 { unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
 -}
 
-makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable]
+makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable, ''Supporter, ''Enterable]
 makeLenses ''GameWorld
 
 instance HasStore GameWorld (Object GameWorld) where
@@ -57,7 +57,11 @@ instance HasStore GameWorld Openable where
 instance HasStore GameWorld ContainerData where
     store = containerDataStore
 
+instance HasStore GameWorld Enterable where
+    store = enterableStore
 
+instance HasStore GameWorld Supporter where
+    store = supporterStore
 runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
 addRule :: Rulebook w () RuleOutcome -> Rule w () RuleOutcome -> World w ()
