@@ -17,7 +17,7 @@ ignoreArgs :: (Int, [Entity] -> Maybe ())
 ignoreArgs = (0, const $ Just ())
 
 singleArg :: (Int, [Entity] -> Maybe Entity)
-singleArg = (0, \case
+singleArg = (1, \case
     [] -> Nothing 
     [x] -> Just x
     _:_ -> Nothing)

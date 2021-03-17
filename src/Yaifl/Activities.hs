@@ -24,9 +24,10 @@ addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
 addActivity ac = do
     activityStore . at (_activityName ac) ?= BoxedActivity ac
 
-addBaseActivities :: WithGameData w m => m ()
+addBaseActivities :: WithStandardWorld w m => m ()
 addBaseActivities = do
     addActivity printingNameOfADarkRoomImpl
+    addActivity printingNameOfSomethingImpl
 
 makeActivityEx :: Text -> Int -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
     [Rule w v RuleOutcome] -> [Rule w v RuleOutcome] -> Activity w v
@@ -82,7 +83,6 @@ printingNameOfSomethingImpl = makeActivity printingNameOfSomethingName singleArg
         o <- getComponent @(Object w) e
         traverse_ say (_name <$> o)
         return $ Just True)
-
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 data Article = Indefinite | Definite

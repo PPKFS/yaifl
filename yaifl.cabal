@@ -76,6 +76,8 @@ library
                       , Yaifl.Components.Object
                       , Yaifl.Components.Container
                       , Yaifl.Components.Openable
+                      , Yaifl.Components.Supporter
+                      , Yaifl.Components.Enterable
                        --, Yaifl.Components.Direction
                        --, Yaifl.Components.Room
                       , Yaifl.Components.Physical

@@ -57,7 +57,7 @@ instance HasRoom w => HasStore w (RoomObject w) where
     store = rooms
 
 instance ThereIs (RoomObject w) where
-    defaultObject e = RoomObject (blankObject e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty)
+    defaultObject e = RoomObject (blankObject e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty Nothing)
 
 instance HasRoom w => Deletable w (RoomObject w) where
     deleteObject e = do
