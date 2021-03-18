@@ -17,6 +17,7 @@ module Yaifl.Components.Object
     , showMaybeObjDebug
     , isType
     , getDescription
+    , evalDescription'
     , HasObjectStore
         {-
     , objectComponent
@@ -83,15 +84,17 @@ type HasObjectStore w = HasStore w (Object w)
 class HasDescription a m where
     evalDescription :: a -> m Text
 
+evalDescription' :: MonadState (GameData w) m => Entity -> Description w -> m Text
+evalDescription' _ (PlainDescription t) = return t
+evalDescription' e (DynamicDescription f) = f e <$> get
+
 instance (MonadState (GameData w) m, HasStore w (Object w)) => HasDescription Entity m where
     evalDescription e = do
         v <- getComponent @(Object w) e
         maybe (return "Uh oh.") evalDescription v
 
 instance MonadState (GameData w) m => HasDescription (Object w) m where
-    evalDescription e = ed e <$> get where
-            ed Object{_description=PlainDescription t} = return t
-            ed Object{_description=DynamicDescription f, _objID=i} = f i
+    evalDescription e = evalDescription' (_objID e) (_description e)
 
 thereIs :: (ThereIs s, HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
 thereIs s = do

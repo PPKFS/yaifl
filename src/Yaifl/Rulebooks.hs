@@ -13,11 +13,11 @@ import Colog
 import qualified Data.Text as T
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 
-ignoreArgs :: (Int, [Entity] -> Maybe ())
-ignoreArgs = (0, const $ Just ())
+ignoreArgs :: (Int -> Bool, [Entity] -> Maybe ())
+ignoreArgs = ((==0), const $ Just ())
 
-singleArg :: (Int, [Entity] -> Maybe Entity)
-singleArg = (1, \case
+singleArg :: (Int -> Bool, [Entity] -> Maybe Entity)
+singleArg = ((==1), \case
     [] -> Nothing 
     [x] -> Just x
     _:_ -> Nothing)
@@ -152,7 +152,7 @@ actionProcessingRulebookImpl :: Show v => Action w v -> [Entity] -> Rulebook w v
 actionProcessingRulebookImpl a args = RulebookWithVariables
     actionProcessingRulebookName
     (Just True)
-    (if length args == _appliesTo a then runRulebook (_setActionVariables a args) else return Nothing)
+    (if _appliesTo a (length args) then runRulebook (_setActionVariables a args) else return Nothing)
     (actionProcessingRules a)
 
 actionProcessingRules :: Action w v -> [Rule w v Bool]

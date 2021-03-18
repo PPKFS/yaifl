@@ -5,19 +5,23 @@ module Yaifl.Activities
     makeActivityEx, makeActivity,
     doActivity',
     printingNameOfADarkRoomName, printingDescriptionOfADarkRoomName,
-    
-    --describingLocaleActivityName, choosingNotableLocaleObjectsActivityName,
+
+    describingLocaleActivityName, --choosingNotableLocaleObjectsActivityName,
     --LocaleDescription(..),
     printNameEx, printName,
     capitalThe,
-    --printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName-}
+    printingLocaleParagraphAboutActivityImpl, printingLocaleParagraphAboutActivityName
 ) where
 
 import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Components
 import Yaifl.Rulebooks
+import Yaifl.Utils
 import Colog
+import qualified Data.Set as DS
+import qualified Data.IntMap.Strict as DM
+import qualified Data.List as DL
 
 
 addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
@@ -28,15 +32,18 @@ addBaseActivities :: WithStandardWorld w m => m ()
 addBaseActivities = do
     addActivity printingNameOfADarkRoomImpl
     addActivity printingNameOfSomethingImpl
+    addActivity printingDescriptionOfADarkRoomImpl
+    addActivity describingLocaleActivityImpl
 
-makeActivityEx :: Text -> Int -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
+
+makeActivityEx :: Text -> (Int -> Bool) -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
     [Rule w v RuleOutcome] -> [Rule w v RuleOutcome] -> Activity w v
 makeActivityEx n appliesTo setVars before forRules after = Activity n appliesTo (\v -> makeRulebook "set activity variables rulebook" [Rule "set activity variables" (return $ setVars v)])
                         (makeRulebookWithVariables "before activity rulebook" before)
                         (makeRulebookWithVariables "for activity rulebook" forRules)
                         (makeRulebookWithVariables "after activity rulebook" after)
 
-makeActivity :: Text -> (Int, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
+makeActivity :: Text -> (Int -> Bool, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
 makeActivity n (app, setVars) fo = makeActivityEx n app setVars [] [RuleWithVariables "" fo] []
 
 doActivity' :: WithGameData w m => Text -> m (Maybe RuleOutcome)
@@ -50,7 +57,7 @@ doActivity n args = do
         logError $ "couldn't find activity " <> n
         return $ Just False)
           (\(BoxedActivity (Activity _ app setRb bef fo aft)) -> do
-              iv <- if length args == app then runRulebook (setRb args) else return Nothing
+              iv <- if app (length args) then runRulebook (setRb args) else return Nothing
               maybe (do
                   logError "Couldn't parse activity arguments.."
                   return $ Just False
@@ -79,7 +86,7 @@ printingNameOfSomethingName :: Text
 printingNameOfSomethingName = "printing the name of something activity"
 printingNameOfSomethingImpl :: forall w. HasObjectStore w => Activity w Entity
 printingNameOfSomethingImpl = makeActivity printingNameOfSomethingName singleArg (do
-        e <- getRulebookVariables 
+        e <- getRulebookVariables
         o <- getComponent @(Object w) e
         traverse_ say (_name <$> o)
         return $ Just True)
@@ -103,68 +110,107 @@ printNameEx o p = do
     e <- getID o
     let pr = doActivity printingNameOfSomethingName [e]
     case p of
-        NoOptions -> pr 
+        NoOptions -> pr
         SayOptions Indefinite Capitalised -> do say "A "; pr
         SayOptions Definite Capitalised -> do say "The "; pr
         SayOptions Indefinite Uncapitalised -> do say "a "; pr
         SayOptions Definite Uncapitalised -> do say "the "; pr
     pass
-{-
+
+describingLocaleActivityName :: Text
+describingLocaleActivityName = "describing locale activity"
+
 printingLocaleParagraphAboutActivityName :: Text
 printingLocaleParagraphAboutActivityName = "printing locale paragraph about activity"
 
-printingLocaleParagraphAboutActivityImpl :: HasStd w w => UncompiledActivity w Bool Entity
-printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAboutActivityName (const False)
-        (\r1 -> makeRulebook "" r1 [])
-        (\r1 -> makeRulebook "" r1 [
-            makeRule "don’t mention player’s supporter in room descriptions rule" (do
-                (w, (e, _)) <- get
-                when (isEnclosedBy w (getPlayer' w) e) (setLocalePriority e 0)
+singleArgAugmented :: [a] -> Maybe (a, Int)
+singleArgAugmented [x] = Just (x, 0)
+singleArgAugmented _ = Nothing
+
+markedOnlyFlag :: Entity
+markedOnlyFlag = -1000
+
+noConcealedFlag :: Entity
+noConcealedFlag = -1001
+--printingLocaleParagraphAboutActivityImpl :: HasStd w w => UncompiledActivity w Bool Entity
+printingLocaleParagraphAboutActivityImpl :: forall w. HasStandardWorld w => Activity w (Entity, Int)
+printingLocaleParagraphAboutActivityImpl = makeActivityEx printingLocaleParagraphAboutActivityName (==1) singleArgAugmented []
+        [
+            RuleWithVariables "don’t mention player’s supporter in room descriptions rule" (do
+                playerID <- getPlayer
+                (e, _) <- getRulebookVariables
+                playerEnclosedBy <- playerID `isEnclosedBy` e
+                when playerEnclosedBy (setLocalePriority e 0)
+                return Nothing
+                ),
+            RuleWithVariables "don’t mention scenery in room descriptions rule" (do
+                (e, _) <- getRulebookVariables
+                isScenery <- e `isType` "scenery"
+                when isScenery (setLocalePriority e 0)
                 return Nothing),
-            makeRule "don’t mention scenery in room descriptions rule" (do
-                (w, (e, _)) <- get
-                when (isComponent w sceneryComponent e) (setLocalePriority e 0)
+            RuleWithVariables "don’t mention undescribed items in room descriptions rule" (do
+                (e, _) <- getRulebookVariables
+                isDescribed <- isX @(Physical w) NotDescribed _described e
+                unless isDescribed (setLocalePriority e 0)
                 return Nothing),
-            makeRule "don’t mention undescribed items in room descriptions rule" (do
-                (w, (e, _)) <- get
-                when (isX NotDescribed _described physicalComponent w e) (setLocalePriority e 0)
-                return Nothing),
-            makeRule "offer items to writing a paragraph about rule" (do
-                (w, (e, _)) <- get
-                when (isX False _mentioned physicalComponent w e) (do
+            RuleWithVariables "offer items to writing a paragraph about rule" (do
+                (e, _) <- getRulebookVariables
+                ism <- isMentioned e
+                unless ism (do
                     res <- doActivity writingParagraphAboutName [e]
                     when (res == Just True) (do
-                        mentionedLens' e .= True
-                        _2 . _2 .= True))
+                        modifyRulebookVariables (\(e', v) -> (e', v+1))
+                        --adjustComponent @(Physical w) e (\x -> x & set mentioned True))
+                        mentionThing e))
                 return Nothing),
-            makeRule "use initial appearance in room descriptions rule" (do
-                (_, (e, _)) <- get
-                phy <- use $ component' physicalComponent e
-                unless (_mentioned phy || _handled phy || isNothing (_initialAppearance phy)) (do
-                    (w', _) <- get
-                    whenJust (fmap (getDescription w' e) (_initialAppearance phy)) (\d' -> unless (d' == "") (do say $ show d'; _2 . _2 .= True))
-                    let isSup = getComponent w' supporterComponent e
-                        --get the things (maybe) on the supporter
-                        enc = fmap (const $ _encloses $ getComponent' w' enclosingComponent e) isSup
-                        -- filter to just things that are locale supported
-                        locSuppStuff = fmap (DS.filter (\it -> not $ isComponent w' sceneryComponent it || isX True _mentioned physicalComponent w' it || isX NotDescribed _described physicalComponent w' it)) enc
-                        isAnyStuff = (\ e' -> if null e' then Nothing else Just e') =<< locSuppStuff
-                    --get rid of any mentioned flags if they're still around
-                    whenJust enc (mapM_ (\i -> when (isX True _mentioned physicalComponent w' i) 
-                            (physicalLens' i . markedForListing .= False)
-                        ))
-                    whenJust isAnyStuff (\_ -> do
+
+            -- oh boy this looks LONG
+            -- if it's not mentioned (otherwise we ignore it)
+            -- if it has an initial appearance and it is not handled
+            -- we have to do the "" check just in case the initial description is dynamic
+            -- increase the locale paragraph count - we only care if it's >0
+            -- say the initial appearance and a paragraph break
+            -- if a locale-supportable thing is on the item (???) then mark all of them for listing
+            -- locale supportable is not scenery, not mentioned, not undescribed
+            -- if any of them are mentioned, unmark them
+            -- say "On the item..." and list everything, full stop, paragraph break, mention it
+
+            RuleWithVariables "use initial appearance in room descriptions rule" (do
+                (e, _) <- getRulebookVariables
+                phy <- getComponent @(Physical w) e
+                -- double maybeM - first ensuring we have a physical component, then seeing if we have an initial appearance to evaluate
+                ism <- isMentioned e
+                desc <- maybeM "" (maybeM "" (evalDescription' e) . _initialAppearance) phy
+                unless (desc == "" || maybe False _handled phy) (do
+                    say desc
+                    modifyRulebookVariables (\(e', v) -> (e', v+1))
+                    enclosing <- getComponent @Enclosing e
+                    isSup <- e `isType` "supporter"
+                    -- get the things (maybe) on the supporter
+                    let enc = if isSup then maybe DS.empty _encloses enclosing else DS.empty
+                    -- filter to just things that are locale supported
+                    ls <- filterM isLocaleSupported (toList enc)
+                    --mark everything for listing, except if it's been mentioned
+                    --in which case we...unmark it?
+                    -- originally I ignored the first part but idk why
+                    mapM_ (\itemOnSupporter -> do
+                        adjustComponent @(Physical w) itemOnSupporter (markedForListing .~ True)
+                        whenM (isMentioned itemOnSupporter)
+                            (adjustComponent @(Physical w) itemOnSupporter (markedForListing .~ False))
+                        ) ls
+                    unless (null ls) (do
                         say "On "
-                        
-                        _2 . _2 .= True
-                        _ <- printName e (SayOptions Definite Uncapitalised)
+                        modifyRulebookVariables (\(e', v) -> (e', v+1))
+                        printNameEx e (SayOptions Definite Uncapitalised)
                         doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
-                        --mentionedLens' e .= True
-                        say ".\n\n"
+                        adjustComponent @(Physical w) e (markedForListing .~ True)
+                        say "."
+                        paragraphBreak
                         )
-                    pass
-                    )
-                return Nothing),
+                    pass)
+                return Nothing)]
+
+{-
             makeRule " describe what’s on scenery supporters in room descriptions rule" (do
                 (w, (e, _)) <- get
                 phy <- use $ component' physicalComponent e
@@ -182,15 +228,24 @@ printingLocaleParagraphAboutActivityImpl = Activity printingLocaleParagraphAbout
                         doActivity listingContentsOfSomethingName [e, markedOnlyFlag, noConcealedFlag]
                         mentionedLens' e .= True
                         say ".\n\n"
-                        {-
-                        
-                        -}
-                        )
-                    pass
-                    )
-                return Nothing)
-        ])
-        (\r1 -> makeRulebook "" r1 [])
+                    pass-}
+        []
+
+listingContentsOfSomethingName :: Text
+listingContentsOfSomethingName = "listing contents of something activity"
+
+paragraphBreak :: WithGameData w m => m ()
+paragraphBreak = say "\n\n"
+
+isLocaleSupported :: forall w m. WithStandardWorld w m => Entity -> m Bool
+isLocaleSupported it = do
+    isScenery <- it `isType` "scenery"
+    ism <- isMentioned it
+    isDescribed <- isX @(Physical w) NotDescribed _described it
+    return $ not $ isScenery || ism|| isDescribed
+
+isMentioned :: WithGameData w m => Entity -> m Bool
+isMentioned e = uses (localeData . mentionedThings) (e `DS.member`)
 
 data ListingContentsArgs = ListingContentsArgs
     {
@@ -199,67 +254,84 @@ data ListingContentsArgs = ListingContentsArgs
         _isIgnoringConcealed :: Bool
     } deriving (Eq, Show)
 
-instance ActionArgs ListingContentsArgs where
-    unboxArguments [] = Nothing
-    unboxArguments [x] = Just $ ListingContentsArgs x False False
-    unboxArguments (x:xs) = Just $ ListingContentsArgs x (Relude.elem markedOnlyFlag xs) (Relude.elem noConcealedFlag xs)
-    defaultActionArguments = ListingContentsArgs (-100) False False
+listingContentsArgs :: (Int -> Bool, [Entity] -> Maybe ListingContentsArgs)
+listingContentsArgs = (\x -> x >=(1 :: Int) && x < 4, \case
+    [x] -> Just $ ListingContentsArgs x False False
+    x:xs -> Just $ ListingContentsArgs x (markedOnlyFlag `elem` xs) (noConcealedFlag `elem` xs)
+    _ -> Nothing)
 
-listingContentsOfSomethingName :: Text
-listingContentsOfSomethingName = "listing the contents of something activity"
-
-listingContentsOfSomethingImpl :: HasStd w w => UncompiledActivity w () ListingContentsArgs
-listingContentsOfSomethingImpl = makeActivity' listingContentsOfSomethingName (do
-    (w, ListingContentsArgs e mo igcon) <- get
-    l <- use $ component' enclosingComponent e
-    let markedPred x = not mo || isX True _markedForListing physicalComponent w x
-        ignoreConPred x = not igcon || isX Nothing _concealedBy physicalComponent w x
-        stuff = DS.filter (\x -> markedPred x && ignoreConPred x) $ _encloses l
+listingContentsOfSomethingImpl :: forall w. HasStandardWorld w => Activity w ListingContentsArgs
+listingContentsOfSomethingImpl = makeActivity listingContentsOfSomethingName listingContentsArgs (do
+    ListingContentsArgs e markedOnly ignoreConcealedItems <- getRulebookVariables
+    l <- getComponent @Enclosing e
+    let markedPred x = (do
+            ml <- isX @(Physical w) True _markedForListing x
+            return $ not markedOnly || ml)
+        ignoreConcealedPred x = (do
+            c <- isConcealed x
+            return $ not ignoreConcealedItems || c)
+        ls = toList . _encloses <$> l
+    contentsToList <- maybe (return []) (filterM (\x -> do
+        m <- markedPred x
+        c <- ignoreConcealedPred x
+        return $ m && c)) ls
     mapM_ (\(a, v) -> do
-        printName a (SayOptions Indefinite Uncapitalised)
-        when (v < length stuff - 1) (say ", ")
-        when (v == length stuff - 2) (say "and ")
-        component' physicalComponent a . mentioned .= True
-        ) $ zip (toList stuff) [0..]
+        printNameEx a (SayOptions Indefinite Uncapitalised)
+        when (v < length contentsToList - 1) (say ", ")
+        when (v == length contentsToList - 2) (say "and ")
+        mentionThing a
+        ) $ zip (toList contentsToList) [0..]
     return $ Just True
     )
-markedOnlyFlag :: Entity
-markedOnlyFlag = -690
 
-noConcealedFlag :: Entity
-noConcealedFlag = -691
+mentionThing :: forall w m. WithStandardWorld w m => Entity -> m ()
+mentionThing e = do
+    -- adjustComponent @(Physical w) e (mentioned .~ True)
+    localeData . mentionedThings %= DS.insert e
+    pass
 
+-- | have I just missed this off somewhere
+-- TODO: keep a list of mentioned things so we can clear them later
 writingParagraphAboutName :: Text
 writingParagraphAboutName = "writing a paragraph about activity"
 
-describingLocaleActivityName :: Text
-describingLocaleActivityName = "printing the locale description of something"
-newtype LocaleDescription = LocaleDescription { _paragraphCount :: Int }
-makeLenses ''LocaleDescription
-describingLocaleActivityImpl :: HasStd w w => UncompiledActivity w LocaleDescription Entity
-describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ LocaleDescription 0) 
-        (\r1 -> makeRulebook "" r1 [
-                makeRule "initialise locale description rule" 
-                    (do world . gameInfo . localePriorities .= Map.empty; return Nothing),
-                makeRule "find notable objects rule" (do
-                    doActivity choosingNotableLocaleObjectsActivityName [fst r1]
-                    return Nothing)])
-        (\r1 -> makeRulebook "" r1 [
-                makeRule "interesting locale paragraphs rule" (do
-                    lp <- use $ world . gameInfo . localePriorities
-                    sayDbgLn $ show lp
-                    let sorted = Relude.sortBy (\(_, a) (_, b) -> compare a b) (Map.toAscList lp)
-                    sayDbgLn $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
-                    res <- mapM (doActivity printingLocaleParagraphAboutActivityName . one . fst) sorted
-                    _2 . _2 . paragraphCount += length (filter (Just True==) res)
-                    return Nothing
-                    ),
-                makeRule "you can also see rule" (do
-                    (w, (p, LocaleDescription e)) <- get
-                    -- lp is everything that has a locale priority
-                    let lp = Map.keys $ Map.filter (>0) (w ^. gameInfo . localePriorities) 
-                    -- we then partition the list into things that have been mentioned and those which have not
-                        (ment, notMent) = partition (_mentioned . getComponent' w physicalComponent) lp
+data LocaleDescription = LocaleDescription {
+      _domain :: Entity
+    , _paragraphCount :: Int } deriving (Eq, Show)
+
+describeLocaleArgs :: [Entity] -> Maybe LocaleDescription
+describeLocaleArgs [x] = Just $ LocaleDescription x 0
+describeLocaleArgs _ = Nothing
+
+describingLocaleActivityImpl :: Activity w LocaleDescription
+describingLocaleActivityImpl = makeActivityEx describingLocaleActivityName (==1) describeLocaleArgs [] [
+    RuleWithVariables "initialise locale description rule" (do
+        clearLocale
+        return Nothing
+        ),
+    RuleWithVariables "find notable objects rule" (do
+        LocaleDescription e _ <- getRulebookVariables
+        doActivity choosingNotableLocaleObjectsActivityName [e]
+        ),
+    RuleWithVariables "interesting locale paragraphs rule" (do
+        localeTable <- use $ localeData . localePriorities
+        let sorted = sort (DM.elems localeTable)
+        logDebug $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
+        res <- mapM (doActivity printingLocaleParagraphAboutActivityName . one) sorted
+        modifyRulebookVariables (\(LocaleDescription d p) -> LocaleDescription d (p + length (filter (Just True==) res)))
+        return Nothing
+        ),
+    RuleWithVariables "you can also see rule" (do
+        LocaleDescription e p <- getRulebookVariables
+        ld <- use localeData
+        -- lp is everything that has a locale priority
+        let lp =  (DM.keys . DM.filter (>0)) (ld ^. localePriorities)
+        -- we then partition the list into things that have been mentioned and those which have not
+            (ment, notMent) = DL.partition (`DS.member` (ld ^. mentionedThings)) lp
+        return Nothing)
+        {-
+                    
+                        
                         sayNm x = do say x; printName p (SayOptions Definite Uncapitalised); say " you "
                         setMarked e' b = component' physicalComponent e' . markedForListing .= b
                     mapM_ (`setMarked` False) ment
@@ -299,11 +371,20 @@ describingLocaleActivityImpl = Activity describingLocaleActivityName (const $ Lo
                         when (p == playerLocation' w) (say " here")
                         say ".\n\n"
                         )
-                    return Nothing
-                    )
-            ])
-        (\r1 -> makeRulebook "" r1 [])
+                    return Nothing -}
+    ] []
 
+choosingNotableLocaleObjectsActivityName :: Text
+choosingNotableLocaleObjectsActivityName = "choosing notable locale objects activity"
+
+choosingNotableLocaleObjectsActivityImpl :: HasStandardWorld w => Activity w Entity
+choosingNotableLocaleObjectsActivityImpl = makeActivity choosingNotableLocaleObjectsActivityName singleArg (do
+    e <- getRulebookVariables
+    encl <- getComponent @Enclosing e
+    whenJust encl (mapM_ (`setLocalePriority` 5) . _encloses)
+    return Nothing)
+
+{-
 groupingEquivalenceRelation :: HasStd u w => u -> Entity -> Entity -> Bool
 groupingEquivalenceRelation u e1 e2 = 
     if | hasChildren u e1 && willRecurse u e1 -> False
@@ -324,20 +405,6 @@ willRecurse u e1 = isComponent u supporterComponent e1 ||
 
 isMatchingContainers :: (HasComponent u w Openable) => u -> Entity -> Entity -> Bool
 isMatchingContainers u e1 e2 = getComponent u openableComponent e2 == getComponent u openableComponent e1
-
-choosingNotableLocaleObjectsActivityName :: Text
-choosingNotableLocaleObjectsActivityName = "choosing notable locale objects activity"
-
-choosingNotableLocaleObjectsActivityImpl :: HasStd w w => UncompiledActivity w () Entity
-choosingNotableLocaleObjectsActivityImpl = makeActivity' choosingNotableLocaleObjectsActivityName (do
-    (w, e) <- get    
-    let r = getComponent w enclosingComponent e
-    whenJust r (mapM_ (\e' -> do
-        setLocalePriority e' 5
-        component' physicalComponent e' . mentioned .= False) . _encloses)
-    return Nothing
-    )
-
 
 --there's something about making sure they can be pluralised which I'm ignoring
 --if it has children and won't make the parser recurse?

@@ -4,8 +4,6 @@ module Yaifl.Components.Supporter
 where
 
 import Yaifl.Prelude
-import Yaifl.Common
-import Yaifl.Components.Object
 
 data Supporter = Supporter deriving Show
 

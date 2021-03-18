@@ -18,7 +18,10 @@ module Yaifl.Components.Physical
     , HasPhysicalStore
     , HasThingStore
     , thingPhysical
+    , isEnclosedBy
+    , isConcealed
     , lit
+    , markedForListing
     )
 where
 
@@ -43,7 +46,6 @@ data Physical w = Physical
     , _wearable          :: Wearability
     , _pushable          :: Pushability
     , _enclosedBy        :: Entity
-    , _mentioned         :: Bool
     , _markedForListing  :: Bool
     , _wornBy            :: Maybe Entity
     , _concealedBy       :: Maybe Entity
@@ -67,7 +69,6 @@ blankPhysical e = Physical
                            Unwearable
                            PushableBetweenRooms
                            e
-                           False
                            False
                            Nothing
                            Nothing
@@ -133,6 +134,13 @@ move obj le = do
             adjustComponent @Enclosing le (encloses %~ DS.insert obj)
             return True
         )
+
+-- | either it's directly enclosed by the thing, or an upper level is
+isEnclosedBy :: (HasStore w (Object w), HasStore w (Physical w), WithGameData w m) => Entity -> Entity -> m Bool
+isEnclosedBy obj encloser = do
+    directly <- getLocation obj
+    indirectly <- maybeM False (obj `isEnclosedBy`) directly
+    return $ directly == Just encloser || indirectly 
 {-
 makeThing' :: HasWorld w '[Physical] r => Name -> Description -> Entity -> Sem r Entity
 makeThing' n d l = do

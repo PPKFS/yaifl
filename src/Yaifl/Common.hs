@@ -62,6 +62,8 @@ module Yaifl.Common
     adjustComponent,
     setComponent,
     deleteComponent,
+    mentionedThings,
+    localePriorities,
     MonadWorld,
     liftWorld,
     defaultVoidRoom,
@@ -74,10 +76,14 @@ module Yaifl.Common
     getActor,
     currentActionVars,
     getRulebookVariables,
+    modifyRulebookVariables,
     activityStore,
     BoxedActivity(..),
     WithGameData,
     Activity(..),
+    localeData,
+    setLocalePriority,
+    clearLocale,
     blankGameData)
 where
 
@@ -92,6 +98,8 @@ import Control.Monad.State.Strict
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 import qualified Data.Text as T
+import qualified Data.IntMap.Strict as DIM
+import qualified Data.Set as DS
 
 {- TYPES -}
 
@@ -141,8 +149,14 @@ data GameData w = GameData
     _actionProcessing :: BoxedAction w -> [Entity] -> World w RuleOutcome,
     _roomDescriptions :: RoomDescriptions,
     _darknessWitnessed :: Bool,
-    _currentActionVars :: (Entity, [Entity])
+    _currentActionVars :: (Entity, [Entity]),
+    _localeData :: LocaleData
   }
+
+data LocaleData = LocaleData
+    { _localePriorities :: DIM.IntMap Int
+    , _mentionedThings :: Set Entity
+    }
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data MessageBuffer = MessageBuffer
@@ -201,7 +215,7 @@ type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
     --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
 blankGameData :: w -> (w -> w) -> GameData w
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, [])
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, []) (LocaleData DIM.empty DS.empty)
 
 blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
 blankActionProcessor _ _ = do
@@ -276,6 +290,9 @@ newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving 
 getRulebookVariables :: Monad m => RuleVarsT v m v
 getRulebookVariables = RuleVarsT get
 
+modifyRulebookVariables :: Monad m => (s -> s) -> RuleVarsT s m ()
+modifyRulebookVariables e = RuleVarsT (modify e)
+
 instance MonadState (GameData w) m => MonadState (GameData w) (RuleVarsT v m) where
     state = lift . state
 
@@ -314,7 +331,7 @@ type PlainRulebook w m = Rulebook w () RuleOutcome
 data Action w v where
     Action ::  { _actionName          :: Text
                , _understandAs        :: [Text]
-               , _appliesTo           :: Int
+               , _appliesTo           :: Int -> Bool
                , _setActionVariables  :: [Entity] -> Rulebook w () v
                , _beforeActionRules   :: v -> Rulebook w v RuleOutcome
                , _checkActionRules    :: v -> Rulebook w v RuleOutcome
@@ -324,7 +341,7 @@ data Action w v where
 
 data Activity w v = Activity
     { _activityName         :: Text
-    , _activityappliesTo    :: Int
+    , _activityappliesTo    :: Int -> Bool
     , _setActivityVariables :: [Entity] -> Rulebook w () v
     , _beforeRules  :: v -> Rulebook w v RuleOutcome
     , _forRules     :: v -> Rulebook w v RuleOutcome
@@ -333,6 +350,7 @@ data Activity w v = Activity
 
 makeLenses ''MessageBuffer
 makeLenses ''GameData
+makeLenses ''LocaleData
 
 getActor :: WithGameData w m => m Entity
 getActor = use $ currentActionVars . _1
@@ -393,3 +411,10 @@ setEntityCounter e = do
 
 newEntity :: WithGameData w m => m Entity
 newEntity = do entityCounter <<%= (+ 1)
+
+setLocalePriority :: MonadState (GameData w) m => Int -> Int -> m ()
+setLocalePriority e p = localeData . localePriorities . at e ?= p
+
+-- TODO: clear mentioned flags
+clearLocale :: MonadState (GameData w) m => m ()
+clearLocale = localeData . localePriorities .= DIM.empty

@@ -1,6 +1,7 @@
 module Yaifl.Actions
 (
   addBaseActions
+, makeAction
 ) where
 
 import Yaifl.Prelude
@@ -10,7 +11,6 @@ import Yaifl.Components
 import Yaifl.Activities
 import Colog
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import qualified Data.List.NonEmpty as NE
 import Yaifl.Utils
 
 
@@ -23,7 +23,7 @@ addBaseActions = do
     actionProcessing .= defaultActionProcessingRules
     addAction lookingActionImpl
 
-makeAction :: Text -> Int -> [Rule w () RuleOutcome] ->
+makeAction :: Text -> (Int -> Bool) -> [Rule w () RuleOutcome] ->
     [Rule w () RuleOutcome] -> [Rule w () RuleOutcome] ->
     [Rule w () RuleOutcome] -> Action w ()
 makeAction n app bef chec carr repor = Action n [n] app (\_ -> makeRulebook "set action variables rulebook" [Rule "set action variables" (return $ Just ())])
@@ -42,7 +42,7 @@ data LookingActionVariables = LookingActionVariables
 lookingActionName = "looking"
 
 lookingActionImpl :: HasStandardWorld w => Action w LookingActionVariables
-lookingActionImpl = Action lookingActionName [lookingActionName] 0 (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
+lookingActionImpl = Action lookingActionName [lookingActionName] (==0) (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
 
 lookingActionSet :: HasStandardWorld w => Rulebook w () LookingActionVariables
 lookingActionSet = makeRulebook "set action variables rulebook" [
@@ -161,13 +161,13 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
                                 desc <- traverse evalDescription loc
                                 whenJust desc sayLn)
                | True -> pass
-            return Nothing)]{-
-        makeRule "room description paragraphs about objects rule" (do
-            (w, (_, LookingActionVariables _ lvl _)) <- get
-            let lvls = visibilityLvls lvl w (getPlayer' w)
-            when (lvl > 0) (mapM_ (`whenJust` (\e' -> do doActivity describingLocaleActivityName [e']; pass)) lvls
-                )
-            return Nothing)]-}
+            return Nothing),
+        RuleWithVariables "room description paragraphs about objects rule" (do
+            LookingActionVariables _ lvls _ <- getRulebookVariables
+            mapM_ (\x -> doActivity describingLocaleActivityName [x]) lvls            
+            return Nothing)]
+
+
 
 foreachVisibilityHolder :: (WithGameData w m, HasObjectStore w) => Entity -> RuleVarsT LookingActionVariables m ()
 foreachVisibilityHolder e = do
