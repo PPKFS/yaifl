@@ -4,6 +4,10 @@ module Yaifl.Components.Container
     , ContainerObject(..)
     , isOpaqueClosedContainer
     , HasContainer
+    , containerEnclosing
+    , containerEnterable
+    , containerOpenable
+    , deleteContainer
     )
 where
 

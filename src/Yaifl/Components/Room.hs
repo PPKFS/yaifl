@@ -11,6 +11,9 @@ module Yaifl.Components.Room
       , updateFirstRoom
       , roomObjData
       , darkness
+      , roomEnclosing
+      , deleteRoom
+      , room
     )
 where
 
@@ -20,10 +23,7 @@ import Yaifl.Components.Object
 import Yaifl.Components.Enclosing
 
 import qualified Data.Set as DS
-import qualified Data.Map.Strict as Map
-import qualified Data.IntMap.Merge.Strict as IMerge
 import qualified Data.IntMap.Strict as IM
-import qualified Data.Map.Merge.Strict as MapMerge
 import Colog hiding (Lens')
 import Yaifl.Utils
 

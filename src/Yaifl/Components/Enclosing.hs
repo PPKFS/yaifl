@@ -1,7 +1,8 @@
 module Yaifl.Components.Enclosing
 (
-    Enclosing(..),
-    encloses
+    Enclosing(..)
+  , encloses
+  , enclosingCapacity
 ) where
 
 import           Yaifl.Common
@@ -12,5 +13,6 @@ data Enclosing = Enclosing
         _encloses :: Set Entity
         , _enclosingCapacity :: Maybe Int
     } deriving Show
+
 makeLenses ''Enclosing
 
