@@ -9,7 +9,6 @@ where
 import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Components.Object
-import Yaifl.Components.Physical
 import Colog
 import Yaifl.Components.Enclosing
 
@@ -29,7 +28,7 @@ movePlayer r = do
     p <- getPlayer
     move p r
 
-makePlayer :: forall w m. (HasStore w Player, HasThing w, WithGameData w m) => Entity -> m Entity
+makePlayer :: forall w m. (HasStore w Player, ThereIsThingConstraints w m) => Entity -> m Entity
 makePlayer e = do
     withEntityIDBlock e $ thereIs @(Thing w) $ do
         name .= "yourself" 

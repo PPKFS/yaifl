@@ -84,6 +84,7 @@ module Yaifl.Common
     localeData,
     setLocalePriority,
     clearLocale,
+    mostRecentRoom,
     blankGameData)
 where
 
@@ -150,7 +151,8 @@ data GameData w = GameData
     _roomDescriptions :: RoomDescriptions,
     _darknessWitnessed :: Bool,
     _currentActionVars :: (Entity, [Entity]),
-    _localeData :: LocaleData
+    _localeData :: LocaleData,
+    _mostRecentRoom :: Maybe Entity
   }
 
 data LocaleData = LocaleData
@@ -215,7 +217,7 @@ type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
     --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
 blankGameData :: w -> (w -> w) -> GameData w
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, []) (LocaleData DIM.empty DS.empty)
+blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, []) (LocaleData DIM.empty DS.empty) Nothing
 
 blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
 blankActionProcessor _ _ = do
@@ -279,8 +281,8 @@ storeLens4 f a a2 a3 a4 = lens (intersectStore4 f) (setStore4 a a2 a3 a4)
 storeLens5 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e, HasStore w f) => (a -> c -> d -> e -> f -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> (b -> f) -> Lens' w (Store b)
 storeLens5 f a a2 a3 a4 a5 = lens (intersectStore5 f) (setStore5 a a2 a3 a4 a5)
 
-class ThereIs t where
-    defaultObject :: Entity -> t
+class Monad m => ThereIs t m where
+    defaultObject :: Entity -> m t
 
 class Deletable w t where
     deleteObject :: (WithGameData w m, HasStore w t) => Entity -> m ()
@@ -381,7 +383,7 @@ isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent @
 sayInternal :: WithGameData w m => StyledDoc -> m ()
 sayInternal a = do
     w <- use $ messageBuffer . msgStyle
-    logDebug (T.dropWhileEnd (== '\n') $ show a)
+    -- logDebug (T.dropWhileEnd (== '\n') $ show a)
     messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
 
 say :: WithGameData w m => Text -> m ()

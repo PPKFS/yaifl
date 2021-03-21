@@ -24,7 +24,7 @@ data Opacity = Opaque | Transparent deriving (Eq, Show)
 data ContainerData = ContainerData
     {
         _opacity :: Opacity
-    } deriving Show
+    } deriving (Eq, Show)
 
 data ContainerObject w = ContainerObject
     {
@@ -44,8 +44,8 @@ instance HasObject (ContainerObject w) w where
 instance HasContainer w => HasStore w (ContainerObject w) where
     store = containers
 
-instance ThereIs (ContainerObject w) where
-    defaultObject e = ContainerObject (blankObject e "container") (ContainerData Opaque ) (Enclosing DS.empty Nothing) Closed NotEnterable
+instance Monad m => ThereIs (ContainerObject w) m where
+    defaultObject e = return $ ContainerObject (blankObject e "container") (ContainerData Opaque ) (Enclosing DS.empty Nothing) Closed NotEnterable
 
 instance HasContainer w => Deletable w (ContainerObject w) where
     deleteObject e = do
