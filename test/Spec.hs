@@ -96,8 +96,11 @@ ex1World = do
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         modifyingM (gameWorld . things . traverse) (\t -> do
             whenM (do
+                sayLn "aaaa"
                 desc <- evalDescription t
+                logDebug $ "description is " <> desc <> "|" <> show ("" == desc)
                 return $ "" == desc) (do
+                say "aaaa"
                 sayLn $ (t ^. name) <> " has no description.")
             return t)
         return Nothing)

@@ -3,7 +3,6 @@ module Yaifl.Components
     --, module Yaifl.Components.Direction
     , module Yaifl.Components.Room
     , module Yaifl.Components.Enclosing
-    , module Yaifl.Components.Physical
     , module Yaifl.Components.Player
     , module Yaifl.Components.Container
     , module Yaifl.Components.Openable
@@ -17,7 +16,6 @@ module Yaifl.Components
 import           Yaifl.Components.Object
 import           Yaifl.Components.Room
 import           Yaifl.Components.Enclosing
-import           Yaifl.Components.Physical
 import           Yaifl.Components.Player
 import           Yaifl.Components.Supporter
 import           Yaifl.Common

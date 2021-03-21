@@ -35,6 +35,8 @@ common common-options
                      , raw-strings-qq
                      , semigroupoids
                      , pretty-simple
+                     , monadlist
+                     , control-bool
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -79,8 +81,6 @@ library
                       , Yaifl.Components.Supporter
                       , Yaifl.Components.Enterable
                        --, Yaifl.Components.Direction
-                       --, Yaifl.Components.Room
-                      , Yaifl.Components.Physical
                       , Yaifl.Components.Player
                       , Yaifl.Utils
 test-suite yaifl-test
