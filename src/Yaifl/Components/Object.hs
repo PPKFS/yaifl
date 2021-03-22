@@ -46,6 +46,7 @@ module Yaifl.Components.Object
     , isWorn
     , isLit
     , ThereIsThingConstraints
+    , thingObject
     )
 where
 
@@ -181,13 +182,10 @@ getDescription e = do
     o <- getComponent @(Object w) e
     return (_description <$> o)
 
-class HasName w m a where
-    getName :: (HasStore w (Object w)) => a -> m Name
-
-instance MonadState (GameData w) m => HasName w m Entity where
-    getName e = do
-        o <- getComponent @(Object w) e
-        return $ maybe "(no object)" _name o
+getName :: forall w m. (HasStore w (Object w), WithGameData w m) => Entity -> m Name
+getName e = do
+    o <- getComponent @(Object w) e
+    return $ maybe "(no object)" _name o
 
 isConcealed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
 isConcealed = isX @(Physical w) Nothing _concealedBy

@@ -3,7 +3,6 @@ module Main
         main
     ) where
 import           Yaifl.Prelude
-import Yaifl
 import Yaifl.Components
 import           Test.HUnit hiding (State)
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal
@@ -14,24 +13,10 @@ import qualified Data.Map.Strict            as Map
 import qualified Data.Set as DS
 import qualified Control.Monad.State.Lazy as MonState
 
-
-import Yaifl.TH
-import Colog.Monad
-import Colog (LogAction(..),Severity(..), logStringStdout, logPrint, HasLog)
 import Colog.Message
+import Colog
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.IO as TIO
-import Yaifl.Activities
-import Yaifl.Rulebooks
-import Yaifl.Actions
-{-
-Game { unwrapGame :: ReaderT (RulebookStore (Game w))
-(LoggerT Text (World w)) a } deriving (Functor, Applicative, Monad)
-                                            
-newtype World w a = World 
-{ unwrapWorld :: State (GameData w) a } deriving (Functor, Applicative, Monad)
--}
+import Yaifl
 
 makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable, ''Supporter, ''Enterable]
 makeLenses ''GameWorld
@@ -94,15 +79,13 @@ ex1World = do
         name .= "napkin"
         description .= "Slightly crumpled."
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
-        modifyingM (gameWorld . things . traverse) (\t -> do
+        foreachObject things (do
             whenM (do
-                sayLn "aaaa"
-                desc <- evalDescription t
-                logDebug $ "description is " <> desc <> "|" <> show ("" == desc)
+                desc <- getObject >>= evalDescription
                 return $ "" == desc) (do
-                say "aaaa"
-                sayLn $ (t ^. name) <> " has no description.")
-            return t)
+                t <- getObject
+                say $ t ^. object . name
+                sayLn " has no description."))
         return Nothing)
     pass
 
