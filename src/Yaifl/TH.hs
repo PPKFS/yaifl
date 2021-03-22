@@ -7,13 +7,13 @@ module Yaifl.TH
 import Language.Haskell.TH as TH
 import Data.Char
 import Relude
-
+{-
 data StoreType = Unique Name | Map Name
 
 getStoreName :: StoreType -> Name
 getStoreName (Unique n) = n
 getStoreName (Map n) = n
-
+-}
 bangDef :: Bang
 bangDef = Bang NoSourceUnpackedness NoSourceStrictness
 
@@ -27,6 +27,7 @@ mkLensName t = mkName $ "_" <> replaceFirst (nameBase t <> "Store") toLower
 makeWorld :: Text -> [Name] -> Q [Dec]
 makeWorld typeName componentStores = do
   let worldType = mkName $ toString typeName
+  
   stores <- mapM (makeStoreDatatypes worldType) componentStores
   let dataDef = DataD [] worldType [] Nothing [records] [DerivClause Nothing [ConT ''Show]]
       makeRecord (t, (e, _)) = (mkLensName t, bangDef, AppT (ConT (mkName "Store")) e)
@@ -34,11 +35,12 @@ makeWorld typeName componentStores = do
       blankWorldCtr = FunD (blankName worldType) [Clause [] (NormalB (iterExpr expr)) []]
       expr = AppE (ConE worldType) (VarE $ mkName "emptyStore")
       iterExpr = foldr (.) id $ replicate (length componentStores - 1) (\x -> AppE x (VarE $ mkName "emptyStore"))
-  return [dataDef, blankWorldCtr]
+      topSig = SigD (blankName worldType) (ConT worldType)
+  return [dataDef, topSig, blankWorldCtr]
 makeStoreDatatypes :: Name -> Name -> Q (TH.Type, Bool)
 makeStoreDatatypes param a = do
   TyConI tyCon <- reify a
-  (tyConName, tyVars) <- case tyCon of
+  (_, tyVars) <- case tyCon of
     DataD _ nm tyVars _ _ _  -> return (nm, tyVars)
     NewtypeD _ nm tyVars _ _ _ -> return (nm, tyVars)
     _ -> fail "deriveFunctor: tyCon may not be a type synonym."

@@ -39,6 +39,7 @@ data LookingActionVariables = LookingActionVariables
         _roomDescribingAction :: Text
     } deriving Show
 
+lookingActionName :: Text
 lookingActionName = "looking"
 
 lookingActionImpl :: HasStandardWorld w => Action w LookingActionVariables
@@ -148,7 +149,6 @@ carryOutLookingRules = makeRulebookWithVariables "carry out looking rulebook"
             LookingActionVariables cnt lvls ac <- getRulebookVariables
             let visCeil = viaNonEmpty last lvls
             loc <- getActor >>= getLocation
-            locDesc <- join <$> traverse getDescription loc
             roomDesc <- use roomDescriptions
             dw <- use darknessWitnessed
             let abbrev = roomDesc == AbbreviatedRoomDescriptions

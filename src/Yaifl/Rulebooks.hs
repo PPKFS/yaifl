@@ -1,7 +1,7 @@
 module Yaifl.Rulebooks
 (
     makeBlankRule, runRulebook, makeRulebook, tryAction, makeRulebookWithVariables
-    , runRulebookEx, ignoreArgs, singleArg
+    , runRulebookEx, ignoreArgs, singleArg, addRulebook
      , whenPlayBeginsName, whenPlayBeginsRules, introText,defaultActionProcessingRules
 ) where
 
@@ -67,7 +67,7 @@ runRulebookEx (Rulebook n def r) = if null r then pure (Nothing, def) else
     do
         logRulebookName n
         res <- doUntilJustM (\case
-                Rule rn rf -> do
+                Rule _ rf -> do
                     --unless (rn == "") (logDebug $ "Following thee " <> rn)
                     liftWorld rf
                 RuleWithVariables _ _ -> do
@@ -86,7 +86,7 @@ processRuleList (x:xs) def args  = case x of
             Rule _ _ -> do
                 logError "Hit argumentless rule in rulebook with args"
                 return def
-            RuleWithVariables rn (RuleVarsT rf) -> do
+            RuleWithVariables _ (RuleVarsT rf) -> do
                 --unless (rn == "") (logInfo $ "Following the " <> rn)
                 let v = runStateT rf args
                 (res, s) <- liftWorld v
@@ -125,6 +125,7 @@ sayIntroText = do
     --setStyle Nothing
     pass
 
+actionProcessingRulebookName :: Text
 actionProcessingRulebookName = "action processing rulebook"
 
 tryAction :: (HasStore w Player, WithGameData w m) => Text -> [Entity] -> m Bool

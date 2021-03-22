@@ -23,7 +23,7 @@ import qualified Data.Set as DS
 import qualified Data.IntMap.Strict as DM
 import qualified Data.List as DL
 import qualified Control.Monad.ListM as LM
-import Control.Bool hiding (whenM)
+import Control.Bool hiding (whenM, unlessM)
 
 
 addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
@@ -38,6 +38,7 @@ addBaseActivities = do
     addActivity describingLocaleActivityImpl
     addActivity choosingNotableLocaleObjectsActivityImpl
     addActivity printingLocaleParagraphAboutActivityImpl
+    addActivity listingContentsOfSomethingImpl
 
 
 makeActivityEx :: Text -> (Int -> Bool) -> ([Entity] -> Maybe v) -> [Rule w v RuleOutcome] ->
@@ -136,36 +137,32 @@ markedOnlyFlag = -1000
 
 noConcealedFlag :: Entity
 noConcealedFlag = -1001
+
+get1st :: Monad m => RuleVarsT (a, b) m a
+get1st = fst <$> getRulebookVariables
+
 --printingLocaleParagraphAboutActivityImpl :: HasStd w w => UncompiledActivity w Bool Entity
 printingLocaleParagraphAboutActivityImpl :: forall w. HasStandardWorld w => Activity w (Entity, Int)
 printingLocaleParagraphAboutActivityImpl = makeActivityEx printingLocaleParagraphAboutActivityName (==1) singleArgAugmented []
         [
             RuleWithVariables "don’t mention player’s supporter in room descriptions rule" (do
                 playerID <- getPlayer
-                (e, _) <- getRulebookVariables
-                playerEnclosedBy <- playerID `isEnclosedBy` e
-                when playerEnclosedBy (setLocalePriority e 0)
+                get1st >>= (\e -> whenM (playerID `isEnclosedBy` e) (setLocalePriority e 0))
                 return Nothing
                 ),
             RuleWithVariables "don’t mention scenery in room descriptions rule" (do
-                (e, _) <- getRulebookVariables
-                isScenery <- e `isType` "scenery"
-                when isScenery (setLocalePriority e 0)
+                get1st >>= (\e -> whenM (e `isType` "scenery") (setLocalePriority e 0))
                 return Nothing),
             RuleWithVariables "don’t mention undescribed items in room descriptions rule" (do
-                (e, _) <- getRulebookVariables
-                isDescribed <- isX @(Physical w) Described _described e
-                logDebug $ show e <> "is " <> show isDescribed
-                unless isDescribed (setLocalePriority e 0)
+                get1st >>= (\e -> do
+                    b <- isDescribed e
+                    unless b (setLocalePriority e 0))
                 return Nothing),
             RuleWithVariables "offer items to writing a paragraph about rule" (do
                 (e, _) <- getRulebookVariables
-                ism <- isMentioned e
-                unless ism (do
-                    res <- doActivity writingParagraphAboutName [e]
-                    when (res == Just True) (do
+                unlessM (isMentioned e) (do
+                    whenM (doActivity writingParagraphAboutName [e] <==> return (Just True)) (do
                         modifyRulebookVariables (\(e', v) -> (e', v+1))
-                        --adjustComponent @(Physical w) e (\x -> x & set mentioned True))
                         mentionThing e))
                 return Nothing),
 
@@ -187,7 +184,7 @@ printingLocaleParagraphAboutActivityImpl = makeActivityEx printingLocaleParagrap
                 ism <- isMentioned e
                 unless ism $ do
                     desc <- maybeM "" (maybeM "" (evalDescription' e) . _initialAppearance) phy
-                    unless (desc == "" || maybe False _handled phy) (do
+                    unless (desc == "" || (fmap _handled phy == Just NotHandled )) (do
                         say desc
                         modifyRulebookVariables (\(e', v) -> (e', v+1))
                         enclosing <- getComponent @Enclosing e

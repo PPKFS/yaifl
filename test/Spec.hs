@@ -5,14 +5,6 @@ module Main
 import           Yaifl.Prelude
 import Yaifl.Components
 import           Test.HUnit hiding (State)
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal
-                                               as PPTTY
-import qualified Data.Text.Prettyprint.Doc     as PP
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.Map.Strict            as Map
-import qualified Data.Set as DS
-import qualified Control.Monad.State.Lazy as MonState
-
 import Colog.Message
 import Colog
 import qualified Data.Text as T
@@ -47,6 +39,8 @@ instance HasStore GameWorld Enterable where
 
 instance HasStore GameWorld Supporter where
     store = supporterStore
+
+runWorld :: World w a -> GameData w -> Env (World w) -> IO (GameData w)
 runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
 addRule :: Rulebook w () RuleOutcome -> Rule w () RuleOutcome -> World w ()
@@ -59,12 +53,6 @@ addRule rb r = do
 addRuleLast :: Rulebook w v a -> Rule w v a -> Rulebook w v a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
 addRuleLast (RulebookWithVariables n d s rs) r = RulebookWithVariables n d s ([r] <> rs)
-
-modifyingM :: MonadState s m => LensLike m s s a b -> (a -> m b) -> m ()
-modifyingM t f = do
-  s <- get
-  s' <- t f s
-  put s'
 
 ex1World :: forall w. HasStandardWorld w => World w ()
 ex1World = do
@@ -81,9 +69,9 @@ ex1World = do
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
             whenM (do
-                desc <- getObject >>= evalDescription
+                desc <- getForeachObject >>= evalDescription
                 return $ "" == desc) (do
-                t <- getObject
+                t <- getForeachObject
                 say $ t ^. object . name
                 sayLn " has no description."))
         return Nothing)
