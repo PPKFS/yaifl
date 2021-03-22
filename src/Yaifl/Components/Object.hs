@@ -1,101 +1,92 @@
-module Yaifl.Components.Object
-    ( Name
-    , Description(..)
-    , Object(..)
-    , name
-    , description
-    , objID
-    , objType
-    , HasObject
-    , object
-    , ObjType
-    , blankObject
-    , thereIs
-    , evalDescription
-    , HasDescription
-    , showObjDebug
-    , showMaybeObjDebug
-    , isType
-    , getDescription
-    , evalDescription'
-    , HasObjectStore
-    , getName
-    , ThingLit(..)
-    , Edibility(..)
-    , Portability(..)
-    , Wearability(..)
-    , Pushability(..)
-    , Describable(..)
-    , Physical(..)
-    , Thing
-    , thing
-    , things
-    , described
-    , HasThing
-    , move
-    , getThing
-    , getLocation
-    , HasPhysical
-    , HasPhysicalStore
-    , HasThingStore
-    , thingPhysical
-    , isEnclosedBy
-    , isConcealed
-    , lit
-    , markedForListing
-    , isWorn
-    , isLit
-    , ThereIsThingConstraints
-    , thingObject
-    )
-where
+module Yaifl.Components.Object (
+    Name,
+    Description (..),
+    Object (..),
+    ThingLit (..),
+    Edibility (..),
+    Portability (..),
+    Wearability (..),
+    Pushability (..),
+    Describable (..),
+    Physical (..),
+    Handled (..),
+    Thing (..),
 
+    name,
+    description,
+    objID,
+    objType,
+    HasObject,
+    object,
+    ObjType,
+    blankObject,
+    thereIs,
+    evalDescription,
+    HasDescription,
+    showObjDebug,
+    showMaybeObjDebug,
+    isType,
+    getDescription,
+    evalDescription',
+    HasObjectStore,
+    getName,
+
+    thing,
+    things,
+    described,
+    HasThing,
+    move,
+
+    getThing,
+    getPhysical,
+    getObject,
+
+    getLocation,
+    HasPhysical,
+    HasPhysicalStore,
+    HasThingStore,
+    thingPhysical,
+    isEnclosedBy,
+    isConcealed,
+    lit,
+    markedForListing,
+    isWorn,
+    isLit,
+    ThereIsThingConstraints,
+    thingObject,
+    isDescribed,
+) where
+
+import Colog hiding (Lens')
+import qualified Data.Set as DS
 import qualified Text.Show
-import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Components.Enclosing
-import qualified Data.Set as DS
+import Yaifl.Prelude
 import Yaifl.Utils
-import Colog hiding (Lens')
 
--- the printed name of something
+-- | The printed name of something.
 type Name = Text
+
+{- | Object types follow a hierarchy which only holds superficial information
+ i.e. there's no real subtyping, more just a DAG of strings.
+-}
 type ObjType = Text
 
-data Description w = PlainDescription Text | DynamicDescription (Entity -> GameData w -> Text)
-
-instance IsString (Description w) where
-    fromString = PlainDescription . fromString
-
--- | also for overloadedstrings
-instance Semigroup (Description w) where
-    (<>) (PlainDescription e) (PlainDescription e2) =
-        PlainDescription (e <> e2)
-    (<>) (PlainDescription e) (DynamicDescription e2) =
-        DynamicDescription (\e1 -> do
-            e' <- e2 e1
-            return $ e <> e')
-    (<>) (DynamicDescription e2) (PlainDescription e) =
-        DynamicDescription (\e1 -> do
-            e' <- e2 e1
-            return $ e' <> e)
-    (<>) (DynamicDescription e) (DynamicDescription e2) =
-        DynamicDescription (\e1 -> do
-            e' <- e2 e1
-            e'' <- e e1
-            return $ e'' <> e')
--- | we define a show instance just for debug purposes.
-instance Show (Description w) where
-    show (PlainDescription   t) = show t
-    show (DynamicDescription _) = "dynamic description"
+-- | The description of something.
+data Description w
+    = -- | A static description.
+      PlainDescription Text
+    | -- | A description that is a function over the world.
+      DynamicDescription (Entity -> GameData w -> Text)
 
 data Object w = Object
-    { _name        :: Name
+    { _name :: Name
     , _description :: Description w
-    , _objID    :: Entity
-    , _objType  :: Text
+    , _objID :: Entity
+    , _objType :: ObjType
     }
-    deriving Show
+    deriving (Show)
 
 data ThingLit = Lit | Unlit deriving (Eq, Show)
 data Edibility = Edible | Inedible deriving (Eq, Show)
@@ -103,42 +94,39 @@ data Portability = FixedInPlace | Portable deriving (Eq, Show)
 data Wearability = Wearable | Unwearable deriving (Eq, Show)
 data Pushability = PushableBetweenRooms | NotPushableBetweenRooms deriving (Eq, Show)
 data Describable = Described | NotDescribed deriving (Eq, Show)
+data Handled = Handled | NotHandled deriving (Eq, Show)
 data Physical w = Physical
-    { _lit               :: ThingLit
-    , _edible            :: Edibility
-    , _portable          :: Portability
-    , _wearable          :: Wearability
-    , _pushable          :: Pushability
-    , _enclosedBy        :: Entity
-    , _markedForListing  :: Bool
-    , _wornBy            :: Maybe Entity
-    , _concealedBy       :: Maybe Entity
-    , _described         :: Describable
-    , _handled           :: Bool
+    { _lit :: ThingLit
+    , _edible :: Edibility
+    , _portable :: Portability
+    , _wearable :: Wearability
+    , _pushable :: Pushability
+    , _enclosedBy :: Entity
+    , _markedForListing :: Bool
+    , _wornBy :: Maybe Entity
+    , _concealedBy :: Maybe Entity
+    , _described :: Describable
+    , _handled :: Handled
     , _initialAppearance :: Maybe (Description w)
-    , _scenery           :: Bool
-    } deriving Show
+    , _isScenery :: Bool
+    }
+    deriving (Show)
 
 data Thing w = Thing
-    {
-        _thingObject :: Object w
-      , _thingPhysical :: Physical w
-    } deriving Show
+    { _thingObject :: Object w
+    , _thingPhysical :: Physical w
+    }
+    deriving (Show)
 
-makeLenses ''Thing
-makeClassy ''Physical
-
-blankObject :: Entity -> ObjType -> Object w
-blankObject = Object "" ""
-makeClassy ''Object
+-- some neater HasStore types
 
 type HasObjectStore w = HasStore w (Object w)
+type HasPhysicalStore w = (HasStore w (Object w), HasStore w (Physical w))
+type HasThingStore w = HasStore w (Thing w)
+type HasThing w = (HasObjectStore w, HasPhysicalStore w)
+
 class HasDescription a m where
     evalDescription :: a -> m Text
-
-evalDescription' :: MonadState (GameData w) m => Entity -> Description w -> m Text
-evalDescription' _ (PlainDescription t) = return t
-evalDescription' e (DynamicDescription f) = f e <$> get
 
 instance (MonadState (GameData w) m, HasStore w (Object w)) => HasDescription Entity m where
     evalDescription e = do
@@ -148,67 +136,45 @@ instance (MonadState (GameData w) m, HasStore w (Object w)) => HasDescription En
 instance MonadState (GameData w) m => HasDescription (Object w) m where
     evalDescription e = evalDescription' (_objID e) (_description e)
 
-getPhysical :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m (Maybe (Physical w))
-getPhysical = getComponent @(Physical w)
-thereIs :: (ThereIs s m, HasStore w (Physical w), HasStore w Enclosing, HasStore w (Object w), HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
-thereIs s = do
-    e <- newEntity
-    defaultObj <- defaultObject e
-    gameWorld . store . at e ?= defaultObj
-    phys <- getPhysical e -- @(Physical w) e
-    whenJust phys (\_ -> do
-        rm <- use mostRecentRoom
-        whenJust rm (\x -> do { move e x; pass })
-        pass)
-    let v = execState s defaultObj
-    gameWorld . store . at e ?= v
-    logDebug $ "Made a new object at ID " <> show e <> " named " <> _name (v ^. object)
-    whenM (e `isType` "room") (mostRecentRoom ?= e)
-    return v
+evalDescription' :: MonadState (GameData w) m => Entity -> Description w -> m Text
+evalDescription' _ (PlainDescription t) = return t
+evalDescription' e (DynamicDescription f) = f e <$> get
 
-showObjDebug :: HasObject s w => s -> Text
-showObjDebug s = "(" <> s ^. object . name <> ", ID: " <> show (s ^. object . objID) <> ", type: " <> s ^. object . objType <> ")"
+-- | For OverloadedStrings
+instance IsString (Description w) where
+    fromString = PlainDescription . fromString
 
-showMaybeObjDebug :: HasObject s w => Maybe s -> Text
-showMaybeObjDebug = maybe "(No object)" showObjDebug
+instance Semigroup (Description w) where
+    (<>) (PlainDescription e) (PlainDescription e2) =
+        PlainDescription (e <> e2)
+    (<>) (PlainDescription e) (DynamicDescription e2) =
+        DynamicDescription
+            ( \e1 -> do
+                e' <- e2 e1
+                return $ e <> e'
+            )
+    (<>) (DynamicDescription e2) (PlainDescription e) =
+        DynamicDescription
+            ( \e1 -> do
+                e' <- e2 e1
+                return $ e' <> e
+            )
+    (<>) (DynamicDescription e) (DynamicDescription e2) =
+        DynamicDescription
+            ( \e1 -> do
+                e' <- e2 e1
+                e'' <- e e1
+                return $ e'' <> e'
+            )
 
-isType :: forall w m. (MonadState (GameData w) m, HasObjectStore w) => Entity -> Text -> m Bool
-isType e t = do
-    o <- getComponent @(Object w) e
-    return $ fmap _objType o == Just t
+-- | we define a show instance just for debug purposes.
+instance Show (Description w) where
+    show (PlainDescription t) = show t
+    show (DynamicDescription _) = "dynamic description"
 
-getDescription :: forall w m. (HasObjectStore w, WithGameData w m) => Entity -> m (Maybe (Description w))
-getDescription e = do
-    o <- getComponent @(Object w) e
-    return (_description <$> o)
-
-getName :: forall w m. (HasStore w (Object w), WithGameData w m) => Entity -> m Name
-getName e = do
-    o <- getComponent @(Object w) e
-    return $ maybe "(no object)" _name o
-
-isConcealed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
-isConcealed = isX @(Physical w) Nothing _concealedBy
-
-type HasPhysicalStore w = (HasStore w (Object w), HasStore w (Physical w))
-type HasThingStore w = HasStore w (Thing w)
-blankPhysical :: Entity -> Physical w
-blankPhysical e = Physical
-                           Unlit
-                           Inedible
-                           Portable
-                           Unwearable
-                           PushableBetweenRooms
-                           e
-                           False
-                           Nothing
-                           Nothing
-                           Described
-                           False
-                           Nothing
-                           False
-
-
+makeLenses ''Thing
+makeClassy ''Physical
+makeClassy ''Object
 
 instance HasObject (Thing w) w where
     object = thingObject
@@ -226,7 +192,107 @@ instance MonadState (GameData w) m => HasDescription (Thing w) m where
 
 instance HasThing w => HasStore w (Thing w) where
     store = things
-type HasThing w = (HasObjectStore w , HasPhysicalStore w)
+
+blankObject :: Entity -> ObjType -> Object w
+blankObject = Object "" ""
+
+blankPhysical :: Entity -> Physical w
+blankPhysical e =
+    Physical
+        Unlit
+        Inedible
+        Portable
+        Unwearable
+        PushableBetweenRooms
+        e
+        False
+        Nothing
+        Nothing
+        Described
+        NotHandled
+        Nothing
+        False
+
+thereIs :: (ThereIs s m, HasPhysicalStore w, HasStore w Enclosing, HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
+thereIs s = do
+    e <- newEntity
+    defaultObj <- defaultObject e
+    gameWorld . store . at e ?= defaultObj
+    phys <- getPhysical e -- @(Physical w) e
+    whenJust
+        phys
+        (const $ whenJustM (use mostRecentRoom) (\x -> do move e x; pass))
+    let v = execState s defaultObj
+    gameWorld . store . at e ?= v
+    logDebug $ "Made a new object at ID " <> show e <> " named " <> _name (v ^. object)
+    whenM (e `isType` "room") (mostRecentRoom ?= e)
+    return v
+
+showObjDebug :: HasObject s w => s -> Text
+showObjDebug s = "(" <> s ^. object . name <> ", ID: " <> show (s ^. object . objID) <> ", type: " <> s ^. object . objType <> ")"
+
+showMaybeObjDebug :: HasObject s w => Maybe s -> Text
+showMaybeObjDebug = maybe "(No object)" showObjDebug
+
+-- helper functions for looking stuff up --
+
+
+getPhysical :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m (Maybe (Physical w))
+getPhysical = getComponent @(Physical w)
+
+getPhysical' :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m (Physical w)
+getPhysical' = getComponent' @(Physical w)
+
+getObject :: forall w m. (WithGameData w m, HasStore w (Object w)) => Entity -> m (Maybe (Object w))
+getObject = getComponent @(Object w)
+
+getObject' :: forall w m. (WithGameData w m, HasStore w (Object w)) => Entity -> m (Object w)
+getObject' = getComponent' @(Object w)
+
+getThing :: forall w m. (WithGameData w m, HasStore w (Thing w)) => Entity -> m (Maybe (Thing w))
+getThing = getComponent @(Thing w)
+
+getDescription :: forall w m. (HasObjectStore w, WithGameData w m) => Entity -> m (Maybe (Description w))
+getDescription e = _description <<$>> getObject e
+
+getDescription' :: forall w m. (HasObjectStore w, WithGameData w m) => Entity -> m (Description w)
+getDescription' e = _description <$> getObject' e
+
+getName :: forall w m. (HasStore w (Object w), WithGameData w m) => Entity -> m (Maybe Name)
+getName e = _name <<$>> getObject e
+
+getName' :: forall w m. (HasStore w (Object w), WithGameData w m) => Entity -> m Name
+getName' e = _name <$> getObject' e
+
+getLocation :: forall w m. (HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe Entity)
+getLocation e = _enclosedBy <<$>> getPhysical e
+
+getLocation' :: forall w m. (HasPhysicalStore w, WithGameData w m) => Entity -> m Entity
+getLocation' e = _enclosedBy <$> getPhysical' e
+
+isConcealed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
+isConcealed = isX @(Physical w) Nothing _concealedBy
+
+isDescribed :: forall w m. (WithGameData w m, HasStore w (Physical w)) => Entity -> m Bool
+isDescribed = isX @(Physical w) Described _described
+
+isWorn :: forall w m. (HasThing w, WithGameData w m) => Entity -> m Bool
+isWorn e = maybe False (isJust . _wornBy) <$> getComponent @(Physical w) e
+
+isLit :: forall w m. (HasThing w, WithGameData w m) => Entity -> m Bool
+isLit = isX @(Physical w) Lit _lit
+
+-- | either it's directly enclosed by the thing, or an upper level is
+isEnclosedBy :: (HasStore w (Object w), HasStore w (Physical w), WithGameData w m) => Entity -> Entity -> m Bool
+isEnclosedBy obj encloser = do
+    v <- getLocation obj
+    maybe (return False) (\x -> if x == encloser then return True else x `isEnclosedBy` encloser) v 
+
+-- TODO: redo this
+isType :: forall w m. (MonadState (GameData w) m, HasObjectStore w) => Entity -> Text -> m Bool
+isType e t = do
+    o <- getComponent @(Object w) e
+    return $ fmap _objType o == Just t
 
 things :: HasThing w => Lens' w (Store (Thing w))
 things = storeLens2 Thing _thingObject _thingPhysical
@@ -234,26 +300,20 @@ things = storeLens2 Thing _thingObject _thingPhysical
 thing :: HasThing w => Entity -> Lens' w (Maybe (Thing w))
 thing k = things . at k
 
-getThing :: (WithGameData w m, HasThing w) => Entity -> m (Maybe (Thing w))
-getThing o = use $ gameWorld . thing o
-
-getLocation :: forall w m. (HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe Entity)
-getLocation e = do
-    o <- getComponent @(Physical w) e
-    return (_enclosedBy <$> o)
-
-move :: forall w m . (HasThing w, HasStore w Enclosing, WithGameData w m) => Entity -> Entity -> m Bool
+move :: forall w m. (HasThing w, HasStore w Enclosing, WithGameData w m) => Entity -> Entity -> m Bool
 move obj le = do
     objToMove <- getThing obj
     mloc <- getComponent @Enclosing le -- use $ gameWorld . (store @w @Enclosing) . at le
     locName <- getComponent @(Object w) le
-    doIfExists2 objToMove mloc (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.")
+    doIfExists2
+        objToMove
+        mloc
+        (showMaybeObjDebug objToMove <> " has no physical component, so cannot be moved.")
         (showMaybeObjDebug locName <> " has no enclosing component, so cannot move objects into it.")
-        (\o _ -> do
+        ( \o _ -> do
             --todo: recalc the location?
             -- todo: doesn't this mean the location is actually
             -- a derived property?
-            --o . location .= le
             let vl = o ^. thingPhysical . enclosedBy
             vlo <- getComponent @(Object w) vl
             logDebug $ "Moving " <> showObjDebug o <> " from " <> showMaybeObjDebug vlo <> " to " <> showMaybeObjDebug locName
@@ -262,50 +322,3 @@ move obj le = do
             adjustComponent @Enclosing le (encloses %~ DS.insert obj)
             return True
         )
-
--- | either it's directly enclosed by the thing, or an upper level is
-isEnclosedBy :: (HasStore w (Object w), HasStore w (Physical w), WithGameData w m) => Entity -> Entity -> m Bool
-isEnclosedBy obj encloser = do
-    directly <- getLocation obj
-    maybe (return False) (\x -> if x == encloser then return True else x `isEnclosedBy` encloser) directly
-
-isWorn :: forall w m. (HasThing w, WithGameData w m) => Entity -> m Bool
-isWorn e = do
-    phys <- getComponent @(Physical w) e
-    maybeM False (return . isJust . _wornBy) phys
-
-isLit :: forall w m. (HasThing w, WithGameData w m) => Entity -> m Bool
-isLit e = getComponent @(Physical w) e >>= (\x -> return $ fmap _lit x == Just Lit)
-
-
-{-
-mapObjects :: HasWorld w '[c] r => Proxy c -> (c -> Sem r c) -> Sem r ()
-mapObjects c1 func = do
-    g <- getStore c1
-    mapM_ (\(k, v) -> do
-        res <- func v
-        setComponent c1 k res) $ IM.assocs g
-
-mapObjects2 :: HasWorld w '[c1, c2] r => Proxy c1 -> Proxy c2 -> (c1 -> c2 -> Sem r (c1, c2)) -> Sem r ()
-mapObjects2 c1 c2 func = do
-    g <- getStore c1
-    mapM_ (\(k, v) -> do
-        comp2 <- getComponent c2 k
-        whenJust comp2 (\co2 -> do
-                        (r1, r2) <- func v co2
-                        setComponent c1 k r1
-                        setComponent c2 k r2)) $ IM.assocs g
-
-mapObjects3 :: HasWorld w '[c1, c2, c3] r => Proxy c1 -> Proxy c2 -> Proxy c3 -> (c1 -> c2 -> c3 -> Sem r (c1, c2, c3)) -> Sem r ()
-mapObjects3 c1 c2 c3 func = do
-    g <- getStore c1
-    mapM_ (\(k, v) -> do
-        comp2 <- getComponent c2 k
-        comp3 <- getComponent c3 k
-        whenJust comp2 (\co2 -> whenJust comp3 
-                    (\co3 -> do
-                        (r1, r2, r3) <- func v co2 co3
-                        setComponent c1 k r1
-                        setComponent c2 k r2
-                        setComponent c3 k r3))) $ IM.assocs g                        
-                        -}

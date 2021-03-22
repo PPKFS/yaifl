@@ -8,7 +8,7 @@ module Yaifl.Utils
 
 import Yaifl.Prelude
 import Yaifl.Common
-import Data.List
+import qualified Data.List as L
 import Colog
 
 doUntilJustM :: (Foldable t, Monad m) => (a1 -> m (Maybe a2)) -> t a1 -> m (Maybe a2)
@@ -24,7 +24,7 @@ doIfExists2 c1 c2 err1 err2 f = do
 
 minimumNE :: Ord a => NonEmpty a -> a
 minimumNE (a :| []) = a
-minimumNE (a :| as) = min a (Data.List.minimum as)
+minimumNE (a :| as) = min a (L.minimum as)
 
 maybeM :: Monad m => b -> (a1 -> m b) -> Maybe a1 -> m b
 maybeM d = maybe (return d)

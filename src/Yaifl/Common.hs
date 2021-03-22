@@ -86,7 +86,10 @@ module Yaifl.Common
     clearLocale,
     mostRecentRoom,
     foreachObject,
-    getObject,
+    getForeachObject,
+    defaultdirectionBlockIDs,
+    modifyObject,
+    getComponent',
     blankGameData)
 where
 
@@ -97,12 +100,11 @@ import qualified Data.IntMap as IM
 import qualified Data.Map.Strict as Map
 import Yaifl.Prelude
 import Data.Functor.Apply (Apply(..))
-import Control.Monad.State.Strict
 import qualified Data.Text.Prettyprint.Doc     as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import qualified Data.Text as T
 import qualified Data.IntMap.Strict as DIM
 import qualified Data.Set as DS
+import Control.Monad.State.Strict (mapStateT)
 
 {- TYPES -}
 
@@ -124,7 +126,7 @@ defaultVoidRoom = -20
 -- | Store a is a container of components of type a, indexed by entity ID.
 -- in an ideal world (TODO? it'd have multiple different types of stores)
 type Store a = IM.IntMap a
-type RulebookStore w = Map.Map Text (BoxedRulebook w RuleOutcome) 
+type RulebookStore w = Map.Map Text (BoxedRulebook w RuleOutcome)
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -136,8 +138,8 @@ newtype ActionEvaluation w = CompiledAction ([Entity] -> World w RuleOutcome)
 
 class HasStore w c where
     store :: Lens' w (Store c)
-    
-newtype Env m = Env { _envLogAction :: LogAction m Message } 
+
+newtype Env m = Env { _envLogAction :: LogAction m Message }
 
 
 data GameData w = GameData
@@ -169,11 +171,11 @@ data MessageBuffer = MessageBuffer
         _msgStyle :: Maybe PPTTY.AnsiStyle
     } deriving Show
 
-newtype World w a = World { unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a} 
+newtype World w a = World { unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a}
     deriving newtype (Functor, Applicative, Monad,
         MonadState (GameData w),
         MonadReader (Env (World w)),
-        MonadIO) 
+        MonadIO)
 
 class MonadState (GameData w) m => HasID w e m where
     getID :: e -> m Entity
@@ -211,7 +213,7 @@ instance MonadTrans (RuleVarsT v) where
 
 
 instance MonadReader r m => MonadReader r (RuleVarsT v m) where
-    ask = lift ask 
+    ask = lift ask
     local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
 
 type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
@@ -225,7 +227,7 @@ blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
 blankActionProcessor _ _ = do
     logError "No action processing rulebook given"
     return False
-
+{-
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
 fanoutTraversal2 :: Traversal' s a -> Traversal' s b -> Traversal' s (a, b)
@@ -237,7 +239,7 @@ fanoutTraversal2 t1 t2 fab s =
 
 fanoutTraversal3 :: Traversal' s a -> Traversal' s b -> Traversal' s c -> Traversal' s ((a, b), c)
 fanoutTraversal3 t1 t2 = fanoutTraversal2 (fanoutTraversal2 t1 t2)
-
+-}
 intersectStore :: HasStore w a => (a -> b) -> w -> Store b
 intersectStore f w = f <$> w ^. store
 
@@ -302,10 +304,12 @@ instance MonadState (GameData w) m => MonadState (GameData w) (RuleVarsT v m) wh
 
 instance (Monad m, MonadWorld w m) => MonadWorld w (RuleVarsT v m) where
     liftWorld = lift . liftWorld
+    liftLogWorld = error "log error"
 
 instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (RuleVarsT v m) where
     getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
-    
+    overLogAction = error "log error"
+
 data Rule w v a where
     Rule :: Text -> World w (Maybe a) -> Rule w () a
     RuleWithVariables :: Text -> RuleVarsT v (World w) (Maybe a) -> Rule w v a
@@ -360,6 +364,11 @@ getActor = use $ currentActionVars . _1
 getComponent :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m (Maybe c)
 getComponent e = use $ gameWorld . store . at e
 
+getComponent' :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m c
+getComponent' e = use (gameWorld . store . at e) >>= \case
+        Nothing -> error $ "Failed component lookup for ID " <> show e 
+        Just x -> return x
+
 setComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> c -> m ()
 setComponent e v = gameWorld . store . at e ?= v
 
@@ -413,7 +422,7 @@ setEntityCounter e = do
     return ec
 
 newEntity :: WithGameData w m => m Entity
-newEntity = do entityCounter <<%= (+ 1)
+newEntity = entityCounter <<%= (+ 1)
 
 setLocalePriority :: MonadState (GameData w) m => Int -> Int -> m ()
 setLocalePriority e p = localeData . localePriorities . at e ?= p
@@ -422,8 +431,8 @@ setLocalePriority e p = localeData . localePriorities . at e ?= p
 clearLocale :: MonadState (GameData w) m => m ()
 clearLocale = localeData . localePriorities .= DIM.empty
 
-getObject :: Monad m => ForeachObjectT v m v
-getObject = ForeachObjectT get
+getForeachObject :: Monad m => ForeachObjectT v m v
+getForeachObject = ForeachObjectT get
 
 modifyObject :: Monad m => (s -> s) -> ForeachObjectT s m ()
 modifyObject e = ForeachObjectT (modify e)
@@ -433,18 +442,20 @@ instance MonadState (GameData w) m => MonadState (GameData w) (ForeachObjectT v 
 
 instance (Monad m, MonadWorld w m) => MonadWorld w (ForeachObjectT v m) where
     liftWorld = lift . liftWorld
+    liftLogWorld = error "log error"
 
 instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (ForeachObjectT v m) where
     getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
+    overLogAction = error "log error"
 
 
 instance MonadReader r m => MonadReader r (ForeachObjectT v m) where
-    ask = lift ask 
+    ask = lift ask
     local l m = ForeachObjectT $ mapStateT (local l) (unwrapForeachObjectT m)
 
 newtype ForeachObjectT o m a = ForeachObjectT { unwrapForeachObjectT :: StateT o m a } deriving (Functor, Applicative, Monad, MonadTrans)
 
-foreachObject :: (MonadState (GameData w) m, HasStore w c) => Lens' w (Store c) -> ForeachObjectT c m a -> m ()
+foreachObject :: (MonadState (GameData w) m) => Lens' w (Store c) -> ForeachObjectT c m a -> m ()
 foreachObject st (ForeachObjectT monadLoop) = do
     v <- use $ gameWorld . st
     updatedMap <- mapM (execStateT monadLoop) v
