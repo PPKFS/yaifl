@@ -37,6 +37,7 @@ common common-options
                      , pretty-simple
                      , monadlist
                      , control-bool
+                     , keys
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities

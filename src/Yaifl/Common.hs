@@ -85,6 +85,8 @@ module Yaifl.Common
     setLocalePriority,
     clearLocale,
     mostRecentRoom,
+    foreachObject,
+    getObject,
     blankGameData)
 where
 
@@ -303,7 +305,6 @@ instance (Monad m, MonadWorld w m) => MonadWorld w (RuleVarsT v m) where
 
 instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (RuleVarsT v m) where
     getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
-
     
 data Rule w v a where
     Rule :: Text -> World w (Maybe a) -> Rule w () a
@@ -420,3 +421,31 @@ setLocalePriority e p = localeData . localePriorities . at e ?= p
 -- TODO: clear mentioned flags
 clearLocale :: MonadState (GameData w) m => m ()
 clearLocale = localeData . localePriorities .= DIM.empty
+
+getObject :: Monad m => ForeachObjectT v m v
+getObject = ForeachObjectT get
+
+modifyObject :: Monad m => (s -> s) -> ForeachObjectT s m ()
+modifyObject e = ForeachObjectT (modify e)
+
+instance MonadState (GameData w) m => MonadState (GameData w) (ForeachObjectT v m) where
+    state = lift . state
+
+instance (Monad m, MonadWorld w m) => MonadWorld w (ForeachObjectT v m) where
+    liftWorld = lift . liftWorld
+
+instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (ForeachObjectT v m) where
+    getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
+
+
+instance MonadReader r m => MonadReader r (ForeachObjectT v m) where
+    ask = lift ask 
+    local l m = ForeachObjectT $ mapStateT (local l) (unwrapForeachObjectT m)
+
+newtype ForeachObjectT o m a = ForeachObjectT { unwrapForeachObjectT :: StateT o m a } deriving (Functor, Applicative, Monad, MonadTrans)
+
+foreachObject :: (MonadState (GameData w) m, HasStore w c) => Lens' w (Store c) -> ForeachObjectT c m a -> m ()
+foreachObject st (ForeachObjectT monadLoop) = do
+    v <- use $ gameWorld . st
+    updatedMap <- mapM (execStateT monadLoop) v
+    gameWorld . st .= updatedMap
