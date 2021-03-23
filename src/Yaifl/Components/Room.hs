@@ -1,30 +1,28 @@
-module Yaifl.Components.Room
-    (
-        RoomData(..)
-      , RoomObject(..)
-      , Darkness(..)
-      , IsVisited(..)
-      , roomObject
-      , rooms
-      , HasRoom
-      , makeRoom
-      , updateFirstRoom
-      , roomObjData
-      , darkness
-      , roomEnclosing
-      , deleteRoom
-      , room
-    )
-where
+module Yaifl.Components.Room (
+    RoomData (..),
+    RoomObject (..),
+    Darkness (..),
+    IsVisited (..),
+    roomObject,
+    rooms,
+    HasRoom,
+    makeRoom,
+    updateFirstRoom,
+    roomObjData,
+    darkness,
+    roomEnclosing,
+    deleteRoom,
+    room,
+) where
 
-import           Yaifl.Common
-import           Yaifl.Prelude
-import Yaifl.Components.Object
+import Yaifl.Common
 import Yaifl.Components.Enclosing
+import Yaifl.Components.Object
+import Yaifl.Prelude
 
-import qualified Data.Set as DS
-import qualified Data.IntMap.Strict as IM
 import Colog hiding (Lens')
+import qualified Data.IntMap.Strict as IM
+import qualified Data.Set as DS
 import Yaifl.Utils
 
 data Darkness = Lighted | Dark deriving (Eq, Show)
@@ -33,21 +31,20 @@ type MapConnections = Store Entity
 type ContainingRegion = Maybe Entity
 
 data RoomData = RoomData
-    {
-        _isVisited :: IsVisited,
-        _darkness :: Darkness,
-        _mapConnections :: MapConnections,
-        _containingRegion :: ContainingRegion
-    } deriving Show
+    { _isVisited :: IsVisited
+    , _darkness :: Darkness
+    , _mapConnections :: MapConnections
+    , _containingRegion :: ContainingRegion
+    }
+    deriving (Show)
 
 data RoomObject w = RoomObject
-    {
-        _roomObject :: Object w
-      , _roomObjData :: RoomData
-      , _roomEnclosing :: Enclosing
-    } deriving Show
+    { _roomObject :: Object w
+    , _roomObjData :: RoomData
+    , _roomEnclosing :: Enclosing
+    }
+    deriving (Show)
 
-            
 makeClassy ''RoomData
 makeLenses ''RoomObject
 
@@ -64,7 +61,7 @@ makeRoom :: forall w m. (HasRoom w, HasStore w (Physical w), WithGameData w m) =
 makeRoom n = thereIs @(RoomObject w) $ do
     name .= n
     description .= PlainDescription ("It's " <> n <> ".")
-    
+
 instance HasRoom w => Deletable w (RoomObject w) where
     deleteObject e = do
         deleteComponent @(Object w) e
@@ -76,7 +73,6 @@ type HasRoom w = (HasObjectStore w, HasStore w RoomData, HasStore w Enclosing)
 deleteRoom :: forall w m. (WithGameData w m, HasRoom w) => Entity -> m ()
 deleteRoom = deleteObject @w @(RoomObject w)
 
-
 rooms :: HasRoom w => Lens' w (Store (RoomObject w))
 rooms = storeLens3 RoomObject _roomObject _roomObjData _roomEnclosing
 
@@ -87,25 +83,15 @@ room k = rooms . at k
 updateFirstRoom :: forall w m. WithGameData w m => HasRoom w => m Entity
 updateFirstRoom = do
     ks <- uses (gameWorld . store @w @(RoomObject w)) (nonEmpty . IM.keys)
-    maybe (do
-        logError "No rooms detected, so couldn't find first room."
-        return (-10))  (\t -> do
-        let v = minimumNE t
-        o <- getComponent @(Object w) v
-        firstRoom ?= v
-        logInfo $ "Added the first room " <> showMaybeObjDebug o
-        return v) ks
-{-
-makeRoom :: HasWorld w '[Enclosing, RoomData] r => Text -> Description -> Sem r Entity
-makeRoom n d = do
-    addContext "RoomConstruction" Nothing
-    e <- makeObject n d "room"
-    addComponent e (RoomData Unvisited emptyStore Nothing)
-    addComponent e (Enclosing DS.empty)
-    removeContext
-    return e
-
-makeRoom' :: HasWorld w '[Enclosing, RoomData] r => Text -> Sem r Entity
-makeRoom' n = makeRoom n $ "It's " <> PlainDescription n <> "."
-
--}
+    maybe
+        ( do
+            logError "No rooms detected, so couldn't find first room."
+            return (-10)
+        )
+        ( \t -> do
+            let v = minimumNE t
+            firstRoom ?= v
+            getObject' v >>= (\o' -> logInfo $ "Added the first room " <> showObjDebug o')
+            return v
+        )
+        ks

@@ -1,18 +1,19 @@
--- |
--- Copyright: (c) 2020 Avery
--- SPDX-License-Identifier: MIT
--- Maintainer: Avery <thecommunistduck@hotmail.co.uk>
---
--- Yet another interactive fiction library.
-module Yaifl.Common
-  ( Entity,
+{- |
+ Copyright: (c) 2020 Avery
+ SPDX-License-Identifier: MIT
+ Maintainer: Avery <thecommunistduck@hotmail.co.uk>
+
+ Yet another interactive fiction library.
+-}
+module Yaifl.Common (
+    Entity,
     Store,
     emptyStore,
     RuleOutcome,
     RuleEvaluation,
     World (..),
-    Env(..),
-    RoomDescriptions(..),
+    Env (..),
+    RoomDescriptions (..),
     roomDescriptions,
     HasStore,
     store,
@@ -21,12 +22,12 @@ module Yaifl.Common
     defaultObject,
     Deletable,
     deleteObject,
-    Rulebook(..)
-    , Rule(..)
-    , PlainRule
-    , PlainRulebook
-    , GameData (..),
-    RuleVarsT(..),
+    Rulebook (..),
+    Rule (..),
+    PlainRule,
+    PlainRulebook,
+    GameData (..),
+    RuleVarsT (..),
     HasID,
     getID,
     title,
@@ -67,20 +68,20 @@ module Yaifl.Common
     MonadWorld,
     liftWorld,
     defaultVoidRoom,
-    Action(..),
-    ActionEvaluation(..),
+    Action (..),
+    ActionEvaluation (..),
     actionStore,
-    BoxedRulebook(..),
-    BoxedAction(..),
+    BoxedRulebook (..),
+    BoxedAction (..),
     actionProcessing,
     getActor,
     currentActionVars,
     getRulebookVariables,
     modifyRulebookVariables,
     activityStore,
-    BoxedActivity(..),
+    BoxedActivity (..),
     WithGameData,
-    Activity(..),
+    Activity (..),
     localeData,
     setLocalePriority,
     clearLocale,
@@ -90,21 +91,21 @@ module Yaifl.Common
     defaultdirectionBlockIDs,
     modifyObject,
     getComponent',
-    blankGameData)
-where
+    blankGameData,
+) where
 
-import Colog (LogAction, HasLog (..), LogAction)
+import Colog (HasLog (..), LogAction)
 import Colog.Message
 import Colog.Monad
-import qualified Data.IntMap as IM
-import qualified Data.Map.Strict as Map
-import Yaifl.Prelude
-import Data.Functor.Apply (Apply(..))
-import qualified Data.Text.Prettyprint.Doc     as PP
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import qualified Data.IntMap.Strict as DIM
-import qualified Data.Set as DS
 import Control.Monad.State.Strict (mapStateT)
+import Data.Functor.Apply (Apply (..))
+import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as DIM
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as DS
+import qualified Data.Text.Prettyprint.Doc as PP
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import Yaifl.Prelude
 
 {- TYPES -}
 
@@ -123,10 +124,13 @@ defaultdirectionBlockIDs = -100
 defaultVoidRoom :: Entity
 defaultVoidRoom = -20
 
--- | Store a is a container of components of type a, indexed by entity ID.
--- in an ideal world (TODO? it'd have multiple different types of stores)
+{- | Store a is a container of components of type a, indexed by entity ID.
+ in an ideal world (TODO? it'd have multiple different types of stores)
+-}
 type Store a = IM.IntMap a
+
 type RulebookStore w = Map.Map Text (BoxedRulebook w RuleOutcome)
+
 -- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
@@ -139,25 +143,24 @@ newtype ActionEvaluation w = CompiledAction ([Entity] -> World w RuleOutcome)
 class HasStore w c where
     store :: Lens' w (Store c)
 
-newtype Env m = Env { _envLogAction :: LogAction m Message }
-
+newtype Env m = Env {_envLogAction :: LogAction m Message}
 
 data GameData w = GameData
-  { _gameWorld :: w,
-    _title :: Text,
-    _firstRoom :: Maybe Entity,
-    _entityCounter :: Entity,
-    _messageBuffer :: MessageBuffer,
-    _rulebookStore :: RulebookStore w,
-    _actionStore :: Map.Map Text (BoxedAction w),
-    _activityStore :: Map.Map Text (BoxedActivity w),
-    _actionProcessing :: BoxedAction w -> [Entity] -> World w RuleOutcome,
-    _roomDescriptions :: RoomDescriptions,
-    _darknessWitnessed :: Bool,
-    _currentActionVars :: (Entity, [Entity]),
-    _localeData :: LocaleData,
-    _mostRecentRoom :: Maybe Entity
-  }
+    { _gameWorld :: w
+    , _title :: Text
+    , _firstRoom :: Maybe Entity
+    , _entityCounter :: Entity
+    , _messageBuffer :: MessageBuffer
+    , _rulebookStore :: RulebookStore w
+    , _actionStore :: Map.Map Text (BoxedAction w)
+    , _activityStore :: Map.Map Text (BoxedActivity w)
+    , _actionProcessing :: BoxedAction w -> [Entity] -> World w RuleOutcome
+    , _roomDescriptions :: RoomDescriptions
+    , _darknessWitnessed :: Bool
+    , _currentActionVars :: (Entity, [Entity])
+    , _localeData :: LocaleData
+    , _mostRecentRoom :: Maybe Entity
+    }
 
 data LocaleData = LocaleData
     { _localePriorities :: DIM.IntMap Int
@@ -166,16 +169,20 @@ data LocaleData = LocaleData
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data MessageBuffer = MessageBuffer
-    {
-        _buffer :: [StyledDoc],
-        _msgStyle :: Maybe PPTTY.AnsiStyle
-    } deriving Show
+    { _buffer :: [StyledDoc]
+    , _msgStyle :: Maybe PPTTY.AnsiStyle
+    }
+    deriving (Show)
 
-newtype World w a = World { unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a}
-    deriving newtype (Functor, Applicative, Monad,
-        MonadState (GameData w),
-        MonadReader (Env (World w)),
-        MonadIO)
+newtype World w a = World {unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a}
+    deriving newtype
+        ( Functor
+        , Applicative
+        , Monad
+        , MonadState (GameData w)
+        , MonadReader (Env (World w))
+        , MonadIO
+        )
 
 class MonadState (GameData w) m => HasID w e m where
     getID :: e -> m Entity
@@ -188,7 +195,7 @@ instance HasLog (Env m) Message m where
     {-# INLINE getLogAction #-}
 
     setLogAction :: LogAction m Message -> Env m -> Env m
-    setLogAction newLogAction env = env { _envLogAction = newLogAction }
+    setLogAction newLogAction env = env{_envLogAction = newLogAction}
     {-# INLINE setLogAction #-}
 
 class Monad m => MonadWorld w m where
@@ -201,16 +208,8 @@ instance MonadWorld w (World w) where
 
 type WithGameData w m = (WithLog (Env (World w)) Message m, MonadState (GameData w) m, MonadWorld w m)
 
-{-
-instance MonadWorld m => MonadWorld (LoggerT msg m) where
-    showWorld = lift showWorld
-
-instance MonadWorld m => MonadWorld (ReaderT r m) where
-    showWorld = lift showWorld
--}
 instance MonadTrans (RuleVarsT v) where
     lift = RuleVarsT . lift
-
 
 instance MonadReader r m => MonadReader r (RuleVarsT v m) where
     ask = lift ask
@@ -219,7 +218,8 @@ instance MonadReader r m => MonadReader r (RuleVarsT v m) where
 type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
 
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
-    --setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
+
+--setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
 blankGameData :: w -> (w -> w) -> GameData w
 blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, []) (LocaleData DIM.empty DS.empty) Nothing
 
@@ -227,6 +227,7 @@ blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
 blankActionProcessor _ _ = do
     logError "No action processing rulebook given"
     return False
+
 {-
 --this is some stackoverflow black fing magic
 --but idk if it's actually any easier to follow than the intersection one.
@@ -291,7 +292,7 @@ class Monad m => ThereIs t m where
 class Deletable w t where
     deleteObject :: (WithGameData w m, HasStore w t) => Entity -> m ()
 
-newtype RuleVarsT v m a = RuleVarsT { unwrapRuleVars :: StateT v m a } deriving (Functor, Applicative, Monad)
+newtype RuleVarsT v m a = RuleVarsT {unwrapRuleVars :: StateT v m a} deriving (Functor, Applicative, Monad)
 
 getRulebookVariables :: Monad m => RuleVarsT v m v
 getRulebookVariables = RuleVarsT get
@@ -331,28 +332,29 @@ rulebookName :: Rulebook w v a -> Text
 rulebookName (Rulebook t _ _) = t
 rulebookName (RulebookWithVariables t _ _ _) = t
 
-
 type PlainRule w m = Rule w () RuleOutcome
 type PlainRulebook w m = Rulebook w () RuleOutcome
 
 data Action w v where
-    Action ::  { _actionName          :: Text
-               , _understandAs        :: [Text]
-               , _appliesTo           :: Int -> Bool
-               , _setActionVariables  :: [Entity] -> Rulebook w () v
-               , _beforeActionRules   :: v -> Rulebook w v RuleOutcome
-               , _checkActionRules    :: v -> Rulebook w v RuleOutcome
-               , _carryOutActionRules :: v -> Rulebook w v RuleOutcome
-               , _reportActionRules   :: v -> Rulebook w v RuleOutcome
-               } -> Action w v
+    Action ::
+        { _actionName :: Text
+        , _understandAs :: [Text]
+        , _appliesTo :: Int -> Bool
+        , _setActionVariables :: [Entity] -> Rulebook w () v
+        , _beforeActionRules :: v -> Rulebook w v RuleOutcome
+        , _checkActionRules :: v -> Rulebook w v RuleOutcome
+        , _carryOutActionRules :: v -> Rulebook w v RuleOutcome
+        , _reportActionRules :: v -> Rulebook w v RuleOutcome
+        } ->
+        Action w v
 
 data Activity w v = Activity
-    { _activityName         :: Text
-    , _activityappliesTo    :: Int -> Bool
+    { _activityName :: Text
+    , _activityappliesTo :: Int -> Bool
     , _setActivityVariables :: [Entity] -> Rulebook w () v
-    , _beforeRules  :: v -> Rulebook w v RuleOutcome
-    , _forRules     :: v -> Rulebook w v RuleOutcome
-    , _afterRules   :: v -> Rulebook w v RuleOutcome
+    , _beforeRules :: v -> Rulebook w v RuleOutcome
+    , _forRules :: v -> Rulebook w v RuleOutcome
+    , _afterRules :: v -> Rulebook w v RuleOutcome
     }
 
 makeLenses ''MessageBuffer
@@ -365,8 +367,9 @@ getComponent :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entit
 getComponent e = use $ gameWorld . store . at e
 
 getComponent' :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m c
-getComponent' e = use (gameWorld . store . at e) >>= \case
-        Nothing -> error $ "Failed component lookup for ID " <> show e 
+getComponent' e =
+    use (gameWorld . store . at e) >>= \case
+        Nothing -> error $ "Failed component lookup for ID " <> show e
         Just x -> return x
 
 setComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> c -> m ()
@@ -383,7 +386,8 @@ deleteComponent e = do
     pass
 
 component :: forall c w. HasStore w c => Entity -> Lens' w (Maybe c)
-component e = lens (\w -> w ^. store . at e ) sc where
+component e = lens (\w -> w ^. store . at e) sc
+  where
     sc :: (w -> Maybe c -> w)
     sc w v = set (store @w @c . at e) v w
 
@@ -411,8 +415,8 @@ setStyle sty = messageBuffer . msgStyle .= sty
 withEntityIDBlock :: (MonadState (GameData w) m) => Entity -> m a -> m a
 withEntityIDBlock idblock x = do
     ec <- setEntityCounter idblock
-    v  <- x
-    _  <- setEntityCounter ec
+    v <- x
+    _ <- setEntityCounter ec
     return v
 
 setEntityCounter :: (MonadState (GameData w) m) => Entity -> m Entity
@@ -448,12 +452,11 @@ instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (Worl
     getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
     overLogAction = error "log error"
 
-
 instance MonadReader r m => MonadReader r (ForeachObjectT v m) where
     ask = lift ask
     local l m = ForeachObjectT $ mapStateT (local l) (unwrapForeachObjectT m)
 
-newtype ForeachObjectT o m a = ForeachObjectT { unwrapForeachObjectT :: StateT o m a } deriving (Functor, Applicative, Monad, MonadTrans)
+newtype ForeachObjectT o m a = ForeachObjectT {unwrapForeachObjectT :: StateT o m a} deriving (Functor, Applicative, Monad, MonadTrans)
 
 foreachObject :: (MonadState (GameData w) m) => Lens' w (Store c) -> ForeachObjectT c m a -> m ()
 foreachObject st (ForeachObjectT monadLoop) = do

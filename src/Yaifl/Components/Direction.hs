@@ -7,7 +7,6 @@ module Yaifl.Components.Direction
 
 import Yaifl.Common
 import Yaifl.Prelude
-import Yaifl.Say
 import Yaifl.Components.Object
 
 newtype Direction = Direction { _opposite :: Entity } deriving (Eq, Show)
