@@ -30,6 +30,7 @@ module Yaifl.Components.Object (
     evalDescription',
     HasObjectStore,
     getName,
+    blankThingBase,
 
     thing,
     things,
@@ -39,7 +40,9 @@ module Yaifl.Components.Object (
 
     getThing,
     getPhysical,
+    getPhysical',
     getObject,
+    getObject',
 
     getLocation,
     HasPhysical,
@@ -185,7 +188,7 @@ instance HasPhysical (Thing w) w where
 type ThereIsThingConstraints w m = (HasThing w, HasStore w Enclosing, Monad m, MonadReader (Env (World w)) m, MonadState (GameData w) m, HasLog (Env (World w)) Message m, MonadWorld w m)
 
 instance ThereIsThingConstraints w m => ThereIs (Thing w) m where
-    defaultObject e = return $ Thing (blankObject e "thing") (blankPhysical defaultVoidRoom)
+    defaultObject e = return $ blankThingBase e "thing"
 
 instance MonadState (GameData w) m => HasDescription (Thing w) m where
     evalDescription (Thing o _) = evalDescription o
@@ -212,6 +215,9 @@ blankPhysical e =
         NotHandled
         Nothing
         False
+
+blankThingBase :: Entity -> ObjType -> Thing w
+blankThingBase e t = Thing (blankObject e t) (blankPhysical defaultVoidRoom)
 
 thereIs :: (ThereIs s m, HasPhysicalStore w, HasStore w Enclosing, HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
 thereIs s = do

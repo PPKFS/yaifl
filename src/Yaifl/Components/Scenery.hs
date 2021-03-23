@@ -10,6 +10,3 @@ import Yaifl.Say
 import Yaifl.Components.Object
 
 newtype Scenery = Scenery ()
-
-sceneryComponent :: Proxy Scenery
-sceneryComponent = Proxy
