@@ -19,7 +19,6 @@ module Yaifl.Components.Object (
     HasObject,
     object,
     ObjType,
-    blankObject,
     thereIs,
     evalDescription,
     HasDescription,
@@ -31,6 +30,9 @@ module Yaifl.Components.Object (
     HasObjectStore,
     getName,
     blankThingBase,
+    ThereIs,
+    defaultObject,
+    thereIs',
 
     thing,
     things,
@@ -131,6 +133,10 @@ type HasThing w = (HasObjectStore w, HasPhysicalStore w)
 class HasDescription a m where
     evalDescription :: a -> m Text
 
+
+class Monad m => ThereIs w t m where
+    defaultObject :: Name -> Description w -> Entity -> m t
+
 instance (MonadState (GameData w) m, HasStore w (Object w)) => HasDescription Entity m where
     evalDescription e = do
         v <- getComponent @(Object w) e
@@ -182,22 +188,22 @@ makeClassy ''Object
 instance HasObject (Thing w) w where
     object = thingObject
 
+instance MonadState (GameData w) m => HasID w (Thing w) m where
+    getID e = return $ e ^. thingObject . objID
+
 instance HasPhysical (Thing w) w where
     physical = thingPhysical
 
 type ThereIsThingConstraints w m = (HasThing w, HasStore w Enclosing, Monad m, MonadReader (Env (World w)) m, MonadState (GameData w) m, HasLog (Env (World w)) Message m, MonadWorld w m)
 
-instance ThereIsThingConstraints w m => ThereIs (Thing w) m where
-    defaultObject e = return $ blankThingBase e "thing"
+instance ThereIsThingConstraints w m => ThereIs w (Thing w) m where
+    defaultObject n d e = return $ blankThingBase n d e "thing"
 
 instance MonadState (GameData w) m => HasDescription (Thing w) m where
     evalDescription (Thing o _) = evalDescription o
 
 instance HasThing w => HasStore w (Thing w) where
     store = things
-
-blankObject :: Entity -> ObjType -> Object w
-blankObject = Object "" ""
 
 blankPhysical :: Entity -> Physical w
 blankPhysical e =
@@ -216,13 +222,15 @@ blankPhysical e =
         Nothing
         False
 
-blankThingBase :: Entity -> ObjType -> Thing w
-blankThingBase e t = Thing (blankObject e t) (blankPhysical defaultVoidRoom)
+blankThingBase :: Name -> Description w -> Entity -> ObjType -> Thing w
+blankThingBase n d e t = Thing (Object n d e t) (blankPhysical defaultVoidRoom)
 
-thereIs :: (ThereIs s m, HasPhysicalStore w, HasStore w Enclosing, HasStore w s, WithGameData w m, HasObject s w) => State s a -> m s
-thereIs s = do
+thereIs' :: forall s w m a. (ThereIs w s m, HasPhysicalStore w, HasStore w Enclosing, HasStore w s, WithGameData w m, HasObject s w) => Name -> Description w -> m s
+thereIs' = flip flip pass . thereIs
+thereIs :: forall s w m a. (ThereIs w s m, HasPhysicalStore w, HasStore w Enclosing, HasStore w s, WithGameData w m, HasObject s w) => Name -> Description w -> State s a -> m s
+thereIs n d s = do
     e <- newEntity
-    defaultObj <- defaultObject e
+    defaultObj <- defaultObject n d e
     gameWorld . store . at e ?= defaultObj
     phys <- getPhysical e -- @(Physical w) e
     whenJust

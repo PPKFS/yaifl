@@ -43,8 +43,8 @@ instance HasObject (ContainerObject w) w where
 instance HasContainer w => HasStore w (ContainerObject w) where
     store = containers
 
-instance Monad m => ThereIs (ContainerObject w) m where
-    defaultObject e = return $ ContainerObject (blankThingBase e "container") (ContainerData Opaque) (Enclosing DS.empty Nothing) Closed NotEnterable
+instance Monad m => ThereIs w (ContainerObject w) m where
+    defaultObject n d e = return $ ContainerObject (blankThingBase n d e "container") (ContainerData Opaque) (Enclosing DS.empty Nothing) Closed NotEnterable
 
 instance HasContainer w => Deletable w (ContainerObject w) where
     deleteObject e = do
