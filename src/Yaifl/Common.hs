@@ -18,8 +18,6 @@ module Yaifl.Common (
     HasStore,
     store,
     firstRoom,
-    ThereIs,
-    defaultObject,
     Deletable,
     deleteObject,
     Rulebook (..),
@@ -286,8 +284,6 @@ storeLens4 f a a2 a3 a4 = lens (intersectStore4 f) (setStore4 a a2 a3 a4)
 storeLens5 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e, HasStore w f) => (a -> c -> d -> e -> f -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> (b -> f) -> Lens' w (Store b)
 storeLens5 f a a2 a3 a4 a5 = lens (intersectStore5 f) (setStore5 a a2 a3 a4 a5)
 
-class Monad m => ThereIs t m where
-    defaultObject :: Entity -> m t
 
 class Deletable w t where
     deleteObject :: (WithGameData w m, HasStore w t) => Entity -> m ()

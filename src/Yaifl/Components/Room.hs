@@ -54,13 +54,11 @@ instance HasObject (RoomObject w) w where
 instance HasRoom w => HasStore w (RoomObject w) where
     store = rooms
 
-instance Monad m => ThereIs (RoomObject w) m where
-    defaultObject e = return $ RoomObject (blankObject e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty Nothing)
+instance Monad m => ThereIs w (RoomObject w) m where
+    defaultObject n d e = return $ RoomObject (Object n d e "room") (RoomData Visited Lighted IM.empty Nothing) (Enclosing DS.empty Nothing)
 
-makeRoom :: forall w m. (HasRoom w, HasStore w (Physical w), WithGameData w m) => Text -> m (RoomObject w)
-makeRoom n = thereIs @(RoomObject w) $ do
-    name .= n
-    description .= PlainDescription ("It's " <> n <> ".")
+makeRoom :: forall w m a. (HasRoom w, HasStore w (Physical w), WithGameData w m) => Text -> Description w -> State (RoomObject w) a -> m (RoomObject w)
+makeRoom = thereIs @(RoomObject w)
 
 instance HasRoom w => Deletable w (RoomObject w) where
     deleteObject e = do

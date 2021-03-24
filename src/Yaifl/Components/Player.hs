@@ -23,9 +23,6 @@ movePlayer' r = do
 makePlayer :: forall w m. (HasStore w Player, ThereIsThingConstraints w m) => Entity -> m Entity
 makePlayer e = do
     withEntityIDBlock e $
-        thereIs @(Thing w) $ do
-            name .= "yourself"
-            description .= "it's you."
-            described .= NotDescribed
+        thereIs @(Thing w) "yourself" "it's you." (described .= NotDescribed)
     setComponent uniqueComponent (Player e)
     return e

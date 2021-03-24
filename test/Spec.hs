@@ -9,6 +9,7 @@ import Colog.Message
 import Colog
 import qualified Data.Text as T
 import Yaifl
+import Text.RawString.QQ
 
 makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable, ''Supporter, ''Enterable]
 makeLenses ''GameWorld
@@ -45,44 +46,51 @@ runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
 
 addRule :: Rulebook w () RuleOutcome -> Rule w () RuleOutcome -> World w ()
 addRule rb r = do
-    logDebug "added a rule.."
     let r2 = addRuleLast rb r
     rulebookStore . at (rulebookName r2) ?= BoxedRulebook r2
     pass
 
 addRuleLast :: Rulebook w v a -> Rule w v a -> Rulebook w v a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
-addRuleLast (RulebookWithVariables n d s rs) r = RulebookWithVariables n d s ([r] <> rs)
+addRuleLast (RulebookWithVariables n d s rs) r = RulebookWithVariables n d s (rs <> [r])
 
-ex1World :: forall w. HasStandardWorld w => World w ()
-ex1World = do
+ex2World :: forall w. HasStandardWorld w => World w ()
+ex2World = do
     setTitle "Bic"
-    makeRoom "The Staff Break Room"
-    thereIs @(Thing w) $ do
-        name .= "Bic pen"
-    thereIs @(Thing w) $ do
-        name .= "orange"
-        description .= "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    thereIs @(Thing w) $ do
-        name .= "napkin"
-        description .= "Slightly crumpled."
+    makeRoom "The Staff Break Room" "" pass
+    thereIs' @(Thing w) "Bic pen" ""
+    thereIs' @(Thing w) "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
+    thereIs' @(Thing w) "napkin" "Slightly crumpled."
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
-            whenM (do
-                desc <- getForeachObject >>= evalDescription
-                return $ "" == desc) (do
-                t <- getForeachObject
-                say $ t ^. object . name
+            t <- getForeachObject 
+            whenM (("" ==) <$> evalDescription t) (do
+                printName t
                 sayLn " has no description."))
         return Nothing)
     pass
 
-ex1Test :: Text -> Either Assertion Text
-ex1Test z = consumeTitle "Bic" z >>=
+ex2Test :: Text -> Either Assertion Text
+ex2Test z = consumeTitle "Bic" z >>=
             consumeLine "The Staff Break Room" >>=
             consumeBlankRoomDescription "The Staff Break Room" >>=
             consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
             consumeLine "Bic pen has no description."
+
+ex3World :: HasStandardWorld w => World w ()
+ex3World = do
+    setTitle "Verbosity"
+    -- inform7 uses superbrief, brief, and verbose as the command words
+    -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
+    roomDescriptions .= SometimesAbbreviatedRoomDescriptions 
+    makeRoom "The Wilkie Memorial Research Wing" [r|"The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
+
+The Men's Restroom is immediately west of this point."|] pass
+
+    makeRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence."|] pass
+    pass
+    --isWestOf w
+
 
 setTitle :: WithGameData w m => Text -> m ()
 setTitle t = title .= t
@@ -114,7 +122,7 @@ main = do
       die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
 
 tests :: Test
-tests = makeTests [("Bic - 3.1.2", ex1World, ex1Test)]
+tests = makeTests [("Bic - 3.1.2", ex2World, ex2Test)]
 
 makeTests :: [(String, World GameWorld a, Text -> Either Assertion Text)] -> Test
 makeTests lst = TestList $
@@ -154,183 +162,9 @@ testExample w _ ts = do
 
 
 {-
-tests :: Test
-tests = makeTests []
 
-makeTests :: _ -> _
-makeTests lst = TestList $
-    zipWith (\ i x -> TestLabel (mkName i)  $ TestCase (runWorldTest i x)) [1 ..] lst
-        where mkName i = "example " <> show i
-
-runWorldTest :: (WithLogging sig m, Has (Writer SayOutput) sig m) => Int -> m () -> (m () -> _ ()) -> Assertion
-runWorldTest i w h = do
-        putStrLn $ "Example " <> show i
-        let (a, b) = runApplication (h w) {-$ do
-            addContext "blah" Nothing 
-            logMsg Error "hi"
-            sayLn "test"
-            logMsg Debug "hi again"-}
-        PPTTY.putDoc b
-        PPTTY.putDoc "\n------------\n"
-        PPTTY.putDoc $ coerce a
-        PPTTY.putDoc "\n------------\n"
-        pass
-
-example1World :: HasGameSettings sig m => m ()
-example1World = do
-    title .= "Bic"
-    addRoom' "The Staff Break Room"
-    addThing' "Bic pen" ""
-    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    sayLn "aaaa"
-    addThing' "napkin" "Slightly crumpled."
-    sayLn "moo"
-    addWhenPlayBeginsRule' "run property checks at the start of play rule" (do
-        mapObjects2 physicalComponent objectComponent (\v o -> do
-            when (descriptionOf o == "") (do
-                --printName' o
-                sayLn " has no description.")
-            return (v, o)
-            )
-        return Nothing)
-    g <- get
-    sayLn (show $ Map.keys $ g ^. rulebooks)
-
-
-
-where
-
-import           Yaifl.Common
-
-import           Yaifl.Components
-import           Yaifl.WorldBuilder
-import           Data.Text.Prettyprint.Doc.Render.Terminal\
-import           Test.HUnit hiding (State)
-
-
-import Polysemy.State
-import Polysemy.Error
-import Polysemy.Output
-import Polysemy.IO
-import Control.Lens
-import Polysemy.Trace
-import qualified Prettyprinter.Render.Terminal as PPTTY
-import qualified Data.Text.Prettyprint.Doc     as PP
-
-
-data TestWorld = TestWorld
-    {
-        _objects :: Store Object,
-        _enclosing :: Store Enclosing,
-        _roomData :: Store RoomData,
-        _physical :: Store Physical
-    , _ec      :: Int
-    }
-
-makeLenses ''TestWorld
-
-instance HasStore TestWorld Object where
-    store _ = castOptic objects
-
-instance HasStore TestWorld Enclosing where
-    store _ = castOptic enclosing
-
-instance HasStore TestWorld RoomData where
-    store _ = castOptic roomData
-
-instance HasStore TestWorld Physical where
-    store _ = physical
-
-instance EntityProducer TestWorld where
-    entityCounter = ec
-
---type TestingMonadStack a = Sem TypeList a
-
-type WorldOutput = Either Text ([PP.Doc PPTTY.AnsiStyle], ())
-
-runWorldTest :: Int -> Sem r () -> (Sem r () -> IO WorldOutput) -> Assertion
-runWorldTest i w h' = do
-        putStrLn $ "Example " <> show i
-        Right (v, _) <- h' w
-        PPTTY.putDoc "\n------------\n"
-        PPTTY.putDoc $ PP.fillCat v
-        pass
-
-h :: Sem '[World TestWorld, Log, State LoggingContext, Say,
-                             State (GameSettings TestWorld), Error Text, State WorldBuildInfo,
-                             Embed IO] () -> IO WorldOutput
-h w = w 
-            & worldToMapStore
-            & evalState (TestWorld IM.empty IM.empty IM.empty IM.empty 0)
-            & logToOutput
-            & prettyprintOutputToIO
-            & evalState (LoggingContext [] mempty)
-            & sayToOutput
-            & runOutputList
-            & evalState (GameSettings "Untitled" Nothing Map.empty)
-            & runError
-            & evalState (WorldBuildInfo (-5))
-            & runM
-            
-            
-
-
-
-
-makeWorld "World" defaultWorld
-makeLenses ''World
-
-instance HasWorld World World where
-    world = id
-
-instance HasGameInfo World World where
-    gameInfo = worldGameInfo
-
-instance Has World Object where
-    store _ = objectStore
-
-instance Has World RoomData where
-    store _ = roomDataStore
-
-instance Has World Physical where
-    store _ = physicalStore
-
-instance Has World Player where
-    store _ = playerStore
-
-instance HasMessageBuffer World where
-    messageBuffer = gameInfo . msgBuffer
-
-instance Has World Enclosing where
-    store _ = enclosingStore
-
-instance Has World Container where
-    store _ = containerStore
-
-instance Has World Openable where
-    store _ = openableStore
-
-instance Has World Supporter where
-    store _ = supporterStore
-
-instance Has World Direction where
-    store _ = directionStore
-    
-
-
-example2World :: WorldBuilder World
-example2World = do
-    setTitle "Verbosity"
-    _1 . gameInfo . roomDescriptions .= SometimesAbbreviatedRoomDescriptions
-    w <- addRoom "The Wilkie Memorial Research Wing" [r|"The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
-
-The Men's Restroom is immediately west of this point."|]
-    addRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence."|]
-    isWestOf w
-    pass
-    
-ex1 :: Assertion
-ex1 = testExampleBlank example1World (\z -> consumeTitle "Bic" z >>=
+ex2 :: Assertion
+ex2 = testExampleBlank example1World (\z -> consumeTitle "Bic" z >>=
             consumeLine "The Staff Break Room" >>=
             consumeBlankRoomDescription "The Staff Break Room" >>=
             consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
