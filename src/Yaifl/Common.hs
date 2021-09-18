@@ -1,461 +1,305 @@
-{- |
- Copyright: (c) 2020 Avery
- SPDX-License-Identifier: MIT
- Maintainer: Avery <thecommunistduck@hotmail.co.uk>
-
- Yet another interactive fiction library.
--}
 module Yaifl.Common (
-    Entity,
-    Store,
-    emptyStore,
-    RuleOutcome,
-    RuleEvaluation,
-    World (..),
-    Env (..),
-    RoomDescriptions (..),
-    roomDescriptions,
-    HasStore,
-    store,
-    firstRoom,
-    Deletable,
-    deleteObject,
-    Rulebook (..),
-    Rule (..),
-    PlainRule,
-    PlainRulebook,
-    GameData (..),
-    RuleVarsT (..),
-    HasID,
-    getID,
-    title,
-    darknessWitnessed,
-    intersectStore,
-    intersectStore2,
-    intersectStore3,
-    setStore,
-    setStore2,
-    setStore3,
-    storeLens,
-    storeLens2,
-    storeLens3,
-    storeLens4,
-    storeLens5,
-    isX,
-    say,
-    sayLn,
-    sayIf,
-    entityCounter,
-    gameWorld,
-    rulebookStore,
-    rulebookName,
-    messageBuffer,
-    buffer,
-    setStyle,
-    getComponent,
-    uniqueComponent,
-    withEntityIDBlock,
-    defaultPlayerID,
-    newEntity,
-    component,
-    adjustComponent,
-    setComponent,
-    deleteComponent,
-    mentionedThings,
-    localePriorities,
-    MonadWorld,
-    liftWorld,
-    defaultVoidRoom,
-    Action (..),
-    ActionEvaluation (..),
-    actionStore,
-    BoxedRulebook (..),
-    BoxedAction (..),
-    actionProcessing,
-    getActor,
-    currentActionVars,
-    getRulebookVariables,
-    modifyRulebookVariables,
-    activityStore,
-    BoxedActivity (..),
-    WithGameData,
-    Activity (..),
-    localeData,
-    setLocalePriority,
-    clearLocale,
-    mostRecentRoom,
-    foreachObject,
-    getForeachObject,
-    defaultdirectionBlockIDs,
-    modifyObject,
-    getComponent',
-    blankGameData,
-) where
+    World (..)
+  , ThingProperties (..)
+  , RoomProperties (..)
+  , ConceptProperties (..)
+  , Rulebook(..)
+  , Rule(..)
+  , Name
+  , Description
+  , Entity(..)
+  , Action(..)
+  , MessageBuffer(..)
+  , RoomDescriptions(..)
+  , UnverifiedArgs
+  , Args(..)
+  , Object(..)
+  , Thing
+  , Timestamp
+  , Store
+  , AbstractObject(..)
+  , TimestampedObject(..)
 
-import Colog (HasLog (..), LogAction)
-import Colog.Message
-import Colog.Monad
-import Control.Monad.State.Strict (mapStateT)
-import Data.Functor.Apply (Apply (..))
-import qualified Data.IntMap as IM
-import qualified Data.IntMap.Strict as DIM
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as DS
+  , emptyStore
+
+  , actions
+  , getGlobalTime
+  , whenPlayBegins
+  , messageBuffer
+
+  , defaultActivities
+  , source
+  , objects
+
+  , rules
+
+  , buffer
+
+  , setTitle
+  , addThing
+  , addThing'
+  , addRoom
+  , addRoom'
+  , makeRule
+  , ruleEnd
+  
+  , setStyle
+  , say
+  , sayLn
+  , sayIf) where
+
+import Relude
+
+import Control.Lens
+import qualified Data.IntMap.Strict as IM
 import qualified Data.Text.Prettyprint.Doc as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import Yaifl.Prelude
 
-{- TYPES -}
+-- | An 'Entity' is an integer ID that is used to reference between objects.
+newtype Entity = Entity {unID :: Int} deriving newtype Num
 
--- | An Entity is just an ID that is loosely associated with components.
-type Entity = Int
-
-uniqueComponent :: Entity
-uniqueComponent = 0
-
-defaultPlayerID :: Entity
-defaultPlayerID = -10
-
-defaultdirectionBlockIDs :: Entity
-defaultdirectionBlockIDs = -100
-
-defaultVoidRoom :: Entity
-defaultVoidRoom = -20
-
-{- | Store a is a container of components of type a, indexed by entity ID.
- in an ideal world (TODO? it'd have multiple different types of stores)
--}
 type Store a = IM.IntMap a
 
-type RulebookStore w = Map.Map Text (BoxedRulebook w RuleOutcome)
-
--- | A store with nothing in it
 emptyStore :: Store a
 emptyStore = IM.empty
+class IsWorld w
 
--- | rules either give no outcome, true, or false.
-type RuleOutcome = Bool
+type Name = Text
+type Description = Text
+type Timestamp = Int
 
-newtype ActionEvaluation w = CompiledAction ([Entity] -> World w RuleOutcome)
+newtype ObjType = ObjType {unObjType :: Text} deriving (Show)
 
-class HasStore w c where
-    store :: Lens' w (Store c)
+data Darkness = Lighted | Dark deriving (Eq, Show)
+data IsVisited = Visited | Unvisited deriving (Eq, Show)
+newtype MapConnections = MapConnections {unMapConnections :: Store Entity}
+type ContainingRegion = Maybe Entity
 
-newtype Env m = Env {_envLogAction :: LogAction m Message}
-
-data GameData w = GameData
-    { _gameWorld :: w
-    , _title :: Text
-    , _firstRoom :: Maybe Entity
-    , _entityCounter :: Entity
-    , _messageBuffer :: MessageBuffer
-    , _rulebookStore :: RulebookStore w
-    , _actionStore :: Map.Map Text (BoxedAction w)
-    , _activityStore :: Map.Map Text (BoxedActivity w)
-    , _actionProcessing :: BoxedAction w -> [Entity] -> World w RuleOutcome
-    , _roomDescriptions :: RoomDescriptions
-    , _darknessWitnessed :: Bool
-    , _currentActionVars :: (Entity, [Entity])
-    , _localeData :: LocaleData
-    , _mostRecentRoom :: Maybe Entity
+defaultActivities = error ""
+data Object a = Object
+    { _name :: Name
+    , _description :: Description
+    , _objID :: Entity
+    , _objType :: ObjType
+    , _creationTime :: Timestamp
+    , _details :: a
     }
 
-data LocaleData = LocaleData
-    { _localePriorities :: DIM.IntMap Int
-    , _mentionedThings :: Set Entity
+data RoomData a = RoomData
+    { __isVisited :: IsVisited
+    , __darkness :: Darkness
+    , __mapConnections :: MapConnections
+    , _containingRegion :: ContainingRegion
+    , _roomSpecifics :: a
     }
+
+data ThingData a = ThingData
+    {  _thingSpecifics :: a
+    }
+
+data ConceptData a = ConceptData
+    {  _conceptSpecifics :: a
+    }
+
+makeLenses ''Object
+
+
+data TimestampedObject t r c o = TimestampedObject
+    { _cachedObject :: Object o
+    , _cacheStamp :: Timestamp
+    , _updateFunc :: ObjectUpdate t r c o
+    }
+
+type ObjectUpdate t r c o = World t r c -> Object o -> Object o
+{-
+So the hierarchy of stuff is as follows.
+everything is an Object. The collection of all kinds of Object is a Universe.
+The Universe consists of a ThingUniverse and a RoomUniverse.
+There are standard defined universes but these can be extended by defining InUniverse instances to inject the smaller standard universe type
+into an extended universe type.
+A thing has physical info (out of laziness that there aren't many non-physical things...so I guess I'll just make an isTangible flag and
+ignore stuff that falls as intangible)
+an AbstractObject is either a static object (that does not update itself, but may be updated by other processes)
+or a DynamicObject, which is a wrapper around a timestamped object.
+a timestamped object is a cached reified object at a certain timestamp, plus a function that can update e.g. descriptions if it is deemed out of date
+so in this sense an abstract object is the potential for an object. if you want to look stuff up, you need to reify it first. 
+if you're modifying it, you call modifyObject that just modifies the cached object?
+-}
+
+data AbstractObject t r c o = DynamicObject (TimestampedObject t r c o) | StaticObject (Object o)
+
+data Property t r c = ThingProp (ThingData t) | RoomProp (RoomData r) | ConceptProp (ConceptData c)
+data ThingProperties = PlainObject
+data RoomProperties = PlainRoom
+data ConceptProperties = PlainConcept
+
+type Thing t = Object (ThingData t)
+type Room r = Object (RoomData r)
+type Concept c = Object (ConceptData c)
+
+type AbstractRoom t r c = AbstractObject t r c (RoomData r)
+type AbstractThing t r c = AbstractObject t r c (ThingData t)
+type AbstractConcept t r c = AbstractObject t r c (ConceptData c)
+class IsSubtype sup sub where
+    inject :: sub -> sup
+
+instance IsSubtype a a where
+    inject = id
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data MessageBuffer = MessageBuffer
     { _buffer :: [StyledDoc]
     , _msgStyle :: Maybe PPTTY.AnsiStyle
     }
-    deriving (Show)
-
-newtype World w a = World {unwrapWorld :: ReaderT (Env (World w)) (StateT (GameData w) IO) a}
-    deriving newtype
-        ( Functor
-        , Applicative
-        , Monad
-        , MonadState (GameData w)
-        , MonadReader (Env (World w))
-        , MonadIO
-        )
-
-class MonadState (GameData w) m => HasID w e m where
-    getID :: e -> m Entity
-
-instance MonadState (GameData w) m => HasID w Entity m where
-    getID = return
-instance HasLog (Env m) Message m where
-    getLogAction :: Env m -> LogAction m Message
-    getLogAction = _envLogAction
-    {-# INLINE getLogAction #-}
-
-    setLogAction :: LogAction m Message -> Env m -> Env m
-    setLogAction newLogAction env = env{_envLogAction = newLogAction}
-    {-# INLINE setLogAction #-}
-
-class Monad m => MonadWorld w m where
-    liftWorld :: World w a -> m a
-    liftLogWorld :: LogAction (World w) Message -> LogAction m Message
-
-instance MonadWorld w (World w) where
-    liftWorld = id
-    liftLogWorld = id
-
-type WithGameData w m = (WithLog (Env (World w)) Message m, MonadState (GameData w) m, MonadWorld w m)
-
-instance MonadTrans (RuleVarsT v) where
-    lift = RuleVarsT . lift
-
-instance MonadReader r m => MonadReader r (RuleVarsT v m) where
-    ask = lift ask
-    local l m = RuleVarsT $ mapStateT (local l) (unwrapRuleVars m)
-
-type RuleEvaluation w v = RuleVarsT v (World w) (Maybe RuleOutcome)
-
-data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
-
---setLogAction newLogAction env = env { _envLogAction = runLoggerT . newLogAction }
-blankGameData :: w -> (w -> w) -> GameData w
-blankGameData w rbs = GameData (rbs w) "untitled" Nothing 0 (MessageBuffer [] Nothing) Map.empty Map.empty Map.empty blankActionProcessor NoAbbreviatedRoomDescriptions False (-1, []) (LocaleData DIM.empty DS.empty) Nothing
-
-blankActionProcessor :: BoxedAction w -> [Entity] -> World w RuleOutcome
-blankActionProcessor _ _ = do
-    logError "No action processing rulebook given"
-    return False
-
-{-
---this is some stackoverflow black fing magic
---but idk if it's actually any easier to follow than the intersection one.
-fanoutTraversal2 :: Traversal' s a -> Traversal' s b -> Traversal' s (a, b)
-fanoutTraversal2 t1 t2 fab s =
-  maybe (pure s) (fmap update . fab) mv
-  where
-    mv = liftA2 (,) (s ^? t1) (s ^? t2)
-    update (c, d) = s & t1 .~ c & t2 .~ d
-
-fanoutTraversal3 :: Traversal' s a -> Traversal' s b -> Traversal' s c -> Traversal' s ((a, b), c)
-fanoutTraversal3 t1 t2 = fanoutTraversal2 (fanoutTraversal2 t1 t2)
--}
-intersectStore :: HasStore w a => (a -> b) -> w -> Store b
-intersectStore f w = f <$> w ^. store
-
-intersectStore2 :: (HasStore w a1, HasStore w a2) => (a1 -> a2 -> b) -> w -> Store b
-intersectStore2 f w = intersectStore f w <.> w ^. store
-
-intersectStore3 :: (HasStore w a1, HasStore w a2, HasStore w a) => (a1 -> a2 -> a -> b) -> w -> Store b
-intersectStore3 f w = intersectStore2 f w <.> w ^. store
-
-intersectStore4 :: (HasStore w a1, HasStore w a2, HasStore w a3, HasStore w a) => (a1 -> a2 -> a3 -> a -> b) -> w -> Store b
-intersectStore4 f w = intersectStore3 f w <.> w ^. store
-
-intersectStore5 :: (HasStore w a1, HasStore w a2, HasStore w a3, HasStore w a4, HasStore w a) => (a1 -> a2 -> a3 -> a4 -> a -> b) -> w -> Store b
-intersectStore5 f w = intersectStore4 f w <.> w ^. store
-
-setStore :: forall c a w. HasStore w c => (a -> c) -> w -> Store a -> w
-setStore f w m = w & store %~ IM.union (f <$> m)
-
-setStore2 :: (HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> w -> Store a -> w
-setStore2 f f2 w m = setStore f2 (setStore f w m) m
-
-setStore3 :: (HasStore w c, HasStore w c1, HasStore w c2) => (a -> c1) -> (a -> c2) -> (a -> c) -> w -> Store a -> w
-setStore3 f f2 f3 w m = setStore f3 (setStore2 f f2 w m) m
-
-setStore4 :: (HasStore w c, HasStore w c1, HasStore w c2, HasStore w c3) => (a -> c1) -> (a -> c2) -> (a -> c3) -> (a -> c) -> w -> Store a -> w
-setStore4 f f2 f3 f4 w m = setStore f4 (setStore3 f f2 f3 w m) m
-
-setStore5 :: (HasStore w c, HasStore w c1, HasStore w c2, HasStore w c3, HasStore w c4) => (a -> c1) -> (a -> c2) -> (a -> c3) -> (a -> c) -> (a -> c4) -> w -> Store a -> w
-setStore5 f f2 f3 f4 f5 w m = setStore f5 (setStore4 f f2 f3 f4 w m) m
-
-storeLens :: HasStore w a => (a -> b) -> (b -> a) -> Lens' w (Store b)
-storeLens f a = lens (intersectStore f) (setStore a)
-
-storeLens2 :: (HasStore w a, HasStore w c) => (a -> c -> b) -> (b -> a) -> (b -> c) -> Lens' w (Store b)
-storeLens2 f a a2 = lens (intersectStore2 f) (setStore2 a a2)
-
-storeLens3 :: (HasStore w a, HasStore w c, HasStore w d) => (a -> c -> d -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> Lens' w (Store b)
-storeLens3 f a a2 a3 = lens (intersectStore3 f) (setStore3 a a2 a3)
-
-storeLens4 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e) => (a -> c -> d -> e -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> Lens' w (Store b)
-storeLens4 f a a2 a3 a4 = lens (intersectStore4 f) (setStore4 a a2 a3 a4)
-
-storeLens5 :: (HasStore w a, HasStore w c, HasStore w d, HasStore w e, HasStore w f) => (a -> c -> d -> e -> f -> b) -> (b -> a) -> (b -> c) -> (b -> d) -> (b -> e) -> (b -> f) -> Lens' w (Store b)
-storeLens5 f a a2 a3 a4 a5 = lens (intersectStore5 f) (setStore5 a a2 a3 a4 a5)
-
-
-class Deletable w t where
-    deleteObject :: (WithGameData w m, HasStore w t) => Entity -> m ()
-
-newtype RuleVarsT v m a = RuleVarsT {unwrapRuleVars :: StateT v m a} deriving (Functor, Applicative, Monad)
-
-getRulebookVariables :: Monad m => RuleVarsT v m v
-getRulebookVariables = RuleVarsT get
-
-modifyRulebookVariables :: Monad m => (s -> s) -> RuleVarsT s m ()
-modifyRulebookVariables e = RuleVarsT (modify e)
-
-instance MonadState (GameData w) m => MonadState (GameData w) (RuleVarsT v m) where
-    state = lift . state
-
-instance (Monad m, MonadWorld w m) => MonadWorld w (RuleVarsT v m) where
-    liftWorld = lift . liftWorld
-    liftLogWorld = error "log error"
-
-instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (RuleVarsT v m) where
-    getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
-    overLogAction = error "log error"
-
-data Rule w v a where
-    Rule :: Text -> World w (Maybe a) -> Rule w () a
-    RuleWithVariables :: Text -> RuleVarsT v (World w) (Maybe a) -> Rule w v a
-
--- | a rulebook runs in a monadic context m with rulebook variables v and returns a value r, which is normally a success/fail
-data Rulebook w v a where
-    Rulebook :: Text -> Maybe a -> [Rule w () a] -> Rulebook w () a
-    RulebookWithVariables :: Text -> Maybe a -> World w (Maybe v) -> [Rule w v a] -> Rulebook w v a
-
-data BoxedRulebook w a where
-    BoxedRulebook :: Rulebook w v a -> BoxedRulebook w a
-
-data BoxedAction w where
-    BoxedAction :: Show v => Action w v -> BoxedAction w
-
-data BoxedActivity w where
-    BoxedActivity :: Show v => Activity w v -> BoxedActivity w
-rulebookName :: Rulebook w v a -> Text
-rulebookName (Rulebook t _ _) = t
-rulebookName (RulebookWithVariables t _ _ _) = t
-
-type PlainRule w m = Rule w () RuleOutcome
-type PlainRulebook w m = Rulebook w () RuleOutcome
-
-data Action w v where
-    Action ::
-        { _actionName :: Text
-        , _understandAs :: [Text]
-        , _appliesTo :: Int -> Bool
-        , _setActionVariables :: [Entity] -> Rulebook w () v
-        , _beforeActionRules :: v -> Rulebook w v RuleOutcome
-        , _checkActionRules :: v -> Rulebook w v RuleOutcome
-        , _carryOutActionRules :: v -> Rulebook w v RuleOutcome
-        , _reportActionRules :: v -> Rulebook w v RuleOutcome
-        } ->
-        Action w v
-
-data Activity w v = Activity
-    { _activityName :: Text
-    , _activityappliesTo :: Int -> Bool
-    , _setActivityVariables :: [Entity] -> Rulebook w () v
-    , _beforeRules :: v -> Rulebook w v RuleOutcome
-    , _forRules :: v -> Rulebook w v RuleOutcome
-    , _afterRules :: v -> Rulebook w v RuleOutcome
+--I think this means I need some kind of injection
+--but what I'm doing for laziness is u
+--the only sane instantiation for u is Property t r c so
+data Args t ro c v = Args
+    { _source :: Maybe (Object (Property t ro c))
+    ,  actionVariables :: v
+    , _timestamp :: Timestamp
     }
 
+type UnverifiedArgs t ro c = Args t ro c [Object (Property t ro c)]
+type RuleOutcome = Bool
+data Rule t ro c v r = Rule
+    { _ruleName :: Text
+    , _runRule ::  v -> World t ro c ->((v, Maybe r), World t ro c)
+    }
+data Rulebook t ro c v r where
+    Rulebook :: { _rulebookName :: Text
+    , _defaultOutcome :: Maybe r
+    , _parseRulebookArguments :: UnverifiedArgs t ro c -> World t ro c -> Either Text v
+    , _rules :: [Rule t ro c v r]
+    } -> Rulebook t ro c v r
+
+
+type ActionRulebook t ro c v = Rulebook t ro c (Args t ro c v) RuleOutcome
+data Action t ro c where
+    Action :: { _actionName :: Text
+    , _understandAs :: [Text]
+    , _parseArguments :: UnverifiedArgs t ro c -> World t ro c -> Either Text (Args t ro c v)
+    , _beforeActionRules :: ActionRulebook t ro c v
+    , _checkActionRules :: ActionRulebook t ro c v
+    , _carryOutActionRules :: ActionRulebook t ro c v
+    , _reportActionRules :: ActionRulebook t ro c v
+    } -> Action t ro c
+    {-
+data Activity t ro c where
+    Activity :: { _activityName :: Text
+    , _parseActivityArguments :: UnverifiedArgs t ro c -> Either Text (Args t ro c v)
+    , _beforeRules :: ActionRulebook t ro c v
+    , _forRules :: ActionRulebook t ro c v
+    , _afterRules :: ActionRulebook t ro c v
+    } -> Activity t ro c
+-}
+data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
+
+data ActivityCollection t r c = ActivityCollection
+    { _d :: Int
+    , _e :: Int
+    }
+
+data World t r c = World
+    { _title :: Text
+    , _firstRoom :: Maybe Entity
+    , _entityCounter :: Entity
+    , _darknessWitnessed :: Bool
+    , _roomDescriptions :: RoomDescriptions
+    , _objects :: Store (AbstractThing t r c)
+    , _rooms :: Store (AbstractRoom t r c)
+    , _concepts :: Store (AbstractConcept t r c)
+    , _messageBuffer :: MessageBuffer
+    , _globalTime :: Timestamp
+    , _actions :: Store (Action t r c)
+    , _activities :: ActivityCollection t r c
+    , _whenPlayBegins :: Rulebook t r c () Text
+    , _actionProcessing :: Action t r c -> UnverifiedArgs t r c -> World t r c -> (Maybe Text, World t r c)
+    }
+makeLenses ''World
 makeLenses ''MessageBuffer
-makeLenses ''GameData
-makeLenses ''LocaleData
+makeLenses ''Args
+makeLenses ''Rulebook
 
-getActor :: WithGameData w m => m Entity
-getActor = use $ currentActionVars . _1
-getComponent :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m (Maybe c)
-getComponent e = use $ gameWorld . store . at e
+getGlobalTime :: World t r c -> Timestamp
+getGlobalTime = _globalTime
 
-getComponent' :: forall c w m. (MonadState (GameData w) m, HasStore w c) => Entity -> m c
-getComponent' e =
-    use (gameWorld . store . at e) >>= \case
-        Nothing -> error $ "Failed component lookup for ID " <> show e
-        Just x -> return x
+-- I wanted to add something like 'concepts' as an intangible object kind, "knowing it's there" vs "almost certain" vs "maybe" etc
+-- | this is a collection of all the possible 'a's
+setTitle :: Text -> World u r c -> World u r c
+setTitle = (title .~)
 
-setComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> c -> m ()
-setComponent e v = gameWorld . store . at e ?= v
+newEntityID :: World u r c-> (Entity, World u r c)
+newEntityID w = w & entityCounter <<+~ 1
 
-adjustComponent :: forall c w m. (WithGameData w m, HasStore w c) => Entity -> (c -> c) -> m ()
-adjustComponent e f = do
-    c <- getComponent e
-    whenJust c (setComponent e . f)
+-- | create a new object (room or thing), but don't add it to any stores or anything.
+makeObject :: Name -> Description -> ObjType -> o -> Maybe (ObjectUpdate u r c o) -> World u r c -> (AbstractObject u r c o, World u r c)
+makeObject n d ty specifics upd = runState (do
+    e <- state newEntityID
+    t <- gets _globalTime
+    let obj = Object n d e ty t specifics
+    return $ case upd of
+        Nothing -> StaticObject obj
+        Just upd' -> DynamicObject $ TimestampedObject obj t upd')
 
-deleteComponent :: forall c m w. (WithGameData w m, HasStore w c) => Entity -> m ()
-deleteComponent e = do
-    gameWorld . store @w @c . at e .= Nothing
-    pass
+addInternal :: (AbstractObject u r c o -> World u r c -> World u r c) -> Name -> Description -> ObjType -> o -> Maybe (ObjectUpdate u r c o) -> World u r c -> World u r c
+addInternal updWorld n d ty specifics updateFunc = execState (do
+    o <- state $ makeObject n d ty specifics updateFunc
+    modify $ updWorld o)
 
-component :: forall c w. HasStore w c => Entity -> Lens' w (Maybe c)
-component e = lens (\w -> w ^. store . at e) sc
-  where
-    sc :: (w -> Maybe c -> w)
-    sc w v = set (store @w @c . at e) v w
+addThing :: IsSubtype u ThingProperties => Name -> Description -> ObjType -> Maybe (ThingData u) -> Maybe (ObjectUpdate u r c (ThingData u)) -> World u r c-> World u r c
+addThing n d ot spec = addInternal updateObjects n d ot (fromMaybe blankThingData spec)
 
-isX :: forall c w d m. (Eq d, MonadState (GameData w) m, HasStore w c) => d -> (c -> d) -> Entity -> m Bool
-isX p recordField e = fmap (\t -> Just p == (recordField <$> t)) (getComponent @c @w e)
+addRoom :: IsSubtype r RoomProperties => Name -> Description -> ObjType -> Maybe (RoomData r) -> Maybe (ObjectUpdate u r c (RoomData r)) -> World u r c -> World u r c
+addRoom n d ot spec = addInternal updateRooms n d ot (fromMaybe blankRoomData spec)
 
-sayInternal :: WithGameData w m => StyledDoc -> m ()
-sayInternal a = do
-    w <- use $ messageBuffer . msgStyle
-    -- logDebug (T.dropWhileEnd (== '\n') $ show a)
-    messageBuffer . buffer %= (:) (maybe id PP.annotate w a)
+addThing' :: IsSubtype u ThingProperties => Name -> Description -> State (ThingData u) v -> World u r c -> World u r c
+addThing' n d stateUpdate = addThing n d (ObjType "thing") (Just (execState stateUpdate blankThingData)) Nothing
 
-say :: WithGameData w m => Text -> m ()
-say a = sayInternal (PP.pretty a)
+addRoom' :: IsSubtype r RoomProperties => Name -> Description -> State (RoomData r) v -> World u r c -> World u r c
+addRoom' n d rd = addRoom n d (ObjType "room") (Just (execState rd blankRoomData)) Nothing
 
-sayLn :: WithGameData w m => Text -> m ()
+makeRule :: Text -> (World t ro c -> (Maybe r, World t ro c)) -> Rule t ro c () r
+makeRule n f = Rule n (\_ w -> first ((), ) $ f w)
+
+ruleEnd :: World t0 r0 c0 -> (Maybe r, World t0 r0 c0)
+ruleEnd = (Nothing ,)
+
+blankThingData :: IsSubtype u ThingProperties => ThingData u
+blankThingData = ThingData (inject PlainObject)
+
+blankRoomData :: IsSubtype r RoomProperties => RoomData r
+blankRoomData = RoomData Unvisited Lighted (MapConnections emptyStore) Nothing (inject PlainRoom)
+
+updateInternal :: Lens' (World u r c) (Store (AbstractObject u r c o)) -> AbstractObject u r c o -> World u r c -> World u r c
+updateInternal l o w =  w & l . at (unID $ getID' o) ?~ o where
+    getID' (StaticObject o') = _objID o'
+    getID' (DynamicObject t) = (_objID . _cachedObject) t
+
+updateRooms :: AbstractRoom t r c -> World t r c -> World t r c
+updateRooms = updateInternal rooms
+
+updateObjects :: AbstractThing t r c -> World t r c -> World t r c
+updateObjects = updateInternal objects
+
+sayInternal :: StyledDoc -> World t r c -> World t r c
+sayInternal a w = w & messageBuffer . buffer %~ (:) (maybe id PP.annotate f a)
+    where f = w ^. messageBuffer . msgStyle
+
+say :: Text -> World t r c -> World t r c
+say = sayInternal . PP.pretty
+
+sayLn :: Text -> World t r c -> World t r c
 sayLn a = say (a <> "\n")
 
-sayIf :: WithGameData w m => Bool -> Text -> m ()
-sayIf iff a = when iff (say a)
+sayIf :: Bool -> Text -> World t r c -> World t r c
+sayIf True a = say a
+sayIf False _ = id
 
-setStyle :: (MonadState (GameData w) m) => Maybe PPTTY.AnsiStyle -> m ()
-setStyle sty = messageBuffer . msgStyle .= sty
+setStyle :: Maybe PPTTY.AnsiStyle -> World t r c -> World t r c
+setStyle sty = messageBuffer . msgStyle .~ sty
 
-withEntityIDBlock :: (MonadState (GameData w) m) => Entity -> m a -> m a
-withEntityIDBlock idblock x = do
-    ec <- setEntityCounter idblock
-    v <- x
-    _ <- setEntityCounter ec
-    return v
+--look :: ??? -> World u r -> World u r
 
-setEntityCounter :: (MonadState (GameData w) m) => Entity -> m Entity
-setEntityCounter e = do
-    ec <- use entityCounter
-    entityCounter .= e
-    return ec
-
-newEntity :: WithGameData w m => m Entity
-newEntity = entityCounter <<%= (+ 1)
-
-setLocalePriority :: MonadState (GameData w) m => Int -> Int -> m ()
-setLocalePriority e p = localeData . localePriorities . at e ?= p
-
--- TODO: clear mentioned flags
-clearLocale :: MonadState (GameData w) m => m ()
-clearLocale = localeData . localePriorities .= DIM.empty
-
-getForeachObject :: Monad m => ForeachObjectT v m v
-getForeachObject = ForeachObjectT get
-
-modifyObject :: Monad m => (s -> s) -> ForeachObjectT s m ()
-modifyObject e = ForeachObjectT (modify e)
-
-instance MonadState (GameData w) m => MonadState (GameData w) (ForeachObjectT v m) where
-    state = lift . state
-
-instance (Monad m, MonadWorld w m) => MonadWorld w (ForeachObjectT v m) where
-    liftWorld = lift . liftWorld
-    liftLogWorld = error "log error"
-
-instance (MonadWorld w m, HasLog (Env (World w)) Message m) => HasLog (Env (World w)) Message (ForeachObjectT v m) where
-    getLogAction e = liftLogAction (liftLogWorld $ _envLogAction e)
-    overLogAction = error "log error"
-
-instance MonadReader r m => MonadReader r (ForeachObjectT v m) where
-    ask = lift ask
-    local l m = ForeachObjectT $ mapStateT (local l) (unwrapForeachObjectT m)
-
-newtype ForeachObjectT o m a = ForeachObjectT {unwrapForeachObjectT :: StateT o m a} deriving (Functor, Applicative, Monad, MonadTrans)
-
-foreachObject :: (MonadState (GameData w) m) => Lens' w (Store c) -> ForeachObjectT c m a -> m ()
-foreachObject st (ForeachObjectT monadLoop) = do
-    v <- use $ gameWorld . st
-    updatedMap <- mapM (execStateT monadLoop) v
-    gameWorld . st .= updatedMap
+--addRoom' :: IsSubtype r RoomProperties => Name -> Description -> Maybe (RoomData r) ->  World u r -> World u r
+--addRoom' n d rd = addRoom n d rd "room"

@@ -8,19 +8,27 @@ Yet another interactive fiction library.
 module Yaifl
 (
     module Yaifl.Common
-  , module Yaifl.TH
-  , module Yaifl.Actions
-  , module Yaifl.Components
+  --, module Yaifl.Actions
   , module Yaifl.Rulebooks 
-  , module Yaifl.Activities
+  --, module Yaifl.Activitiesd
+  , newWorld
+  , blankWorld
 ) where
 
 import Yaifl.Common
-import Yaifl.TH
-import Yaifl.Components
-import Yaifl.Actions
-import Yaifl.Rulebooks 
-import Yaifl.Activities
+import Relude
+--import Yaifl.TH
+--import Yaifl.Components
+--import Yaifl.Actions
+import Yaifl.Rulebooks
+--import Yaifl.Activities
+
+newWorld :: [World u r c -> World u r c] -> World u r c
+newWorld l = flipfoldl' (.) id l blankWorld
+
+blankWorld :: World u r c
+blankWorld = World "Untitled" Nothing (Entity 0) False SometimesAbbreviatedRoomDescriptions emptyStore emptyStore emptyStore (MessageBuffer [] Nothing) 0 emptyStore defaultActivities whenPlayBeginsRules defaultActionProcessingRules
+
 --rulebooks :: Has w (Rulebook w) => Lens' w (Store (Rulebook w))
 --rulebooks = store (Proxy :: Proxy (Rulebook w))
 

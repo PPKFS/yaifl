@@ -133,7 +133,6 @@ type HasThing w = (HasObjectStore w, HasPhysicalStore w)
 class HasDescription a m where
     evalDescription :: a -> m Text
 
-
 class Monad m => ThereIs w t m where
     defaultObject :: Name -> Description w -> Entity -> m t
 
@@ -148,6 +147,10 @@ instance MonadState (GameData w) m => HasDescription (Object w) m where
 evalDescription' :: MonadState (GameData w) m => Entity -> Description w -> m Text
 evalDescription' _ (PlainDescription t) = return t
 evalDescription' e (DynamicDescription f) = f e <$> get
+
+
+dynamicDescription ::Monad m0 => (t00 -> m0 ()) -> Description w
+dynamicDescription = error "not implemented"
 
 -- | For OverloadedStrings
 instance IsString (Description w) where
