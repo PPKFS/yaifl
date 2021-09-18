@@ -2,53 +2,125 @@ module Main
     (
         main
     ) where
-import           Yaifl.Prelude
-import Yaifl.Components
-import           Test.HUnit hiding (State)
-import Colog.Message
-import Colog
-import qualified Data.Text as T
+import Relude 
+
 import Yaifl
-import Text.RawString.QQ
+import Test.HUnit
+import Control.Lens
+import qualified Data.Text as T
+class MonadWorld m where
 
-makeWorld "GameWorld" [''Object, ''RoomData, ''Physical, ''Enclosing, ''Player, ''ContainerData, ''Openable, ''Supporter, ''Enterable]
-makeLenses ''GameWorld
+ex2World :: World ThingProperties RoomProperties ConceptProperties
+ex2World = newWorld [
+    setTitle "Bic"
+  , addRoom' "The Staff Break Room" "" pass
+  , addThing' "Bic pen" "" pass
+  , addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
+  , addThing' "napkin" "Slightly crumpled." pass
+  , addWhenPlayBegins $ makeRule "run property checks at the start of play rule" ruleEnd]
+    {-
+    addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
+        foreachObject things (do
+            t <- getForeachObject 
+            whenM (("" ==) <$> evalDescription t) (do
+                printName t
+                sayLn " has no description."))
+        return Nothing)
+    -}
 
-instance HasStore GameWorld (Object GameWorld) where
-    store = objectStore
 
-instance HasStore GameWorld (Physical GameWorld) where
-    store = physicalStore
+tests :: Test
+tests = makeTests [YaiflTestCase "Bic - 3.1.2" ex2World [] ex2Test]
 
-instance HasStore GameWorld RoomData where
-    store = roomDataStore
+testMeWith :: [Text] -> Text -> [Text -> Either Assertion Text] -> Text -> Either Assertion Text
+testMeWith _ t c = consumeTitle t >=> foldr (>=>) return c
 
-instance HasStore GameWorld Enclosing where
-    store = enclosingStore
+consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
+consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
 
-instance HasStore GameWorld Player where
-    store = playerStore
+listThings :: [Text] -> Text
+listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
+                (if v == length t1 - 2 then "and " else "")) t1 [0..]
 
-instance HasStore GameWorld Openable where
-    store = openableStore
+consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
+consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
 
-instance HasStore GameWorld ContainerData where
-    store = containerDataStore
+consumeLine :: Text -> Text -> Either Assertion Text
+consumeLine t1 = consumeText (mconcat [t1, "\n"])
+consumeTitle :: Text -> Text -> Either Assertion Text
+consumeTitle t = consumeText (introText t)
+consumeText :: Text -> Text -> Either Assertion Text
+consumeText t1 t2 = case T.stripPrefix t1 t2 of
+    Just x -> Right x
+    Nothing -> Left $ t2 @?= t1
 
-instance HasStore GameWorld Enterable where
-    store = enterableStore
+consumeLooking :: Text -> Text -> Text -> Either Assertion Text
+consumeLooking t d = consumeLine t >=> consumeLine d
 
-instance HasStore GameWorld Supporter where
-    store = supporterStore
+data YaiflTestCase where
+    YaiflTestCase :: { testCaseName :: String
+    , testCaseWorld :: World t r c
+    , testCommands :: [Text]
+    , testCaseExpected :: Text -> Either Assertion Text
+    } -> YaiflTestCase
 
-runWorld :: World w a -> GameData w -> Env (World w) -> IO (GameData w)
-runWorld w i env = execStateT (runReaderT (unwrapWorld w) env) i
+ex2Test :: Text -> Either Assertion Text
+ex2Test = testMeWith [] "Bic" [
+            consumeLooking "The Staff Break Room" "",
+            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"],
+            consumeLine "Bic pen has no description."]
 
-addRule :: Rulebook w () RuleOutcome -> Rule w () RuleOutcome -> World w ()
-addRule rb r = do
-    let r2 = addRuleLast rb r
-    rulebookStore . at (rulebookName r2) ?= BoxedRulebook r2
-    pass
+makeTests :: [YaiflTestCase] -> Test
+makeTests lst = TestList $
+    map (\YaiflTestCase{..} -> TestLabel testCaseName $ 
+        TestCase (testHarness testCaseWorld testCommands testCaseExpected)) lst
+
+{-
+w2 <- runWorld (do
+        logInfo "Started world building..."
+        addBaseActions
+        addBaseActivities
+        w
+        addExtrasToBeTH
+        logInfo "Finished world building. Now validating..."
+        logInfo "No validation implemented."
+        logInfo "Finished validation, now running game..."
+        logInfo "\n-------------------"
+        --when I write a proper game loop, this is where it needs to go
+        
+        wpbr <- use $ rulebookStore . at whenPlayBeginsName
+        maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
+        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
+-}
+
+testHarness :: World t r c -> [Text] -> (Text -> Either Assertion Text) -> Assertion
+testHarness w cmds consume = (case Right x >>= consume of
+        Left res -> res
+        Right "" -> pass
+        Right x' -> assertFailure $ "Was left with " <> toString x') where
+            w2 = execState (do
+                modify $ sayLn "Validating...no validation implemented."
+                modify $ sayLn "\n---------------"
+                w' <- get
+                --when I write a proper game loop, this is where it needs to go
+                state $ runRulebook (_whenPlayBegins w') noArgs
+                --do the commands...
+                ) w
+            x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
+    --putStrLn "-------------\n"
+    
+
+
+    
+main :: IO ()
+main = do
+    v <- runTestTT tests
+    if errors v + failures v == 0 then
+      exitSuccess
+    else
+      die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
+{-
+
 
 addRuleLast :: Rulebook w v a -> Rule w v a -> Rulebook w v a
 addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
@@ -71,11 +143,16 @@ ex2World = do
     pass
 
 ex2Test :: Text -> Either Assertion Text
-ex2Test z = consumeTitle "Bic" z >>=
-            consumeLine "The Staff Break Room" >>=
-            consumeBlankRoomDescription "The Staff Break Room" >>=
-            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
-            consumeLine "Bic pen has no description."
+ex2Test = testMeWith [] "Bic" [
+            consumeLooking "The Staff Break Room" "",
+            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"],
+            consumeLine "Bic pen has no description."]
+
+consumeLooking :: Text -> Text -> Text -> Either Assertion Text
+consumeLooking t d = consumeLine t >=> consumeLine d
+
+testMeWith :: [Text] -> Text -> [Text -> Either Assertion Text] -> Text -> Either Assertion Text
+testMeWith _ t c = consumeTitle t >=> foldr (>=>) return c
 
 ex3World :: HasStandardWorld w => World w ()
 ex3World = do
@@ -83,13 +160,79 @@ ex3World = do
     -- inform7 uses superbrief, brief, and verbose as the command words
     -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
     roomDescriptions .= SometimesAbbreviatedRoomDescriptions 
-    makeRoom "The Wilkie Memorial Research Wing" [r|"The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
+    w <- makeRoom "The Wilkie Memorial Research Wing" [r|The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
 
-The Men's Restroom is immediately west of this point."|] pass
+The Men's Restroom is immediately west of this point.|] pass
 
-    makeRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence."|] pass
+    makeRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence.|] (isWestOf w)
     pass
-    --isWestOf w
+
+    --testMe ["west", "east", "verbose", "west"]
+
+isWestOf :: RoomObject w -> State (RoomObject w) a0
+isWestOf = error "not implemented"
+
+ex4World :: HasStandardWorld w => World w ()
+ex4World = do
+    setTitle "Slightly Wrong"
+
+    a <- makeRoom "Awning" [r|A tan awning is stretched on tent poles over the dig-site, providing a little shade to the workers here; you are at the bottom of a square twenty feet on a side, marked out with pegs and lines of string. Uncovered in the south face of this square is an awkward opening into the earth.|] pass
+
+    {- makeRoom "Slightly Wrong Chamber" (dynamicDescription (\e -> do
+        whenM (isVisited e) (append [r|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls.|]) 
+        append [r|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|])) (isSouthOf a) -}
+    pass
+    --testMe ["look", "s", "look"]
+
+
+isVisited :: t0 -> m0 Bool
+isVisited = error "not implemented"
+
+append :: t1 -> m0 ()
+append = error "not implemented"
+
+isSouthOf :: RoomObject w -> State (RoomObject w) a0
+isSouthOf = error "not implemented"
+
+-- Port Royal consists of examples 5,
+portRoyalWorld :: HasStandardWorld w => World w ()
+portRoyalWorld = do
+    setTitle "1691"
+    fj <- makeRoom "Fort James" [r|The enclosure of Fort James is a large, roughly hexagonal court walled with heavy stone. The walls face the entrance to Port Royal Harbour, and the battery of guns is prepared to destroy any enemy ship arriving.|] pass
+
+    tse <- makeRoom "Thames Street End" [r|he ill-named Thames Street runs from here -- at the point of the peninsula -- all the way east among houses and shops, through the Fish Market, edging by the round front of Fort Carlisle, to the point where the town stops and there is only sandy spit beyond. Lime Street, wider and healthier but not as rich, runs directly south, and to the north the road opens up into the courtyard of Fort James.|] (isSouthOf fj)
+    
+    wl <- makeRoom "Water Lane" [r|Here Thames Street -- never very straight -- goes steeply southeast for a portion before continuing more directly to the east.
+
+    Water Lane runs south toward Queen Street, and facing onto it is the New Prison -- which, in the way of these things, is neither. It did serve in that capacity for a time, and in a measure of the villainy which has been usual in Port Royal from its earliest days, it is nearly the largest building in the town.|] (isEastOf tse)
+
+    tsawb <- makeRoom "Thames Street at the Wherry Bridge" [r|To the southwest is the fishmarket; directly across the street is the entrance to a private alley through a brick archway.|] (isEastOf wl)
+
+    pa <- makeRoom "The Private Alley" [r|You're just outside the tavern the Feathers. To the north, under a pretty little archway, is the active mayhem of Thames Street, but the alley narrows down to a dead end a little distance to the south.|] (isSouthOf tsawb)
+
+    tf <- makeRoom "The Feathers" [r|Newly built with brick, replacing the older Feathers tavern that used to stand here. It sells wines in quantity, as well as serving them directly, and the goods are always of the best quality. There's a room upstairs for those wanting to stay the night.|] (isInsideFrom pa)
+
+    makeRoom "The Feathers Bedroom" "" (isAbove tf)
+
+    makeRoom "Lime Street" "" (isSouthOf tse)
+
+    qsm <- makeRoom "Queen Street Middle" "" pass
+
+    makeRoom "Queen Street East" "" (do
+        isSouthOf pa
+        isEastOf qsm)
+    
+    pass
+
+isEastOf :: RoomObject w -> State (RoomObject w) a1
+isEastOf = error "not implemented"
+
+isInsideFrom :: t0 -> State (RoomObject w) a2
+isInsideFrom = error "not implemented"
+
+isAbove :: RoomObject w -> State (RoomObject w) a3
+isAbove = error "not implemented"
+
 
 
 setTitle :: WithGameData w m => Text -> m ()
@@ -104,6 +247,7 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
 
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
 consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
+
 consumeLine :: Text -> Text -> Either Assertion Text
 consumeLine t1 = consumeText (mconcat [t1, "\n"])
 consumeTitle :: Text -> Text -> Either Assertion Text
@@ -194,3 +338,5 @@ runActions = error "not implemented"
         ) $ zip (toList stuff) [0..]-}
 
 -}
+-}
+
