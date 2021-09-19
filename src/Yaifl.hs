@@ -9,27 +9,40 @@ module Yaifl
 (
     module Yaifl.Common
   , module Yaifl.Messages
-  , module Yaifl.Rulebooks 
-  --, module Yaifl.Activitiesd
+  , module Yaifl.Rulebooks
+  , module Yaifl.Objects
+  --, module Yaifl.Activities
   , newWorld
   , blankWorld
 ) where
 
 import Yaifl.Common
 import Relude
---import Yaifl.TH
---import Yaifl.Components
+import Yaifl.Objects
 --import Yaifl.Actions
 import Yaifl.Rulebooks
 import Yaifl.Messages
 --import Yaifl.Activities
 
-newWorld :: [World u r c -> World u r c] -> World u r c
+newWorld
+  :: [World u r c -> World u r c]
+  -> World u r c
 newWorld l = flipfoldl' (.) id l blankWorld
 
 blankWorld :: World u r c
-blankWorld = World "Untitled" Nothing (Entity 0) False SometimesAbbreviatedRoomDescriptions emptyStore emptyStore emptyStore (emptyMessageBuffer, emptyMessageBuffer) 0 emptyStore defaultActivities whenPlayBeginsRules defaultActionProcessingRules
-
---rulebooks :: Has w (Rulebook w) => Lens' w (Store (Rulebook w))
---rulebooks = store (Proxy :: Proxy (Rulebook w))
-
+blankWorld = World
+  { _title = "Untitled"
+  , _entityCounter = Entity 0
+  , _globalTime = 0
+  , _darknessWitnessed = False
+  , _firstRoom = Nothing
+  , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
+  , _things = emptyStore
+  , _concepts = emptyStore
+  , _rooms = emptyStore
+  , _messageBuffers = (emptyMessageBuffer, emptyMessageBuffer)
+  , _actions = emptyStore
+  , _activities = defaultActivities
+  , _whenPlayBegins = whenPlayBeginsRules
+  , _actionProcessing = defaultActionProcessingRules
+  }

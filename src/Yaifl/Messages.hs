@@ -1,17 +1,37 @@
+{-|
+Module      : Yaifl.Messages
+Description : Printing messages to the say (regular output) and logging buffers.
+Copyright   : (c) Avery, 2021
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
 module Yaifl.Messages
-  ( MessageBuffer (..)
+  ( -- * Types
+    MessageBuffer (..)
   , BufferTypes (..)
   , HasBuffer
+
+  -- * Smart constructors
   , emptyMessageBuffer
+
+  -- * Lenses
   , bufferL
+
+  -- * Buffer modification
   , setStyle
   , setSayStyle
   , say
   , sayLn
   , sayIf
+  , logInfo
+  , logError
+  , logVerbose
+
+  -- ** Flushing
   , flushBufferToStdOut
   , flushBufferToText
-  , logInfo
+
   )
 where
 
@@ -22,7 +42,8 @@ import Relude
 
 -- | A type d contains (some number of) buffers, indexed by a phantom type.
 class HasBuffer d p where
-  bufferL :: Proxy p -> Lens' d MessageBuffer -- ^ Lens for the buffer.
+  -- | Lens for the buffer.
+  bufferL :: Proxy p -> Lens' d MessageBuffer
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
@@ -69,7 +90,7 @@ sayContext
   -> StyledDoc
 sayContext = PP.hcat . _msgBufContext
 
--- | Print 'message' to the regular 'say' buffer.
+-- | Print @message@ to the regular @say@ buffer.
 say
   :: (HasBuffer w 'SayBuffer)
   => Text -- ^ Message.
@@ -77,7 +98,7 @@ say
   -> w
 say = sayInternal sb . PP.pretty
 
--- | Print 'message' to the regular 'say' buffer with a newline.
+-- | Print @message@ to the say buffer with a newline.
 sayLn
   :: (HasBuffer w 'SayBuffer)
   => Text -- ^ Message.
@@ -85,7 +106,7 @@ sayLn
   -> w
 sayLn a = say (a <> "\n")
 
--- | Conditionally print 'message' to the regular 'say' buffer.
+-- | Conditionally print @message@ to the say buffer.
 sayIf
   :: (HasBuffer w 'SayBuffer)
   => Bool -- ^ Condition to evaluate.
@@ -95,7 +116,7 @@ sayIf
 sayIf True = say
 sayIf False = const id
 
--- | Print 'message' to the logging buffer.
+-- | Print @message@ to the logging buffer.
 log
   :: (HasBuffer w 'LogBuffer)
   => LogLevel -- ^ Level of logging for this message.
@@ -109,50 +130,50 @@ log logLevel message w
 shouldPrint
   :: (HasBuffer w p)
   => Proxy p
-  -> w -- ^ 
-  -> LogLevel -- ^ 
+  -> w -- ^
+  -> LogLevel -- ^
   -> Bool
 shouldPrint prox = view (bufferL prox . msgBufPrintLevel)
 
--- | Print 'message' to the logging buffer with a newline.
-logLn 
-  :: (HasBuffer w 'LogBuffer) 
+-- | Print @message@ to the logging buffer with a newline.
+logLn
+  :: (HasBuffer w 'LogBuffer)
   => LogLevel -- ^ Level of logging for this message.
   -> Text -- ^ Message.
   -> w
   -> w
 logLn logLevel message = log logLevel (message <> "\n")
 
--- | Print 'message' to the logging buffer with a newline and 'Info' prefix.
-logInfo 
+-- | Print @message@ to the logging buffer with a newline and @Info@ prefix.
+logInfo
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> w 
+  -> w
   -> w
 logInfo = withLogPrefix InfoLevel PPTTY.Blue "Info"
 
--- | Print 'message' to the logging buffer with a newline and 'Debug' prefix.
-logVerbose  
+-- | Print @message@ to the logging buffer with a newline and @Debug@ prefix.
+logVerbose
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> w 
+  -> w
   -> w
 logVerbose = withLogPrefix VerboseLevel PPTTY.Green "Debug"
 
--- | Print 'message' to the logging buffer with a newline and 'Error' prefix.
+-- | Print @message@ to the logging buffer with a newline and @Error@ prefix.
 logError
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> w 
+  -> w
   -> w
 logError = withLogPrefix VerboseLevel PPTTY.Red "Error"
 
--- | Print 'message' to the logging buffer with a (local) prefix.
+-- | Print @message@ to the logging buffer with a (local) prefix.
 -- | This will respect the existing context and styles, if applicable.
-withLogPrefix 
-  :: (HasBuffer w 'LogBuffer) 
+withLogPrefix
+  :: (HasBuffer w 'LogBuffer)
   => LogLevel
-  -> PPTTY.Color 
+  -> PPTTY.Color
   -> Text -- ^ Message prefix.
   -> Text -- ^ Message itself.
   -> w
@@ -161,10 +182,10 @@ withLogPrefix logLevel colour prefix message = execState $ do
   oldBuf <- use $ bufferL lb . msgBufContext
   let bf = PP.annotate PPTTY.bold
   -- append the logging prefix to the context and make it pretty
-  bufferL lb . msgBufContext %= (PP.surround 
-    (PP.annotate 
-        (PPTTY.color colour <> PPTTY.bold) 
-        (PP.pretty prefix)) 
+  bufferL lb . msgBufContext %= (PP.surround
+    (PP.annotate
+        (PPTTY.color colour <> PPTTY.bold)
+        (PP.pretty prefix))
         (bf "[") (bf "]") :)
   -- update
   modify $ logLn logLevel message
@@ -173,7 +194,7 @@ withLogPrefix logLevel colour prefix message = execState $ do
 
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setStyle 
+setStyle
   :: (HasBuffer w p)
   => Proxy p
   -> Maybe PPTTY.AnsiStyle -- ^ The updated style.
@@ -181,26 +202,27 @@ setStyle
   -> w
 setStyle prox = set $ bufferL prox . msgBufStyle
 
--- | Update the style of the 'say' buffer. Setting to 'Just' overwrites the style,
+-- | Update the style of the say buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setSayStyle 
+setSayStyle
   :: (HasBuffer w 'SayBuffer)
-  => Maybe PPTTY.AnsiStyle 
+  => Maybe PPTTY.AnsiStyle
   -> w
   -> w
 setSayStyle = setStyle sb
 
--- | Update the style of the 'log' buffer. Setting to 'Just' overwrites the style,
--- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setLogStyle 
-  :: (HasBuffer w 'LogBuffer) 
-  => Maybe PPTTY.AnsiStyle 
+-- | Update the style of the logging buffer. Setting to 'Just' overwrites
+-- the style, whereas 'Nothing' will remove it.
+-- This will not affect previous messages.
+setLogStyle
+  :: (HasBuffer w 'LogBuffer)
+  => Maybe PPTTY.AnsiStyle
   -> w
   -> w
 setLogStyle = setStyle lb
 
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
--- | with all formatting (e.g. ANSI colour codes) removed.
+-- with all formatting (e.g. ANSI colour codes) removed.
 flushBufferToText
   :: (HasBuffer w p)
   => Proxy p
@@ -209,11 +231,11 @@ flushBufferToText
 flushBufferToText prox = runState $ do
   -- take it down and flip it around
   msgList <- use $ bufferL prox . msgBufBuffer . reversed
-  bufferL prox . msgBufBuffer .= []  
+  bufferL prox . msgBufBuffer .= []
   return $ (mconcat . map show) msgList
 
 -- | Clear a message buffer and return the container (with a clean buffer)
--- | with all formatting (e.g. ANSI colour codes) *included*.
+-- with all formatting (e.g. ANSI colour codes) *included*.
 flushBufferToStdOut
   :: (MonadIO m, HasBuffer w p)
   => Proxy p
