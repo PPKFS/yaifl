@@ -92,7 +92,7 @@ w2 <- runWorld (do
 -}
 
 testHarness :: World t r c -> [Text] -> (Text -> Either Assertion Text) -> Assertion
-testHarness w cmds consume = do
+testHarness w _ consume = do
     let w2 = execState (do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
                 modify $ logInfo "Validating...no validation implemented."
