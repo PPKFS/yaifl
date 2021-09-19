@@ -9,13 +9,13 @@ import Test.HUnit
 import qualified Data.Text as T
 
 ex2World :: World ThingProperties RoomProperties ConceptProperties
-ex2World = newWorld [
-    setTitle "Bic"
-  , addRoom' "The Staff Break Room" "" pass
-  , addThing' "Bic pen" "" pass
-  , addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
-  , addThing' "napkin" "Slightly crumpled." pass
-  , addWhenPlayBegins $ makeRule "run property checks at the start of play rule" ruleEnd]
+ex2World = newWorld $ do
+   setTitle "Bic"
+   addRoom' "The Staff Break Room" "" pass
+   addThing' "Bic pen" "" pass
+   addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
+   addThing' "napkin" "Slightly crumpled." pass
+   addWhenPlayBegins $ makeRule "run property checks at the start of play rule" ruleEnd
     {-
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do

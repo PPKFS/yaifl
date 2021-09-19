@@ -156,7 +156,7 @@ logInfo
   => Text -- ^ Message.
   -> w
   -> w
-logInfo = withLogPrefix InfoLevel PPTTY.Blue "Info"
+logInfo = withLogPrefix InfoLevel PPTTY.Blue "Msg"
 
 -- | Print @message@ to the logging buffer with a newline and @Debug@ prefix.
 logVerbose
@@ -164,7 +164,7 @@ logVerbose
   => Text -- ^ Message.
   -> w
   -> w
-logVerbose = withLogPrefix VerboseLevel PPTTY.Green "Debug"
+logVerbose = withLogPrefix VerboseLevel PPTTY.Green "Dbg"
 
 -- | Print @message@ to the logging buffer with a newline and @Error@ prefix.
 logError
@@ -172,7 +172,7 @@ logError
   => Text -- ^ Message.
   -> w
   -> w
-logError = withLogPrefix VerboseLevel PPTTY.Red "Error"
+logError = withLogPrefix VerboseLevel PPTTY.Red "Err"
 
 -- | Print @message@ to the logging buffer with a (local) prefix.
 -- | This will respect the existing context and styles, if applicable.

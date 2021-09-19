@@ -64,12 +64,12 @@ makeObject
   -> Maybe (ObjectUpdate u r c o) -- ^ 'Nothing' for a static object, 'Just f' for
                                   -- a dynamic object.
   -> World u r c
-  -> (AbstractObject u r c o, World u r c)
+  -> ((Entity, AbstractObject u r c o), World u r c)
 makeObject n d ty specifics upd = runState $ do
   e <- state newEntityID
   t <- gets getGlobalTime
   let obj = Object n d e ty t specifics
-  return $ maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd
+  return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 addObject
   :: (AbstractObject u r c o -> World u r c -> World u r c)
@@ -78,12 +78,13 @@ addObject
   -> ObjType
   -> o
   -> Maybe (ObjectUpdate u r c o)
-  -> World u r c
-  -> World u r c
+  -> State (World u r c) Entity
 -- hilariously the pointfree version of this is
 -- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
-addObject updWorld n d ty specifics updateFunc w =
-  uncurry updWorld (makeObject n d ty specifics updateFunc w)
+addObject updWorld n d ty specifics updateFunc = do
+  obj <- state $ makeObject n d ty specifics updateFunc
+  modify $ updWorld (snd obj)
+  return (fst obj)
 
 -- | Create a new 'Thing' and add it to the relevant stores.
 addThing
@@ -93,8 +94,7 @@ addThing
   -> ObjType -- ^ Type.
   -> Maybe (ThingData t) -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdate t r c (ThingData t)) -- ^ Static/Dynamic.
-  -> World t r c
-  -> World t r c
+  -> State (World t r c) Entity
 addThing name desc objtype details = addObject updateThing
   name desc objtype (fromMaybe blankThingData details)
 
@@ -110,8 +110,7 @@ addThing'
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> State (ThingData t) v -- ^ Build your own thing monad!
-  -> World t r c
-  -> World t r c
+  -> State (World t r c) Entity
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
   (Just (execState stateUpdate blankThingData)) Nothing
 
@@ -121,9 +120,8 @@ addRoom
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
   -> Maybe (RoomData r) -- ^
-  -> Maybe (ObjectUpdate u r c (RoomData r))  -- ^ Optional details.
-  -> World u r c -- ^
-  -> World u r c
+  -> Maybe (ObjectUpdate t r c (RoomData r))  -- ^ Optional details.
+  -> State (World t r c) Entity
 addRoom name desc objtype details = addObject updateRoom
   name desc objtype (fromMaybe blankRoomData details)
 
@@ -133,12 +131,15 @@ addRoom'
   => Text
   -> Text
   -> State (RoomData r) v
-  -> World u r c
-  -> World u r c
+  -> State (World t r c) Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
   (Just (execState rd blankRoomData)) Nothing
 
-move :: Entity -> Entity -> World t r c -> (Maybe Text, World t r c)
+move
+  :: Entity
+  -> Entity
+  -> World t r c
+  -> (Maybe Bool, World t r c)
 move = error "not impl"
 {-
 getThing

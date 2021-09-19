@@ -28,12 +28,12 @@ common common-options
                      , prettyprinter
                      , prettyprinter-ansi-terminal
                      , template-haskell
-                     , containers 
+                     , containers
                      , text
                      , mtl
                      , enummapset
                      , raw-strings-qq
-                     
+
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
@@ -54,11 +54,11 @@ common common-options
     ghc-options:       -Wmissing-export-lists
                        -Wpartial-fields
   if impl(ghc >= 8.8)
-    ghc-options:       
+    ghc-options:
 
   default-language:    Haskell2010
-  default-extensions: NoImplicitPrelude OverloadedStrings ApplicativeDo 
-    BangPatterns 
+  default-extensions: NoImplicitPrelude OverloadedStrings ApplicativeDo
+    BangPatterns
     BlockArguments
     ConstraintKinds
     DataKinds
@@ -85,6 +85,7 @@ common common-options
     OverloadedStrings
     PatternSynonyms
     PolyKinds
+    QualifiedDo
     RankNTypes
     RecordWildCards
     ScopedTypeVariables
@@ -98,7 +99,7 @@ common common-options
 library
   import:              common-options
   hs-source-dirs:      src
-  exposed-modules:     
+  exposed-modules:
                       Yaifl
                       Yaifl.Common
                       Yaifl.Rulebooks
@@ -110,14 +111,14 @@ library
                       --, Yaifl.Rulebooks
                       --, Yaifl.Actions
                       --, Yaifl.Activities
-  other-modules:       
+  other-modules:
                       -- Yaifl.Components.Room
                       --, Yaifl.Components.Enclosing
                       --, Yaifl.Components.Object
                       --, Yaifl.Components.Container
                       --, Yaifl.Components.Openable
                       --, Yaifl.Components.Supporter
-            
+
                       --, Yaifl.Components.Enterable
                        --, Yaifl.Components.Direction
                       --, Yaifl.Components.Player
