@@ -2,14 +2,11 @@ module Main
     (
         main
     ) where
-import Relude 
+import Relude
 
 import Yaifl
 import Test.HUnit
-import Control.Lens
 import qualified Data.Text as T
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-class MonadWorld m where
 
 ex2World :: World ThingProperties RoomProperties ConceptProperties
 ex2World = newWorld [
@@ -22,7 +19,7 @@ ex2World = newWorld [
     {-
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
-            t <- getForeachObject 
+            t <- getForeachObject
             whenM (("" ==) <$> evalDescription t) (do
                 printName t
                 sayLn " has no description."))
@@ -73,7 +70,7 @@ ex2Test = testMeWith [] "Bic" [
 
 makeTests :: [YaiflTestCase] -> Test
 makeTests lst = TestList $
-    map (\YaiflTestCase{..} -> TestLabel testCaseName $ 
+    map (\YaiflTestCase{..} -> TestLabel testCaseName $
         TestCase (testHarness testCaseWorld testCommands testCaseExpected)) lst
 
 {-
@@ -88,7 +85,7 @@ w2 <- runWorld (do
         logInfo "Finished validation, now running game..."
         logInfo "\n-------------------"
         --when I write a proper game loop, this is where it needs to go
-        
+
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
         maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
@@ -111,7 +108,7 @@ testHarness w cmds consume = do
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x')
-    
+
 main :: IO ()
 main = do
     v <- runTestTT tests
@@ -135,7 +132,7 @@ ex2World = do
     thereIs' @(Thing w) "napkin" "Slightly crumpled."
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
-            t <- getForeachObject 
+            t <- getForeachObject
             whenM (("" ==) <$> evalDescription t) (do
                 printName t
                 sayLn " has no description."))
@@ -159,7 +156,7 @@ ex3World = do
     setTitle "Verbosity"
     -- inform7 uses superbrief, brief, and verbose as the command words
     -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
-    roomDescriptions .= SometimesAbbreviatedRoomDescriptions 
+    roomDescriptions .= SometimesAbbreviatedRoomDescriptions
     w <- makeRoom "The Wilkie Memorial Research Wing" [r|The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
 
 The Men's Restroom is immediately west of this point.|] pass
@@ -179,7 +176,7 @@ ex4World = do
     a <- makeRoom "Awning" [r|A tan awning is stretched on tent poles over the dig-site, providing a little shade to the workers here; you are at the bottom of a square twenty feet on a side, marked out with pegs and lines of string. Uncovered in the south face of this square is an awkward opening into the earth.|] pass
 
     {- makeRoom "Slightly Wrong Chamber" (dynamicDescription (\e -> do
-        whenM (isVisited e) (append [r|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls.|]) 
+        whenM (isVisited e) (append [r|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls.|])
         append [r|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|])) (isSouthOf a) -}
     pass
     --testMe ["look", "s", "look"]
@@ -201,7 +198,7 @@ portRoyalWorld = do
     fj <- makeRoom "Fort James" [r|The enclosure of Fort James is a large, roughly hexagonal court walled with heavy stone. The walls face the entrance to Port Royal Harbour, and the battery of guns is prepared to destroy any enemy ship arriving.|] pass
 
     tse <- makeRoom "Thames Street End" [r|he ill-named Thames Street runs from here -- at the point of the peninsula -- all the way east among houses and shops, through the Fish Market, edging by the round front of Fort Carlisle, to the point where the town stops and there is only sandy spit beyond. Lime Street, wider and healthier but not as rich, runs directly south, and to the north the road opens up into the courtyard of Fort James.|] (isSouthOf fj)
-    
+
     wl <- makeRoom "Water Lane" [r|Here Thames Street -- never very straight -- goes steeply southeast for a portion before continuing more directly to the east.
 
     Water Lane runs south toward Queen Street, and facing onto it is the New Prison -- which, in the way of these things, is neither. It did serve in that capacity for a time, and in a measure of the villainy which has been usual in Port Royal from its earliest days, it is nearly the largest building in the town.|] (isEastOf tse)
@@ -221,7 +218,7 @@ portRoyalWorld = do
     makeRoom "Queen Street East" "" (do
         isSouthOf pa
         isEastOf qsm)
-    
+
     pass
 
 isEastOf :: RoomObject w -> State (RoomObject w) a1
@@ -293,7 +290,7 @@ testExample w _ ts = do
         logInfo "Finished validation, now running game..."
         logInfo "\n-------------------"
         --when I write a proper game loop, this is where it needs to go
-        
+
         wpbr <- use $ rulebookStore . at whenPlayBeginsName
         maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
@@ -320,7 +317,7 @@ ex2 = testExample example2World [] (\v -> consumeTitle "Verbosity" v >>=
             consumeLine [r|"The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
 
 The Men's Restroom is immediately west of this point."|])
-    
+
 
 --parse the input
 --run the input

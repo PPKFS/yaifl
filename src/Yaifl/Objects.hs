@@ -1,10 +1,21 @@
 
-module Yaifl.Objects (
-    move,
-    addThing,
-    addThing',
-    addRoom,
-    addRoom',
+{-|
+Module      : Yaifl.Objects
+Description : Creating, modifying, querying objects.
+Copyright   : (c) Avery, 2021
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+module Yaifl.Objects
+( -- * Adding objects
+  addRoom
+, addRoom'
+, addThing
+, addThing'
+, addObject
+
+, move
 ) where
 
 import Relude
@@ -13,19 +24,37 @@ import Control.Lens
 
 type Enclosing = Int
 
-updateInternal :: Lens' (World u r c) (Store (AbstractObject u r c o)) -> AbstractObject u r c o -> World u r c -> World u r c
-updateInternal l o w = w & l . at (getID' o) ?~ o
-  where
-    getID' (StaticObject o') = _objID o'
-    getID' (DynamicObject t) = (_objID . _cachedObject) t
+-- | Get the ID out of an abstract object. Since the ID **should** be constant, using
+-- the cached version of a dynamic object isn't a problem.
+getAbstractObjectID
+  :: AbstractObject t r c o
+  -> Entity
+getAbstractObjectID (StaticObject o') = _objID o'
+getAbstractObjectID (DynamicObject t) = (_objID . _tsCachedObject) t
 
-updateRooms :: AbstractRoom t r c -> World t r c -> World t r c
-updateRooms = updateInternal rooms
+-- TODO: can I make this into a functor?
+updateInternal
+  :: Lens' (World u r c) (Store (AbstractObject u r c o))
+  -> AbstractObject u r c o
+  -> World u r c
+  -> World u r c
+updateInternal storeLens obj = storeLens . at (getAbstractObjectID obj) ?~ obj
 
-updateObjects :: AbstractThing t r c -> World t r c -> World t r c
-updateObjects = updateInternal objects
+-- | Update a 'room'.
+updateRoom
+  :: AbstractRoom t r c
+  -> World t r c
+  -> World t r c
+updateRoom = updateInternal rooms
 
--- | Create a new object and assign it an entity ID, but do **not** add it to any 
+-- | Update a 'thing'.
+updateThing
+  :: AbstractThing t r c
+  -> World t r c
+  -> World t r c
+updateThing = updateInternal things
+
+-- | Create a new object and assign it an entity ID, but do **not** add it to any
 -- stores. See also 'addObject' for a version that adds it to a store.
 makeObject
   :: Text -- ^ Name.
@@ -42,8 +71,8 @@ makeObject n d ty specifics upd = runState $ do
   let obj = Object n d e ty t specifics
   return $ maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd
 
-addInternal
-  :: (AbstractObject u r c o -> World u r c -> World u r c) 
+addObject
+  :: (AbstractObject u r c o -> World u r c -> World u r c)
   -> Text
   -> Text
   -> ObjType
@@ -51,27 +80,78 @@ addInternal
   -> Maybe (ObjectUpdate u r c o)
   -> World u r c
   -> World u r c
--- hilariously the pointfree version of this is 
--- addInternal = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
-addInternal updWorld n d ty specifics updateFunc w = 
+-- hilariously the pointfree version of this is
+-- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
+addObject updWorld n d ty specifics updateFunc w =
   uncurry updWorld (makeObject n d ty specifics updateFunc w)
 
-addThing :: IsSubtype u ThingProperties => Text -> Text -> ObjType -> Maybe (ThingData u) -> Maybe (ObjectUpdate u r c (ThingData u)) -> World u r c -> World u r c
-addThing n d ot spec = addInternal updateObjects n d ot (fromMaybe blankThingData spec)
+-- | Create a new 'Thing' and add it to the relevant stores.
+addThing
+  :: IsSubtype t ThingProperties
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> ObjType -- ^ Type.
+  -> Maybe (ThingData t) -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ObjectUpdate t r c (ThingData t)) -- ^ Static/Dynamic.
+  -> World t r c
+  -> World t r c
+addThing name desc objtype details = addObject updateThing
+  name desc objtype (fromMaybe blankThingData details)
 
-addRoom :: IsSubtype r RoomProperties => Text -> Text -> ObjType -> Maybe (RoomData r) -> Maybe (ObjectUpdate u r c (RoomData r)) -> World u r c -> World u r c
-addRoom n d ot spec = addInternal updateRooms n d ot (fromMaybe blankRoomData spec)
+-- | A version of 'addThing' that uses a state monad to provide imperative-like
+-- descriptions of the internals of the object. Compare
+-- @
+-- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
+-- @ with @
+-- addThing' n d o (someLensField .= 5)
+-- @
+addThing'
+  :: IsSubtype t ThingProperties
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> State (ThingData t) v -- ^ Build your own thing monad!
+  -> World t r c
+  -> World t r c
+addThing' n d stateUpdate = addThing n d (ObjType "thing")
+  (Just (execState stateUpdate blankThingData)) Nothing
 
-addThing' :: IsSubtype u ThingProperties => Text -> Text -> State (ThingData u) v -> World u r c -> World u r c
-addThing' n d stateUpdate = addThing n d (ObjType "thing") (Just (execState stateUpdate blankThingData)) Nothing
+addRoom
+  :: IsSubtype r RoomProperties
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> ObjType -- ^ Type.
+  -> Maybe (RoomData r) -- ^
+  -> Maybe (ObjectUpdate u r c (RoomData r))  -- ^ Optional details.
+  -> World u r c -- ^
+  -> World u r c
+addRoom name desc objtype details = addObject updateRoom
+  name desc objtype (fromMaybe blankRoomData details)
 
-addRoom' :: IsSubtype r RoomProperties => Text -> Text -> State (RoomData r) v -> World u r c -> World u r c
-addRoom' n d rd = addRoom n d (ObjType "room") (Just (execState rd blankRoomData)) Nothing
+-- | See 'addThing`'.
+addRoom'
+  :: IsSubtype r RoomProperties
+  => Text
+  -> Text
+  -> State (RoomData r) v
+  -> World u r c
+  -> World u r c
+addRoom' n d rd = addRoom n d (ObjType "room")
+  (Just (execState rd blankRoomData)) Nothing
 
-getThing :: Entity -> World t r c -> (Maybe (Thing t), World t r c)
-getThing = getObjectFrom objects
+move :: Entity -> Entity -> World t r c -> (Maybe Text, World t r c)
+move = error "not impl"
+{-
+getThing
+  :: Entity
+  -> World t r c
+  -> (Maybe (Thing t), World t r c)
+getThing = getObjectFrom things
 
-getObjectFrom :: Lens' (World t r c) (Store (AbstractObject t r c o)) -> Entity -> World t r c -> (Maybe (Object o), World t r c)
+getObjectFrom
+  :: Lens' (World t r c) (Store (AbstractObject t r c o))
+  -> Entity
+  -> World t r c
+  -> (Maybe (Object o), World t r c)
 getObjectFrom f e = runState $ do
     o <- use $ f . at (unID e)
     w <- get
@@ -80,9 +160,9 @@ getObjectFrom f e = runState $ do
         return $ Just obj) o
     return Nothing
 
-blah :: Lens' (World t r c) (Store (AbstractObject t r c o)) -- ^ 
-  -> AbstractObject t r c o -- ^ 
-  -> World t r c -- ^ 
+blah :: Lens' (World t r c) (Store (AbstractObject t r c o)) -- ^
+  -> AbstractObject t r c o -- ^
+  -> World t r c -- ^
   -> (Object o, World t r c)
 blah _ (StaticObject v) w = (v, w)
 blah l (DynamicObject t) w = if _cacheStamp t == getGlobalTime w
@@ -140,3 +220,4 @@ move eObj eLoc = runState $ do
             return True
         )
     -}
+-}
