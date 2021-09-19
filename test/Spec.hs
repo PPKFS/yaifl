@@ -8,6 +8,7 @@ import Yaifl
 import Test.HUnit
 import Control.Lens
 import qualified Data.Text as T
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 class MonadWorld m where
 
 ex2World :: World ThingProperties RoomProperties ConceptProperties
@@ -94,23 +95,22 @@ w2 <- runWorld (do
 -}
 
 testHarness :: World t r c -> [Text] -> (Text -> Either Assertion Text) -> Assertion
-testHarness w cmds consume = (case Right x >>= consume of
-        Left res -> res
-        Right "" -> pass
-        Right x' -> assertFailure $ "Was left with " <> toString x') where
-            w2 = execState (do
-                modify $ sayLn "Validating...no validation implemented."
-                modify $ sayLn "\n---------------"
+testHarness w cmds consume = do
+    let w2 = execState (do
+                --modify $ setSayStyle $ (Just PPTTY.bold)
+                modify $ logInfo "Validating...no validation implemented."
+                modify $ logInfo "\n---------------"
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
                 state $ runRulebook (_whenPlayBegins w') noArgs
                 --do the commands...
                 ) w
-            x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
-    --putStrLn "-------------\n"
-    
-
-
+    w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
+    let (x, _) = flushBufferToText (Proxy @'SayBuffer) w3
+    (case Right x >>= consume of
+        Left res -> res
+        Right "" -> pass
+        Right x' -> assertFailure $ "Was left with " <> toString x')
     
 main :: IO ()
 main = do
