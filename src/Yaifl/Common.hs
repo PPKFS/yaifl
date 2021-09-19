@@ -266,7 +266,7 @@ data Rulebook t ro c v r where
 -- | 'ActionRulebook's have specific variables
 type ActionRulebook t ro c v = Rulebook t ro c (Args t ro c v) RuleOutcome
 
-type ParseArguments t ro c v =  UnverifiedArgs t ro c -> World t ro c -> Either Text v
+type ParseArguments t ro c v =  UnverifiedArgs t ro c -> World t ro c -> Maybe v
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -315,10 +315,10 @@ data World t r c = World
   , _concepts :: !(Store (AbstractConcept t r c))
   , _actions :: !(Store (Action t r c))
   , _activities :: !(ActivityCollection t r c)
-  , _whenPlayBegins :: !(Rulebook t r c () Text)
+  , _whenPlayBegins :: !(Rulebook t r c () Bool)
   , _messageBuffers :: !(MessageBuffer, MessageBuffer)
   , _actionProcessing :: !(Action t r c -> UnverifiedArgs t r c ->
-                           World t r c -> (Maybe Text, World t r c))
+                           World t r c -> (Maybe Bool, World t r c))
   }
 
 makeLenses ''World
@@ -342,9 +342,8 @@ getGlobalTime = _globalTime
 -- | Update the game title.
 setTitle
   :: Text -- ^ New title.
-  -> World u r c
-  -> World u r c
-setTitle = (title .~)
+  -> State (World u r c) ()
+setTitle = (title .=)
 
 -- | Generate a new entity ID.
 newEntityID

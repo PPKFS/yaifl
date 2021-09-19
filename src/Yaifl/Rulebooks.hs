@@ -68,7 +68,7 @@ defaultActionProcessingRules
   :: Action t r c
   -> UnverifiedArgs t r c
   -> World t r c
-  -> (Maybe Text, World t r c)
+  -> (Maybe Bool, World t r c)
 defaultActionProcessingRules _ _ = (Nothing,)
 
 -- | Attempt to run an action from a text command (so will handle the parsing).
@@ -83,23 +83,23 @@ tryAction an a = runState $ do
   ac <- gets (getAction an ta)
   -- either run the action if we parsed it successfully, or
   -- pipe through the error message
-  res <- either (return . Just) (state . runAction ta) ac
-  whenJust res (modify . logError)
+  res <- maybe (return Nothing) (state . runAction ta) ac
+  unless (isJust res) (modify $ logError ("Couldn't find a matching action for " <> an))
   return $ isNothing res
 
 getAction
   :: Text
   -> UnverifiedArgs t r c
   -> World t r c
-  -> Either Text (Action t r c)
-getAction = error "not implemented"
+  -> Maybe (Action t r c)
+getAction _ _ _ = Nothing
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction
   :: UnverifiedArgs t r c
   -> Action t r c
   -> World t r c
-  -> (Maybe Text, World t r c)
+  -> (Maybe Bool, World t r c)
 runAction args act w = _actionProcessing w act args w
 
 -- | Run a rulebook. Mostly this just adds some logging baggage.
@@ -113,13 +113,10 @@ runRulebook Rulebook{..} args = runState $ do
   modify $ logInfo $ "Following the " <> _rbName <> " rulebook"
   modify $ addLogContext _rbName
   w <- get
+  let argParse = _rbParseArguments ta w
   -- TODO: logging
-  res <- either
-      -- print the error
-      (\l -> modify (logError l) >> return Nothing)
-      -- run the rules
-      (state . processRuleList _rbRules)
-      (_rbParseArguments ta w)
+  res <- maybe (return Nothing) (state . processRuleList _rbRules) argParse
+  modify $ logInfo $ "Finished the " <> _rbName <> " rulebook"
   modify popLogContext
   return $ res <|> _rbDefaultOutcome
 
@@ -136,6 +133,7 @@ processRuleList (x : xs) args = runState $ do
           (modify $ logVerbose $ "Following the " <> _ruleName x)
         (v, res) <- state $ _runRule x args
         -- if we hit nothing, continue; otherwise return
+        whenJust res (const $ modify $ logVerbose $ "Finishing rulebook on rule " <> _ruleName x)
         state (\w' -> maybe
           (processRuleList xs v w')
           (\r -> (Just r, w')) res)
@@ -163,11 +161,11 @@ whenPlayBeginsName :: Text
 whenPlayBeginsName = "When Play Begins"
 
 -- | The rulebook that runs at the start of the game.
-whenPlayBeginsRules :: Rulebook t r c () Text
+whenPlayBeginsRules :: Rulebook t r c () Bool
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
-    (const $ const $ Right ())
+    (const $ const (Just ()))
     [ makeRule "display banner rule" $ ruleEnd . sayIntroText
     , makeRule "position player in world rule" positionPlayer
     , makeRule "initial room description rule" initRoomDescription
@@ -197,10 +195,18 @@ withPlayerSource = error "not implemented"
 
 positionPlayer
   :: World t r c
-  -> (Maybe Text, World t r c)
+  -> (Maybe Bool, World t r c)
 positionPlayer w = case _firstRoom w of
-  Nothing -> (Just "No rooms have been made, so cannot place the player.", w)
+  Nothing -> failRuleWithError "No rooms have been made, so cannot place the player." w
   Just fr -> move (getPlayer w) fr w
+
+-- | Return a failure (Just False) from a rule and log a string to the
+-- debug log.
+failRuleWithError
+  :: Text -- ^ Error message.
+  -> World t r c
+  -> (Maybe Bool, World t r c)
+failRuleWithError t w = (Just False, logError t w)
 
 getPlayer
   :: World t r c
@@ -231,10 +237,9 @@ introText w = fold
       (2 * T.length shortBorder + T.length w + 2) "-"
 
 addWhenPlayBegins
-  :: Rule t r c () Text
-  -> World t r c
-  -> World t r c
-addWhenPlayBegins = over whenPlayBegins . addRule
+  :: Rule t r c () Bool
+  -> State (World t r c) ()
+addWhenPlayBegins r = whenPlayBegins %= addRule r
 
 addRule
   :: Rule t ro c v r

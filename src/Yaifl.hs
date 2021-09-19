@@ -25,9 +25,9 @@ import Yaifl.Messages
 --import Yaifl.Activities
 
 newWorld
-  :: [World u r c -> World u r c]
-  -> World u r c
-newWorld l = flipfoldl' (.) id l blankWorld
+  :: State (World t r c) v
+  -> World t r c
+newWorld = (`execState` blankWorld)
 
 blankWorld :: World u r c
 blankWorld = World
