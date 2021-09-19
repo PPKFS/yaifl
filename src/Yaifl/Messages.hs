@@ -27,6 +27,8 @@ module Yaifl.Messages
   , logInfo
   , logError
   , logVerbose
+  , addLogContext
+  , popLogContext
 
   -- ** Flushing
   , flushBufferToStdOut
@@ -80,10 +82,14 @@ sayInternal
   -> d
   -> d
 sayInternal prox msg w = w & bufferL prox . msgBufBuffer %~ (:)
-    (sayContext buf PP.<+> maybe id PP.annotate style msg)
+    (sayContext buf `joinOp` maybe id PP.annotate style msg)
   where
     buf = w ^. bufferL prox
     style = buf ^. msgBufStyle
+    cxt = buf ^. msgBufContext
+    joinOp = case cxt of
+     [] -> (<>)
+     _ -> (PP.<+>)
 
 sayContext
   :: MessageBuffer
@@ -180,18 +186,24 @@ withLogPrefix
   -> w
 withLogPrefix logLevel colour prefix message = execState $ do
   oldBuf <- use $ bufferL lb . msgBufContext
-  let bf = PP.annotate PPTTY.bold
   -- append the logging prefix to the context and make it pretty
-  bufferL lb . msgBufContext %= (PP.surround
-    (PP.annotate
-        (PPTTY.color colour <> PPTTY.bold)
-        (PP.pretty prefix))
-        (bf "[") (bf "]") :)
+  bufferL lb . msgBufContext %= (logContextPrefix colour prefix :)
   -- update
   modify $ logLn logLevel message
   -- restore
   bufferL lb . msgBufContext .= oldBuf
 
+logContextPrefix
+  :: PP.Pretty a
+  => PPTTY.Color
+  -> a
+  -> PP.Doc PPTTY.AnsiStyle
+logContextPrefix colour prefix = PP.surround
+    (PP.annotate
+        (PPTTY.colorDull colour <> PPTTY.bold)
+        (PP.pretty prefix))
+        (bf "[") (bf "]")
+    where bf = PP.annotate PPTTY.bold
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
 setStyle
@@ -220,6 +232,21 @@ setLogStyle
   -> w
   -> w
 setLogStyle = setStyle lb
+
+-- | Add some context to the log buffer.
+addLogContext
+  :: (HasBuffer w 'LogBuffer)
+  => Text
+  -> w
+  -> w
+addLogContext cxt = bufferL lb . msgBufContext %~ (logContextPrefix PPTTY.White cxt :)
+
+-- | Remove the last layer of context from the log buffer
+popLogContext
+  :: (HasBuffer w 'LogBuffer)
+  => w
+  -> w
+popLogContext w = w & bufferL lb . msgBufContext %~ drop 1
 
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.

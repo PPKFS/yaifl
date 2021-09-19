@@ -299,7 +299,7 @@ data ActivityCollection t r c = ActivityCollection
 
 -- | TODO
 defaultActivities :: ActivityCollection t r c
-defaultActivities = error ""
+defaultActivities = ActivityCollection 1 1
 
 -- | TODO: split this into 3 - stores, config, bookkeeping?
 data World t r c = World

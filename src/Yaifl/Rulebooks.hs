@@ -69,10 +69,10 @@ defaultActionProcessingRules
   -> UnverifiedArgs t r c
   -> World t r c
   -> (Maybe Text, World t r c)
-defaultActionProcessingRules = error ""
+defaultActionProcessingRules _ _ = (Nothing,)
 
 -- | Attempt to run an action from a text command (so will handle the parsing).
--- note that this does require the arguments to be parsed out
+-- Note that this does require the arguments to be parsed out.
 tryAction
   :: Text -- ^ text of command
   -> (Timestamp -> UnverifiedArgs t r c) -- ^ Arguments without a timestamp
@@ -110,6 +110,8 @@ runRulebook
   -> (Maybe re, World t ro c)
 runRulebook Rulebook{..} args = runState $ do
   ta <- gets (args . getGlobalTime)
+  modify $ logInfo $ "Following the " <> _rbName <> " rulebook"
+  modify $ addLogContext _rbName
   w <- get
   -- TODO: logging
   res <- either
@@ -118,6 +120,7 @@ runRulebook Rulebook{..} args = runState $ do
       -- run the rules
       (state . processRuleList _rbRules)
       (_rbParseArguments ta w)
+  modify popLogContext
   return $ res <|> _rbDefaultOutcome
 
 -- | Mostly this is a very complicated "run a list of functions until you get
@@ -157,7 +160,7 @@ processRuleList (x : xs) args = runState $ do
     return res
 -}
 whenPlayBeginsName :: Text
-whenPlayBeginsName = "when play begins rules"
+whenPlayBeginsName = "When Play Begins"
 
 -- | The rulebook that runs at the start of the game.
 whenPlayBeginsRules :: Rulebook t r c () Text
