@@ -1,134 +1,195 @@
-module Yaifl.Common (
+module Yaifl.Common
+  ( -- * Types
     World (..)
-  , ThingProperties (..)
-  , RoomProperties (..)
-  , ConceptProperties (..)
-  , Rulebook(..)
-  , Rule(..)
-  , Name
-  , Description
-  , Entity(..)
-  , Action(..)
-  , MessageBuffer(..)
-  , RoomDescriptions(..)
-  , UnverifiedArgs
-  , Args(..)
-  , Object(..)
-  , Thing
-  , Timestamp
   , Store
-  , AbstractObject(..)
-  , TimestampedObject(..)
+  , Entity (..)
+  , MessageBuffer (..)
+  , RoomDescriptions (..)
+  , Timestamp
+    -- ** Objects
+  , Object (..)
+  , Thing
+  , Room
+  , Concept
 
+  , ThingProperties (..)
+  ,  RoomProperties (..)
+  , ConceptProperties (..)
+
+  , AbstractObject (..)
+  , TimestampedObject (..)
+    -- ** Rules and Actions
+  , Rulebook (..)
+  , Rule (..)
+
+  , Action (..)  
+  , UnverifiedArgs
+  , Args (..)
+
+  -- * Smart constructors
   , emptyStore
-
-  , actions
-  , getGlobalTime
-  , whenPlayBegins
-  , messageBuffer
-
   , defaultActivities
-  , source
+
+  -- * Lenses
+  , actions
+  , whenPlayBegins
   , objects
-
-  , rules
-
-  , buffer
-
-  , setTitle
-  , addThing
-  , addThing'
-  , addRoom
-  , addRoom'
-  , makeRule
-  , ruleEnd
   
-  , setStyle
-  , say
-  , sayLn
-  , sayIf) where
-
-import Relude
+  -- * World lookups and modifications
+  , getGlobalTime
+  , setTitle
+  )
+where
 
 import Control.Lens
+import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
-import qualified Data.Text.Prettyprint.Doc as PP
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import Relude
+import Yaifl.Messages
+
+class IsSubtype sup sub where
+  inject :: sub -> sup
+
+instance IsSubtype a a where
+  inject = id
 
 -- | An 'Entity' is an integer ID that is used to reference between objects.
-newtype Entity = Entity {unID :: Int} deriving newtype Num
+newtype Entity = Entity 
+  { unID :: Int
+  } deriving stock   (Show, Generic)
+    deriving newtype (Num, Enum)
 
-type Store a = IM.IntMap a
+-- | A 'Store' is a map from 'Entity's to 'a's.
+newtype Store a = Store 
+  { unStore :: EM.EnumMap Entity a
+  }
+
+-- first let's define our own alterF for EnumMap...
+alterEMF
+  :: (Functor f, Enum k)
+  => (Maybe a -> f (Maybe a)) 
+  -> k
+  -> EM.EnumMap k a -> f (EM.EnumMap k a)
+alterEMF upd k m = EM.intMapToEnumMap <$> IM.alterF upd (fromEnum k) (EM.enumMapToIntMap m)
+
+-- | alterF wrapper for Store, since it's a wrapper around a wrapper...
+alterSF
+  :: Functor f
+  => (Maybe a -> f (Maybe a)) 
+  -> Entity
+  -> Store a -> f (Store a)
+alterSF upd k m = Store <$> alterEMF upd k (unStore m)
+
+instance At (Store a) where
+  at k f = alterSF f k
+
+type instance IxValue (Store a) = a
+type instance Index (Store a) = Entity
+instance Ixed (Store a) where
+  ix k f m = case EM.lookup k (unStore m) of
+     Just v -> Store <$> (f v <&> \v' -> EM.insert k v' (unStore m))
+     Nothing -> pure m
+  {-# INLINE ix #-}
 
 emptyStore :: Store a
-emptyStore = IM.empty
-class IsWorld w
+emptyStore = Store EM.empty
 
-type Name = Text
-type Description = Text
+-- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
+-- modification is made to the 'World'; therefore it does not directly correspond to
+-- some sort of in-game turn counter. For example, throwing an object would result in
+-- multiple timestamp jumps (an object moving, potential interactions on it hitting
+-- something) whereas a sequence of 10 look actions will not (as the world does not
+-- change). This is primarily used to ensure we can cache updates of objects that
+-- change properties (e.g. strings).
 type Timestamp = Int
 
-newtype ObjType = ObjType {unObjType :: Text} deriving (Show)
+-- | ObjTypes make a DAG that approximates inheritance; for instance, we may only care
+-- that an object *is* a kind of food, but we don't necessarily know what the 'a' is
+-- or looks like.
+newtype ObjType = ObjType 
+  { unObjType :: Text } 
+  deriving (Show)
 
+-- | Whether a room has an intrinsic light-ness. This isn't equivalent to whether a
+-- room is currently dark - for instance, a cave may have light (if the player has a 
+-- lantern) but the cave will be Dark. 
 data Darkness = Lighted | Dark deriving (Eq, Show)
+
+-- | Whether a room has been visited before or not.
 data IsVisited = Visited | Unvisited deriving (Eq, Show)
-newtype MapConnections = MapConnections {unMapConnections :: Store Entity}
+
+-- | The connections from a given room to another
+type MapConnections = Store Entity 
+
+-- | An abstract grouping of rooms.
 type ContainingRegion = Maybe Entity
 
-defaultActivities = error ""
+-- | An 'Object' is any kind of game object. The important part is 'a'; which should 
+-- probably be one of three kinds (thus parameterisation by t r c):
+-- 'ThingData t'
+-- 'RoomData r'
+-- 'ConceptData c'
 data Object a = Object
-    { _name :: Name
-    , _description :: Description
-    , _objID :: Entity
-    , _objType :: ObjType
-    , _creationTime :: Timestamp
-    , _details :: a
-    }
+  { _objName :: !Text
+  , _objDescription :: !Text
+  , _objID :: !Entity
+  , _objType :: !ObjType
+  , _objCreationTime :: !Timestamp
+  , _objDetails :: !a
+  }
 
+-- | Details for room objects. This is anything which is...well, a room. Nontangible.
 data RoomData a = RoomData
-    { __isVisited :: IsVisited
-    , __darkness :: Darkness
-    , __mapConnections :: MapConnections
-    , _containingRegion :: ContainingRegion
-    , _roomSpecifics :: a
-    }
+  { _roomIsVisited :: !IsVisited
+  , _roomDarkness :: !Darkness
+  , _roomMapConnections :: !MapConnections
+  , _roomContainingRegion :: !ContainingRegion
+  , _roomDetails :: !a
+  }
 
+-- | Details for things. This is anything tangible.
 data ThingData a = ThingData
-    {  _thingSpecifics :: a
-    }
+  { _thingDetails :: !a
+  , _thingDummy :: ()
+  }
 
+-- | Details for concepts. These are intangible, predominantly knowledge facts (for
+-- instance, the knowledge of an actor about the location of an item). This is where
+-- yaifl differs from inform.
 data ConceptData a = ConceptData
-    {  _conceptSpecifics :: a
-    }
+  { _conceptDetails :: !a
+  , _conceptDummy :: ()
+  }
 
-makeLenses ''Object
-
-
+-- | A 'TimestampedObject' is an object which has been cached at time '_cacheStamp'
+-- and contains a function to update it given the state of the world. For instance,
+-- this allows descriptions to be dynamic.
 data TimestampedObject t r c o = TimestampedObject
-    { _cachedObject :: Object o
-    , _cacheStamp :: Timestamp
-    , _updateFunc :: ObjectUpdate t r c o
-    }
+  { _tsCachedObject :: !(Object o)
+  , _tsCacheStamp :: !Timestamp
+  , _tsUpdateFunc :: ObjectUpdate t r c o
+  }
 
-type ObjectUpdate t r c o = World t r c -> Object o -> Object o
-{-
-So the hierarchy of stuff is as follows.
-everything is an Object. The collection of all kinds of Object is a Universe.
-The Universe consists of a ThingUniverse and a RoomUniverse.
-There are standard defined universes but these can be extended by defining InUniverse instances to inject the smaller standard universe type
-into an extended universe type.
-A thing has physical info (out of laziness that there aren't many non-physical things...so I guess I'll just make an isTangible flag and
-ignore stuff that falls as intangible)
-an AbstractObject is either a static object (that does not update itself, but may be updated by other processes)
-or a DynamicObject, which is a wrapper around a timestamped object.
-a timestamped object is a cached reified object at a certain timestamp, plus a function that can update e.g. descriptions if it is deemed out of date
-so in this sense an abstract object is the potential for an object. if you want to look stuff up, you need to reify it first. 
-if you're modifying it, you call modifyObject that just modifies the cached object?
--}
+-- | Function to update an object
+type ObjectUpdate t r c o = Object o -> World t r c -> Object o
 
-data AbstractObject t r c o = DynamicObject (TimestampedObject t r c o) | StaticObject (Object o)
+-- | An abstract object is either a static object (which does not need to update itself)
+-- or a timestamped object. Whilst this is what is stored internally, you shouldn't
+-- need to pass these around; instead reify the object with 'reifyObject'.
+data AbstractObject t r c o
+  = DynamicObject (TimestampedObject t r c o) 
+  | StaticObject (Object o)
 
-data Property t r c = ThingProp (ThingData t) | RoomProp (RoomData r) | ConceptProp (ConceptData c)
+-- | A property is the closed universe of all possible object types. This is to
+-- ensure we don't have to worry about existentials. 
+data Property t r c 
+  = ThingProperty (ThingData t) 
+  | RoomProperty (RoomData r) 
+  | ConceptProperty (ConceptData c)
+
+-- | These 3 are the standard universes for each of the object subtypes. To extend
+-- these, define an injection that allows for access of these as a subtype of a larger
+-- property type.
 data ThingProperties = PlainObject
 data RoomProperties = PlainRoom
 data ConceptProperties = PlainConcept
@@ -137,167 +198,136 @@ type Thing t = Object (ThingData t)
 type Room r = Object (RoomData r)
 type Concept c = Object (ConceptData c)
 
-type AbstractRoom t r c = AbstractObject t r c (RoomData r)
 type AbstractThing t r c = AbstractObject t r c (ThingData t)
+type AbstractRoom t r c = AbstractObject t r c (RoomData r)
 type AbstractConcept t r c = AbstractObject t r c (ConceptData c)
-class IsSubtype sup sub where
-    inject :: sub -> sup
 
-instance IsSubtype a a where
-    inject = id
+blankThingData :: IsSubtype u ThingProperties => ThingData u
+blankThingData = ThingData (inject PlainObject) ()
 
-type StyledDoc = PP.Doc PPTTY.AnsiStyle
-data MessageBuffer = MessageBuffer
-    { _buffer :: [StyledDoc]
-    , _msgStyle :: Maybe PPTTY.AnsiStyle
-    }
---I think this means I need some kind of injection
---but what I'm doing for laziness is u
---the only sane instantiation for u is Property t r c so
+blankRoomData :: IsSubtype r RoomProperties => RoomData r
+blankRoomData = RoomData Unvisited Lighted emptyStore Nothing (inject PlainRoom)
+
+-- | Arguments for an action, activity, or rulebook. These are parameterised over
+-- the closed 'Property' universe and the variables, which are either unknown
+-- (see 'UnverifiedArgs') or known (concrete instantation).
 data Args t ro c v = Args
-    { _source :: Maybe (Object (Property t ro c))
-    ,  actionVariables :: v
-    , _timestamp :: Timestamp
-    }
+  { _argsSource :: !(Maybe (Object (Property t ro c)))
+  , _argsVariables :: !v
+  , _argsTimestamp :: !Timestamp
+  }
 
+-- | Before 'Args' are parsed, the variables are a list of objects.
 type UnverifiedArgs t ro c = Args t ro c [Object (Property t ro c)]
+
 type RuleOutcome = Bool
+
+-- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
+-- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule t ro c v r = Rule
-    { _ruleName :: Text
-    , _runRule ::  v -> World t ro c ->((v, Maybe r), World t ro c)
-    }
+  { _ruleName :: !Text
+  , _runRule :: v -> World t ro c -> ((v, Maybe r), World t ro c)
+  }
+
+-- | A 'Rulebook' is a composition of functions ('Rule's) with short-circuiting (if
+-- a Just value is returned), default return values, and a way to parse
+-- 'UnverifiedArgs' into a 'v'.
 data Rulebook t ro c v r where
-    Rulebook :: { _rulebookName :: Text
-    , _defaultOutcome :: Maybe r
-    , _parseRulebookArguments :: UnverifiedArgs t ro c -> World t ro c -> Either Text v
-    , _rules :: [Rule t ro c v r]
+  Rulebook ::
+    { _rbName :: !Text
+    , _rbDefaultOutcome :: !(Maybe r)
+    , _rbParseArguments :: !(ParseArguments t ro c v)
+    , _rbRules :: ![Rule t ro c v r]
     } -> Rulebook t ro c v r
 
-
+-- | 'ActionRulebook's have specific variables
 type ActionRulebook t ro c v = Rulebook t ro c (Args t ro c v) RuleOutcome
+
+type ParseArguments t ro c v =  UnverifiedArgs t ro c -> World t ro c -> Either Text v
+
+-- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
+-- Pretty much all of it is lifted directly from the Inform concept of an action,
+-- except that set action variables is not a rulebook.
 data Action t ro c where
-    Action :: { _actionName :: Text
-    , _understandAs :: [Text]
-    , _parseArguments :: UnverifiedArgs t ro c -> World t ro c -> Either Text (Args t ro c v)
-    , _beforeActionRules :: ActionRulebook t ro c v
-    , _checkActionRules :: ActionRulebook t ro c v
-    , _carryOutActionRules :: ActionRulebook t ro c v
-    , _reportActionRules :: ActionRulebook t ro c v
+  Action ::
+    { _actionName :: !Text
+    , _actionUnderstandAs :: ![Text]
+    , _actionParseArguments :: !(ParseArguments t ro c (Args t ro c v))
+    , _actionBeforeRules :: !(ActionRulebook t ro c v)
+    , _actionCheckRules :: !(ActionRulebook t ro c v)
+    , _actionCarryOutRules :: !(ActionRulebook t ro c v)
+    , _actionReportRules :: !(ActionRulebook t ro c v)
     } -> Action t ro c
-    {-
-data Activity t ro c where
-    Activity :: { _activityName :: Text
-    , _parseActivityArguments :: UnverifiedArgs t ro c -> Either Text (Args t ro c v)
-    , _beforeRules :: ActionRulebook t ro c v
-    , _forRules :: ActionRulebook t ro c v
-    , _afterRules :: ActionRulebook t ro c v
-    } -> Activity t ro c
--}
-data RoomDescriptions = SometimesAbbreviatedRoomDescriptions | AbbreviatedRoomDescriptions | NoAbbreviatedRoomDescriptions deriving (Eq, Show)
 
+-- | Again lifted directly from Inform; this sets whether to always print room 
+-- descriptions (No..) even if the room is visited, to only print them on the first
+-- entry (Sometimes..) or never.
+data RoomDescriptions 
+  = SometimesAbbreviatedRoomDescriptions 
+  | AbbreviatedRoomDescriptions 
+  | NoAbbreviatedRoomDescriptions 
+  deriving (Eq, Show)
+
+-- TODO
 data ActivityCollection t r c = ActivityCollection
-    { _d :: Int
-    , _e :: Int
-    }
+  { _dummy1 :: !Int
+  , _dummy2 :: !Int
+  }
 
+-- TODO
+defaultActivities :: ActivityCollection t r c
+defaultActivities = error ""
+
+-- TODO: split this into 3 - stores, config, bookkeeping?
 data World t r c = World
-    { _title :: Text
-    , _firstRoom :: Maybe Entity
-    , _entityCounter :: Entity
-    , _darknessWitnessed :: Bool
-    , _roomDescriptions :: RoomDescriptions
-    , _objects :: Store (AbstractThing t r c)
-    , _rooms :: Store (AbstractRoom t r c)
-    , _concepts :: Store (AbstractConcept t r c)
-    , _messageBuffer :: MessageBuffer
-    , _globalTime :: Timestamp
-    , _actions :: Store (Action t r c)
-    , _activities :: ActivityCollection t r c
-    , _whenPlayBegins :: Rulebook t r c () Text
-    , _actionProcessing :: Action t r c -> UnverifiedArgs t r c -> World t r c -> (Maybe Text, World t r c)
-    }
+  { _title :: Text
+  , _entityCounter :: Entity
+  , _globalTime :: Timestamp
+  , _darknessWitnessed :: Bool
+  , _roomDescriptions :: RoomDescriptions
+
+  , _firstRoom :: Maybe Entity
+  , _objects :: Store (AbstractThing t r c)
+  , _rooms :: Store (AbstractRoom t r c)
+  , _concepts :: Store (AbstractConcept t r c)
+  , _actions :: Store (Action t r c)
+  , _activities :: ActivityCollection t r c
+  , _whenPlayBegins :: Rulebook t r c () Text
+  , _messageBuffers :: (MessageBuffer, MessageBuffer)
+  , _actionProcessing :: Action t r c -> UnverifiedArgs t r c -> 
+                           World t r c -> (Maybe Text, World t r c)
+  }
+
 makeLenses ''World
-makeLenses ''MessageBuffer
+makeLenses ''Object
 makeLenses ''Args
 makeLenses ''Rulebook
 
-getGlobalTime :: World t r c -> Timestamp
+instance HasBuffer (World t r c) 'LogBuffer where
+  bufferL _ = messageBuffers . _2
+
+instance HasBuffer (World t r c) 'SayBuffer where
+  bufferL _ = messageBuffers . _1
+
+-- | Obtain the current timestamp. This is a function in case I want to change the
+-- implementation in the future.
+getGlobalTime 
+  :: World t r c
+  -> Timestamp
 getGlobalTime = _globalTime
 
--- I wanted to add something like 'concepts' as an intangible object kind, "knowing it's there" vs "almost certain" vs "maybe" etc
--- | this is a collection of all the possible 'a's
-setTitle :: Text -> World u r c -> World u r c
+-- | Update the game title.
+setTitle 
+  :: Text -- ^ New title.
+  -> World u r c 
+  -> World u r c
 setTitle = (title .~)
 
-newEntityID :: World u r c-> (Entity, World u r c)
-newEntityID w = w & entityCounter <<+~ 1
-
--- | create a new object (room or thing), but don't add it to any stores or anything.
-makeObject :: Name -> Description -> ObjType -> o -> Maybe (ObjectUpdate u r c o) -> World u r c -> (AbstractObject u r c o, World u r c)
-makeObject n d ty specifics upd = runState (do
-    e <- state newEntityID
-    t <- gets _globalTime
-    let obj = Object n d e ty t specifics
-    return $ case upd of
-        Nothing -> StaticObject obj
-        Just upd' -> DynamicObject $ TimestampedObject obj t upd')
-
-addInternal :: (AbstractObject u r c o -> World u r c -> World u r c) -> Name -> Description -> ObjType -> o -> Maybe (ObjectUpdate u r c o) -> World u r c -> World u r c
-addInternal updWorld n d ty specifics updateFunc = execState (do
-    o <- state $ makeObject n d ty specifics updateFunc
-    modify $ updWorld o)
-
-addThing :: IsSubtype u ThingProperties => Name -> Description -> ObjType -> Maybe (ThingData u) -> Maybe (ObjectUpdate u r c (ThingData u)) -> World u r c-> World u r c
-addThing n d ot spec = addInternal updateObjects n d ot (fromMaybe blankThingData spec)
-
-addRoom :: IsSubtype r RoomProperties => Name -> Description -> ObjType -> Maybe (RoomData r) -> Maybe (ObjectUpdate u r c (RoomData r)) -> World u r c -> World u r c
-addRoom n d ot spec = addInternal updateRooms n d ot (fromMaybe blankRoomData spec)
-
-addThing' :: IsSubtype u ThingProperties => Name -> Description -> State (ThingData u) v -> World u r c -> World u r c
-addThing' n d stateUpdate = addThing n d (ObjType "thing") (Just (execState stateUpdate blankThingData)) Nothing
-
-addRoom' :: IsSubtype r RoomProperties => Name -> Description -> State (RoomData r) v -> World u r c -> World u r c
-addRoom' n d rd = addRoom n d (ObjType "room") (Just (execState rd blankRoomData)) Nothing
-
-makeRule :: Text -> (World t ro c -> (Maybe r, World t ro c)) -> Rule t ro c () r
-makeRule n f = Rule n (\_ w -> first ((), ) $ f w)
-
-ruleEnd :: World t0 r0 c0 -> (Maybe r, World t0 r0 c0)
-ruleEnd = (Nothing ,)
-
-blankThingData :: IsSubtype u ThingProperties => ThingData u
-blankThingData = ThingData (inject PlainObject)
-
-blankRoomData :: IsSubtype r RoomProperties => RoomData r
-blankRoomData = RoomData Unvisited Lighted (MapConnections emptyStore) Nothing (inject PlainRoom)
-
-updateInternal :: Lens' (World u r c) (Store (AbstractObject u r c o)) -> AbstractObject u r c o -> World u r c -> World u r c
-updateInternal l o w =  w & l . at (unID $ getID' o) ?~ o where
-    getID' (StaticObject o') = _objID o'
-    getID' (DynamicObject t) = (_objID . _cachedObject) t
-
-updateRooms :: AbstractRoom t r c -> World t r c -> World t r c
-updateRooms = updateInternal rooms
-
-updateObjects :: AbstractThing t r c -> World t r c -> World t r c
-updateObjects = updateInternal objects
-
-sayInternal :: StyledDoc -> World t r c -> World t r c
-sayInternal a w = w & messageBuffer . buffer %~ (:) (maybe id PP.annotate f a)
-    where f = w ^. messageBuffer . msgStyle
-
-say :: Text -> World t r c -> World t r c
-say = sayInternal . PP.pretty
-
-sayLn :: Text -> World t r c -> World t r c
-sayLn a = say (a <> "\n")
-
-sayIf :: Bool -> Text -> World t r c -> World t r c
-sayIf True a = say a
-sayIf False _ = id
-
-setStyle :: Maybe PPTTY.AnsiStyle -> World t r c -> World t r c
-setStyle sty = messageBuffer . msgStyle .~ sty
+-- | Generate a new entity ID.
+newEntityID
+  :: World u r c
+  -> (Entity, World u r c)
+newEntityID = entityCounter <<+~ 1
 
 --look :: ??? -> World u r -> World u r
 

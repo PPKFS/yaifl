@@ -1,6 +1,7 @@
-module Yaifl.Components.Openable (
-    Openable (..),
-) where
+module Yaifl.Components.Openable
+  ( Openable (..),
+  )
+where
 
 import Yaifl.Prelude
 

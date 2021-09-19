@@ -31,9 +31,7 @@ common common-options
                      , containers 
                      , text
                      , mtl
-                     , polysemy
-                     , type-errors-pretty
-                     , polysemy-plugin
+                     , enummapset
                      , raw-strings-qq
                      
   ghc-options:         -Wall
@@ -41,10 +39,10 @@ common common-options
                        -Widentities
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
+                       -Wno-unused-top-binds
                        -O3
                        -flate-specialise
-                       -fplugin=Polysemy.Plugin
-                       ---fspecialise-aggressively
+                       -fspecialise-aggressively
                        -fno-warn-unused-do-bind
                        ---ddump-splices
                        ---ddump-to-file
@@ -104,6 +102,8 @@ library
                       Yaifl
                       Yaifl.Common
                       Yaifl.Rulebooks
+                      Yaifl.Objects
+                      Yaifl.Messages
                       --, Yaifl.Prelude
                       --, Yaifl.TH
                       --, Yaifl.Components

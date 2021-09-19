@@ -1,17 +1,24 @@
-module Yaifl.Rulebooks (
-   whenPlayBeginsRules
-,  addWhenPlayBegins
-, defaultActionProcessingRules
-, introText
-, runRulebook
-, noArgs
-) where
+module Yaifl.Rulebooks
+  ( whenPlayBeginsRules,
+    addWhenPlayBegins,
+    defaultActionProcessingRules,
+    introText,
+    runRulebook,
+    noArgs,
 
-import Yaifl.Common
-import Relude
+    makeRule,
+    ruleEnd,
+  )
+where
+
 import Control.Lens
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 import qualified Data.Text as T
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import Relude
+import Yaifl.Common
+import Yaifl.Messages
+import Yaifl.Objects
+
 {-
 whenPlayBeginsRules :: (HasStore w Enclosing, HasStore w Player, HasThing w) => Rulebook w () RuleOutcome
 whenPlayBeginsRules =
@@ -43,43 +50,65 @@ instance LoggableFailure (Either Text a) where
         modify $ sayLn l
         return False) (return True) e) r
 -}
+makeRule :: Text -> (World t ro c -> (Maybe r, World t ro c)) -> Rule t ro c () r
+makeRule n f = Rule n (\_ w -> first ((),) $ f w)
 
+ruleEnd :: World t0 r0 c0 -> (Maybe r, World t0 r0 c0)
+ruleEnd = (Nothing,)
 
 defaultActionProcessingRules :: Action t r c -> UnverifiedArgs t r c -> World t r c -> (Maybe Text, World t r c)
 defaultActionProcessingRules a u w = error ""
 
 tryAction :: Text -> (Timestamp -> UnverifiedArgs t r c) -> World t r c -> (Bool, World t r c)
 tryAction an a = runState $ do
-    ta <- gets (a . getGlobalTime)
-    ac <- gets (getAction an ta)
-    res <- either (return . Just) (state . runAction ta) ac
-    maybe (return True) (\l -> do
+  ta <- gets (a . getGlobalTime)
+  ac <- gets (getAction an ta)
+  res <- either (return . Just) (state . runAction ta) ac
+  maybe
+    (return True)
+    ( \l -> do
         modify $ sayLn l
-        return False) res
+        return False
+    )
+    res
 
 getAction :: Text -> UnverifiedArgs t r c -> World t r c -> Either Text (Action t r c)
 getAction = error "not implemented"
 
 runAction :: UnverifiedArgs t r c -> Action t r c -> World t r c -> (Maybe Text, World t r c)
 runAction args act = runState $ do
-    ap <- gets _actionProcessing
-    state $ ap act args
+  ap <- gets _actionProcessing
+  state $ ap act args
 
 runRulebook :: Rulebook t ro c v re -> (Timestamp -> UnverifiedArgs t ro c) -> World t ro c -> (Maybe re, World t ro c)
-runRulebook Rulebook{..} args w = runState (do
-    ta <- gets (args . getGlobalTime)
-    let parsedArgs = _parseRulebookArguments ta w
-    res <- either (\l -> do
-        modify $ sayLn l
-        return Nothing) (state . processRuleList _rules ) parsedArgs
-    return $ res <|> _defaultOutcome) w
+runRulebook Rulebook {..} args w =
+  runState
+    ( do
+        ta <- gets (args . getGlobalTime)
+        let parsedArgs = _parseRulebookArguments ta w
+        res <-
+          either
+            ( \l -> do
+                modify $ sayLn l
+                return Nothing
+            )
+            (state . processRuleList _rules)
+            parsedArgs
+        return $ res <|> _defaultOutcome
+    )
+    w
 
 processRuleList :: [Rule t ro c v re] -> v -> World t ro c -> (Maybe re, World t ro c)
 processRuleList [] _ w = (Nothing, w)
-processRuleList (x : xs) args w = runState (do
+processRuleList (x : xs) args w =
+  runState
+    ( do
         unless (_ruleName x == "") (modify $ sayLn $ "Following the " <> _ruleName x)
         (v, res) <- state $ _runRule x args
-        state (\w' -> maybe (processRuleList xs v w') (\r -> (Just r, w')) res)) w
+        state (\w' -> maybe (processRuleList xs v w') (\r -> (Just r, w')) res)
+    )
+    w
+
 {-
     ac <- use $ actionStore . at action
     ap <- use actionProcessing
@@ -100,11 +129,17 @@ processRuleList (x : xs) args w = runState (do
     return res
 -}
 whenPlayBeginsName = "when play begins rules"
+
 whenPlayBeginsRules :: Rulebook t r c () Text
-whenPlayBeginsRules = Rulebook whenPlayBeginsName Nothing (const $ const $ Right ()) [
-      makeRule "display banner rule" $ ruleEnd . sayIntroText
-    , makeRule "position player in world rule" positionPlayer
-    , makeRule "initial room description rule" $ first (const Nothing) . tryAction "looking" playerNoArgs]
+whenPlayBeginsRules =
+  Rulebook
+    whenPlayBeginsName
+    Nothing
+    (const $ const $ Right ())
+    [ makeRule "display banner rule" $ ruleEnd . sayIntroText,
+      makeRule "position player in world rule" positionPlayer,
+      makeRule "initial room description rule" $ first (const Nothing) . tryAction "looking" playerNoArgs
+    ]
 
 playerNoArgs :: Timestamp -> UnverifiedArgs t ro c
 playerNoArgs = withPlayerSource <$> noArgs
@@ -114,16 +149,22 @@ noArgs = Args Nothing []
 
 withPlayerSource :: Args t r c v -> Args t r c v
 withPlayerSource = error "not implemented"
+
 positionPlayer :: World t r c -> (Maybe Text, World t r c)
-positionPlayer = error "not implemented"
+positionPlayer w = case _firstRoom w of
+  Nothing -> (Just "No rooms.", w)
+  Just fr -> move (getPlayer w) fr w
+
+getPlayer :: World t r c -> Entity
+getPlayer = error "not implemented"
 
 sayIntroText :: World t r c -> World t r c
 sayIntroText = execState $ do
-    modify $ setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
-    t <- gets _title
-    modify (say $ introText t)
-    modify $ setStyle Nothing
-    pass
+  modify $ setSayStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
+  t <- gets _title
+  modify (say $ introText t)
+  modify $ setSayStyle Nothing
+  pass
 
 introText :: Text -> Text
 introText w = fold [longBorder <> "\n", shortBorder <> " " <> w <> " " <> shortBorder <> "\n", longBorder <> "\n\n"]
@@ -136,6 +177,7 @@ addWhenPlayBegins = over whenPlayBegins . addRule
 
 addRule :: Rule t ro c v r -> Rulebook t ro c v r -> Rulebook t ro c v r
 addRule r = rules %~ (++ [r])
+
 {-
 actionProcessingRulebookImpl :: Action w v -> [Entity] -> Rulebook w v RuleOutcome
 actionProcessingRulebookImpl a args =

@@ -1,10 +1,10 @@
 module Yaifl.Components.Supporter
-    ( Supporter(..)
-    )
+  ( Supporter (..),
+  )
 where
 
 import Yaifl.Prelude
 
-data Supporter = Supporter deriving Show
+data Supporter = Supporter deriving (Show)
 
 makeLenses ''Supporter

@@ -1,6 +1,7 @@
-module Yaifl.Components.Enterable (
-    Enterable (..),
-) where
+module Yaifl.Components.Enterable
+  ( Enterable (..),
+  )
+where
 
 import Yaifl.Prelude
 
