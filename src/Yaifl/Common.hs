@@ -64,10 +64,8 @@ module Yaifl.Common
   )
 where
 
-import Control.Lens
 import qualified Data.EnumMap.Strict as EM
-import qualified Data.IntMap.Strict as IM
-import Relude
+import Yaifl.Prelude
 import Yaifl.Messages
 
 class IsSubtype sup sub where
@@ -87,32 +85,12 @@ newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   }
 
--- first let's define our own alterF for EnumMap...
-alterEMF
-  :: (Functor f, Enum k)
-  => (Maybe a -> f (Maybe a))
-  -> k
-  -> EM.EnumMap k a -> f (EM.EnumMap k a)
-alterEMF upd k m = EM.intMapToEnumMap <$> IM.alterF upd (fromEnum k) (EM.enumMapToIntMap m)
-
--- | alterF wrapper for Store, since it's a wrapper around a wrapper...
-alterSF
-  :: Functor f
-  => (Maybe a -> f (Maybe a))
-  -> Entity
-  -> Store a -> f (Store a)
-alterSF upd k m = Store <$> alterEMF upd k (unStore m)
-
 instance At (Store a) where
-  at k f = alterSF f k
+  at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
 
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
-instance Ixed (Store a) where
-  ix k f m = case EM.lookup k (unStore m) of
-     Just v -> Store <$> (f v <&> \v' -> EM.insert k v' (unStore m))
-     Nothing -> pure m
-  {-# INLINE ix #-}
+instance Ixed (Store a)
 
 emptyStore :: Store a
 emptyStore = Store EM.empty
@@ -327,10 +305,10 @@ makeLenses ''Args
 makeLenses ''Rulebook
 
 instance HasBuffer (World t r c) 'LogBuffer where
-  bufferL _ = messageBuffers . _2
+  bufferL _ = messageBuffers % _2
 
 instance HasBuffer (World t r c) 'SayBuffer where
-  bufferL _ = messageBuffers . _1
+  bufferL _ = messageBuffers % _1
 
 -- | Obtain the current timestamp. This is a function in case I want to change the
 -- implementation in the future.
@@ -350,6 +328,3 @@ newEntityID
   :: World u r c
   -> (Entity, World u r c)
 newEntityID = entityCounter <<+~ 1
-
-reifyObject :: AbstractObject t r c o -> World t r c -> (Object o, World t r c)
-reifyObject = error ""

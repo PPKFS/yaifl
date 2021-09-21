@@ -37,10 +37,9 @@ module Yaifl.Messages
   )
 where
 
-import Control.Lens
 import qualified Data.Text.Prettyprint.Doc as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import Relude
+import Yaifl.Prelude
 
 -- | A type d contains (some number of) buffers, indexed by a phantom type.
 class HasBuffer d p where
@@ -81,7 +80,7 @@ sayInternal
   -> StyledDoc
   -> d
   -> d
-sayInternal prox msg w = w & bufferL prox . msgBufBuffer %~ (:)
+sayInternal prox msg w = w & bufferL prox % msgBufBuffer %~ (:)
     (sayContext buf `joinOp` maybe id PP.annotate style msg)
   where
     buf = w ^. bufferL prox
@@ -139,7 +138,7 @@ shouldPrint
   -> w -- ^
   -> LogLevel -- ^
   -> Bool
-shouldPrint prox = view (bufferL prox . msgBufPrintLevel)
+shouldPrint prox = view (bufferL prox % msgBufPrintLevel)
 
 -- | Print @message@ to the logging buffer with a newline.
 logLn
@@ -185,13 +184,13 @@ withLogPrefix
   -> w
   -> w
 withLogPrefix logLevel colour prefix message = execState $ do
-  oldBuf <- use $ bufferL lb . msgBufContext
+  oldBuf <- use $ bufferL lb % msgBufContext
   -- append the logging prefix to the context and make it pretty
-  bufferL lb . msgBufContext %= (logContextPrefix colour prefix :)
+  bufferL lb % msgBufContext %= (logContextPrefix colour prefix :)
   -- update
   modify $ logLn logLevel message
   -- restore
-  bufferL lb . msgBufContext .= oldBuf
+  bufferL lb % msgBufContext .= oldBuf
 
 logContextPrefix
   :: PP.Pretty a
@@ -212,7 +211,7 @@ setStyle
   -> Maybe PPTTY.AnsiStyle -- ^ The updated style.
   -> w
   -> w
-setStyle prox = set $ bufferL prox . msgBufStyle
+setStyle prox = set $ bufferL prox % msgBufStyle
 
 -- | Update the style of the say buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
@@ -239,14 +238,14 @@ addLogContext
   => Text
   -> w
   -> w
-addLogContext cxt = bufferL lb . msgBufContext %~ (logContextPrefix PPTTY.White cxt :)
+addLogContext cxt = bufferL lb % msgBufContext %~ (logContextPrefix PPTTY.White cxt :)
 
 -- | Remove the last layer of context from the log buffer
 popLogContext
   :: (HasBuffer w 'LogBuffer)
   => w
   -> w
-popLogContext w = w & bufferL lb . msgBufContext %~ drop 1
+popLogContext w = w & bufferL lb % msgBufContext %~ drop 1
 
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.
@@ -257,8 +256,8 @@ flushBufferToText
   -> (Text, w)
 flushBufferToText prox = runState $ do
   -- take it down and flip it around
-  msgList <- use $ bufferL prox . msgBufBuffer . reversed
-  bufferL prox . msgBufBuffer .= []
+  msgList <- use $ bufferL prox % msgBufBuffer % reversed
+  bufferL prox % msgBufBuffer .= []
   return $ (mconcat . map show) msgList
 
 -- | Clear a message buffer and return the container (with a clean buffer)
@@ -269,8 +268,8 @@ flushBufferToStdOut
   -> w
   -> m w
 flushBufferToStdOut prox w = do
-  let output' = (PPTTY.putDoc (comboBuffer w prox), w & bufferL prox . msgBufBuffer .~ [])
+  let output' = (PPTTY.putDoc (comboBuffer w prox), w & bufferL prox % msgBufBuffer .~ [])
   liftIO $ fst output'
   return (snd output')
   where
-    comboBuffer d' p' = PP.hcat $ reverse $ d' ^. bufferL p' . msgBufBuffer
+    comboBuffer d' p' = PP.hcat $ reverse $ d' ^. bufferL p' % msgBufBuffer

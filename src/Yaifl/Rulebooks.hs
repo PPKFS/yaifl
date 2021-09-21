@@ -11,10 +11,9 @@ module Yaifl.Rulebooks
   )
 where
 
-import Control.Lens
 import qualified Data.Text as T
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import Relude
+import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Messages
 import Yaifl.Objects
@@ -167,7 +166,7 @@ whenPlayBeginsRules = Rulebook
     Nothing
     (const $ const (Just ()))
     [ makeRule "display banner rule" $ ruleEnd . sayIntroText
-    , makeRule "position player in world rule" positionPlayer
+    , makeRule "position player in world rule" (runState positionPlayer)
     , makeRule "initial room description rule" initRoomDescription
     ]
 
@@ -194,11 +193,15 @@ withPlayerSource
 withPlayerSource = error "not implemented"
 
 positionPlayer
-  :: World t r c
-  -> (Maybe Bool, World t r c)
-positionPlayer w = case _firstRoom w of
-  Nothing -> failRuleWithError "No rooms have been made, so cannot place the player." w
-  Just fr -> move (getPlayer w) fr w
+  :: State (World t r c) (Maybe Bool)
+positionPlayer = do
+  fr <- gets _firstRoom
+  pl <- gets getPlayer
+  case fr of
+    Nothing -> state $ failRuleWithError "No rooms have been made, so cannot place the player."
+    Just fr' -> do
+      m <- move pl fr'
+      if m then return Nothing else state $ failRuleWithError "Failed to move the player."
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.
