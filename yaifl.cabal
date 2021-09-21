@@ -24,7 +24,7 @@ common common-options
   build-depends:
                      base
                      , relude
-                     , lens
+                     , optics
                      , prettyprinter
                      , prettyprinter-ansi-terminal
                      , template-haskell
@@ -112,6 +112,7 @@ library
                       --, Yaifl.Actions
                       --, Yaifl.Activities
   other-modules:
+                      Yaifl.Prelude
                       -- Yaifl.Components.Room
                       --, Yaifl.Components.Enclosing
                       --, Yaifl.Components.Object
