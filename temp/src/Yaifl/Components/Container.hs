@@ -1,5 +1,5 @@
-module Yaifl.Components.Container
-  ( Opacity (..),
+module Yaifl.Components.Container (
+    Opacity (..),
     ContainerData (..),
     ContainerObject (..),
     isOpaqueClosedContainer,
@@ -8,8 +8,7 @@ module Yaifl.Components.Container
     containerEnterable,
     containerOpenable,
     deleteContainer,
-  )
-where
+) where
 
 import qualified Data.Set as DS
 import Yaifl.Common
@@ -22,42 +21,41 @@ import Yaifl.Prelude
 data Opacity = Opaque | Transparent deriving (Eq, Show)
 
 newtype ContainerData = ContainerData
-  { _opacity :: Opacity
-  }
-  deriving (Eq, Show)
+    { _opacity :: Opacity
+    }
+    deriving (Eq, Show)
 
 data ContainerObject w = ContainerObject
-  { _containerThing :: Thing w,
-    _containerObjData :: ContainerData,
-    _containerEnclosing :: Enclosing,
-    _containerOpenable :: Openable,
-    _containerEnterable :: Enterable
-  }
-  deriving (Show)
+    { _containerThing :: Thing w
+    , _containerObjData :: ContainerData
+    , _containerEnclosing :: Enclosing
+    , _containerOpenable :: Openable
+    , _containerEnterable :: Enterable
+    }
+    deriving Show
 
 makeClassy ''ContainerData
 makeLenses ''ContainerObject
 
 instance HasObject (ContainerObject w) w where
-  object = containerThing . object
+    object = containerThing . object
 
 instance HasContainer w => HasStore w (ContainerObject w) where
-  store = containers
+    store = containers
 
 instance Monad m => ThereIs w (ContainerObject w) m where
-  defaultObject n d e = return $ ContainerObject (blankThingBase n d e "container") (ContainerData Opaque) (Enclosing DS.empty Nothing) Closed NotEnterable
+    defaultObject n d e = return $ ContainerObject (blankThingBase n d e "container") (ContainerData Opaque) (Enclosing DS.empty Nothing) Closed NotEnterable
 
 instance HasContainer w => Deletable w (ContainerObject w) where
-  deleteObject e = do
-    deleteComponent @(Thing w) e
-    deleteComponent @ContainerData e
-    deleteComponent @Enclosing e
-    deleteComponent @Openable e
-    deleteComponent @Enterable e
-    pass
+    deleteObject e = do
+        deleteComponent @(Thing w) e
+        deleteComponent @ContainerData e
+        deleteComponent @Enclosing e
+        deleteComponent @Openable e
+        deleteComponent @Enterable e
+        pass
 
 type HasContainer w = (HasThingStore w, HasStore w ContainerData, HasStore w Enclosing, HasStore w Openable, HasStore w Enterable)
-
 deleteContainer :: forall w m. (WithGameData w m, HasContainer w) => Entity -> m ()
 deleteContainer = deleteObject @w @(ContainerObject w)
 
@@ -69,5 +67,5 @@ container k = containers . at k
 
 isOpaqueClosedContainer :: (WithGameData w m, HasContainer w) => Entity -> m Bool
 isOpaqueClosedContainer e = do
-  c <- use $ gameWorld . container e
-  return $ c ^? _Just . containerObjData . opacity == Just Opaque && fmap _containerOpenable c == Just Closed
+    c <- use $ gameWorld . container e
+    return $ c ^? _Just . containerObjData . opacity == Just Opaque && fmap _containerOpenable c == Just Closed

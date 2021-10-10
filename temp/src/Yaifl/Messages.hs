@@ -153,21 +153,24 @@ logLn logLevel message = log logLevel (message <> "\n")
 logInfo
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> State w ()
+  -> w
+  -> w
 logInfo = withLogPrefix InfoLevel PPTTY.Blue "Msg"
 
 -- | Print @message@ to the logging buffer with a newline and @Debug@ prefix.
 logVerbose
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> State w ()
+  -> w
+  -> w
 logVerbose = withLogPrefix VerboseLevel PPTTY.Green "Dbg"
 
 -- | Print @message@ to the logging buffer with a newline and @Error@ prefix.
 logError
   :: (HasBuffer w 'LogBuffer)
   => Text -- ^ Message.
-  -> State w ()
+  -> w
+  -> w
 logError = withLogPrefix VerboseLevel PPTTY.Red "Err"
 
 -- | Print @message@ to the logging buffer with a (local) prefix.
@@ -178,8 +181,9 @@ withLogPrefix
   -> PPTTY.Color
   -> Text -- ^ Message prefix.
   -> Text -- ^ Message itself.
-  -> State w ()
-withLogPrefix logLevel colour prefix message = do
+  -> w
+  -> w
+withLogPrefix logLevel colour prefix message = execState $ do
   oldBuf <- use $ bufferL lb % msgBufContext
   -- append the logging prefix to the context and make it pretty
   bufferL lb % msgBufContext %= (logContextPrefix colour prefix :)
@@ -234,14 +238,14 @@ addLogContext
   => Text
   -> w
   -> w
-addLogContext cxt = bufferL lb % msgBufContext %~ (\l -> l <> [logContextPrefix PPTTY.White cxt])
+addLogContext cxt = bufferL lb % msgBufContext %~ (logContextPrefix PPTTY.White cxt :)
 
 -- | Remove the last layer of context from the log buffer
 popLogContext
   :: (HasBuffer w 'LogBuffer)
   => w
   -> w
-popLogContext w = w & bufferL lb % msgBufContext %~ (fromMaybe [] . viaNonEmpty init)
+popLogContext w = w & bufferL lb % msgBufContext %~ drop 1
 
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.

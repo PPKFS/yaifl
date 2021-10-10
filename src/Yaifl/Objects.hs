@@ -1,4 +1,3 @@
-
 {-|
 Module      : Yaifl.Objects
 Description : Creating, modifying, querying objects.
@@ -8,50 +7,79 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 module Yaifl.Objects
-( -- * Adding objects
-  addRoom
-, addRoom'
-, addThing
-, addThing'
-, addObject
+  ( -- * Adding objects
 
-, move
-) where
+    addRoom
+  , addRoom'
+  , addThing
+  , addThing'
+  , addObject
+
+  
+
+  -- * get/set/modify
+  , containedBy
+
+  , move
+  , getThing
+
+  , fromAny
+
+  -- * Property stuff
+  , HasProperty
+
+  ) where
 
 import Yaifl.Prelude
 import Yaifl.Common
+import Yaifl.Messages
+import qualified Data.EnumSet as ES
+import Text.Pretty.Simple
 
-type Enclosing = Int
+containedBy :: Lens' (Thing s) Entity
+containedBy = objData % thingContainedBy
 
--- | Get the ID out of an abstract object. Since the ID **should** be constant, using
--- the cached version of a dynamic object isn't a problem.
-getAbstractObjectID
-  :: AbstractObject t r c o
-  -> Entity
-getAbstractObjectID (StaticObject o') = _objID o'
-getAbstractObjectID (DynamicObject t) = (_objID . _tsCachedObject) t
+class Prettify o where
+  prettify :: o -> Text
 
--- TODO: can I make this into a functor?
-updateInternal
-  :: Lens' (World u r c) (Store (AbstractObject u r c o))
-  -> AbstractObject u r c o
-  -> World u r c
-  -> World u r c
-updateInternal storeLens obj = storeLens % at (getAbstractObjectID obj) ?~ obj
 
--- | Update a 'room'.
-updateRoom
-  :: AbstractRoom t r c
-  -> World t r c
-  -> World t r c
-updateRoom = updateInternal rooms
+instance {-# OVERLAPPABLE #-} Prettify s where
+  prettify = const "No prettify instance"
 
--- | Update a 'thing'.
-updateThing
-  :: AbstractThing t r c
-  -> World t r c
-  -> World t r c
-updateThing = updateInternal things
+instance Prettify o => Prettify (Maybe o) where
+  prettify Nothing = "Nothing"
+  prettify (Just s) = prettify s
+
+instance Prettify (Object s d) where
+  prettify Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")\n" <> toStrict (pString (toString s)) where
+    s = "{ Description = " <> _objDescription <>
+        ", Type = " <> prettify _objType <>
+        -- F.% ", Creation Time = " F.% F.stext 
+        ", Specifics = " <> prettify _objSpecifics <>
+        ", Data = " <> prettify _objData
+
+instance Prettify ObjType where
+  prettify = unObjType
+
+instance Prettify (Either a b) where
+  prettify = either prettify prettify
+
+logObject
+  :: ObjectLike o
+  => Text
+  -> o
+  -> State (World s) ()
+logObject n e = do
+  o <- getObject e
+  logVerbose $ n <> "\n" <> prettify o
+  whenJust o $ \Object{..} -> logVerbose _objName
+
+objectName
+  :: ObjectLike o
+  => o
+  -> World s
+  -> Text
+objectName o w = maybe "Nothin" _objName $ evalState (getObject o) w
 
 -- | Create a new object and assign it an entity ID, but do **not** add it to any
 -- stores. See also 'addObject' for a version that adds it to a store.
@@ -59,43 +87,68 @@ makeObject
   :: Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType
-  -> o -- ^ Object details.
-  -> Maybe (ObjectUpdate u r c o) -- ^ 'Nothing' for a static object, 'Just f' for
+  -> Bool
+  -> Either ObjectSpecifics s -- ^ Object details.
+  -> d
+  -> Maybe (ObjectUpdate s d) -- ^ 'Nothing' for a static object, 'Just f' for
                                   -- a dynamic object.
-  -> World u r c
-  -> ((Entity, AbstractObject u r c o), World u r c)
-makeObject n d ty specifics upd = runState $ do
-  e <- state newEntityID
+  -> World s
+  -> ((Entity, AbstractObject s d), World s)
+makeObject n d ty isT specifics details upd = runState $ do
+  e <- state $ newEntityID isT
   t <- gets getGlobalTime
-  let obj = Object n d e ty t specifics
+  let obj = Object n d e ty t specifics details
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 addObject
-  :: (AbstractObject u r c o -> World u r c -> World u r c)
+  :: (AbstractObject s d -> World s -> World s)
   -> Text
   -> Text
   -> ObjType
-  -> o
-  -> Maybe (ObjectUpdate u r c o)
-  -> State (World u r c) Entity
+  -> Bool
+  -> Either ObjectSpecifics s
+  -> d
+  -> Maybe (ObjectUpdate s d)
+  -> State (World s) Entity
 -- hilariously the pointfree version of this is
 -- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
-addObject updWorld n d ty specifics updateFunc = do
-  obj <- state $ makeObject n d ty specifics updateFunc
+addObject updWorld n d ty isT specifics details updateFunc = do
+  obj <- state $ makeObject n d ty isT specifics details updateFunc
   modify $ updWorld (snd obj)
   return (fst obj)
 
+updateInternal
+  :: Lens' (World s) (Store (AbstractObject s d))
+  -> AbstractObject s d
+  -> World s
+  -> World s
+updateInternal storeLens obj = storeLens % at (getID obj) ?~ obj
+
+-- | Update a 'thing'.
+updateThing
+  :: AbstractThing s
+  -> World s
+  -> World s
+updateThing = updateInternal things
+
+-- | Update a 'room'.
+updateRoom
+  :: AbstractRoom s
+  -> World s
+  -> World s
+updateRoom = updateInternal rooms
+
 -- | Create a new 'Thing' and add it to the relevant stores.
 addThing
-  :: IsSubtype t ThingProperties
-  => Text -- ^ Name.
+  :: Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
-  -> Maybe (ThingData t) -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Maybe (ObjectUpdate t r c (ThingData t)) -- ^ Static/Dynamic.
-  -> State (World t r c) Entity
-addThing name desc objtype details = addObject updateThing
-  name desc objtype (fromMaybe blankThingData details)
+  -> Maybe (Either ObjectSpecifics s)
+  -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ObjectUpdate s ThingData) -- ^ Static/Dynamic.
+  -> State (World s) Entity
+addThing name desc objtype specifics details = addObject updateThing name desc objtype
+  True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankThingData details)
 
 -- | A version of 'addThing' that uses a state monad to provide imperative-like
 -- descriptions of the internals of the object. Compare
@@ -105,115 +158,473 @@ addThing name desc objtype details = addObject updateThing
 -- addThing' n d o (someLensField .= 5)
 -- @
 addThing'
-  :: IsSubtype t ThingProperties
-  => Text -- ^ Name.
+  :: Text -- ^ Name.
   -> Text -- ^ Description.
-  -> State (ThingData t) v -- ^ Build your own thing monad!
-  -> State (World t r c) Entity
+  -> State ThingData r -- ^ Build your own thing monad!
+  -> State (World s) Entity
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
-  (Just (execState stateUpdate blankThingData)) Nothing
+    Nothing (Just $ execState stateUpdate blankThingData) Nothing
 
+-- | Create a new 'Room' and add it to the relevant stores.
 addRoom
-  :: IsSubtype r RoomProperties
-  => Text -- ^ Name.
+  :: Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
-  -> Maybe (RoomData r) -- ^
-  -> Maybe (ObjectUpdate t r c (RoomData r))  -- ^ Optional details.
-  -> State (World t r c) Entity
-addRoom name desc objtype details = addObject updateRoom
-  name desc objtype (fromMaybe blankRoomData details)
+  -> Maybe (Either ObjectSpecifics s)
+  -> Maybe RoomData -- ^
+  -> Maybe (ObjectUpdate s RoomData)  -- ^
+  -> State (World s) Entity
+addRoom name desc objtype specifics details upd = do
+  e <- addObject updateRoom name desc objtype False
+        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankRoomData details) upd
+  w <- get
+  when (isNothing $ w ^. firstRoom) (firstRoom ?= e)
+  return e
 
--- | See 'addThing`'.
+-- | A version of 'addRoom' that uses a state monad to provide imperative-like
+-- descriptions of the internals of the object. Compare
+-- @
+-- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
+-- @ with @
+-- addThing' n d o (someLensField .= 5)
+-- @
 addRoom'
-  :: IsSubtype r RoomProperties
-  => Text
+  :: Text
   -> Text
-  -> State (RoomData r) v
-  -> State (World t r c) Entity
+  -> State RoomData v
+  -> State (World s) Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
-  (Just (execState rd blankRoomData)) Nothing
+  Nothing (Just (execState rd blankRoomData)) Nothing
 
-move
-  :: Entity
-  -> Entity
-  -> State (World t r c) Bool
-move eObj _ = do
-    _ <- getThing eObj
-    --loc <- getEnclosing eLoc
+-- ** getX
+-- sets of signatures
+-- internal: getObjectFrom, getAbstractObjectFrom
+-- if we know what we are getting and we want reification
+-- getThing, getRoom
+-- if we know what we are getting and we don't want reification:
+-- getAbstractThing, getAbstractRoom
+-- if we don't know what we are getting and we want reification
+-- getObject
+-- if we don't know what we are getting and we don't want reification
+-- getAbstractObject
+-- affine traversals
+-- object, abstractObject, thing, room
+getObjectFrom
+  :: ObjectLike o
+  => StoreLens' s d
+  -> o
+  -> State (World s) (Maybe (Object s d))
+getObjectFrom l e = do
+    o <- gets $ getAbstractObjectFrom l e
+    mapMaybeM o (state . reifyObject l)
 
-    -- obtain both objects
-    -- obtain the containing component
-    -- obtain the current location of the thing
-    -- change the location of the thing to the container
-    -- remove the thing from its previous container
-    -- update the timestamp
-    return False
-
-mapMaybeM
-  :: (Monad m)
-  => Maybe a
-  -> (a -> m b)
-  -> m (Maybe b)
-mapMaybeM m f = maybe (return Nothing) (fmap Just . f) m
-
-reifyObject
-  :: Lens' (World t r c) (Store (AbstractObject t r c o))
-  -> AbstractObject t r c o
-  -> World t r c
-  -> (Object o, World t r c)
-reifyObject _ (StaticObject v) w = (v, w)
-reifyObject l (DynamicObject t) w = if _tsCacheStamp t == getGlobalTime w
-                    then (co, w)
-                    else runState (do
-                        updatedObj <- gets (_tsUpdateFunc t co)
-                        let tsUpdated = DynamicObject $ updateCachedObject t updatedObj
-                        l % at (_objID co) ?= tsUpdated
-                        return updatedObj) w
-                    where co = _tsCachedObject t
-
-updateCachedObject :: TimestampedObject t r c o -> Object o -> TimestampedObject t r c o
-updateCachedObject = error "not implemented"
+getAbstractObjectFrom
+  :: ObjectLike o
+  => StoreLens' s d
+  -> o
+  -> World s
+  -> Maybe (AbstractObject s d)
+getAbstractObjectFrom l e w = w ^? l % ix (getID e)
 
 getThing
-  :: Entity
-  -> State (World t r c) (Maybe (Thing t))
+  :: ObjectLike o
+  => o
+  -> State (World s) (Maybe (Thing s))
 getThing = getObjectFrom things
 
-getObjectFrom
-  :: Lens' (World t r c) (Store (AbstractObject t r c o))
-  -> Entity
-  -> State (World t r c) (Maybe (Object o))
-getObjectFrom l e = do
-    (o :: Maybe (AbstractObject t r c o)) <- use $ l % at e
-    Yaifl.Objects.mapMaybeM o (state . reifyObject l)
+getRoom
+  :: ObjectLike o
+  => o
+  -> State (World s) (Maybe (Room s))
+getRoom = getObjectFrom rooms
 
--- Lens' w (Maybe Enclosing)???
+getAbstractThing
+  :: ObjectLike o
+  => o
+  -> World s
+  -> Maybe (AbstractThing s)
+getAbstractThing = getAbstractObjectFrom things
+
+getAbstractRoom
+  :: ObjectLike o
+  => o
+  -> World s
+  -> Maybe (AbstractRoom s)
+getAbstractRoom = getAbstractObjectFrom rooms
+
+getObject
+  :: ObjectLike o
+  => o
+  -> State (World s) (Maybe (AnyObject s))
+getObject e = if isThing e
+  then
+    (do
+      o <- getObjectFrom things e
+      return $ toAny <$> o)
+  else
+    (do
+      o <- getObjectFrom rooms e
+      return $ toAny <$> o)
+
+
+class CanBeAny o d where
+  toAny :: o -> d
+  fromAny :: d -> Maybe o
+
+instance CanBeAny (Object s RoomData) (AnyObject s) where
+  toAny = fmap Right
+  fromAny = traverse rightToMaybe
+
+instance CanBeAny (Object s ThingData) (AnyObject s) where
+  toAny = fmap Left
+  fromAny = traverse leftToMaybe
+
+instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
+  toAny (StaticObject s) = StaticObject $ toAny s
+  toAny (DynamicObject (TimestampedObject tsobj tsts tsf)) =
+    DynamicObject $ TimestampedObject
+    (toAny tsobj) tsts (\a w -> maybe a (\v -> Right <$> tsf v w) (fromAny a))
+
+  fromAny (StaticObject s) = fmap StaticObject (fromAny s)
+  fromAny (DynamicObject (TimestampedObject tsobj tsts tsf)) = case fromAny tsobj of
+    Nothing -> Nothing
+    Just s -> Just $ DynamicObject
+      (TimestampedObject s tsts (\v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+
+instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
+  toAny (StaticObject s) = StaticObject $ toAny s
+  toAny (DynamicObject (TimestampedObject tsobj tsts tsf)) =
+    DynamicObject $ TimestampedObject
+    (toAny tsobj) tsts (\a w -> maybe a (\v -> Left <$> tsf v w) (fromAny a))
+  fromAny (StaticObject s) = fmap StaticObject (fromAny s)
+  fromAny (DynamicObject (TimestampedObject tsobj tsts tsf)) = case fromAny tsobj of
+    Nothing -> Nothing
+    Just s -> Just $ DynamicObject
+      (TimestampedObject s tsts
+        (\v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+
+getAbstractObject
+  :: ObjectLike o
+  => o
+  -> World s
+  -> Maybe (AnyAbstractObject s)
+getAbstractObject e w = if isThing e
+  then
+    toAny <$> getAbstractObjectFrom things e w
+  else
+    toAny <$> getAbstractObjectFrom rooms e w
+
+-- the getter on this doesn't update the cache...
+-- but it does return an updated object.
+object
+  :: ObjectLike o
+  => o
+  -> AffineTraversal' (World s) (AnyObject s)
+object e = atraversal
+  (if isThing e
+    then
+      \w -> maybeToRight w $ toAny <$> evalState (getThing e) w
+    else
+      \w -> maybeToRight w $ toAny <$> evalState (getRoom e) w)
+  (\w o -> execState (setObject o) w)
+
+class HasProperty o v where
+  default propertyL :: AffineTraversal' o v
+  propertyL = atraversal Left const
+  propertyL :: AffineTraversal' o v
+
+instance (HasProperty a v, HasProperty b v) => HasProperty (Either a b) v where
+  propertyL = propertyL `eitherJoin` propertyL
+
+instance HasProperty ObjectSpecifics Enclosing
+instance HasProperty () a
+
 {-
-getEnclosing
-  :: Entity
-  -> State (World t r c) (Maybe )
+instance (HasX s a v, HasX s b v) => HasX (Either a b) v where
+  getX = either getX getX
+  setX e v = undefined -- bimap (`setX` v) (`setX` v) e
 -}
+getEnclosing
+  :: HasProperty s Enclosing
+  => ObjectLike o
+  => o
+  -> State (World s) (Maybe Enclosing)
+getEnclosing e = if isThing e
+  then
+    defaultPropertyGetter e
+  else (do
+    o <- getRoom e
+    return $ o ^? _Just % objData % roomEnclosing
+  )
+
+setEnclosing
+  :: HasProperty s Enclosing
+  => ObjectLike o
+  => o
+  -> Enclosing
+  -> State (World s) ()
+setEnclosing e v = if isThing e
+  then
+    defaultPropertySetter e v
+  else
+    modifyRoom e (objData % roomEnclosing .~ v)
+
+modifyProperty
+  :: (o -> State (World s) (Maybe p))
+  -> (o -> p -> State (World s) ())
+  -> o
+  -> (p -> p)
+  -> State (World s) ()
+modifyProperty g s o f = do
+  e <- g o
+  when (isNothing e) (do
+    logVerbose "Trying to modify a property of an object which does not exist"
+    pass)
+  whenJust e (s o . f)
+
+modifyEnclosing
+  :: HasProperty s Enclosing
+  => ObjectLike o
+  => o
+  -> (Enclosing -> Enclosing)
+  -> State (World s) ()
+modifyEnclosing = modifyProperty getEnclosing setEnclosing
+
+defaultPropertySetter
+  :: HasProperty ObjectSpecifics v
+  => HasProperty s v
+  => ObjectLike o
+  => o
+  -> v -> State (World s) ()
+defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
+
+defaultPropertyGetter
+  :: HasProperty ObjectSpecifics v
+  => HasProperty s v
+  => ObjectLike o
+  => o
+  -> State (World s) (Maybe v)
+defaultPropertyGetter e = do
+  o <- getObject e
+  return $ preview (objSpecifics % propertyL) =<< o
+
+move
+  :: HasProperty s Enclosing
+  => Entity
+  -> Entity
+  -> State (World s) Bool
+move eObj eLoc = do
+  -- reify both objects
+  obj <- getThing eObj
+  loc <- getEnclosing eLoc
+  f <- maybeOrReport2 obj loc
+        (logError "Could not find object to move.")
+        (logError "Could not find enclosing part of location.")
+        (\o' _ -> do
+          -- obtain the current location of the thing
+          let container = o' ^. containedBy
+          oName <- gets $ objectName o'
+          contName <- gets $ objectName container
+          eLocName <- gets $ objectName eLoc
+          logVerbose $ "Moving " <> oName <> " from " <> contName <> " to " <> eLocName
+
+          -- update the old location
+          container `noLongerContains` o'
+
+          -- update the thing moved
+          eLoc `nowContains` o'
+        )
+  return $ isJust f
+
+modifyObjectFrom
+  :: ObjectLike o
+  => StoreLens' s d
+  -> o
+  -> (Object s d -> Object s d)
+  -> State (World s) ()
+modifyObjectFrom l o s = do
+  l % ix (getID o) % objectL %= s
+  tickGlobalTime
+  pass
+
+setObjectFrom
+  :: StoreLens' s d
+  -> Object s d
+  -> State (World s) ()
+setObjectFrom l o = modifyObjectFrom l o id
+
+modifyObject
+  :: ObjectLike o
+  => o
+  -> (AnyObject s -> AnyObject s)
+  -> State (World s) ()
+modifyObject e s = if isThing e
+  then
+    modifyObjectFrom things e (anyModifyToThing s)
+  else
+    modifyObjectFrom rooms e (anyModifyToRoom s)
+
+setObject
+  :: AnyObject s
+  -> State (World s) ()
+setObject o = modifyObject o id
+
+anyModifyToThing
+  :: (AnyObject s -> AnyObject s)
+  -> (Thing s -> Thing s)
+anyModifyToThing f t = fromMaybe t (fromAny $ f (toAny t))
+
+anyModifyToRoom
+  :: (AnyObject s -> AnyObject s)
+  -> (Room s -> Room s)
+anyModifyToRoom f t = fromMaybe t (fromAny $ f (toAny t))
+
+modifyThing
+  :: ObjectLike o
+  => o
+  -> (Thing s -> Thing s)
+  -> State (World s) ()
+modifyThing = modifyObjectFrom things
+
+modifyRoom
+  :: ObjectLike o
+  => o
+  -> (Room s -> Room s)
+  -> State (World s) ()
+modifyRoom = modifyObjectFrom rooms
+
+setThing
+  :: Thing s
+  -> State (World s) ()
+setThing = setObjectFrom things
+
+setRoom
+  :: Room s
+  -> State (World s) ()
+setRoom = setObjectFrom rooms
+
+noLongerContains
+  :: HasProperty s Enclosing
+  => ObjectLike cont
+  => ObjectLike obj
+  => cont
+  -> obj
+  -> State (World s) ()
+noLongerContains cont obj = modifyEnclosing cont
+  (enclosingContains %~ ES.delete (getID obj))
+
+nowContains
+  :: HasProperty s Enclosing
+  => ObjectLike cont
+  => ObjectLike obj
+  => cont
+  -> obj
+  -> State (World s) ()
+nowContains cont obj = do
+  modifyEnclosing cont (enclosingContains %~ ES.insert (getID obj))
+  modifyThing obj (objData % thingContainedBy .~ getID cont)
+
+
+
+
+
 {-
-blah :: Lens' (World t r c) (Store (AbstractObject t r c o)) -- ^
-  -> AbstractObject t r c o -- ^
-  -> World t r c -- ^
-  -> (Object o, World t r c)
 
 
 
 
 
-enclosingPrism :: Prism' (Object a) (Object Enclosing)
-enclosingPrism = undefined
 
-getEnclosing :: Entity -> World t r c -> (Maybe Enclosing, World t r c)
-getEnclosing = error "not implemented"
+{-
 
 
+g
+  :: World o
+  -> AbstractObject o (Property o)
+  -> World o
+g w o
+  | isThingID e = maybe w (\o' -> w & set (things % ix e) o') (projectThing o)
+  | isRoomID e = maybe w (\o' -> w & set (rooms % ix e) o') (projectRoom o)
+  | isConceptID e = maybe w (\o' -> w & set (concepts % ix e) o') (projectConcept o)
+  | otherwise = error $ "Missing case " <> show e
+  where e = getID o
+
+--Lens' AO Prop | Maybe AO Thing
+projectThing :: AbstractObject o (Property o) -> Maybe (AbstractObject o (ThingData t))
+projectThing o = (Just . upd o ThingProperty) =<< (o ^? objectL % objDetails % _ThingProperty)
+
+upd :: AbstractObject o (Property o) -> (a -> Property o) -> a -> AbstractObject o a
+upd (StaticObject o) _ t = StaticObject (o & objDetails .~ t)
+upd (DynamicObject (TimestampedObject to tt tu)) f t=
+  DynamicObject (TimestampedObject (to { _objDetails = t}) tt
+    (\o w -> a o w f v tu))
+
+a ::
+  Object a
+  -> World o
+  -> (a -> Property o)
+  -> Maybe (Property o -> a)
+  -> (Object (Property o) -> World o -> Object (Property o)) -> Object a
+a o w inj proj upd' = case proj of
+  Just t -> t <$> upd' (inj <$> o) w
+  Nothing -> o
+
+projectRoom:: AbstractObject o (Property o) -> Maybe (AbstractObject o (RoomData r))
+projectRoom = traverse (preview _RoomProperty)
+
+projectConcept :: AbstractObject o (Property o) -> Maybe (AbstractObject o (ConceptData c))
+projectConcept = traverse (preview _ConceptProperty)
 
 
-    {-
+
+-}
+
+
+
+
+{-
+enclosing
+  :: HasComponent o Enclosing
+  => AffineTraversal' (Object (Property o)) Enclosing
+enclosing = objDetails % traverseProperty @Enclosing
+
+traverseProperty
+  :: forall v o
+  .  HasThingTraversal t v
+  => HasRoomTraversal r v
+  => HasConceptTraversal c v
+  => AffineTraversal' (Property o) v
+traverseProperty = atraversal
+  (\s -> case s of
+    ThingProperty t -> maybeToRight s (getThingPart t)
+    RoomProperty r -> maybeToRight s (getRoomPart r)
+    ConceptProperty c -> maybeToRight s (getConceptPart c))
+  (\s b -> case s of
+    ThingProperty t -> ThingProperty $ setThingPart t b
+    RoomProperty r -> RoomProperty $ setRoomPart r b
+    ConceptProperty c -> ConceptProperty $ setConceptPart c b)
+
+class HasPropertyTraversal t v where
+  getPart :: t -> Maybe v
+  default getPart :: t -> Maybe v
+  getPart = const Nothing
+
+  setPart :: t -> v -> t
+  default setPart :: t -> v -> t
+  setPart = const
+
+-- so for any triple o, and N traversal targets, we have:
+-- N copies of HasProperty x, for each of o
+-- N copies of HasXTraversal X n - these are /all/ just blank instances
+-- except when we don't need a copy (e.g. room enclosing)
+-- HasProperty is the special case here
+-- I think what I want is to make default instances for everything, except certain things in a list
+-- which I then need to make my own ones
+instance HasPropertyTraversal () Enclosing
+instance HasThingTraversal () Enclosing
+instance HasConceptTraversal () Enclosing
+-}
+
     objToMove <- getThing obj
     mloc <- getComponent @Enclosing le -- use $ gameWorld . (store @w @Enclosing) . at le
     locName <- getComponent @(Object w) le
@@ -234,5 +645,4 @@ getEnclosing = error "not implemented"
             adjustComponent @Enclosing le (encloses %~ DS.insert obj)
             return True
         )
-    -}
 -}
