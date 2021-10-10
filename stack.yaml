@@ -1,5 +1,6 @@
 resolver: nightly-2021-09-02
 
 extra-deps:
-
+  - generic-lens-core-2.2.0.0@sha256:b6b69e992f15fa80001de737f41f2123059011a1163d6c8941ce2e3ab44f8c03,2913
+  - generic-optics-2.2.0.0@sha256:d29ce810bfa454e6e594d7d47c5687888666dbbde6cc9808c568b63a9194c5d7,3716
 allow-newer: true

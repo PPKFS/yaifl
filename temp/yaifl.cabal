@@ -1,4 +1,4 @@
-cabal-version:       3.0
+cabal-version:       2.4
 name:                yaifl
 version:             0.0.0.0
 synopsis:            Yet another interactive fiction library.
@@ -6,6 +6,7 @@ description:         Yet another interactive fiction library.
 homepage:            https://github.com/PPKFS/yaifl
 bug-reports:         https://github.com/PPKFS/yaifl/issues
 license:             MIT
+license-file:        LICENSE
 author:              Avery
 maintainer:          Avery <thecommunistduck@hotmail.co.uk>
 copyright:           2021 Avery
@@ -26,14 +27,12 @@ common common-options
                      , optics
                      , prettyprinter
                      , prettyprinter-ansi-terminal
-                     , pretty-simple
                      , template-haskell
                      , containers
                      , text
                      , mtl
                      , enummapset
                      , raw-strings-qq
-                     , generic-optics
 
   ghc-options:         -Wall
                        -Wcompat
@@ -44,7 +43,6 @@ common common-options
                        -O3
                        -flate-specialise
                        -fspecialise-aggressively
-                       -fprint-potential-instances
                        -fno-warn-unused-do-bind
                        ---ddump-splices
                        ---ddump-to-file
@@ -59,10 +57,7 @@ common common-options
     ghc-options:
 
   default-language:    Haskell2010
-  default-extensions: 
-    NoImplicitPrelude 
-    OverloadedStrings 
-    ApplicativeDo
+  default-extensions: NoImplicitPrelude OverloadedStrings ApplicativeDo
     BangPatterns
     BlockArguments
     ConstraintKinds
@@ -87,12 +82,10 @@ common common-options
     MultiParamTypeClasses
     MultiWayIf
     NamedFieldPuns
-    NoMonomorphismRestriction
     OverloadedStrings
     PatternSynonyms
     PolyKinds
     QualifiedDo
-    QuasiQuotes
     RankNTypes
     RecordWildCards
     ScopedTypeVariables
@@ -103,7 +96,6 @@ common common-options
     TypeFamilies
     TypeFamilyDependencies
     TypeOperators
-    UndecidableInstances
 library
   import:              common-options
   hs-source-dirs:      src
@@ -117,7 +109,7 @@ library
                       --, Yaifl.TH
                       --, Yaifl.Components
                       --, Yaifl.Rulebooks
-                      Yaifl.Actions
+                      --, Yaifl.Actions
                       --, Yaifl.Activities
   other-modules:
                       Yaifl.Prelude

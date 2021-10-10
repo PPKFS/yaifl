@@ -1,10 +1,9 @@
-module Yaifl.Components.Player
-  ( Player (..),
+module Yaifl.Components.Player (
+    Player (..),
     movePlayer',
     getPlayer',
     makePlayer,
-  )
-where
+) where
 
 import Yaifl.Common
 import Yaifl.Components.Enclosing
@@ -18,12 +17,12 @@ getPlayer' = coerce <$> getComponent' @Player uniqueComponent
 
 movePlayer' :: (HasStore w Player, HasThing w, HasStore w Enclosing, WithGameData w m) => Entity -> m Bool
 movePlayer' r = do
-  p <- getPlayer'
-  move p r
+    p <- getPlayer'
+    move p r
 
 makePlayer :: forall w m. (HasStore w Player, ThereIsThingConstraints w m) => Entity -> m Entity
 makePlayer e = do
-  withEntityIDBlock e $
-    thereIs @(Thing w) "yourself" "it's you." (described .= NotDescribed)
-  setComponent uniqueComponent (Player e)
-  return e
+    withEntityIDBlock e $
+        thereIs @(Thing w) "yourself" "it's you." (described .= NotDescribed)
+    setComponent uniqueComponent (Player e)
+    return e
