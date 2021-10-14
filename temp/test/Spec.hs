@@ -8,7 +8,7 @@ import Yaifl
 import Test.HUnit
 import qualified Data.Text as T
 
-ex2World :: World ()
+ex2World :: World ThingProperties RoomProperties ConceptProperties
 ex2World = newWorld $ do
    setTitle "Bic"
    addRoom' "The Staff Break Room" "" pass
@@ -57,7 +57,7 @@ consumeLooking t d = consumeLine t >=> consumeLine d
 
 data YaiflTestCase where
     YaiflTestCase :: { testCaseName :: String
-    , testCaseWorld :: World o
+    , testCaseWorld :: World t r c
     , testCommands :: [Text]
     , testCaseExpected :: Text -> Either Assertion Text
     } -> YaiflTestCase
@@ -91,15 +91,15 @@ w2 <- runWorld (do
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
 -}
 
-testHarness :: World o -> [Text] -> (Text -> Either Assertion Text) -> Assertion
+testHarness :: World t r c -> [Text] -> (Text -> Either Assertion Text) -> Assertion
 testHarness w _ consume = do
     let w2 = execState (do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
-                logInfo "Validating...no validation implemented."
-                logInfo "\n---------------"
+                modify $ logInfo "Validating...no validation implemented."
+                modify $ logInfo "\n---------------"
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
-                state $ runRulebook (_whenPlayBegins w') (const ())
+                state $ runRulebook (_whenPlayBegins w') noArgs
                 --do the commands...
                 ) w
     w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
@@ -115,7 +115,7 @@ main = do
     if errors v + failures v == 0 then
       exitSuccess
     else
-      die "you FAIL miette? you fail her tests like weakly typed language? oh! oh! jail for mother! jail for mother for One Thousand Years!!!"
+      die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
 {-
 
 

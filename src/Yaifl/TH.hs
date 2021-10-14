@@ -1,55 +1,51 @@
-{-# LANGUAGE TemplateHaskell #-}
 module Yaifl.TH
-       (
-           makeWorld
-       ) where
+(
+    makeSpecificsWithout
+  , makePropertyFunction
+  , SpecificsFunctions(..)
+) where
 
-import Language.Haskell.TH as TH
-import Data.Char
-import Relude
+import Yaifl.Prelude
+import Language.Haskell.TH
+import Language.Haskell.Meta
+import Data.Text (replace)
+
+data SpecificsFunctions =
+    GetX
+    | SetX
+    | GetX'
+    | SetX'
+    | ModifyX
+    | ModifyX'
+    deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
+
 {-
-data StoreType = Unique Name | Map Name
-
-getStoreName :: StoreType -> Name
-getStoreName (Unique n) = n
-getStoreName (Map n) = n
+getX :: HasProperty s X
+=> ObjectLike o
+ => o
+ -> State (World s) (Maybe X)
+ getX = defaultPropertyGetter 
 -}
-bangDef :: Bang
-bangDef = Bang NoSourceUnpackedness NoSourceStrictness
 
-replaceFirst :: [a] -> (a -> a) -> [a]
-replaceFirst [] _ = []
-replaceFirst (x:xs) f = f x : xs
+makeSpecificsWithout :: [SpecificsFunctions] -> Name -> Q [Dec]
+makeSpecificsWithout l prop = do
+    v <- mapM (makePropertyFunction prop) (universeSans l)
+    return $ join v
 
-mkLensName :: Name -> Name
-mkLensName t = mkName $ "_" <> replaceFirst (nameBase t <> "Store") toLower
+makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
+makePropertyFunction n sf = do
+    o <- newName "o"
+    s <- newName "s"
+    v <- newName "v"
 
-makeWorld :: Text -> [Name] -> Q [Dec]
-makeWorld typeName componentStores = do
-  let worldType = mkName $ toString typeName
-  
-  stores <- mapM (makeStoreDatatypes worldType) componentStores
-  let dataDef = DataD [] worldType [] Nothing [records] [DerivClause Nothing [ConT ''Show]]
-      makeRecord (t, (e, _)) = (mkLensName t, bangDef, AppT (ConT (mkName "Store")) e)
-      records = RecC worldType (zipWith (curry makeRecord) componentStores stores) -- <> 
-      blankWorldCtr = FunD (blankName worldType) [Clause [] (NormalB (iterExpr expr)) []]
-      expr = AppE (ConE worldType) (VarE $ mkName "emptyStore")
-      iterExpr = foldr (.) id $ replicate (length componentStores - 1) (\x -> AppE x (VarE $ mkName "emptyStore"))
-      topSig = SigD (blankName worldType) (ConT worldType)
-  return [dataDef, topSig, blankWorldCtr]
-makeStoreDatatypes :: Name -> Name -> Q (TH.Type, Bool)
-makeStoreDatatypes param a = do
-  TyConI tyCon <- reify a
-  (_, tyVars) <- case tyCon of
-    DataD _ nm tyVars _ _ _  -> return (nm, tyVars)
-    NewtypeD _ nm tyVars _ _ _ -> return (nm, tyVars)
-    _ -> fail "deriveFunctor: tyCon may not be a type synonym."
-    -- if we are dealing with Foo x, then construct a forced w type
-  let (v, fl) = if null tyVars then (ConT a, False) else (AppT (ConT a) (ConT param), True)--mkName "w" 
-  return (v, fl)
+    return $ (case sf of
+        GetX -> replaceTH "getXSUBHERE :: HasProperty s XSUBHERE => ObjectLike o => o -> State (World s) (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+        GetX' -> replaceTH "getXSUBHERE':: HasProperty s XSUBHERE => ObjectLike o => o -> World s -> Maybe XSUBHERE\ngetXSUBHERE' = evalState . getXSUBHERE"
+        SetX -> replaceTH "setXSUBHERE :: HasProperty s XSUBHERE => ObjectLike o => o-> XSUBHERE-> State (World s) ()\nsetXSUBHERE = defaultPropertySetter"
+        SetX' -> replaceTH "setXSUBHERE' :: HasProperty s XSUBHERE => ObjectLike o => o-> XSUBHERE -> World s -> World s\nsetXSUBHERE' o e = execState (setXSUBHERE o e)"
+        ModifyX -> replaceTH "modifyXSUBHERE :: HasProperty s XSUBHERE => ObjectLike o=> o-> (XSUBHERE -> XSUBHERE) -> State (World s) ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
+        ModifyX' -> replaceTH "--" --replaceTH "modifyXSUBHERE' :: HasProperty s XSUBHERE => ObjectLike o=> o-> (XSUBHERE -> XSUBHERE)-> World s -> World s\nmodifyXSUBHERE' = evalState . (modifyProperty getXSUBHERE setXSUBHERE)"
+        ) (toText $ nameBase n)
 
-blankName :: Name -> Name
-blankName n = mkName $ "blank" <> nameBase n
-
---gameinfo :: TH.Type -> (Name, Bang, TH.Type)
---gameinfo w = (mkName "_worldGameInfo", bangDef, AppT (ConT $ mkName "GameInfo") w)
+replaceTH :: Text -> Text -> [Dec]
+replaceTH y x = fromRight [] (parseDecs $ toString $ replace "XSUBHERE" x y)

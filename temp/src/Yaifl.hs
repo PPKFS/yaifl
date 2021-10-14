@@ -19,35 +19,29 @@ module Yaifl
 import Yaifl.Common
 import Relude
 import Yaifl.Objects
-import Yaifl.Actions
+--import Yaifl.Actions
 import Yaifl.Rulebooks
 import Yaifl.Messages
-import qualified Data.Map.Strict as DM
 --import Yaifl.Activities
 
 newWorld
-  :: HasStandardProperties s 
-  => State (World s) v
-  -> World s
-newWorld = (`execState` addBaseActions blankWorld)
+  :: State (World t r c) v
+  -> World t r c
+newWorld = (`execState` blankWorld)
 
-type HasStandardProperties s = HasProperty s Enclosing
-blankWorld 
-  :: HasStandardProperties s
-  => World s
+blankWorld :: World u r c
 blankWorld = World
   { _title = "Untitled"
-  , _entityCounter = (Entity 1, Entity (-2))
+  , _entityCounter = Entity 0
   , _globalTime = 0
   , _darknessWitnessed = False
   , _firstRoom = Nothing
   , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
-  , _currentPlayer = Entity defaultPlayerID
   , _things = emptyStore
-  , _concepts = () --emptyStore
+  , _concepts = emptyStore
   , _rooms = emptyStore
   , _messageBuffers = (emptyMessageBuffer, emptyMessageBuffer)
-  , _actions = DM.empty
+  , _actions = emptyStore
   , _activities = defaultActivities
   , _whenPlayBegins = whenPlayBeginsRules
   , _actionProcessing = defaultActionProcessingRules

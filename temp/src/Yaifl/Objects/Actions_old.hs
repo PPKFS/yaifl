@@ -1,32 +1,46 @@
 module Yaifl.Actions
-  ( addBaseActions
+  ( addBaseActions,
+    makeAction,
   )
 where
 
+import Colog
+import Control.Bool
+import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import Yaifl.Activities
 import Yaifl.Common
+import Yaifl.Components
 import Yaifl.Prelude
-import Yaifl.Objects
+import Yaifl.Rulebooks
+import Yaifl.Utils
 
+addAction :: (Show v, WithGameData w m) => Action w v -> m ()
+addAction ac = do
+  actionStore . at (_actionName ac) ?= BoxedAction ac
 
-addAction
-  :: Action s
-  -> World s
-  -> World s
-addAction ac =
-  actions % at (_actionName ac) ?~ ac
+addBaseActions :: WithStandardWorld w m => m ()
+addBaseActions = do
+  actionProcessing .= defaultActionProcessingRules
+  addAction lookingActionImpl
 
-addBaseActions
-  :: World s
-  -> World s
-addBaseActions = foldr (.) id [
-    addAction lookingActionImpl
-  ]
-
-makeActionRulebook
-  :: Text
-  -> [Rule o (Args o v) RuleOutcome]
-  -> ActionRulebook o v
-makeActionRulebook n = Rulebook n Nothing (const . Just)
+makeAction ::
+  Text ->
+  (Int -> Bool) ->
+  [Rule w () RuleOutcome] ->
+  [Rule w () RuleOutcome] ->
+  [Rule w () RuleOutcome] ->
+  [Rule w () RuleOutcome] ->
+  Action w ()
+makeAction n app bef chec carr repor =
+  Action
+    n
+    [n]
+    app
+    (const $ makeRulebook "set action variables rulebook" [Rule "set action variables" (return $ Just ())])
+    (const $ makeRulebook "before action rulebook" bef)
+    (const $ makeRulebook "check action rulebook" chec)
+    (const $ makeRulebook "carry out action rulebook" carr)
+    (const $ makeRulebook "report action rulebook" repor)
 
 data LookingActionVariables = LookingActionVariables
   { _visibilityCount :: Int,
@@ -35,67 +49,35 @@ data LookingActionVariables = LookingActionVariables
   }
   deriving (Show)
 
-lookingActionImpl
-  :: Action s
-lookingActionImpl = Action
-  "looking"
-  ["look", "looking"]
-  lookingActionSet
-  (makeActionRulebook "before looking rulebook" [])
-  (makeActionRulebook "check looking rulebook" [])
-  carryOutLookingRules
-  (makeActionRulebook "report looking rulebook" [])
+lookingActionName :: Text
+lookingActionName = "looking"
 
-carryOutLookingRules :: ActionRulebook s LookingActionVariables
-carryOutLookingRules = makeActionRulebook "a" []
+lookingActionImpl :: HasStandardWorld w => Action w LookingActionVariables
+lookingActionImpl = Action lookingActionName [lookingActionName] (== 0) (const lookingActionSet) (makeRulebookWithVariables "before looking rulebook" []) (makeRulebookWithVariables "check looking rulebook" []) carryOutLookingRules (makeRulebookWithVariables "report looking rulebook" [])
 
-lookingActionSet
-  :: UnverifiedArgs s
-  -> World s
-  -> Maybe LookingActionVariables
-lookingActionSet args w = fmap (\x -> LookingActionVariables lightLevels (take lightLevels x) "looking") vl
-            where
-              o = _argsSource args
-              loc = fromAny o ^? _Just % containedBy
-              vl = (`getVisibilityLevels` w) =<< loc
-              lightLevels = recalculateLightOfParent o
-
-getVisibilityLevels
-  :: ObjectLike o
-  => o
-  -> World s
-  -> Maybe [Entity]
-getVisibilityLevels e w = case findVisibilityHolder e w of
-    Nothing -> Nothing
-    Just a' -> if a' == e'
-        then Just [e']
-        else (a' :) <$> getVisibilityLevels a' w
-    where e' = getID e
-
--- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
-findVisibilityHolder 
-  :: ObjectLike o
-  => o
-  -> World s
-  -> Maybe Entity
-findVisibilityHolder e' w = if isRoom e' || isOpaqueClosedContainer e' w then Just (getID e') else evalState (do
-  t <- getThing e'
-  return $ t ^? _Just % containedBy) w
-  
+lookingActionSet :: HasStandardWorld w => Rulebook w () LookingActionVariables
+lookingActionSet =
+  makeRulebook
+    "set action variables rulebook"
+    [ Rule
+        "determine visibility ceiling rule"
+        ( do
+            --TODO - set properly?
+            actorID <- getActor
+            vl <- getLocation actorID >>= traverse getVisibilityLevels
+            lightLevels <- recalculateLightOfParent actorID
+            return $ fmap (\x -> LookingActionVariables lightLevels (take lightLevels x) lookingActionName) (join vl)
+        )
+    ]
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
 -- there is light exactly when the parent (p) "offers light"
 
--- has light is if it's lit, or see through and it contains light
+---has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
-recalculateLightOfParent 
-  :: ObjectLike o
-  => o
-  -> Entity 
-  -> World s
-  -> Int
+recalculateLightOfParent :: WithStandardWorld w m => Entity -> m Int
 recalculateLightOfParent e = do
   p <- getLocation e
   maybe
@@ -108,9 +90,6 @@ recalculateLightOfParent e = do
     )
     p
 
-offersLight = undefined
-getLocation = undefined
-{-}
 -- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
 offersLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
 offersLight e = do
@@ -148,9 +127,22 @@ isSeeThrough e = do
       isEnterableNotContainer = l4 == Just Enterable && not isContainer
   return $ isJust l3 || isTransparent || isEnterableNotContainer || isOpenContainer
 
+getVisibilityLevels :: (HasContainer w, HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe [Entity])
+getVisibilityLevels e = do
+  a <- findVisibilityHolder e
+  case a of
+    Nothing -> return Nothing
+    Just a' ->
+      if a' == e
+        then return (Just [e])
+        else do
+          logDebug $ "Visibility holder of " <> show e <> " was " <> show a'
+          (a' :) <<$>> getVisibilityLevels a'
 
-
-
+findVisibilityHolder :: forall w m. (HasContainer w, HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe Entity)
+findVisibilityHolder e' = do
+  -- the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
+  ifM (e' `isType` "room" <|=> isOpaqueClosedContainer e') (return $ Just e') (Just . _enclosedBy <$> getPhysical' e')
 
 carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
 carryOutLookingRules =
@@ -220,4 +212,3 @@ foreachVisibilityHolder e = do
   ifM (e `isType` "supporter") (say "(on ") (say "(in ")
   printName e
   say ")"
--}
