@@ -22,9 +22,10 @@ module Yaifl.Common
   , ObjType(..)
   , ObjectUpdate
   , ObjectLike(..)
-  , IsSubtype(..)
 
   , Enclosing(..)
+  , Container(..)
+
   , Thing
   , Room
 
@@ -79,6 +80,10 @@ module Yaifl.Common
   , conceptDetails
 
   , enclosingContains
+  , containerEnclosing
+
+  , _EnclosingSpecifics
+  , _ContainerSpecifics
 
   -- * World lookups and modifications
   , getGlobalTime
@@ -150,7 +155,12 @@ type MapConnections = Store Entity
 -- | An abstract grouping of rooms.
 type ContainingRegion = Maybe Entity
 
-data ObjectSpecifics = NoSpecifics deriving stock (Show)
+data ObjectSpecifics = 
+  NoSpecifics 
+  | EnclosingSpecifics Enclosing 
+  | ContainerSpecifics Container deriving stock (Show)
+
+
 
 -- | An 'Object' is any kind of game object. The important part is @a@; which should
 -- probably be one of three kinds (thus parameterisation by t r c):
@@ -182,23 +192,27 @@ data ThingData = ThingData
   { _thingContainedBy :: !Entity
   } deriving stock (Generic, Show)
 
-newtype Enclosing = Enclosing
+data Enclosing = Enclosing
   { _enclosingContains :: ES.EnumSet Entity
-  } deriving stock (Show)
+  , _enclosingCapacity :: Maybe Int
+  } deriving stock (Show, Eq)
+
+data Opacity = Opaque | Transparent deriving stock (Eq, Show)
+data Enterable = Enterable | NotEnterable deriving stock (Eq, Show)
+data Openable = Open | Closed deriving stock (Eq, Show)
+
+data Container = Container
+  { _opacity :: Opacity
+  , _containerEnclosing :: Enclosing
+  , _containerOpenable :: Openable
+  , _containerEnterable :: Enterable
+  }
+  deriving stock (Eq, Show)
+
+makeLenses ''Container
 
 emptyEnclosing :: Enclosing
-emptyEnclosing = Enclosing ES.empty
-
-class IsSubtype sub sup where
-  default inject :: (sup ~ sub) => sub -> sup
-  inject = id
-  inject :: sub -> sup
-
-instance IsSubtype a (Either a b) where
-  inject = Left
-
-instance IsSubtype b (Either a b) where
-  inject = Right
+emptyEnclosing = Enclosing ES.empty Nothing
 
 -- | Details for concepts. These are intangible, predominantly knowledge facts (for
 -- instance, the knowledge of an actor about the location of an item). This is where
@@ -226,8 +240,6 @@ type Room s = Object s RoomData
 type AbstractThing s = AbstractObject s ThingData
 type AbstractRoom s = AbstractObject s RoomData
 type AnyAbstractObject s = AbstractObject s (Either ThingData RoomData)
-
-type IsAnyObject d = IsSubtype d (Either RoomData ThingData)
 
 -- | An abstract object is either a static object (which does not need to update itself)
 -- or a timestamped object. Whilst this is what is stored internally, you shouldn't
@@ -357,6 +369,7 @@ makeLenses ''RoomData
 makeLenses ''ConceptData
 makeLenses ''Enclosing
 makeLenses ''TimestampedObject
+makePrisms ''ObjectSpecifics
 
 -- I can inject a smaller value into a larger value
 -- so as long as I have a smaller value originally?
