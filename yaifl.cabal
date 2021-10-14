@@ -33,7 +33,8 @@ common common-options
                      , mtl
                      , enummapset
                      , raw-strings-qq
-                     , generic-optics
+                     , haskell-src-meta
+
 
   ghc-options:         -Wall
                        -Wcompat
@@ -114,7 +115,7 @@ library
                       Yaifl.Objects
                       Yaifl.Messages
                       --, Yaifl.Prelude
-                      --, Yaifl.TH
+                      Yaifl.TH
                       --, Yaifl.Components
                       --, Yaifl.Rulebooks
                       Yaifl.Actions

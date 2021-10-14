@@ -11,6 +11,8 @@ module Yaifl.Prelude
   , (<<-~)
   , (<$$>)
   , eitherJoin
+  , thenATraverse
+  , universeSans
   ) where
 
 import Relude hiding (mapMaybeM)
@@ -20,6 +22,7 @@ import Optics.State.Operators
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List.NonEmpty as NonEmpty
+import Data.List ((\\))
 -- first let's define our own alterF for EnumMap...
 alterEMF
   :: (Functor f, Enum k)
@@ -52,7 +55,7 @@ reversed = involuted reversing
 instance Reversing [a] where
   reversing = reverse
 
-infixr 4 <<+~
+infixr 4 <<+~, <<-~
 
 mapMaybeM
   :: (Monad m)
@@ -109,11 +112,28 @@ eitherJoin
   :: AffineTraversal' a f
   -> AffineTraversal' b f
   -> AffineTraversal' (Either a b) f
-eitherJoin t1 t2 = atraversal
-  ( \s -> case matching (_Left % t1) s of
-      Left _ -> matching (_Right % t2) s
+eitherJoin t1 t2 = (_Left % t1) `thenATraverse` (_Right % t2)
+
+thenATraverse
+  :: Is t1 An_AffineTraversal 
+  => Is t2 An_AffineTraversal 
+  => Optic t1 ix s s a b
+  -> Optic t2 ix s s a b
+  -> AffineTraversal s s a b
+thenATraverse o1 o2 = atraversal
+  ( \s -> case matching o1 s of
+      Left _ -> matching o2 s
       Right f -> Right f
   )
-  (\s b -> s & (_Left % t1) .~ b
-           & (_Right % t2) .~ b
+  (\s b -> s & castOptic @An_AffineTraversal o1 .~ b
+           & castOptic @An_AffineTraversal o2 .~ b
   )
+
+  -- | Obtain a list of all members of a type universe, sans a finite list
+universeSans
+  :: Bounded x
+  => Enum x
+  => Ord x
+  => [x] 
+  -> [x]
+universeSans x = universe \\ x

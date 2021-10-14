@@ -65,22 +65,29 @@ getVisibilityLevels
   => o
   -> World s
   -> Maybe [Entity]
-getVisibilityLevels e = evalState $ do
-  a <- findVisibilityHolder e
-  case a of
-    Nothing -> return Nothing
-    Just a' ->
-      if a' == e
-        then return (Just [getID e])
-        else do
-          logDebug $ "Visibility holder of " <> show e <> " was " <> show a'
-          (a' :) <<$>> getVisibilityLevels a'
+getVisibilityLevels e w = case findVisibilityHolder e w of
+    Nothing -> Nothing
+    Just a' -> if a' == e'
+        then Just [e']
+        else (a' :) <$> getVisibilityLevels a' w
+    where e' = getID e
+
+-- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
+findVisibilityHolder 
+  :: ObjectLike o
+  => o
+  -> World s
+  -> Maybe Entity
+findVisibilityHolder e' w = if isRoom e' || isOpaqueClosedContainer e' w then Just (getID e') else evalState (do
+  t <- getThing e'
+  return $ t ^? _Just % containedBy) w
+  
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
 -- there is light exactly when the parent (p) "offers light"
 
----has light is if it's lit, or see through and it contains light
+-- has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent 
@@ -100,6 +107,9 @@ recalculateLightOfParent e = do
           (return 0)
     )
     p
+
+offersLight = undefined
+getLocation = undefined
 {-}
 -- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
 offersLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
@@ -140,10 +150,7 @@ isSeeThrough e = do
 
 
 
-findVisibilityHolder :: forall w m. (HasContainer w, HasPhysicalStore w, WithGameData w m) => Entity -> m (Maybe Entity)
-findVisibilityHolder e' = do
-  -- the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
-  ifM (e' `isType` "room" <|=> isOpaqueClosedContainer e') (return $ Just e') (Just . _enclosedBy <$> getPhysical' e')
+
 
 carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
 carryOutLookingRules =

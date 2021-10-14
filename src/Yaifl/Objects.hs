@@ -6,6 +6,8 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
+
+{-# OPTIONS_GHC -ddump-splices #-}
 module Yaifl.Objects
   ( -- * Adding objects
 
@@ -15,13 +17,19 @@ module Yaifl.Objects
   , addThing'
   , addObject
 
-  
+  -- * querying objects
+
+  , isOpaqueClosedContainer
 
   -- * get/set/modify
   , containedBy
 
   , move
+
   , getThing
+  , getObject
+  , getThing'
+  , getObject'
 
   , fromAny
 
@@ -35,6 +43,7 @@ import Yaifl.Common
 import Yaifl.Messages
 import qualified Data.EnumSet as ES
 import Text.Pretty.Simple
+import Yaifl.TH
 
 containedBy :: Lens' (Thing s) Entity
 containedBy = objData % thingContainedBy
@@ -266,6 +275,18 @@ getObject e = if isThing e
       o <- getObjectFrom rooms e
       return $ toAny <$> o)
 
+getThing' 
+  :: ObjectLike o 
+  => o -> World s 
+  -> Maybe (Thing s)
+getThing' o = evalState (getThing o)
+
+getObject' 
+  :: ObjectLike o 
+  => o 
+  -> World s 
+  -> Maybe (AnyObject s)
+getObject' o = evalState (getObject o)
 
 class CanBeAny o d where
   toAny :: o -> d
@@ -328,6 +349,33 @@ object e = atraversal
       \w -> maybeToRight w $ toAny <$> evalState (getRoom e) w)
   (\w o -> execState (setObject o) w)
 
+setObject
+  :: AnyObject s
+  -> State (World s) ()
+setObject o = modifyObject o id
+
+modifyObject
+  :: ObjectLike o
+  => o
+  -> (AnyObject s -> AnyObject s)
+  -> State (World s) ()
+modifyObject e s = if isThing e
+  then
+    modifyObjectFrom things e (anyModifyToThing s)
+  else
+    modifyObjectFrom rooms e (anyModifyToRoom s)
+
+anyModifyToThing
+  :: (AnyObject s -> AnyObject s)
+  -> (Thing s -> Thing s)
+anyModifyToThing f t = fromMaybe t (fromAny $ f (toAny t))
+
+anyModifyToRoom
+  :: (AnyObject s -> AnyObject s)
+  -> (Room s -> Room s)
+anyModifyToRoom f t = fromMaybe t (fromAny $ f (toAny t))
+
+
 class HasProperty o v where
   default propertyL :: AffineTraversal' o v
   propertyL = atraversal Left const
@@ -336,14 +384,13 @@ class HasProperty o v where
 instance (HasProperty a v, HasProperty b v) => HasProperty (Either a b) v where
   propertyL = propertyL `eitherJoin` propertyL
 
-instance HasProperty ObjectSpecifics Enclosing
+instance HasProperty ObjectSpecifics Enclosing where
+  propertyL = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing)
 instance HasProperty () a
 
-{-
-instance (HasX s a v, HasX s b v) => HasX (Either a b) v where
-  getX = either getX getX
-  setX e v = undefined -- bimap (`setX` v) (`setX` v) e
--}
+instance HasProperty ObjectSpecifics Container where
+  propertyL = castOptic _ContainerSpecifics 
+
 getEnclosing
   :: HasProperty s Enclosing
   => ObjectLike o
@@ -369,6 +416,47 @@ setEnclosing e v = if isThing e
   else
     modifyRoom e (objData % roomEnclosing .~ v)
 
+modifyObjectFrom
+  :: ObjectLike o
+  => StoreLens' s d
+  -> o
+  -> (Object s d -> Object s d)
+  -> State (World s) ()
+modifyObjectFrom l o s = do
+  l % ix (getID o) % objectL %= s
+  tickGlobalTime
+  pass
+
+setObjectFrom
+  :: StoreLens' s d
+  -> Object s d
+  -> State (World s) ()
+setObjectFrom l o = modifyObjectFrom l o id
+
+modifyThing
+  :: ObjectLike o
+  => o
+  -> (Thing s -> Thing s)
+  -> State (World s) ()
+modifyThing = modifyObjectFrom things
+
+modifyRoom
+  :: ObjectLike o
+  => o
+  -> (Room s -> Room s)
+  -> State (World s) ()
+modifyRoom = modifyObjectFrom rooms
+
+setThing
+  :: Thing s
+  -> State (World s) ()
+setThing = setObjectFrom things
+
+setRoom
+  :: Room s
+  -> State (World s) ()
+setRoom = setObjectFrom rooms
+
 modifyProperty
   :: (o -> State (World s) (Maybe p))
   -> (o -> p -> State (World s) ())
@@ -381,14 +469,6 @@ modifyProperty g s o f = do
     logVerbose "Trying to modify a property of an object which does not exist"
     pass)
   whenJust e (s o . f)
-
-modifyEnclosing
-  :: HasProperty s Enclosing
-  => ObjectLike o
-  => o
-  -> (Enclosing -> Enclosing)
-  -> State (World s) ()
-modifyEnclosing = modifyProperty getEnclosing setEnclosing
 
 defaultPropertySetter
   :: HasProperty ObjectSpecifics v
@@ -407,6 +487,9 @@ defaultPropertyGetter
 defaultPropertyGetter e = do
   o <- getObject e
   return $ preview (objSpecifics % propertyL) =<< o
+
+makeSpecificsWithout [GetX, SetX] ''Enclosing
+makeSpecificsWithout [] ''Container
 
 move
   :: HasProperty s Enclosing
@@ -436,73 +519,6 @@ move eObj eLoc = do
         )
   return $ isJust f
 
-modifyObjectFrom
-  :: ObjectLike o
-  => StoreLens' s d
-  -> o
-  -> (Object s d -> Object s d)
-  -> State (World s) ()
-modifyObjectFrom l o s = do
-  l % ix (getID o) % objectL %= s
-  tickGlobalTime
-  pass
-
-setObjectFrom
-  :: StoreLens' s d
-  -> Object s d
-  -> State (World s) ()
-setObjectFrom l o = modifyObjectFrom l o id
-
-modifyObject
-  :: ObjectLike o
-  => o
-  -> (AnyObject s -> AnyObject s)
-  -> State (World s) ()
-modifyObject e s = if isThing e
-  then
-    modifyObjectFrom things e (anyModifyToThing s)
-  else
-    modifyObjectFrom rooms e (anyModifyToRoom s)
-
-setObject
-  :: AnyObject s
-  -> State (World s) ()
-setObject o = modifyObject o id
-
-anyModifyToThing
-  :: (AnyObject s -> AnyObject s)
-  -> (Thing s -> Thing s)
-anyModifyToThing f t = fromMaybe t (fromAny $ f (toAny t))
-
-anyModifyToRoom
-  :: (AnyObject s -> AnyObject s)
-  -> (Room s -> Room s)
-anyModifyToRoom f t = fromMaybe t (fromAny $ f (toAny t))
-
-modifyThing
-  :: ObjectLike o
-  => o
-  -> (Thing s -> Thing s)
-  -> State (World s) ()
-modifyThing = modifyObjectFrom things
-
-modifyRoom
-  :: ObjectLike o
-  => o
-  -> (Room s -> Room s)
-  -> State (World s) ()
-modifyRoom = modifyObjectFrom rooms
-
-setThing
-  :: Thing s
-  -> State (World s) ()
-setThing = setObjectFrom things
-
-setRoom
-  :: Room s
-  -> State (World s) ()
-setRoom = setObjectFrom rooms
-
 noLongerContains
   :: HasProperty s Enclosing
   => ObjectLike cont
@@ -524,8 +540,17 @@ nowContains cont obj = do
   modifyEnclosing cont (enclosingContains %~ ES.insert (getID obj))
   modifyThing obj (objData % thingContainedBy .~ getID cont)
 
-
-
+isOpaqueClosedContainer 
+  :: HasProperty s Container
+  => ObjectLike o
+  => o
+  -> World s
+  -> Bool
+isOpaqueClosedContainer e w = False
+  where
+    o = getObject' e w
+    cont = getContainer' e w
+  --return $ c ^? _Just . containerObjData . opacity == Just Opaque && fmap _containerOpenable c == Just Closed
 
 
 {-
