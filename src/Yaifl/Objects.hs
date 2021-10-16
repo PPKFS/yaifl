@@ -20,22 +20,38 @@ module Yaifl.Objects
   -- * querying objects
 
   , isOpaqueClosedContainer
+  , ObjectLike(..)
+  , asThingOrRoom'
 
   -- * get/set/modify
   , containedBy
 
   , move
 
-  , getThing
   , getObject
   , getThing'
   , getObject'
 
+  , getEnclosing
+  , getEnclosing'
+
+  , getContainer'
+  , getContainer
+
+  , getEnterable
+  , getEnterable'
+
+
   , fromAny
   , toAny
 
+  , getLocation
+  , getLocation'
+
   -- * Property stuff
   , HasProperty
+
+  , Prettify(..)
 
   ) where
 
@@ -64,7 +80,7 @@ instance Prettify (Object s d) where
   prettify Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")\n" <> toStrict (pString (toString s)) where
     s = "{ Description = " <> _objDescription <>
         ", Type = " <> prettify _objType <>
-        -- F.% ", Creation Time = " F.% F.stext 
+        -- F.% ", Creation Time = " F.% F.stext
         ", Specifics = " <> prettify _objSpecifics <>
         ", Data = " <> prettify _objData
 
@@ -75,7 +91,7 @@ instance Prettify (Either a b) where
   prettify = either prettify prettify
 
 logObject
-  :: ObjectLike o
+  :: ObjectLike s o
   => Text
   -> o
   -> State (World s) ()
@@ -85,7 +101,7 @@ logObject n e = do
   whenJust o $ \Object{..} -> logVerbose _objName
 
 objectName
-  :: ObjectLike o
+  :: ObjectLike s o
   => o
   -> World s
   -> Text
@@ -220,7 +236,7 @@ addRoom' n d rd = addRoom n d (ObjType "room")
 -- affine traversals
 -- object, abstractObject, thing, room
 getObjectFrom
-  :: ObjectLike o
+  :: HasID o
   => StoreLens' s d
   -> o
   -> State (World s) (Maybe (Object s d))
@@ -229,63 +245,92 @@ getObjectFrom l e = do
     mapMaybeM o (state . reifyObject l)
 
 getAbstractObjectFrom
-  :: ObjectLike o
+  :: HasID o
   => StoreLens' s d
   -> o
   -> World s
   -> Maybe (AbstractObject s d)
 getAbstractObjectFrom l e w = w ^? l % ix (getID e)
 
-getThing
-  :: ObjectLike o
-  => o
-  -> State (World s) (Maybe (Thing s))
-getThing = getObjectFrom things
-
-getRoom
-  :: ObjectLike o
-  => o
-  -> State (World s) (Maybe (Room s))
-getRoom = getObjectFrom rooms
-
 getAbstractThing
-  :: ObjectLike o
+  :: HasID o
   => o
   -> World s
   -> Maybe (AbstractThing s)
 getAbstractThing = getAbstractObjectFrom things
 
 getAbstractRoom
-  :: ObjectLike o
+  :: HasID o
   => o
   -> World s
   -> Maybe (AbstractRoom s)
 getAbstractRoom = getAbstractObjectFrom rooms
 
+getThing'
+  :: ObjectLike s o
+  => o
+  -> World s
+  -> Maybe (Thing s)
+getThing' o = evalState (getThing o)
+
+getRoom'
+  :: ObjectLike s o
+  => o
+  -> World s
+  -> Maybe (Room s)
+getRoom' o = evalState (getRoom o)
+
+class HasID o => ObjectLike s o where
+  getRoom :: o -> State (World s) (Maybe (Room s))
+  default getRoom :: o -> State (World s) (Maybe (Room s))
+  getRoom = const $ return Nothing
+  getThing :: o -> State (World s) (Maybe (Thing s))
+  default getThing :: o -> State (World s) (Maybe (Thing s))
+  getThing = const $ return Nothing
+
+instance ObjectLike s Entity where
+  getThing = getObjectFrom things
+  getRoom = getObjectFrom rooms
+
+instance ObjectLike s (Thing s) where
+  getThing = return . Just
+
+instance ObjectLike s (Room s) where
+  getRoom = return . Just
+
+asThingOrRoom'
+  :: ObjectLike s o
+  => o
+  -> (Thing s -> a)
+  -> (Room s -> a)
+  -> World s
+  -> Maybe a
+asThingOrRoom' o tf rf w =
+  if
+    isThing o
+  then
+      tf <$> getThing' o w
+  else
+     rf <$> getRoom' o w
+
 getObject
-  :: ObjectLike o
+  :: ObjectLike s o
   => o
   -> State (World s) (Maybe (AnyObject s))
 getObject e = if isThing e
   then
     (do
-      o <- getObjectFrom things e
+      o <- getThing e
       return $ toAny <$> o)
   else
     (do
-      o <- getObjectFrom rooms e
+      o <- getRoom e
       return $ toAny <$> o)
 
-getThing' 
-  :: ObjectLike o 
-  => o -> World s 
-  -> Maybe (Thing s)
-getThing' o = evalState (getThing o)
-
-getObject' 
-  :: ObjectLike o 
-  => o 
-  -> World s 
+getObject'
+  :: ObjectLike s o
+  => o
+  -> World s
   -> Maybe (AnyObject s)
 getObject' o = evalState (getObject o)
 
@@ -326,7 +371,7 @@ instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
         (\v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
 
 getAbstractObject
-  :: ObjectLike o
+  :: HasID o
   => o
   -> World s
   -> Maybe (AnyAbstractObject s)
@@ -339,7 +384,7 @@ getAbstractObject e w = if isThing e
 -- the getter on this doesn't update the cache...
 -- but it does return an updated object.
 object
-  :: ObjectLike o
+  :: ObjectLike s o
   => o
   -> AffineTraversal' (World s) (AnyObject s)
 object e = atraversal
@@ -356,7 +401,7 @@ setObject
 setObject o = modifyObject o id
 
 modifyObject
-  :: ObjectLike o
+  :: HasID o
   => o
   -> (AnyObject s -> AnyObject s)
   -> State (World s) ()
@@ -376,7 +421,6 @@ anyModifyToRoom
   -> (Room s -> Room s)
 anyModifyToRoom f t = fromMaybe t (fromAny $ f (toAny t))
 
-
 class HasProperty o v where
   default propertyL :: AffineTraversal' o v
   propertyL = atraversal Left const
@@ -390,11 +434,14 @@ instance HasProperty ObjectSpecifics Enclosing where
 instance HasProperty () a
 
 instance HasProperty ObjectSpecifics Container where
-  propertyL = castOptic _ContainerSpecifics 
+  propertyL = castOptic _ContainerSpecifics
+
+instance HasProperty ObjectSpecifics Enterable where
+  propertyL = _ContainerSpecifics % containerEnterable
 
 getEnclosing
   :: HasProperty s Enclosing
-  => ObjectLike o
+  => ObjectLike s o
   => o
   -> State (World s) (Maybe Enclosing)
 getEnclosing e = if isThing e
@@ -407,7 +454,7 @@ getEnclosing e = if isThing e
 
 setEnclosing
   :: HasProperty s Enclosing
-  => ObjectLike o
+  => HasID o
   => o
   -> Enclosing
   -> State (World s) ()
@@ -417,8 +464,30 @@ setEnclosing e v = if isThing e
   else
     modifyRoom e (objData % roomEnclosing .~ v)
 
+getThingLit
+  :: ObjectLike s o
+  => o
+  -> State (World s) (Maybe ThingLit)
+getThingLit e = if isThing e
+  then (do
+    o <- getThing e
+    return $ o ^? _Just % objData % thingLit)
+  else
+    return Nothing -- property that makes no sense if it's a room
+
+setThingLit
+  :: HasID o
+  => o
+  -> ThingLit
+  -> State (World s) ()
+setThingLit e v = if isThing e
+  then
+    modifyThing e (objData % thingLit .~ v)
+  else
+    pass
+
 modifyObjectFrom
-  :: ObjectLike o
+  :: HasID o
   => StoreLens' s d
   -> o
   -> (Object s d -> Object s d)
@@ -435,14 +504,14 @@ setObjectFrom
 setObjectFrom l o = modifyObjectFrom l o id
 
 modifyThing
-  :: ObjectLike o
+  :: HasID o
   => o
   -> (Thing s -> Thing s)
   -> State (World s) ()
 modifyThing = modifyObjectFrom things
 
 modifyRoom
-  :: ObjectLike o
+  :: HasID o
   => o
   -> (Room s -> Room s)
   -> State (World s) ()
@@ -474,7 +543,7 @@ modifyProperty g s o f = do
 defaultPropertySetter
   :: HasProperty ObjectSpecifics v
   => HasProperty s v
-  => ObjectLike o
+  => HasID o
   => o
   -> v -> State (World s) ()
 defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
@@ -482,7 +551,7 @@ defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
 defaultPropertyGetter
   :: HasProperty ObjectSpecifics v
   => HasProperty s v
-  => ObjectLike o
+  => ObjectLike s o
   => o
   -> State (World s) (Maybe v)
 defaultPropertyGetter e = do
@@ -491,6 +560,30 @@ defaultPropertyGetter e = do
 
 makeSpecificsWithout [GetX, SetX] ''Enclosing
 makeSpecificsWithout [] ''Container
+makeSpecificsWithout [] ''Enterable
+--makeSpecificsWithout [GetX, SetX] ''ThingLit --TODO: flag
+
+getLocation
+  :: ObjectLike s o
+  => o
+  -> State (World s) (Maybe Entity)
+getLocation o = do
+  v <- getThing o
+  let enclosedby = v ^? _Just % containedBy
+  v' <- mapMaybeM enclosedby (\x -> if
+      isRoom x
+    then
+      return $ Just x
+    else
+      getLocation x)
+  return $ join v'
+
+getLocation'
+  ::  ObjectLike s o
+  => o
+  -> World s
+  -> Maybe Entity
+getLocation' o = evalState (getLocation o)
 
 move
   :: HasProperty s Enclosing
@@ -505,7 +598,7 @@ move eObj eLoc = do
         (logError "Could not find object to move.")
         (logError "Could not find enclosing part of location.")
         (\o' _ -> do
-          -- obtain the current location of the thing
+          -- obtain the current container of the thing
           let container = o' ^. containedBy
           oName <- gets $ objectName o'
           contName <- gets $ objectName container
@@ -522,8 +615,8 @@ move eObj eLoc = do
 
 noLongerContains
   :: HasProperty s Enclosing
-  => ObjectLike cont
-  => ObjectLike obj
+  => ObjectLike s cont
+  => ObjectLike s obj
   => cont
   -> obj
   -> State (World s) ()
@@ -532,8 +625,8 @@ noLongerContains cont obj = modifyEnclosing cont
 
 nowContains
   :: HasProperty s Enclosing
-  => ObjectLike cont
-  => ObjectLike obj
+  => ObjectLike s cont
+  => ObjectLike s obj
   => cont
   -> obj
   -> State (World s) ()
@@ -541,11 +634,11 @@ nowContains cont obj = do
   modifyEnclosing cont (enclosingContains %~ ES.insert (getID obj))
   modifyThing obj (objData % thingContainedBy .~ getID cont)
 
-isOpaqueClosedContainer 
+isOpaqueClosedContainer
   :: HasProperty s Container
-  => ObjectLike o
+  => ObjectLike s o
   => o
   -> World s
   -> Bool
-isOpaqueClosedContainer e w = maybe False (\c -> (_containerOpacity c == Opaque) 
+isOpaqueClosedContainer e w = maybe False (\c -> (_containerOpacity c == Opaque)
     && (_containerOpenable c == Closed)) (getContainer' e w)

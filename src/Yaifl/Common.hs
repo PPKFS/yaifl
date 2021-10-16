@@ -21,13 +21,15 @@ module Yaifl.Common
   , ConceptData(..)
   , ObjType(..)
   , ObjectUpdate
-  , ObjectLike(..)
+  , HasID(..)
 
   , Enclosing(..)
   , Container(..)
   , Opacity(..)
   , Enterable(..)
   , Openable(..)
+  , ThingLit(..)
+  , Darkness(..)
 
   , Thing
   , Room
@@ -75,16 +77,21 @@ module Yaifl.Common
   , objSpecifics
   , thingContainedBy
   , roomEnclosing
+  , roomDarkness
   , objectL
   , tsCachedObject
   , things
   , rooms
   , argsSource
 
+  , thingLit
+
   , conceptDetails
 
   , enclosingContains
   , containerEnclosing
+  , containerOpenable
+  , containerEnterable
 
   , _EnclosingSpecifics
   , _ContainerSpecifics
@@ -96,6 +103,8 @@ module Yaifl.Common
   , newEntityID
 
   , reifyObject
+
+  , isType
   )
 where
 
@@ -150,6 +159,9 @@ newtype ObjType = ObjType
 -- lantern) but the cave will be Dark.
 data Darkness = Lighted | Dark deriving (Eq, Show)
 
+-- | Whether a thing is inherently lit or not. This counts for lighting up spaces.
+data ThingLit = Lit | NotLit deriving (Eq, Show)
+
 -- | Whether a room has been visited before or not.
 data IsVisited = Visited | Unvisited deriving (Eq, Show)
 
@@ -159,12 +171,10 @@ type MapConnections = Store Entity
 -- | An abstract grouping of rooms.
 type ContainingRegion = Maybe Entity
 
-data ObjectSpecifics = 
-  NoSpecifics 
-  | EnclosingSpecifics Enclosing 
+data ObjectSpecifics =
+  NoSpecifics
+  | EnclosingSpecifics Enclosing
   | ContainerSpecifics Container deriving stock (Show)
-
-
 
 -- | An 'Object' is any kind of game object. The important part is @a@; which should
 -- probably be one of three kinds (thus parameterisation by t r c):
@@ -194,6 +204,7 @@ data RoomData = RoomData
 -- | Details for things. This is anything tangible.
 data ThingData = ThingData
   { _thingContainedBy :: !Entity
+  , _thingLit :: !ThingLit
   } deriving stock (Generic, Show)
 
 data Enclosing = Enclosing
@@ -260,7 +271,7 @@ data RoomProperties = PlainRoom
 data ConceptProperties = PlainConcept
 
 blankThingData :: ThingData
-blankThingData = ThingData (Entity defaultVoidID)
+blankThingData = ThingData (Entity defaultVoidID) NotLit
 
 blankRoomData
   :: RoomData
@@ -395,13 +406,13 @@ objectL = lens
   )
 
 isThing
-  :: (ObjectLike a)
+  :: (HasID a)
   => a
   -> Bool
 isThing a = getID a >= 0
 
 isRoom
-  :: (ObjectLike a)
+  :: (HasID a)
   => a
   -> Bool
 isRoom = not . isThing
@@ -437,20 +448,20 @@ instance HasBuffer (World s) 'LogBuffer where
 instance HasBuffer (World s) 'SayBuffer where
   bufferL _ = messageBuffers % _1
 
-class ObjectLike n where
+class HasID n where
   getID :: n -> Entity
 
-instance ObjectLike Entity where
+instance HasID Entity where
   getID = id
 
-instance ObjectLike (Object s d) where
+instance HasID (Object s d) where
   getID = _objID
 
-instance ObjectLike (AbstractObject s d) where
+instance HasID (AbstractObject s d) where
   getID (StaticObject o) = getID o
   getID (DynamicObject ts) = getID ts
 
-instance ObjectLike (TimestampedObject s d) where
+instance HasID (TimestampedObject s d) where
   getID (TimestampedObject o _ _) = getID o
 
 instance Functor (Args s) where
@@ -495,4 +506,11 @@ newEntityID
 newEntityID True = entityCounter % _1 <<+~ 1
 newEntityID False = entityCounter % _2 <<-~ 1
 
+-- | Calculate whether one object type is a subclass of another
+isType
+  :: Object s d
+  -> ObjType
+  -> World s
+  -> Bool
+isType o t w = False
 

@@ -55,44 +55,48 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" []
 -- lightLevels (recalc light) is how many levels we can actually see because of light
 -- vl is how many levels we could see in perfect light.
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
--- 100 up. 
+-- 100 up.
 lookingActionSet
-  :: forall s. 
+  :: forall s.
   HasProperty s Container
   => UnverifiedArgs s
   -> World s
   -> Maybe LookingActionVariables
 lookingActionSet Args{..} w = do
   (asThing :: Maybe (Thing s)) <- fromAny <$> _argsSource ^? _Just
+  asThing' <- asThing
   loc <- asThing ^? _Just % containedBy
-  let vl = getVisibilityLevels loc w
-  lightLevels <- (`recalculateLightOfParent` w) <$> asThing
-  return $ LookingActionVariables lightLevels (take lightLevels vl) "looking" 
+  vl <- getVisibilityLevels loc w
+  lightLevels <- (`recalculateLightOfParent` w) asThing'
+  return $ LookingActionVariables lightLevels (take lightLevels vl) "looking"
 
 getVisibilityLevels
   :: HasProperty s Container
-  => ObjectLike o
+  => ObjectLike s o
   => o
   -> World s
-  -> [Entity]
+  -> Maybe [Entity]
 getVisibilityLevels e w = case findVisibilityHolder e w of
-    Nothing -> []
+    Nothing -> Nothing
     Just a' -> if a' == e'
-        then [e']
-        else a' : getVisibilityLevels a' w
+        then Just [e']
+        else (a' :) <$> getVisibilityLevels a' w
     where e' = getID e
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
-findVisibilityHolder 
+findVisibilityHolder
   :: HasProperty s Container
-  => ObjectLike o
+  => ObjectLike s o
   => o
   -> World s
   -> Maybe Entity
-findVisibilityHolder e' w = if isRoom e' || isOpaqueClosedContainer e' w then Just (getID e') else evalState (do
-  t <- getThing e'
-  return $ t ^? _Just % containedBy) w
-  
+findVisibilityHolder e' w =
+  if
+    isRoom e' || isOpaqueClosedContainer e' w
+  then
+    Just (getID e')
+  else
+    getThing' e' w ^? _Just % containedBy
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -101,44 +105,61 @@ findVisibilityHolder e' w = if isRoom e' || isOpaqueClosedContainer e' w then Ju
 -- has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
-recalculateLightOfParent 
-  :: ObjectLike o
+recalculateLightOfParent
+  :: ObjectLike s o
   => o
   -> World s
-  -> Int
-recalculateLightOfParent e w = maybe 0 ( \p' -> 
-  if 
-    offersLight w p' 
-  then
-    1 + recalculateLightOfParent p' w
+  -> Maybe Int
+recalculateLightOfParent e w = do
+  -- TODO: verify if this is fine failing on a room
+  loc <- getThing' e w
+  offers <- offersLight loc w
+  if offers then (do
+    recurs <- recalculateLightOfParent loc w
+    return (1 + recurs)
+    )
   else
-    0) (getLocation' e w)
-  
+    return 0
 
-offersLight = undefined
-getLocation' 
-  :: ObjectLike o
+-- | A thing offers [out] light if:
+-- - it is a lit thing (lit thing or lighted room)
+-- - it contains a thing that has light
+-- - it is see-through and its parent offers light
+offersLight
+  :: ObjectLike s o
   => o
-  -> World w
-  -> Maybe Entity
-getLocation' = undefined
-{-}
--- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
-offersLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
-offersLight e = do
-  litObj <- objectItselfHasLight e
-  l3 <- getComponent @Enclosing e
-  l4 <- isSeeThrough e >>= (\x -> if x then getLocation e >>= maybeM False offersLight else return False)
-  containsLitObj <- maybeM False (anyM hasLight) $ l3 ^? _Just . encloses
-  return $ litObj || l4 || containsLitObj
+  -> World s
+  -> Maybe Bool
+offersLight e w = orM [objIsLit, containsLitObj, seeThruWithParent] where
+  objIsLit = objectItselfHasLight e w
+  seeThruWithParent = (\o -> all (== Just True) [Just $ isSeeThrough o w, parentOffersLight o w]) <$> getThing' e w
+  parentOffersLight o = offersLight (o ^. containedBy)
+  containsLitObj = Nothing --maybeM False (anyM hasLight) $ l3 ^? _Just . encloses
+
+-- | an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
+isSeeThrough
+  :: Thing s
+  -> World s
+  -> Bool
+isSeeThrough e w = isSupporter || isTransparent || isEnterableNotContainer || isOpenContainer where
+  isSupporter = isType e "supporter" w
+  isContainer = isType e "container" w
+  c = getContainer' e w
+  en = getEnterable' e w
+  isTransparent = fmap _containerOpacity c == Just Transparent
+  isOpenContainer = (fmap _containerOpenable c == Just Open) && isContainer
+  isEnterableNotContainer = en == Just Enterable && not isContainer
 
 -- either a lit object or a lighted room
-objectItselfHasLight :: forall w m. WithStandardWorld w m => Entity -> m Bool
-objectItselfHasLight e = do
-  l1 <- getComponent @(Thing w) e
-  l2 <- getComponent @RoomData e
-  return $ (l1 ^? _Just . thingPhysical . lit == Just Lit) || (l2 ^? _Just . darkness == Just Lighted)
-
+objectItselfHasLight
+  :: ObjectLike s o
+  => o
+  -> World s
+  -> Maybe Bool
+objectItselfHasLight e = asThingOrRoom' e
+  (\x -> x ^. objData % thingLit == Lit)
+  (\x -> x ^. objData % roomDarkness == Lighted)
+{-
 hasLight :: WithStandardWorld w m => Entity -> m Bool
 hasLight e = do
   litObj <- objectItselfHasLight e
@@ -147,18 +168,7 @@ hasLight e = do
   containsLitObj <- maybeM False (anyM hasLight) $ l1 ^? _Just . encloses
   return $ litObj || l2 && containsLitObj
 
---an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
-isSeeThrough :: WithStandardWorld w m => Entity -> m Bool
-isSeeThrough e = do
-  l1 <- getComponent @ContainerData e
-  l2 <- getComponent @Openable e
-  l3 <- getComponent @Supporter e
-  l4 <- getComponent @Enterable e
-  isContainer <- e `isType` "container"
-  let isTransparent = fmap _opacity l1 == Just Transparent
-      isOpenContainer = l2 == Just Open && isJust l1
-      isEnterableNotContainer = l4 == Just Enterable && not isContainer
-  return $ isJust l3 || isTransparent || isEnterableNotContainer || isOpenContainer
+
 
 
 

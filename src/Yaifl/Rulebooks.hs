@@ -144,6 +144,9 @@ runRulebookAndReturnVariables Rulebook{..} args = runState $ do
   modify $ addLogContext _rbName
   logInfo $ "Following the " <> _rbName <> " rulebook"
   argParse <- gets $ _rbParseArguments args
+  case argParse of
+    Nothing -> logError $ "Couldn't parse rulebook vars for " <> _rbName
+    Just _ -> logVerbose "Parsed args..."
   -- TODO: logging
   res <- maybe (return Nothing) (\x -> do
     (v, r1) <- (state . processRuleList _rbRules) x
@@ -162,7 +165,7 @@ processRuleList
 processRuleList [] v = ((v, Nothing),)
 processRuleList (x : xs) args = runState $ do
         unless (_ruleName x == "")
-          (logVerbose $ "Following the " <> _ruleName x)
+          (logVerbose $ "Following the " <> _ruleName x <> " rule")
         (v, res) <- state $ _runRule x args
         -- if we hit nothing, continue; otherwise return
         whenJust res (const $ logVerbose $ "Finishing rulebook on rule " <> _ruleName x)
@@ -181,9 +184,9 @@ whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
     (const $ const (Just ()))
-    [ makeRule "display banner rule" $ ruleEnd . sayIntroText
-    , makeRule "position player in world rule" (runState positionPlayer)
-    , makeRule "initial room description rule" initRoomDescription
+    [ makeRule "Display Banner" $ ruleEnd . sayIntroText
+    , makeRule "Position player in world" (runState positionPlayer)
+    , makeRule "Initial room description" initRoomDescription
     ]
 
 initRoomDescription
