@@ -25,6 +25,9 @@ module Yaifl.Common
 
   , Enclosing(..)
   , Container(..)
+  , Opacity(..)
+  , Enterable(..)
+  , Openable(..)
 
   , Thing
   , Room
@@ -76,6 +79,7 @@ module Yaifl.Common
   , tsCachedObject
   , things
   , rooms
+  , argsSource
 
   , conceptDetails
 
@@ -202,7 +206,7 @@ data Enterable = Enterable | NotEnterable deriving stock (Eq, Show)
 data Openable = Open | Closed deriving stock (Eq, Show)
 
 data Container = Container
-  { _opacity :: Opacity
+  { _containerOpacity :: Opacity
   , _containerEnclosing :: Enclosing
   , _containerOpenable :: Openable
   , _containerEnterable :: Enterable
@@ -449,8 +453,10 @@ instance ObjectLike (AbstractObject s d) where
 instance ObjectLike (TimestampedObject s d) where
   getID (TimestampedObject o _ _) = getID o
 
+instance Functor (Args s) where
+  fmap f = argsVariables %~ f
 instance Functor (Object s) where
-  fmap f o = o & objData %~ f
+  fmap f = objData %~ f
 
 instance Foldable (Object s) where
   foldMap f = f . _objData

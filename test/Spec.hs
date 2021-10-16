@@ -99,7 +99,7 @@ testHarness w _ consume = do
                 logInfo "\n---------------"
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
-                state $ runRulebook (_whenPlayBegins w') (const ())
+                state $ runRulebook (_whenPlayBegins w') ()
                 --do the commands...
                 ) w
     w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2

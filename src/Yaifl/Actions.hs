@@ -16,7 +16,8 @@ addAction ac =
   actions % at (_actionName ac) ?~ ac
 
 addBaseActions
-  :: World s
+  :: HasProperty s Container
+  => World s
   -> World s
 addBaseActions = foldr (.) id [
     addAction lookingActionImpl
@@ -36,7 +37,8 @@ data LookingActionVariables = LookingActionVariables
   deriving (Show)
 
 lookingActionImpl
-  :: Action s
+  :: HasProperty s Container
+  => Action s
 lookingActionImpl = Action
   "looking"
   ["look", "looking"]
@@ -47,34 +49,43 @@ lookingActionImpl = Action
   (makeActionRulebook "report looking rulebook" [])
 
 carryOutLookingRules :: ActionRulebook s LookingActionVariables
-carryOutLookingRules = makeActionRulebook "a" []
+carryOutLookingRules = makeActionRulebook "Carry Out Looking" []
 
+-- if we have no source, then we have no idea where we are looking 'from'; return nothing
+-- lightLevels (recalc light) is how many levels we can actually see because of light
+-- vl is how many levels we could see in perfect light.
+-- so if there's no light at all, then we take none of the levels - even if we could potentially see
+-- 100 up. 
 lookingActionSet
-  :: UnverifiedArgs s
+  :: forall s. 
+  HasProperty s Container
+  => UnverifiedArgs s
   -> World s
   -> Maybe LookingActionVariables
-lookingActionSet args w = fmap (\x -> LookingActionVariables lightLevels (take lightLevels x) "looking") vl
-            where
-              o = _argsSource args
-              loc = fromAny o ^? _Just % containedBy
-              vl = (`getVisibilityLevels` w) =<< loc
-              lightLevels = recalculateLightOfParent o
+lookingActionSet Args{..} w = do
+  (asThing :: Maybe (Thing s)) <- fromAny <$> _argsSource ^? _Just
+  loc <- asThing ^? _Just % containedBy
+  let vl = getVisibilityLevels loc w
+  lightLevels <- (`recalculateLightOfParent` w) <$> asThing
+  return $ LookingActionVariables lightLevels (take lightLevels vl) "looking" 
 
 getVisibilityLevels
-  :: ObjectLike o
+  :: HasProperty s Container
+  => ObjectLike o
   => o
   -> World s
-  -> Maybe [Entity]
+  -> [Entity]
 getVisibilityLevels e w = case findVisibilityHolder e w of
-    Nothing -> Nothing
+    Nothing -> []
     Just a' -> if a' == e'
-        then Just [e']
-        else (a' :) <$> getVisibilityLevels a' w
+        then [e']
+        else a' : getVisibilityLevels a' w
     where e' = getID e
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder 
-  :: ObjectLike o
+  :: HasProperty s Container
+  => ObjectLike o
   => o
   -> World s
   -> Maybe Entity
@@ -93,23 +104,24 @@ findVisibilityHolder e' w = if isRoom e' || isOpaqueClosedContainer e' w then Ju
 recalculateLightOfParent 
   :: ObjectLike o
   => o
-  -> Entity 
   -> World s
   -> Int
-recalculateLightOfParent e = do
-  p <- getLocation e
-  maybe
-    (return 0)
-    ( \p' ->
-        ifM
-          (offersLight p')
-          ((1 +) <$> recalculateLightOfParent p')
-          (return 0)
-    )
-    p
+recalculateLightOfParent e w = maybe 0 ( \p' -> 
+  if 
+    offersLight w p' 
+  then
+    1 + recalculateLightOfParent p' w
+  else
+    0) (getLocation' e w)
+  
 
 offersLight = undefined
-getLocation = undefined
+getLocation' 
+  :: ObjectLike o
+  => o
+  -> World w
+  -> Maybe Entity
+getLocation' = undefined
 {-}
 -- offering light is a lit thing (lit thing or lighted room), or has a thing that has light, or is see-through and its parent offers light
 offersLight :: forall w m. WithStandardWorld w m => Entity -> m Bool

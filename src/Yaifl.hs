@@ -31,7 +31,7 @@ newWorld
   -> World s
 newWorld = (`execState` addBaseActions blankWorld)
 
-type HasStandardProperties s = HasProperty s Enclosing
+type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container)
 blankWorld 
   :: HasStandardProperties s
   => World s

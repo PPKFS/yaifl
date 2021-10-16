@@ -57,6 +57,11 @@ makeRule
   -> Rule o () r
 makeRule n f = Rule n (\_ w -> first ((),) $ f w)
 
+blankRule
+  :: Text
+  -> Rule o v r
+blankRule n = Rule n (\a w -> ((a, Nothing), execState (logVerbose (n <> " needs implementing")) w))
+
 -- | Append this to the end of a rule to remove any unnecessary return values
 ruleEnd
   :: World o
@@ -68,39 +73,29 @@ defaultActionProcessingRules
   -> UnverifiedArgs o
   -> World o
   -> (Maybe Bool, World o)
-defaultActionProcessingRules Action{..} u = runRulebook (Rulebook 
-  "Action Processing" 
-  (Just True) 
-  _actionParseArguments
+defaultActionProcessingRules Action{..} = runRulebook (Rulebook
+  "Action Processing"
+  (Just True)
+  (\uv w -> (\x -> fmap (const x) uv) <$> _actionParseArguments uv w)
   -- v -> World s -> ((v, Maybe r), World s)
-  [
-    Rule "before stage rule" (\a w -> ((a, Nothing), w))
+  [ blankRule "Before stage rule"
+  , blankRule "carrying requirements rule"
+  , blankRule "basic visibility rule"
+  , blankRule "instead stage rule"
+  , blankRule "requested actions require persuasion rule"
+  , blankRule "carry out requested actions rule"
+  , blankRule "investigate player awareness rule"
+  , blankRule "check stage rule"
+  --v -> World s -> ((v, Maybe r), World s)
+  -- Rulebook o (Args o v) (Args o v) RuleOutcome -> Args o v -> World o -> (Maybe RuleOutcome, World o)
+  , Rule "carry out stage rule"
+        ( \v w -> first (fromMaybe (v, Nothing)) $ runRulebookAndReturnVariables _actionCarryOutRules v w)
+  , blankRule "after stage rule"
+  , blankRule "investigate player awareness after rule"
+  , blankRule "report stage rule"
+  , blankRule "clean actions rule"
+  ])
 
-  ]) (const u)
-
-{-
-
-actionProcessingRules :: Action w v -> [Rule w v Bool]
-actionProcessingRules a =
-    [ makeBlankRuleWithVariables "before stage rule"
-    , makeBlankRuleWithVariables "carrying requirements rule"
-    , makeBlankRuleWithVariables "basic visibility rule"
-    , makeBlankRuleWithVariables "instead stage rule"
-    , makeBlankRuleWithVariables "requested actions require persuasion rule"
-    , makeBlankRuleWithVariables "carry out requested actions rule"
-    , makeBlankRuleWithVariables "investigate player awareness rule"
-    , makeBlankRuleWithVariables "check stage rule"
-    , RuleWithVariables
-        "carry out stage rule"
-        (
-            getRulebookVariables >>= runRulebook . _carryOutActionRules a
-        )
-    , makeBlankRuleWithVariables "after stage rule"
-    , makeBlankRuleWithVariables "investigate player awareness after rule"
-    , makeBlankRuleWithVariables "report stage rule"
-    , makeBlankRuleWithVariables "clean actions rule"
-    ]
--}
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction
@@ -135,19 +130,27 @@ runAction args act w = _actionProcessing w act args w
 -- | Run a rulebook. Mostly this just adds some logging baggage.
 runRulebook
   :: Rulebook o ia v re
-  -> (Timestamp -> ia)
+  -> ia
   -> World o
   -> (Maybe re, World o)
-runRulebook Rulebook{..} args = runState $ do
-  ta <- gets (args . getGlobalTime)
+runRulebook rb ia w = first (snd =<<) $ runRulebookAndReturnVariables rb ia w
+
+runRulebookAndReturnVariables
+  :: Rulebook o ia v re
+  -> ia
+  -> World o
+  -> (Maybe (v, Maybe re), World o)
+runRulebookAndReturnVariables Rulebook{..} args = runState $ do
   modify $ addLogContext _rbName
   logInfo $ "Following the " <> _rbName <> " rulebook"
-  argParse <- gets $ _rbParseArguments ta
+  argParse <- gets $ _rbParseArguments args
   -- TODO: logging
-  res <- maybe (return Nothing) (state . processRuleList _rbRules) argParse
+  res <- maybe (return Nothing) (\x -> do
+    (v, r1) <- (state . processRuleList _rbRules) x
+    return $ Just (v, r1)) argParse
   logInfo $ "Finished the " <> _rbName <> " rulebook"
   modify popLogContext
-  return $ res <|> _rbDefaultOutcome
+  return $ (\(v, r1) -> Just (v, r1 <|> _rbDefaultOutcome)) =<< res
 
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
@@ -155,8 +158,8 @@ processRuleList
   :: [Rule o v re]
   -> v
   -> World o
-  -> (Maybe re, World o)
-processRuleList [] _ = (Nothing,)
+  -> ((v, Maybe re), World o)
+processRuleList [] v = ((v, Nothing),)
 processRuleList (x : xs) args = runState $ do
         unless (_ruleName x == "")
           (logVerbose $ "Following the " <> _ruleName x)
@@ -165,7 +168,7 @@ processRuleList (x : xs) args = runState $ do
         whenJust res (const $ logVerbose $ "Finishing rulebook on rule " <> _ruleName x)
         state (\w' -> maybe
           (processRuleList xs v w')
-          (\r -> (Just r, w')) res)
+          (\r -> ((v, Just r), w')) res)
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "When Play Begins"
@@ -186,13 +189,14 @@ whenPlayBeginsRules = Rulebook
 initRoomDescription
   :: World o
   -> (Maybe a, World o)
-initRoomDescription = first (const Nothing) . tryAction "looking" playerNoArgs
+initRoomDescription w = (Nothing, snd $ tryAction "looking" (playerNoArgs w) w)
 
 -- | No Arguments, player source.
 playerNoArgs
-  :: Timestamp
-  -> UnverifiedArgs o
-playerNoArgs = withPlayerSource <$> noArgs
+  :: World s
+  -> Timestamp
+  -> UnverifiedArgs s
+playerNoArgs w = withPlayerSource w <$> noArgs
 
 -- | No Arguments, no source.
 noArgs
@@ -201,18 +205,19 @@ noArgs
 noArgs = Args Nothing []
 
 withPlayerSource
-  :: Args o v
-  -> Args o v
-withPlayerSource = error "not implemented"
+  :: World s
+  -> Args s v
+  -> Args s v
+withPlayerSource w = argsSource .~ (toAny <$> getPlayer w)
 
 positionPlayer
   :: HasProperty s Enclosing
   => State (World s) (Maybe Bool)
 positionPlayer = do
   fr <- gets _firstRoom
-  pl <- gets getPlayer
+  pl <- gets _currentPlayer
   case fr of
-    Nothing -> state $ failRuleWithError 
+    Nothing -> state $ failRuleWithError
       "No rooms have been made, so cannot place the player."
     Just fr' -> do
       m <- move pl fr'
@@ -228,8 +233,8 @@ failRuleWithError t w = (Just False, execState (logError t) w)
 
 getPlayer
   :: World o
-  -> Entity
-getPlayer = _currentPlayer
+  -> Maybe (Thing o)
+getPlayer w = getThing' (_currentPlayer w) w
 
 sayIntroText
   :: World o
