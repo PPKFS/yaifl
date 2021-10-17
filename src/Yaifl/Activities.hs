@@ -1,9 +1,6 @@
 module Yaifl.Activities
-  ( doActivity'
-    {-doActivity,
-    addBaseActivities,
-    makeActivityEx,
-    makeActivity,
+  ( defaultActivities
+    {-
 
     printingNameOfADarkRoomName,
     printingDescriptionOfADarkRoomName,
@@ -17,93 +14,13 @@ module Yaifl.Activities
 where
 
 import Yaifl.Common
-import Yaifl.Prelude
-import Yaifl.Rulebooks
+
+import Yaifl.Activities.PrintingADarkRoom
+defaultActivities :: ActivityCollection s
+defaultActivities = ActivityCollection
+  { _printingNameOfADarkRoom = printingNameOfADarkRoomImpl
+  }
 {-}
-addBaseActivities :: m ()
-addBaseActivities = do
-  addActivity printingNameOfADarkRoomImpl
-  addActivity printingNameOfSomethingImpl
-  addActivity printingDescriptionOfADarkRoomImpl
-  addActivity describingLocaleActivityImpl
-  addActivity choosingNotableLocaleObjectsActivityImpl
-  addActivity printingLocaleParagraphAboutActivityImpl
-  addActivity listingContentsOfSomethingImpl
-
-makeActivityEx ::
-  Text ->
-  (Int -> Bool) ->
-  ([Entity] -> Maybe v) ->
-  [Rule w v RuleOutcome] ->
-  [Rule w v RuleOutcome] ->
-  [Rule w v RuleOutcome] ->
-  Activity w v
-makeActivityEx n appliesTo setVars before forRules after =
-  Activity
-    n
-    appliesTo
-    (\v -> makeRulebook "set activity variables rulebook" [Rule "set activity variables" (return $ setVars v)])
-    (makeRulebookWithVariables "before activity rulebook" before)
-    (makeRulebookWithVariables "for activity rulebook" forRules)
-    (makeRulebookWithVariables "after activity rulebook" after)
-
-makeActivity :: Text -> (Int -> Bool, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
-makeActivity n (app, setVars) fo = makeActivityEx n app setVars [] [RuleWithVariables "" fo] []
--}
-doActivity' = undefined
-{-}
-doActivity'
-  :: (ActivityStore -> Activity a b c )
-  -> c
-  -> World s
-  -> (Maybe c, World s)
-doActivity' = evalState . doActivity
-
-doActivity
-  :: (ActivityStore -> Activity a b c)
-  -> c
-  -> State (World s) (Maybe c)
-{
-doActivity :: WithGameData w m => Text -> [Entity] -> m (Maybe RuleOutcome)
-doActivity n args = do
-  ac <- use $ activityStore . at n
-  maybe
-    ( do
-        logError $ "couldn't find activity " <> n
-        return $ Just False
-    )
-    ( \(BoxedActivity (Activity _ app setRb bef fo aft)) -> do
-        iv <- if app (length args) then runRulebook (setRb args) else return Nothing
-        maybe
-          ( do
-              logError "Couldn't parse activity arguments.."
-              return $ Just False
-          )
-          ( \x -> do
-              (r1, _) <- runRulebookEx (bef x)
-              ry <- runRulebookEx . fo $ fromMaybe x r1
-              rz <- runRulebookEx . aft $ fromMaybe x (fst ry)
-              return (snd rz)
-          )
-          iv
-    )
-    ac
-
-printingNameOfADarkRoomName :: Text
-printingNameOfADarkRoomName = "printing the name of a dark room activity"
-
-printingNameOfADarkRoomImpl :: Activity w ()
-printingNameOfADarkRoomImpl =
-  makeActivity
-    printingNameOfADarkRoomName
-    ignoreArgs
-    ( do
-        say "Darkness"
-        return $ Just True
-    )
-
-printingDescriptionOfADarkRoomName :: Text
-printingDescriptionOfADarkRoomName = "printing the description of a dark room activity"
 
 printingDescriptionOfADarkRoomImpl :: Activity w ()
 printingDescriptionOfADarkRoomImpl =

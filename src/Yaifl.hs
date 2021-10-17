@@ -23,7 +23,7 @@ import Yaifl.Actions
 import Yaifl.Rulebooks
 import Yaifl.Messages
 import qualified Data.Map.Strict as DM
---import Yaifl.Activities
+import Yaifl.Activities
 
 newWorld
   :: HasStandardProperties s

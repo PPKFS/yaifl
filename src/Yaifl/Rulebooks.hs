@@ -4,6 +4,7 @@ module Yaifl.Rulebooks
     defaultActionProcessingRules,
     introText,
     runRulebook,
+    runRulebookAndReturnVariables,
     noArgs,
 
     makeRule,

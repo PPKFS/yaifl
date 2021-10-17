@@ -40,6 +40,7 @@ module Yaifl.Types
   , UnverifiedArgs
   , ActivityCollection(..)
   , Args (..)
+  , Activity(..)
   -- * World
   , World (..)
   , MessageBuffer (..)
@@ -64,6 +65,7 @@ module Yaifl.Types
   , globalTime
   , title
   , entityCounter
+  , activities
 
   , thingLit
 
@@ -279,10 +281,17 @@ data Action o where
     , _actionReportRules :: !(ActionRulebook o v)
     } -> Action o
 
+data Activity o v r = Activity
+    { _activityName :: !Text
+    , _activityDefault :: Maybe r
+    , _activityBeforeRules :: !(Rulebook o v v ())
+    , _activityCarryOutRules :: !(Rulebook o v v r)
+    , _activityAfterRules :: !(Rulebook o v v ())
+    }
+
 -- | TODO
 data ActivityCollection o = ActivityCollection
-  { _dummy1 :: !Int
-  , _dummy2 :: !Int
+  { _printingNameOfADarkRoom :: !(Activity o () ())
   }
 
 data World o = World

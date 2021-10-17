@@ -125,17 +125,10 @@ library
   other-modules:
                       Yaifl.Prelude
                       Yaifl.ObjectLogging
-                      -- Yaifl.Components.Room
-                      --, Yaifl.Components.Enclosing
-                      --, Yaifl.Components.Object
-                      --, Yaifl.Components.Container
-                      --, Yaifl.Components.Openable
-                      --, Yaifl.Components.Supporter
-
-                      --, Yaifl.Components.Enterable
-                       --, Yaifl.Components.Direction
-                      --, Yaifl.Components.Player
-                      --, Yaifl.Utils
+                      Yaifl.Activities.PrintingADarkRoom
+                      Yaifl.Activities.Common
+                      Yaifl.Actions.Common
+                      Yaifl.Actions.Looking
 test-suite yaifl-test
   import:              common-options
   type:                exitcode-stdio-1.0

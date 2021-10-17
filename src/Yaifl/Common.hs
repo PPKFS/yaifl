@@ -12,7 +12,6 @@ module Yaifl.Common
   , blankThingData
   , blankRoomData
   , defaultPlayerID
-  , defaultActivities
   -- * Object querying
   , isThing
   , isRoom
@@ -54,10 +53,6 @@ blankThingData = ThingData (Entity defaultVoidID) NotLit
 
 blankRoomData :: RoomData
 blankRoomData = RoomData Unvisited Lighted emptyStore Nothing emptyEnclosing
-
--- | TODO
-defaultActivities :: ActivityCollection o
-defaultActivities = ActivityCollection 1 1
 
 defaultPlayerID :: Int
 defaultPlayerID = 1
