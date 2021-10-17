@@ -23,6 +23,7 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List.NonEmpty as NonEmpty
 import Data.List ((\\))
+import qualified Data.EnumSet
 -- first let's define our own alterF for EnumMap...
 alterEMF
   :: (Functor f, Enum k)
@@ -98,13 +99,13 @@ maybeOrReport2 c1 c2 err1 err2 f = do
     when (isNothing c1) err1
     when (isNothing c2) err2
     sequenceA (f <$> c1 <*> c2)
-  
+
 infixl 4 <$$>
-(<$$>) 
+(<$$>)
   :: Functor f
   => Functor g
-  => (a -> b) 
-  -> f (g a) 
+  => (a -> b)
+  -> f (g a)
   -> f (g b)
 h <$$> m = fmap h <$> m
 
@@ -115,8 +116,8 @@ eitherJoin
 eitherJoin t1 t2 = (_Left % t1) `thenATraverse` (_Right % t2)
 
 thenATraverse
-  :: Is t1 An_AffineTraversal 
-  => Is t2 An_AffineTraversal 
+  :: Is t1 An_AffineTraversal
+  => Is t2 An_AffineTraversal
   => Optic t1 ix s s a b
   -> Optic t2 ix s s a b
   -> AffineTraversal s s a b
@@ -134,6 +135,6 @@ universeSans
   :: Bounded x
   => Enum x
   => Ord x
-  => [x] 
+  => [x]
   -> [x]
 universeSans x = universe \\ x

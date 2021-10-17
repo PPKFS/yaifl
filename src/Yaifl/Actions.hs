@@ -6,8 +6,9 @@ where
 import Yaifl.Common
 import Yaifl.Prelude
 import Yaifl.Objects
+import qualified Data.EnumSet as DES
 
-
+type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 addAction
   :: Action s
   -> World s
@@ -16,7 +17,7 @@ addAction ac =
   actions % at (_actionName ac) ?~ ac
 
 addBaseActions
-  :: HasProperty s Container
+  :: HasLookingProperties s
   => World s
   -> World s
 addBaseActions = foldr (.) id [
@@ -37,7 +38,7 @@ data LookingActionVariables = LookingActionVariables
   deriving (Show)
 
 lookingActionImpl
-  :: HasProperty s Container
+  :: HasLookingProperties s
   => Action s
 lookingActionImpl = Action
   "looking"
@@ -58,7 +59,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" []
 -- 100 up.
 lookingActionSet
   :: forall s.
-  HasProperty s Container
+  HasLookingProperties s
   => UnverifiedArgs s
   -> World s
   -> Maybe LookingActionVariables
@@ -71,7 +72,7 @@ lookingActionSet Args{..} w = do
   return $ LookingActionVariables lightLevels (take lightLevels vl) "looking"
 
 getVisibilityLevels
-  :: HasProperty s Container
+  :: HasLookingProperties s
   => ObjectLike s o
   => o
   -> World s
@@ -85,7 +86,7 @@ getVisibilityLevels e w = case findVisibilityHolder e w of
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder
-  :: HasProperty s Container
+  :: HasLookingProperties s
   => ObjectLike s o
   => o
   -> World s
@@ -106,7 +107,8 @@ findVisibilityHolder e' w =
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent
-  :: ObjectLike s o
+  :: HasLookingProperties s
+  => ObjectLike s o
   => o
   -> World s
   -> Maybe Int
@@ -121,36 +123,54 @@ recalculateLightOfParent e w = do
   else
     return 0
 
--- | A thing offers [out] light if:
+-- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
 -- - it contains a thing that has light
 -- - it is see-through and its parent offers light
+-- this goes DOWN the object tree; the light goes to its contents
 offersLight
-  :: ObjectLike s o
+  :: HasLookingProperties s
+  => ObjectLike s o
   => o
   -> World s
   -> Maybe Bool
-offersLight e w = orM [objIsLit, containsLitObj, seeThruWithParent] where
-  objIsLit = objectItselfHasLight e w
-  seeThruWithParent = (\o -> all (== Just True) [Just $ isSeeThrough o w, parentOffersLight o w]) <$> getThing' e w
-  parentOffersLight o = offersLight (o ^. containedBy)
-  containsLitObj = Nothing --maybeM False (anyM hasLight) $ l3 ^? _Just . encloses
+offersLight e w = do
+  -- this will short circuit if we can't find e
+  objIsLit <- objectItselfHasLight e w
+  -- it is an object (else Nothing)
+  -- it is see through
+  -- its parent offers light
+  let seeThruWithParent = maybe False
+        (\o -> all (( == True) . fromMaybe False) [Just $ isSeeThrough o w, parentOffersLight o w]) (getThing' e w)
+      parentOffersLight o = offersLight (o ^. containedBy)
+  return $ objIsLit || seeThruWithParent || containsLitObj e w
 
 -- | an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
 isSeeThrough
-  :: Thing s
+  :: HasLookingProperties s
+  => Thing s
   -> World s
   -> Bool
 isSeeThrough e w = isSupporter || isTransparent || isEnterableNotContainer || isOpenContainer where
-  isSupporter = isType e "supporter" w
-  isContainer = isType e "container" w
+  isSupporter = isType e (ObjType "supporter") w
+  isContainer = isType e (ObjType "container") w
   c = getContainer' e w
   en = getEnterable' e w
   isTransparent = fmap _containerOpacity c == Just Transparent
   isOpenContainer = (fmap _containerOpenable c == Just Open) && isContainer
   isEnterableNotContainer = en == Just Enterable && not isContainer
 
--- either a lit object or a lighted room
+containsLitObj
+  :: HasLookingProperties s
+  => ObjectLike s o
+  => o
+  -> World s
+  -> Bool
+containsLitObj e w = maybe False (\e' -> any hasLightOrNothing (DES.elems $ e' ^. enclosingContains)) (getEnclosing' e w)
+  where
+    hasLightOrNothing o = fromMaybe False (hasLight o w)
+
+-- | either a lit object or a lighted room
 objectItselfHasLight
   :: ObjectLike s o
   => o
@@ -159,19 +179,26 @@ objectItselfHasLight
 objectItselfHasLight e = asThingOrRoom' e
   (\x -> x ^. objData % thingLit == Lit)
   (\x -> x ^. objData % roomDarkness == Lighted)
+
+-- | (4) An object has light if:
+-- (a) it itself has the light attribute set, or
+-- (b) it is see-through and any of its immediate possessions have light, or
+-- (c) any object it places in scope using the property add_to_scope has light.
+-- ignoring (c) for now; TODO?
+-- this goes UP the object tree
+hasLight
+  :: HasLookingProperties s
+  => ObjectLike s o
+  => o
+  -> World s
+  -> Maybe Bool
+hasLight e w = do
+  -- short circuits if o is an invalid object
+  litObj <- objectItselfHasLight e w
+  let isSeeThroughObj = maybe False (`isSeeThrough` w) (getThing' e w)
+  return $ litObj || isSeeThroughObj && containsLitObj e w
+
 {-
-hasLight :: WithStandardWorld w m => Entity -> m Bool
-hasLight e = do
-  litObj <- objectItselfHasLight e
-  l1 <- getComponent @Enclosing e
-  l2 <- isSeeThrough e
-  containsLitObj <- maybeM False (anyM hasLight) $ l1 ^? _Just . encloses
-  return $ litObj || l2 && containsLitObj
-
-
-
-
-
 
 
 carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome

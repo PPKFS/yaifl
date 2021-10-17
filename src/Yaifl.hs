@@ -26,13 +26,13 @@ import qualified Data.Map.Strict as DM
 --import Yaifl.Activities
 
 newWorld
-  :: HasStandardProperties s 
+  :: HasStandardProperties s
   => State (World s) v
   -> World s
 newWorld = (`execState` addBaseActions blankWorld)
 
-type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container)
-blankWorld 
+type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container, HasProperty s Enterable)
+blankWorld
   :: HasStandardProperties s
   => World s
 blankWorld = World
