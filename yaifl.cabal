@@ -60,9 +60,9 @@ common common-options
     ghc-options:
 
   default-language:    Haskell2010
-  default-extensions: 
-    NoImplicitPrelude 
-    OverloadedStrings 
+  default-extensions:
+    NoImplicitPrelude
+    OverloadedStrings
     ApplicativeDo
     BangPatterns
     BlockArguments
@@ -119,7 +119,7 @@ library
                       --, Yaifl.Components
                       --, Yaifl.Rulebooks
                       Yaifl.Actions
-                      --, Yaifl.Activities
+                      Yaifl.Activities
   other-modules:
                       Yaifl.Prelude
                       -- Yaifl.Components.Room

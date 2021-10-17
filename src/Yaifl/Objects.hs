@@ -52,6 +52,7 @@ module Yaifl.Objects
   , HasProperty
 
   , Prettify(..)
+  , shortPrint
 
   ) where
 
@@ -76,6 +77,8 @@ instance Prettify o => Prettify (Maybe o) where
   prettify Nothing = "Nothing"
   prettify (Just s) = prettify s
 
+instance Prettify Text where
+  prettify = id
 instance Prettify (Object s d) where
   prettify Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")\n" <> toStrict (pString (toString s)) where
     s = "{ Description = " <> _objDescription <>
@@ -90,6 +93,13 @@ instance Prettify ObjType where
 instance Prettify (Either a b) where
   prettify = either prettify prettify
 
+instance Prettify [a] where
+  prettify e = mconcat $ map prettify e
+
+shortPrint
+  :: Object s d
+  -> Text
+shortPrint Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")"
 logObject
   :: ObjectLike s o
   => Text
@@ -297,6 +307,10 @@ instance ObjectLike s (Thing s) where
 
 instance ObjectLike s (Room s) where
   getRoom = return . Just
+
+instance ObjectLike s (AnyObject s) where
+  getThing = return . fromAny
+  getRoom = return . fromAny
 
 asThingOrRoom'
   :: ObjectLike s o

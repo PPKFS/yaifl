@@ -1,9 +1,10 @@
 module Yaifl.Activities
-  ( doActivity,
+  ( doActivity'
+    {-doActivity,
     addBaseActivities,
     makeActivityEx,
     makeActivity,
-    doActivity',
+
     printingNameOfADarkRoomName,
     printingDescriptionOfADarkRoomName,
     describingLocaleActivityName,
@@ -11,26 +12,15 @@ module Yaifl.Activities
     printName,
     capitalThe,
     printingLocaleParagraphAboutActivityImpl,
-    printingLocaleParagraphAboutActivityName,
+    printingLocaleParagraphAboutActivityName,-}
   )
 where
 
-import Colog
-import Control.Bool hiding (unlessM, whenM)
-import qualified Control.Monad.ListM as LM
-import qualified Data.IntMap.Strict as DM
-import qualified Data.List as DL
-import qualified Data.Set as DS
 import Yaifl.Common
-import Yaifl.Components
 import Yaifl.Prelude
 import Yaifl.Rulebooks
-import Yaifl.Utils
-
-addActivity :: (Show v, WithGameData w m) => Activity w v -> m ()
-addActivity ac = activityStore . at (_activityName ac) ?= BoxedActivity ac
-
-addBaseActivities :: WithStandardWorld w m => m ()
+{-}
+addBaseActivities :: m ()
 addBaseActivities = do
   addActivity printingNameOfADarkRoomImpl
   addActivity printingNameOfSomethingImpl
@@ -59,10 +49,21 @@ makeActivityEx n appliesTo setVars before forRules after =
 
 makeActivity :: Text -> (Int -> Bool, [Entity] -> Maybe v) -> RuleEvaluation w v -> Activity w v
 makeActivity n (app, setVars) fo = makeActivityEx n app setVars [] [RuleWithVariables "" fo] []
+-}
+doActivity' = undefined
+{-}
+doActivity'
+  :: (ActivityStore -> Activity a b c )
+  -> c
+  -> World s
+  -> (Maybe c, World s)
+doActivity' = evalState . doActivity
 
-doActivity' :: WithGameData w m => Text -> m (Maybe RuleOutcome)
-doActivity' n = doActivity n []
-
+doActivity
+  :: (ActivityStore -> Activity a b c)
+  -> c
+  -> State (World s) (Maybe c)
+{
 doActivity :: WithGameData w m => Text -> [Entity] -> m (Maybe RuleOutcome)
 doActivity n args = do
   ac <- use $ activityStore . at n
@@ -534,3 +535,4 @@ willRecurse e = do
 
 isMatchingContainers :: (HasStore w Openable, WithGameData w m) => Entity -> Entity -> m Bool
 isMatchingContainers e1 e2 = getComponent @Openable e2 <==> getComponent @Openable e1
+-}

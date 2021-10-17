@@ -103,6 +103,7 @@ module Yaifl.Common
   , newEntityID
 
   , reifyObject
+  , eqObject
 
   , isType
   )
@@ -191,6 +192,11 @@ data Object b a = Object
   , _objData :: !a
   } deriving stock (Generic, Show)
 
+eqObject
+  :: Object s d
+  -> Object s e
+  -> Bool
+eqObject a b = _objID a == _objID b
 data ObjectData
 -- | Details for room objects. This is anything which is...well, a room. Nontangible.
 data RoomData = RoomData

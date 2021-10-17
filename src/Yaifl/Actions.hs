@@ -6,7 +6,10 @@ where
 import Yaifl.Common
 import Yaifl.Prelude
 import Yaifl.Objects
+import Yaifl.Messages
+import Yaifl.Rulebooks
 import qualified Data.EnumSet as DES
+import qualified Prettyprinter.Render.Terminal as PPTTY
 
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 addAction
@@ -30,12 +33,17 @@ makeActionRulebook
   -> ActionRulebook o v
 makeActionRulebook n = Rulebook n Nothing (const . Just)
 
-data LookingActionVariables = LookingActionVariables
-  { _visibilityCount :: Int,
-    _visibilityLevels :: [Entity],
-    _roomDescribingAction :: Text
+data LookingActionVariables s = LookingActionVariables
+  { _lookingFrom :: !(AnyObject s)
+  , _visibilityCount :: !Int
+  , _visibilityLevels :: [AnyObject s]
+  , _roomDescribingAction :: !Text
   }
   deriving (Show)
+
+instance Prettify (LookingActionVariables s) where
+  prettify (LookingActionVariables fr _ lvls _) = "Looking from "
+    <> shortPrint fr <> " with levels " <> mconcat (map shortPrint lvls)
 
 lookingActionImpl
   :: HasLookingProperties s
@@ -49,9 +57,6 @@ lookingActionImpl = Action
   carryOutLookingRules
   (makeActionRulebook "report looking rulebook" [])
 
-carryOutLookingRules :: ActionRulebook s LookingActionVariables
-carryOutLookingRules = makeActionRulebook "Carry Out Looking" []
-
 -- if we have no source, then we have no idea where we are looking 'from'; return nothing
 -- lightLevels (recalc light) is how many levels we can actually see because of light
 -- vl is how many levels we could see in perfect light.
@@ -62,47 +67,46 @@ lookingActionSet
   HasLookingProperties s
   => UnverifiedArgs s
   -> World s
-  -> Maybe LookingActionVariables
+  -> Maybe (LookingActionVariables s)
 lookingActionSet Args{..} w = do
   (asThing :: Maybe (Thing s)) <- fromAny <$> _argsSource ^? _Just
   asThing' <- asThing
   loc <- asThing ^? _Just % containedBy
-  vl <- getVisibilityLevels loc w
-  lightLevels <- (`recalculateLightOfParent` w) asThing'
-  return $ LookingActionVariables lightLevels (take lightLevels vl) "looking"
+  reifyLoc <- getObject' loc w
+  vl <- getVisibilityLevels reifyLoc w
+  let lightLevels = (`recalculateLightOfParent` w) asThing'
+  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking"
 
 getVisibilityLevels
   :: HasLookingProperties s
-  => ObjectLike s o
-  => o
+  => AnyObject s
   -> World s
-  -> Maybe [Entity]
-getVisibilityLevels e w = case findVisibilityHolder e w of
-    Nothing -> Nothing
-    Just a' -> if a' == e'
-        then Just [e']
-        else (a' :) <$> getVisibilityLevels a' w
-    where e' = getID e
+  -> Maybe [AnyObject s]
+getVisibilityLevels e w = do
+  vh <- findVisibilityHolder e w
+  if vh `eqObject` e
+      then return [e]
+      else (vh :) <$> getVisibilityLevels vh w
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder
   :: HasLookingProperties s
-  => ObjectLike s o
-  => o
+  => AnyObject s
   -> World s
-  -> Maybe Entity
+  -> Maybe (AnyObject s)
 findVisibilityHolder e' w =
   if
     isRoom e' || isOpaqueClosedContainer e' w
   then
-    Just (getID e')
+    Just e'
   else
-    getThing' e' w ^? _Just % containedBy
+    do
+      t <- getThing' e' w ^? _Just % containedBy
+      getObject' t w
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
 -- there is light exactly when the parent (p) "offers light"
-
 -- has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
@@ -111,17 +115,18 @@ recalculateLightOfParent
   => ObjectLike s o
   => o
   -> World s
-  -> Maybe Int
-recalculateLightOfParent e w = do
-  -- TODO: verify if this is fine failing on a room
-  loc <- getThing' e w
-  offers <- offersLight loc w
-  if offers then (do
-    recurs <- recalculateLightOfParent loc w
-    return (1 + recurs)
-    )
-  else
-    return 0
+  -> Int
+recalculateLightOfParent e w = case parent of
+  Nothing -> 0
+  Just p ->
+    if
+      fromMaybe False $ offersLight p w
+    then
+      maybe 0 (\v -> 1 + recalculateLightOfParent v w) parent
+    else
+      0
+  where
+    parent = view containedBy <$> getThing' e w
 
 -- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
@@ -198,6 +203,34 @@ hasLight e w = do
   let isSeeThroughObj = maybe False (`isSeeThrough` w) (getThing' e w)
   return $ litObj || isSeeThroughObj && containsLitObj e w
 
+carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
+carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
+  makeRule "room description heading rule"
+        (\rb -> runState $ do
+          modify $ setSayStyle (Just PPTTY.bold)
+          let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
+          logVerbose $ prettify (_argsVariables rb)
+          let visCeil = viaNonEmpty last lvls
+          logVerbose $
+            "Printing room description heading with visibility ceiling " <> prettify (shortPrint <$> visCeil) <>
+              " and visibility count " <> show cnt
+        {-}
+          if
+            | cnt == 0 -> do
+              doActivity' printingNameOfADarkRoom ()
+              pass --no light, print darkness
+            | visCeil == getID loc ->
+              traverse_ printName visCeil --if the ceiling is the location, then print [the location]
+            | True ->
+              traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
+          mapM_ foreachVisibilityHolder (drop 1 lvls)
+          modify $ sayLn ""
+          modify $ setSayStyle Nothing
+          --TODO: "run paragraph on with special look spacing"?
+        -}
+          return Nothing)
+
+  ]
 {-
 
 
@@ -206,30 +239,7 @@ carryOutLookingRules =
   makeRulebookWithVariables
     "carry out looking rulebook"
     [ RuleWithVariables
-        "room description heading rule"
-        do
-          setStyle (Just PPTTY.bold)
-          LookingActionVariables cnt lvls _ <- getRulebookVariables
-          let visCeil = viaNonEmpty last lvls
-          loc <- getActor >>= getLocation
-          logDebug $
-            "Printing room description heading with visibility ceiling ID " <> show visCeil
-              <> " and visibility count "
-              <> show cnt
 
-          if
-              | cnt == 0 -> do
-                doActivity printingNameOfADarkRoomName []
-                pass --no light, print darkness
-              | visCeil == loc ->
-                traverse_ printName visCeil --if the ceiling is the location, then print [the location]
-              | True ->
-                traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
-          mapM_ foreachVisibilityHolder (drop 1 lvls)
-          lift $ sayLn ""
-          lift $ setStyle Nothing
-          --TODO: "run paragraph on with special look spacing"?
-          return Nothing,
       RuleWithVariables
         "room description body rule"
         do

@@ -7,6 +7,7 @@ module Yaifl.Rulebooks
     noArgs,
 
     makeRule,
+    makeRule',
     ruleEnd,
   )
 where
@@ -18,44 +19,19 @@ import Yaifl.Common
 import Yaifl.Messages
 import Yaifl.Objects
 
-{-
-whenPlayBeginsRules :: (HasStore w Enclosing, HasStore w Player, HasThing w) => Rulebook w () RuleOutcome
-whenPlayBeginsRules =
-    makeRulebook
-        whenPlayBeginsName
-        [ Rule
-            "display banner rule"
-            ( do
-                sayIntroText
-                return Nothing
-            )
-        , Rule
-            "position player in model world rule"
-            ( do
-                fr <- use firstRoom
-                v <- maybe (return False) movePlayer' fr
-                unless v (logError "The first room was never set.")
-                return Nothing
-            )
-        , Rule
-            "initial room description rule"
-            ( do
-                tryAction "looking" []
-                return Nothing
-            )
-        ]
-instance LoggableFailure (Either Text a) where
-    logErrorToBool e r = runState $ (either (\l -> do
-        modify $ sayLn l
-        return False) (return True) e) r
--}
 -- | Rule smart constructor for rules that do not have any arguments (else you'd have
 -- to write rule bodies with a _ -> prefixed on).
-makeRule
+makeRule'
   :: Text -- ^ Rule name.
   -> (World o -> (Maybe r, World o)) -- ^ Rule function.
-  -> Rule o () r
-makeRule n f = Rule n (\_ w -> first ((),) $ f w)
+  -> Rule o v r
+makeRule' n f = makeRule n (const f)
+
+makeRule
+  :: Text -- ^ Rule name.
+  -> (v -> World o -> (Maybe r, World o)) -- ^ Rule function.
+  -> Rule o v r
+makeRule n f = Rule n (\v w -> first (v,) $ f v w)
 
 blankRule
   :: Text
@@ -184,9 +160,9 @@ whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
     (const $ const (Just ()))
-    [ makeRule "Display Banner" $ ruleEnd . sayIntroText
-    , makeRule "Position player in world" (runState positionPlayer)
-    , makeRule "Initial room description" initRoomDescription
+    [ makeRule' "Display Banner" $ ruleEnd . sayIntroText
+    , makeRule' "Position player in world" (runState positionPlayer)
+    , makeRule' "Initial room description" initRoomDescription
     ]
 
 initRoomDescription
