@@ -5,11 +5,13 @@ where
 
 import Yaifl.Common
 import Yaifl.Prelude
-import Yaifl.Objects
+import Yaifl.Properties
 import Yaifl.Messages
 import Yaifl.Rulebooks
+import Yaifl.ObjectLogging
 import qualified Data.EnumSet as DES
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Yaifl.ObjectLookup
 
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 addAction
@@ -29,7 +31,7 @@ addBaseActions = foldr (.) id [
 
 makeActionRulebook
   :: Text
-  -> [Rule o (Args o v) RuleOutcome]
+  -> [Rule o (Args o v) Bool]
   -> ActionRulebook o v
 makeActionRulebook n = Rulebook n Nothing (const . Just)
 
@@ -208,7 +210,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   makeRule "room description heading rule"
         (\rb -> runState $ do
           modify $ setSayStyle (Just PPTTY.bold)
-          let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
+          let (LookingActionVariables _ cnt lvls _) = _argsVariables rb
           logVerbose $ prettify (_argsVariables rb)
           let visCeil = viaNonEmpty last lvls
           logVerbose $

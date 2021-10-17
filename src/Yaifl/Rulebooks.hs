@@ -16,8 +16,9 @@ import qualified Data.Text as T
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
 import Yaifl.Prelude
 import Yaifl.Common
+import Yaifl.Properties
+import Yaifl.ObjectLookup
 import Yaifl.Messages
-import Yaifl.Objects
 
 -- | Rule smart constructor for rules that do not have any arguments (else you'd have
 -- to write rule bodies with a _ -> prefixed on).

@@ -10,7 +10,7 @@ module Yaifl
     module Yaifl.Common
   , module Yaifl.Messages
   , module Yaifl.Rulebooks
-  , module Yaifl.Objects
+  , module Yaifl.Properties
   --, module Yaifl.Activities
   , newWorld
   , blankWorld
@@ -18,7 +18,7 @@ module Yaifl
 
 import Yaifl.Common
 import Relude
-import Yaifl.Objects
+import Yaifl.Properties
 import Yaifl.Actions
 import Yaifl.Rulebooks
 import Yaifl.Messages

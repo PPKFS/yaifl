@@ -1,0 +1,63 @@
+module Yaifl.ObjectLogging
+  (
+  Prettify(..)
+  , shortPrint
+  , objectName
+  ) where
+
+import Yaifl.Prelude
+import Yaifl.Common
+import Yaifl.Messages
+import Yaifl.ObjectLookup
+import Text.Pretty.Simple (pString)
+
+class Prettify o where
+  prettify :: o -> Text
+
+instance {-# OVERLAPPABLE #-} Prettify s where
+  prettify = const "No prettify instance"
+
+instance Prettify o => Prettify (Maybe o) where
+  prettify Nothing = "Nothing"
+  prettify (Just s) = prettify s
+
+instance Prettify Text where
+  prettify = id
+instance Prettify (Object s d) where
+  prettify Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")\n" <> toStrict (pString (toString s)) where
+    s = "{ Description = " <> _objDescription <>
+        ", Type = " <> prettify _objType <>
+        -- F.% ", Creation Time = " F.% F.stext
+        ", Specifics = " <> prettify _objSpecifics <>
+        ", Data = " <> prettify _objData
+
+instance Prettify ObjType where
+  prettify = unObjType
+
+instance Prettify (Either a b) where
+  prettify = either prettify prettify
+
+instance Prettify [a] where
+  prettify e = mconcat $ map prettify e
+
+shortPrint
+  :: Object s d
+  -> Text
+shortPrint Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")"
+
+logObject
+  :: ObjectLike s o
+  => Text
+  -> o
+  -> State (World s) ()
+logObject n e = do
+  o <- getObject e
+  logVerbose $ n <> "\n" <> prettify o
+  whenJust o $ \Object{..} -> logVerbose _objName
+
+objectName
+  :: ObjectLike s o
+  => o
+  -> World s
+  -> Text
+objectName o w = maybe "Nothing" _objName $ getObject' o w

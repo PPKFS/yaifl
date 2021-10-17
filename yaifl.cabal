@@ -112,16 +112,19 @@ library
                       Yaifl
                       Yaifl.Common
                       Yaifl.Rulebooks
-                      Yaifl.Objects
+                      Yaifl.Properties
                       Yaifl.Messages
                       --, Yaifl.Prelude
                       Yaifl.TH
+                      Yaifl.Types
                       --, Yaifl.Components
                       --, Yaifl.Rulebooks
                       Yaifl.Actions
                       Yaifl.Activities
+                      Yaifl.ObjectLookup
   other-modules:
                       Yaifl.Prelude
+                      Yaifl.ObjectLogging
                       -- Yaifl.Components.Room
                       --, Yaifl.Components.Enclosing
                       --, Yaifl.Components.Object
