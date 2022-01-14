@@ -1,19 +1,15 @@
 {-|
 Module      : Yaifl.Common
-Description : Mostly defining types to be used everywhere ans dome helper functions.
-Copyright   : (c) Avery, 2021
+Description : Mostly defining types to be used everywhere and some helper functions.
+Copyright   : (c) Avery, 2022
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 module Yaifl.Common
   (-- * Smart constructors and default settings
-  emptyStore
-  , blankThingData
-  , blankRoomData
-  , defaultPlayerID
   -- * Object querying
-  , isThing
+  isThing
   , isRoom
   , HasID(..)
   , CanBeAny(..)
@@ -36,35 +32,9 @@ module Yaifl.Common
   )
 where
 
-import qualified Data.EnumMap.Strict as EM
-import qualified Data.EnumSet as ES
 import Yaifl.Prelude
 import Yaifl.Messages
 import Yaifl.Types
-
-emptyStore :: Store a
-emptyStore = Store EM.empty
-
-emptyEnclosing :: Enclosing
-emptyEnclosing = Enclosing ES.empty Nothing
-
-blankThingData :: ThingData
-blankThingData = ThingData (Entity defaultVoidID) NotLit
-
-blankRoomData :: RoomData
-blankRoomData = RoomData Unvisited Lighted emptyStore Nothing emptyEnclosing
-
-defaultPlayerID :: Int
-defaultPlayerID = 1
-
-defaultVoidID :: Int
-defaultVoidID = -1
-
-updateCachedObject
-  :: TimestampedObject s d
-  -> Object s d
-  -> TimestampedObject s d
-updateCachedObject ts o = ts & tsCachedObject .~ o
 
 objectL :: Lens' (AbstractObject s d) (Object s d)
 objectL = lens
@@ -73,11 +43,11 @@ objectL = lens
     DynamicObject (TimestampedObject o _ _) -> o)
   (\o n -> case o of
     StaticObject _ -> StaticObject n
-    DynamicObject ts -> DynamicObject $ updateCachedObject ts n
+    DynamicObject ts -> DynamicObject $ set tsCachedObject n ts
   )
 
-containedBy :: Lens' (Thing s) Entity
-containedBy = objData % thingContainedBy
+containedBy :: forall s. Lens' (Thing s) Entity
+containedBy = coercedTo @(Object s ThingData) % objData % thingContainedBy
 
 isThing
   :: (HasID a)
@@ -101,7 +71,7 @@ reifyObject l (DynamicObject t) w = if _tsCacheStamp t == getGlobalTime w
                     then (co, w)
                     else runState (do
                       -- update the object
-                      updatedObj <- gets $ runUpdateFunction t co
+                      updatedObj <- gets $ updateObject (runUpdateFunction t) co
                       -- update the world
                       l % at (getID co) ?= DynamicObject
                         (updateCachedObject t updatedObj)
@@ -174,24 +144,26 @@ instance CanBeAny (Object s ThingData) (AnyObject s) where
 
 instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
   toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts tsf)) =
+  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
     DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (\a w -> maybe a (\v -> Right <$> tsf v w) (fromAny a))
+    (toAny tsobj) tsts (ObjectUpdate $ \a w -> maybe a (\v -> Right <$> tsf v w) (fromAny a))
 
-  fromAny (StaticObject s) = fmap StaticObject (fromAny s)
-  fromAny (DynamicObject (TimestampedObject tsobj tsts tsf)) = case fromAny tsobj of
+  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
+  fromAny ((DynamicObject
+    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
     Nothing -> Nothing
     Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (\v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+      (TimestampedObject s tsts (ObjectUpdate $ \v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
 
 instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
   toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts tsf)) =
+  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
     DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (\a w -> maybe a (\v -> Left <$> tsf v w) (fromAny a))
-  fromAny (StaticObject s) = fmap StaticObject (fromAny s)
-  fromAny (DynamicObject (TimestampedObject tsobj tsts tsf)) = case fromAny tsobj of
+    (toAny tsobj) tsts (ObjectUpdate $ \a w -> maybe a (\v -> Left <$> tsf v w) (fromAny a))
+
+  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
+  fromAny ((DynamicObject
+    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
     Nothing -> Nothing
     Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts
-        (\v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+      (TimestampedObject s tsts (ObjectUpdate $ \v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))

@@ -1,4 +1,4 @@
-resolver: nightly-2021-09-02
+resolver: nightly-2022-01-06
 
 extra-deps: []
 allow-newer: true

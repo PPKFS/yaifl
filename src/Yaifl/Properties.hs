@@ -111,7 +111,7 @@ addThing'
   -> State ThingData r -- ^ Build your own thing monad!
   -> State (World s) Entity
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
-    Nothing (Just $ execState stateUpdate blankThingData) Nothing
+    Nothing (Just $ execState stateUpdate blank) Nothing
 
 -- | Create a new 'Room' and add it to the relevant stores.
 addRoom
@@ -124,7 +124,7 @@ addRoom
   -> State (World s) Entity
 addRoom name desc objtype specifics details upd = do
   e <- addObject setAbstractRoom' name desc objtype False
-        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankRoomData details) upd
+        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blank details) upd
   w <- get
   when (isNothing $ w ^. firstRoom) (firstRoom ?= e)
   return e
@@ -142,7 +142,7 @@ addRoom'
   -> State RoomData v
   -> State (World s) Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
-  Nothing (Just (execState rd blankRoomData)) Nothing
+  Nothing (Just (execState rd blank)) Nothing
 
 class HasProperty o v where
   default propertyL :: AffineTraversal' o v

@@ -1,5 +1,5 @@
 module Yaifl.Types
-  (
+ {- (
   -- * Objects
   Entity (..)
   , Timestamp(..)
@@ -76,14 +76,18 @@ module Yaifl.Types
 
   , _EnclosingSpecifics
   , _ContainerSpecifics
-  ) where
+  ) -} where
 
 import Yaifl.Prelude
 import Yaifl.Messages
 import qualified Data.EnumSet as ES
 import qualified Data.EnumMap.Strict as EM
 
--- | An 'Entity' is an integer ID that is used to reference between objects.
+class Default e where
+  blank :: e
+
+-- | An 'Entity' is an integer ID that is used to reference between objects. The phantom type
+-- is for tagging it as a room, thing, or either
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic, Eq)
@@ -100,6 +104,9 @@ newtype ObjType = ObjType
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   }  deriving stock (Show)
+
+instance Default (Store a) where
+  blank = Store EM.empty
 
 type StoreLens' s d = (Lens' (World s) (Store (AbstractObject s d)))
 
@@ -121,6 +128,9 @@ newtype Timestamp = Timestamp
   { unTimestamp :: Int
   } deriving stock   (Show, Generic, Eq)
     deriving newtype (Num, Enum, Ord)
+
+instance Default Timestamp where
+  blank = Timestamp 0
 
 -- | An 'Object' is any kind of game object, where @a@ should either be ThingData/RoomData
 -- or Either ThingData RoomData
@@ -152,12 +162,17 @@ data TimestampedObject s d = TimestampedObject
   , _tsUpdateFunc :: ObjectUpdate s d
   }
 
-type AnyObject s = Object s (Either ThingData RoomData)
+
+
 -- | Function to update an object
-type ObjectUpdate s d = (Object s d -> World s -> Object s d)
+newtype ObjectUpdate s d = ObjectUpdate 
+  { updateObject :: Object s d -> World s -> Object s d
+  }
 
 type Thing s = Object s ThingData
 type Room s = Object s RoomData
+type AnyObject s = Object s (Either ThingData RoomData) 
+
 type AbstractThing s = AbstractObject s ThingData
 type AbstractRoom s = AbstractObject s RoomData
 type AnyAbstractObject s = AbstractObject s (Either ThingData RoomData)
@@ -192,6 +207,9 @@ data RoomData = RoomData
   , _roomEnclosing :: !Enclosing
   } deriving stock (Generic, Show)
 
+defaultVoidID :: Entity
+defaultVoidID = Entity (-1)
+
 -- | Whether a thing is inherently lit or not. This counts for lighting up spaces.
 data ThingLit = Lit | NotLit deriving (Eq, Show)
 
@@ -205,6 +223,15 @@ data Enclosing = Enclosing
   { _enclosingContains :: ES.EnumSet Entity
   , _enclosingCapacity :: Maybe Int
   } deriving stock (Show, Eq)
+
+instance Default Enclosing where
+  blank = Enclosing ES.empty Nothing
+
+instance Default ThingData where
+  blank = ThingData defaultVoidID NotLit
+
+instance Default RoomData where
+  blank = RoomData Unvisited Lighted blank Nothing blank
 
 data Opacity = Opaque | Transparent deriving stock (Eq, Show)
 data Enterable = Enterable | NotEnterable deriving stock (Eq, Show)
@@ -235,22 +262,22 @@ data RoomDescriptions
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule s v r = Rule
   { _ruleName :: !Text
-  , _runRule :: v -> World s -> ((v, Maybe r), World s)
+  , _runRule :: v -> State (World s) (v, Maybe r)
   }
 
 -- | A 'Rulebook' is a composition of functions ('Rule's) with short-circuiting (if
--- a Just value is returned), default return values, and a way to parse
--- 'UnverifiedArgs' into a @v@.
-data Rulebook o ia v r where
+-- a Just value is returned) over an object universe `o`, input arguments `ia`, variables `v`
+-- and returns an `r`.
+data Rulebook s ia v r where
   Rulebook ::
     { _rbName :: !Text
     , _rbDefaultOutcome :: !(Maybe r)
-    , _rbParseArguments :: !(ParseArguments o ia v)
-    , _rbRules :: ![Rule o v r]
-    } -> Rulebook o ia v r
+    , _rbParseArguments :: !(ParseArguments s ia v)
+    , _rbRules :: ![Rule s v r]
+    } -> Rulebook s ia v r
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
--- the closed 'Property' universe and the variables, which are either unknown
+-- the closed 's' universe and the variables, which are either unknown
 -- (see 'UnverifiedArgs') or known (concrete instantation).
 data Args s v = Args
   { _argsSource :: !(Maybe (AnyObject s))
@@ -259,27 +286,42 @@ data Args s v = Args
   }
 
 -- | Before 'Args' are parsed, the variables are a list of objects.
-type UnverifiedArgs s = Args s [AnyObject s]
+newtype UnverifiedArgs s = UnverifiedArgs
+  { unArgs :: Args s [AnyObject s]
+  }
 
--- | 'ActionRulebook's have specific variables
-type ActionRulebook o v = Rulebook o (Args o v) (Args o v) Bool
-type StandardRulebook o v r = Rulebook o (UnverifiedArgs o) v r
-type ParseArguments o ia v = ia -> World o -> Maybe v
-type ActionParseArguments o v = UnverifiedArgs o -> World o -> Maybe v
+-- | 'ActionRulebook's run over specific arguments; specifically, they expect 
+-- their arguments to be pre-verified; this allows for the passing of state.
+newtype ActionRulebook s v = ActionRulebook
+  { unActionRulebook :: Rulebook s (Args s v) (Args s v) Bool
+  }
+
+-- | A `StandardRulebook` is one which expects to verify its own arguments.
+newtype StandardRulebook s v r = StandardRulebook
+  { unStandardRulebook :: Rulebook s (UnverifiedArgs s) v r
+  }
+
+newtype ParseArguments s ia v = ParseArguments
+  { runParseArguments :: ia -> World s -> Maybe v
+  }
+
+newtype ActionParseArguments s v = ActionParseArguments
+  { runActionParseArguments :: UnverifiedArgs s -> World s -> Maybe v
+  } 
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
 -- except that set action variables is not a rulebook.
-data Action o where
+data Action s where
   Action ::
     { _actionName :: !Text
     , _actionUnderstandAs :: ![Text]
-    , _actionParseArguments :: !(ActionParseArguments o v)
-    , _actionBeforeRules :: !(ActionRulebook o v)
-    , _actionCheckRules :: !(ActionRulebook o v)
-    , _actionCarryOutRules :: !(ActionRulebook o v)
-    , _actionReportRules :: !(ActionRulebook o v)
-    } -> Action o
+    , _actionParseArguments :: !(ActionParseArguments s v)
+    , _actionBeforeRules :: !(ActionRulebook s v)
+    , _actionCheckRules :: !(ActionRulebook s v)
+    , _actionCarryOutRules :: !(ActionRulebook s v)
+    , _actionReportRules :: !(ActionRulebook s v)
+    } -> Action s
 
 data Activity o v r = Activity
     { _activityName :: !Text
