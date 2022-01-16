@@ -2,7 +2,7 @@ module Main
     (
         main
     ) where
-import Relude
+import Relude hiding (error)
 
 import Yaifl
 import Test.HUnit
@@ -13,7 +13,7 @@ import qualified Language.Haskell.TH.Syntax
 import Language.Haskell.TH (ExpQ)
 
 ex2World :: IO (World ())
-ex2World = newWorld $ do
+ex2World = newWorld "3.1.2" $ do
    setTitle "Bic"
    addRoom' "The Staff Break Room" "" pass
    addThing' "Bic pen" "" pass
@@ -60,7 +60,8 @@ consumeLooking :: Text -> Text -> Text -> Either Assertion Text
 consumeLooking t d = consumeLine t >=> consumeLine d
 
 data YaiflTestCase where
-    YaiflTestCase :: { testCaseName :: String
+    YaiflTestCase :: { 
+    testCaseName :: String
     , testCaseWorld :: IO (World o)
     , testCommands :: [Text]
     , testCaseExpected :: Text -> Either Assertion Text
@@ -98,12 +99,12 @@ w2 <- runWorld (do
 testHarness :: IO (World o) -> [Text] -> (Text -> Either Assertion Text) -> Assertion
 testHarness ioW _ consume = do
     w <- ioW
-    w2 <- runGame (do
+    let sn = _shortName w
+    w2 <- runGame sn (do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
                 --logInfo "Validating...no validation implemented."
                 --logInfo "\n---------------"
                 w' <- get
-                $(logInf) "aaa"
                 --when I write a proper game loop, this is where it needs to go
                 runRulebook (_whenPlayBegins w') ()
                 --do the commands...
@@ -115,7 +116,6 @@ testHarness ioW _ consume = do
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x')
-
 
 main :: IO ()
 main = do

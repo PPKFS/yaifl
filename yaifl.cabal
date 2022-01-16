@@ -21,7 +21,7 @@ source-repository head
 
 common common-options
   build-depends:
-                     base
+                     base >= 4.16.0.0
                      , relude
                      , optics
                      , prettyprinter
@@ -91,6 +91,7 @@ common common-options
     TypeFamilies
     UndecidableInstances
     CPP
+    ImplicitParams
 library
   import:              common-options
   hs-source-dirs:      src

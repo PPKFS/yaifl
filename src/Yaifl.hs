@@ -27,16 +27,19 @@ import Yaifl.Activities
 
 newWorld
   :: HasStandardProperties s
-  => Game s v
+  => Text
+  -> Game s v
   -> IO (World s)
-newWorld g = runGame (modify addBaseActions >> g >> get) blankWorld
+newWorld t g = runGame t (modify addBaseActions >> g >> get) (blankWorld t)
 
 type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container, HasProperty s Enterable)
 blankWorld
   :: HasStandardProperties s
-  => World s
-blankWorld = World
-  { _title = "Untitled"
+  => Text
+  -> World s
+blankWorld t = World
+  { _shortName = t
+  , _title = "Untitled"
   , _entityCounter = (Entity 1, Entity (-2))
   , _globalTime = 0
   , _darknessWitnessed = False

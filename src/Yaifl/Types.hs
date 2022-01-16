@@ -89,6 +89,8 @@ import Katip.Format.Time (formatAsLogTime)
 import Language.Haskell.TH
 import qualified Data.Text as T
 import Data.Aeson.Types hiding (Object)
+import qualified Data.Text.Lazy.Builder as TLB
+import GHC.Stack (srcLocFile, srcLocPackage, srcLocModule, srcLocStartLine, srcLocStartCol, srcLocEndLine, srcLocEndCol)
 
 class Default e where
   blank :: e
@@ -353,7 +355,8 @@ data ActivityCollection o = ActivityCollection
   }
 
 data World s = World
-  { _title :: !Text
+  { _shortName :: !Text
+  , _title :: !Text
   , _entityCounter :: !(Entity, Entity)
   , _globalTime :: !Timestamp
   , _darknessWitnessed :: !Bool
@@ -371,9 +374,38 @@ data World s = World
   , _actionProcessing :: !(forall m. MonadWorld s m => Action s -> UnverifiedArgs s -> m (Maybe Bool))
   }
 
+-- | An abstract interface for logging functions which are capable of reporting
+-- source locations.
+class Monad m => Logger m where
+  debug :: HasCallStack => TLB.Builder -> m ()
+  info :: HasCallStack => TLB.Builder -> m ()
+  warn :: HasCallStack => TLB.Builder -> m ()
+  err :: HasCallStack => TLB.Builder -> m ()
+
 newtype Game s a = Game
   { unGame :: KatipContextT (StateT (World s) IO) a
   } deriving newtype (Functor, Applicative, Monad, MonadIO, Katip, KatipContext, MonadState (World s))
+
+-- | All 'KatipLogger's fulfill the logging interface described by 'Logger'.
+instance Logger (Game s) where
+  debug = logItemM (toLoc ?callStack) DebugS . LogStr
+  info = logItemM (toLoc ?callStack) InfoS . LogStr
+  warn = logItemM (toLoc ?callStack) WarningS . LogStr
+  err = logItemM (toLoc ?callStack) ErrorS . LogStr
+
+-- | Try to extract the last callsite from some GHC 'CallStack' and convert it
+-- to a 'Loc' so that it can be logged with 'logItemM'.
+toLoc :: CallStack -> Maybe Loc
+toLoc stk =
+  let mLoc = listToMaybe . reverse $ getCallStack stk
+   in mLoc <&> \(_, loc) ->
+        Loc
+          { loc_filename = srcLocFile loc,
+            loc_package = srcLocPackage loc,
+            loc_module = srcLocModule loc,
+            loc_start = (srcLocStartLine loc, srcLocStartCol loc),
+            loc_end = (srcLocEndLine loc, srcLocEndCol loc)
+          }
 
 instance MonadReader (World s) (Game s) where
   ask = get
@@ -399,15 +431,12 @@ instance A.ToJSON a => A.ToJSON (YaiflItem a) where
       [ "level" A..= _itemSeverity
       , "message" A..= B.toLazyText (unLogStr _itemMessage)
       , "timestamp" A..= formatAsLogTime _itemTime
-      , "ns" A..= let f = T.intercalate "➤" (unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
+      , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
       , "loc" A..= fmap reshapeFilename _itemLoc
-      ] ++ if A.encode _itemPayload == "{}" then [] else ["data" A..=  _itemPayload]
+      ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
 
 reshapeFilename :: Loc -> String
 reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) <> ":" <> show (fst loc_start) <> ":" <> show (snd loc_start)
-
---locJson :: Language.Haskell.TH.Syntax.Loc -> Text
---locJson Loc{..} = error "not implemented"
 
 makeLenses ''World
 makeLenses ''Object

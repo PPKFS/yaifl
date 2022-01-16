@@ -1,0 +1,4 @@
+{"message":"aaa","loc":"Spec.hs:106:18","ns":"❬A➤main❭","timestamp":"2022-01-16 17:53:43","level":"Info"}
+{"message":"aaa","loc":"Spec.hs:106:18","ns":"❬A➤main➤main2❭","timestamp":"2022-01-16 17:53:43","level":"Info","data":{"blah": true}}
+{"message":"aaa","loc":"Spec.hs:106:18","ns":"❬A➤main➤main2❭","timestamp":"2022-01-16 17:53:43","level":"Error"}
+{"message":"aaa","loc":"Spec.hs:106:18","ns":"❬A❭","timestamp":"2022-01-16 17:53:43","level":"Warning","data":{"foo":{"b":5, "x":"y"}}}

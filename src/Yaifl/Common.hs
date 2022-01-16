@@ -41,6 +41,7 @@ import qualified Data.Aeson as A
 import qualified Data.Text.Lazy.Builder as B
 import Control.Exception (bracket)
 import Katip.Scribes.Handle (colorBySeverity)
+import GHC.IO.Handle.FD
 
 updateCachedObject
   :: TimestampedObject s d
@@ -210,12 +211,12 @@ jsonFormatYaifl withColor verb i =
   colorBySeverity withColor (_itemSeverity i) $
   toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
 
-runGame :: Game s a -> World s -> IO a --World s -> IO (World s)
-runGame f i = do
-  handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal stdout (permitItem InfoS) V2
-  let makeLogEnv = registerScribe "stdout" handleScribe defaultScribeSettings =<< initLogEnv "A" ""
-  -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
-  bracket makeLogEnv closeScribes $ \le -> do
-    let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
-    let initialNamespace = "main"
-    evalStateT (runKatipContextT le initialContext initialNamespace (unGame f)) i
+runGame :: Text -> Game s a -> World s -> IO a --World s -> IO (World s)
+runGame t f i = do
+  withFile "log.json" AppendMode \fh -> do
+    handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal fh (permitItem InfoS) V2
+    let makeLogEnv = registerScribe "stdout" handleScribe defaultScribeSettings =<< initLogEnv "" ""
+    -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
+    bracket makeLogEnv closeScribes $ \le -> do
+      let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
+      evalStateT (runKatipContextT le initialContext (Namespace [t]) (unGame f)) i
