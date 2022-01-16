@@ -83,7 +83,12 @@ import Yaifl.Messages
 import qualified Data.EnumSet as ES
 import qualified Data.EnumMap.Strict as EM
 import Katip
-import Control.Exception
+import qualified Data.Aeson as A
+import qualified Data.Text.Lazy.Builder as B
+import Katip.Format.Time (formatAsLogTime)
+import Language.Haskell.TH
+import qualified Data.Text as T
+import Data.Aeson.Types hiding (Object)
 
 class Default e where
   blank :: e
@@ -165,13 +170,13 @@ data TimestampedObject s d = TimestampedObject
   }
 
 -- | Function to update an object
-newtype ObjectUpdate s d = ObjectUpdate 
+newtype ObjectUpdate s d = ObjectUpdate
   { updateObject :: forall m. (MonadReader (World s) m, KatipContext m) => Object s d -> m (Object s d)
   }
 
 type Thing s = Object s ThingData
 type Room s = Object s RoomData
-type AnyObject s = Object s (Either ThingData RoomData) 
+type AnyObject s = Object s (Either ThingData RoomData)
 
 type AbstractThing s = AbstractObject s ThingData
 type AbstractRoom s = AbstractObject s RoomData
@@ -270,7 +275,7 @@ data Rule s v r = Rule
 
 instance Default (Text -> Rule s v r) where
   blank n = Rule n (\v -> do
-    logLocM InfoS $ ls (n <> " needs implementing") 
+    logLocM InfoS $ ls (n <> " needs implementing")
     return (v, Nothing))
 
 --instance HasBuffer (World s) 'LogBuffer => Default (String -> Rule s v r) where
@@ -366,22 +371,12 @@ data World s = World
   , _actionProcessing :: !(forall m. MonadWorld s m => Action s -> UnverifiedArgs s -> m (Maybe Bool))
   }
 
-newtype Game s a = Game 
+newtype Game s a = Game
   { unGame :: KatipContextT (StateT (World s) IO) a
   } deriving newtype (Functor, Applicative, Monad, MonadIO, Katip, KatipContext, MonadState (World s))
 
-runGame :: Game s a -> World s -> IO a --World s -> IO (World s)
-runGame f i = do
-  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem InfoS) V2
-  let makeLogEnv = registerScribe "stdout" handleScribe defaultScribeSettings =<< initLogEnv "MyApp" "production"
-  -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
-  bracket makeLogEnv closeScribes $ \le -> do
-    let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
-    let initialNamespace = "main"
-    evalStateT (runKatipContextT le initialContext initialNamespace (unGame f)) i
-
 instance MonadReader (World s) (Game s) where
-  ask = get 
+  ask = get
   local f g = do
     s <- get
     put (f s)
@@ -391,6 +386,28 @@ instance MonadReader (World s) (Game s) where
 --in case we have both a read-only and a read-write constraint on the world.
 type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, KatipContext m)
 type MonadWorldRO s m = (MonadReader (World s) m, KatipContext m)
+
+newtype YaiflItem a = YaiflItem
+  { toKatipItem :: Item a
+  } deriving newtype (Generic, Functor)
+
+logInf :: ExpQ
+logInf = [| logLocM InfoS |]
+
+instance A.ToJSON a => A.ToJSON (YaiflItem a) where
+    toJSON (YaiflItem Item{..}) = A.object $
+      [ "level" A..= _itemSeverity
+      , "message" A..= B.toLazyText (unLogStr _itemMessage)
+      , "timestamp" A..= formatAsLogTime _itemTime
+      , "ns" A..= let f = T.intercalate "➤" (unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
+      , "loc" A..= fmap reshapeFilename _itemLoc
+      ] ++ if A.encode _itemPayload == "{}" then [] else ["data" A..=  _itemPayload]
+
+reshapeFilename :: Loc -> String
+reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) <> ":" <> show (fst loc_start) <> ":" <> show (snd loc_start)
+
+--locJson :: Language.Haskell.TH.Syntax.Loc -> Text
+--locJson Loc{..} = error "not implemented"
 
 makeLenses ''World
 makeLenses ''Object
@@ -403,8 +420,8 @@ makeLenses ''TimestampedObject
 makeLenses ''Container
 makePrisms ''ObjectSpecifics
 
-instance HasBuffer (World s) 'LogBuffer where
-  bufferL _ = messageBuffers % _2
+--instance HasBuffer (World s) 'LogBuffer where
+--  bufferL _ = messageBuffers % _2
 
 instance HasBuffer (World s) 'SayBuffer where
   bufferL _ = messageBuffers % _1

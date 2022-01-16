@@ -1,5 +1,4 @@
 resolver: nightly-2022-01-06
 
-extra-deps: 
-  - katip-elasticsearch-0.7.0.0@sha256:061bcd93db4f35866ed9d08d54483690d0f22100c13983c095921ee7e2f30a46,2692
+extra-deps: []
 allow-newer: true

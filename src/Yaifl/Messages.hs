@@ -60,14 +60,11 @@ emptyMessageBuffer = MessageBuffer [] Nothing [] (const True)
 
 makeLenses ''MessageBuffer
 
-lb :: Proxy 'LogBuffer
-lb = Proxy
-
 sb :: Proxy 'SayBuffer
 sb = Proxy
 
--- | Right now I only need 2 kinds of buffer, a regular output one and a log.
-data BufferTypes = LogBuffer | SayBuffer
+-- | Right now I only need 1 kind of buffer, a regular output one.
+data BufferTypes = SayBuffer
 
 sayInternal
   :: (HasBuffer w p)

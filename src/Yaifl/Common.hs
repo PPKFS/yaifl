@@ -28,6 +28,7 @@ module Yaifl.Common
   , reifyObject
 
   , isType
+  , runGame
   , module Yaifl.Types
   )
 where
@@ -35,11 +36,16 @@ where
 import Yaifl.Prelude
 import Yaifl.Messages
 import Yaifl.Types
+import Katip
+import qualified Data.Aeson as A
+import qualified Data.Text.Lazy.Builder as B
+import Control.Exception (bracket)
+import Katip.Scribes.Handle (colorBySeverity)
 
-updateCachedObject 
+updateCachedObject
   :: TimestampedObject s d
-  -> Object s d 
-  -> Timestamp 
+  -> Object s d
+  -> Timestamp
   -> TimestampedObject s d
 updateCachedObject ts n t = ts & set tsCachedObject n
                                             & set tsCacheStamp t
@@ -79,9 +85,9 @@ reifyObject _ (StaticObject v) = return v
 reifyObject l (DynamicObject ts) = do
   let co = _tsCachedObject ts
   now <- getGlobalTime
-  if 
+  if
     _tsCacheStamp ts == now
-  then 
+  then
     return co
   else
     do
@@ -186,3 +192,30 @@ instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
       (TimestampedObject s tsts (ObjectUpdate $ \v -> do
         r' <- tsf $ toAny v
         return $ fromMaybe v (fromAny r') ))
+
+-- | Convert log item to its JSON representation while trimming its
+-- payload based on the desired verbosity. Backends that push JSON
+-- messages should use this to obtain their payload.
+itemJsonYaifl 
+  :: LogItem a 
+  => Verbosity 
+  -> YaiflItem a 
+  -> A.Value
+itemJsonYaifl verb (YaiflItem a) = A.toJSON 
+  $ YaiflItem $ a { _itemPayload = payloadObject verb (_itemPayload a) }
+
+jsonFormatYaifl :: LogItem a => ItemFormatter a
+jsonFormatYaifl withColor verb i =
+  B.fromText $
+  colorBySeverity withColor (_itemSeverity i) $
+  toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
+
+runGame :: Game s a -> World s -> IO a --World s -> IO (World s)
+runGame f i = do
+  handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal stdout (permitItem InfoS) V2
+  let makeLogEnv = registerScribe "stdout" handleScribe defaultScribeSettings =<< initLogEnv "A" ""
+  -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
+  bracket makeLogEnv closeScribes $ \le -> do
+    let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
+    let initialNamespace = "main"
+    evalStateT (runKatipContextT le initialContext initialNamespace (unGame f)) i

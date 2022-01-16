@@ -7,6 +7,10 @@ import Relude
 import Yaifl
 import Test.HUnit
 import qualified Data.Text as T
+import Katip
+import Katip.Core
+import qualified Language.Haskell.TH.Syntax
+import Language.Haskell.TH (ExpQ)
 
 ex2World :: IO (World ())
 ex2World = newWorld $ do
@@ -99,17 +103,19 @@ testHarness ioW _ consume = do
                 --logInfo "Validating...no validation implemented."
                 --logInfo "\n---------------"
                 w' <- get
+                $(logInf) "aaa"
                 --when I write a proper game loop, this is where it needs to go
                 runRulebook (_whenPlayBegins w') ()
                 --do the commands...
                 get
                 ) w
-    w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
-    let (x, _) = flushBufferToText (Proxy @'SayBuffer) w3
+    --w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
+    let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
     (case Right x >>= consume of
         Left res -> res
         Right "" -> pass
         Right x' -> assertFailure $ "Was left with " <> toString x')
+
 
 main :: IO ()
 main = do
