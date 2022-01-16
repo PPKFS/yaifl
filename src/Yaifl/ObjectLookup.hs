@@ -3,28 +3,27 @@ module Yaifl.ObjectLookup
   ObjectLike(..)
   , asThingOrRoom'
   , getObject
-  , getThing'
-  , getObject'
   , setThing
   , setRoom
-  , setThing'
-  , setRoom'
-  , setAbstractThing'
-  , setAbstractRoom'
   , modifyRoom
   , modifyThing
   , modifyObject
+
+  , setAbstractThing
+  , setAbstractRoom
 
 ) where
 
 import Yaifl.Prelude
 import Yaifl.Common
 class HasID o => ObjectLike s o where
-  getRoom :: o -> State (World s) (Maybe (Room s))
-  default getRoom :: o -> State (World s) (Maybe (Room s))
+  getRoom :: MonadWorld s m => o -> m (Maybe (Room s))
+  default getRoom :: MonadWorld s m => o -> m (Maybe (Room s))
+  --todo: add logging error here
   getRoom = const $ return Nothing
-  getThing :: o -> State (World s) (Maybe (Thing s))
-  default getThing :: o -> State (World s) (Maybe (Thing s))
+  getThing :: MonadWorld s m => o -> m (Maybe (Thing s))
+  default getThing :: MonadWorld s m => o -> m (Maybe (Thing s))
+  --todo: add logging error here
   getThing = const $ return Nothing
 
 instance ObjectLike s Entity where
@@ -55,54 +54,44 @@ instance ObjectLike s (AnyObject s) where
 -- affine traversals
 -- object, abstractObject, thing, room
 getObjectFrom
-  :: HasID o
+  :: MonadWorld s m
+  => HasID o
   => StoreLens' s d
   -> o
-  -> State (World s) (Maybe (Object s d))
+  -> m (Maybe (Object s d))
 getObjectFrom l e = do
     o <- gets $ getAbstractObjectFrom l e
-    mapMaybeM o (state . reifyObject l)
+    mapMaybeM o (reifyObject l)
 
 getAbstractObjectFrom
-  :: HasID o
+  :: MonadReader (World s) m
+  => HasID o
   => StoreLens' s d
   -> o
-  -> World s
-  -> Maybe (AbstractObject s d)
-getAbstractObjectFrom l e w = w ^? l % ix (getID e)
+  -> m (Maybe (AbstractObject s d))
+getAbstractObjectFrom l e = do
+  w <- ask
+  return $ w & preview (l % ix (getID e))
 
 getAbstractThing
-  :: HasID o
+  :: MonadReader (World s) m
+  => HasID o
   => o
-  -> World s
-  -> Maybe (AbstractThing s)
+  -> m (Maybe (AbstractThing s))
 getAbstractThing = getAbstractObjectFrom things
 
 getAbstractRoom
-  :: HasID o
+  :: MonadReader (World s) m
+  => HasID o
   => o
-  -> World s
-  -> Maybe (AbstractRoom s)
+  -> m (Maybe (AbstractRoom s))
 getAbstractRoom = getAbstractObjectFrom rooms
 
-getThing'
-  :: ObjectLike s o
-  => o
-  -> World s
-  -> Maybe (Thing s)
-getThing' o = evalState (getThing o)
-
-getRoom'
-  :: ObjectLike s o
-  => o
-  -> World s
-  -> Maybe (Room s)
-getRoom' o = evalState (getRoom o)
-
 getObject
-  :: ObjectLike s o
+  :: MonadWorld s m
+  => ObjectLike s o
   => o
-  -> State (World s) (Maybe (AnyObject s))
+  -> m (Maybe (AnyObject s))
 getObject e = if isThing e
   then
     (do
@@ -112,13 +101,6 @@ getObject e = if isThing e
     (do
       o <- getRoom e
       return $ toAny <$> o)
-
-getObject'
-  :: ObjectLike s o
-  => o
-  -> World s
-  -> Maybe (AnyObject s)
-getObject' o = evalState (getObject o)
 
 getAbstractObject
   :: HasID o
@@ -131,7 +113,7 @@ getAbstractObject e w = if isThing e
   else
     toAny <$> getAbstractObjectFrom rooms e w
 
-
+{-
 -- the getter on this doesn't update the cache...
 -- but it does return an updated object.
 object
@@ -145,17 +127,19 @@ object e = atraversal
     else
       \w -> maybeToRight w $ toAny <$> evalState (getRoom e) w)
   (\w o -> execState (setObject o) w)
-
+-}
 setObject
-  :: AnyObject s
-  -> State (World s) ()
+  :: MonadWorld s m
+  => AnyObject s
+  -> m ()
 setObject o = modifyObject o id
 
 modifyObject
-  :: HasID o
+  :: MonadWorld s m
+  => HasID o
   => o
   -> (AnyObject s -> AnyObject s)
-  -> State (World s) ()
+  -> m ()
 modifyObject e s = if isThing e
   then
     modifyObjectFrom things e (anyModifyToThing s)
@@ -173,99 +157,85 @@ anyModifyToRoom
 anyModifyToRoom f t = fromMaybe t (fromAny $ f (toAny t))
 
 asThingOrRoom'
-  :: ObjectLike s o
+  :: MonadWorld s m
+  => ObjectLike s o
   => o
   -> (Thing s -> a)
   -> (Room s -> a)
-  -> World s
-  -> Maybe a
-asThingOrRoom' o tf rf w =
+  -> m (Maybe a)
+asThingOrRoom' o tf rf =
   if
     isThing o
   then
-      tf <$> getThing' o w
+    tf <$$> getThing o
   else
-     rf <$> getRoom' o w
+     rf <$$> getRoom o
 
 modifyObjectFrom
-  :: HasID o
+  :: MonadWorld s m
+  => HasID o
   => StoreLens' s d
   -> o
   -> (Object s d -> Object s d)
-  -> State (World s) ()
+  -> m ()
 modifyObjectFrom l o s = do
-  l % ix (getID o) % objectL %= s
+  ts <- gets getGlobalTime
+  l % ix (getID o) % objectL ts %= s
   tickGlobalTime
   pass
 
 setObjectFrom
-  :: StoreLens' s d
+  :: MonadWorld s m
+  => StoreLens' s d
   -> Object s d
-  -> State (World s) ()
+  -> m ()
 setObjectFrom l o = modifyObjectFrom l o id
 
 modifyThing
-  :: HasID o
+  :: MonadWorld s m
+  => HasID o
   => o
   -> (Thing s -> Thing s)
-  -> State (World s) ()
+  -> m ()
 modifyThing = modifyObjectFrom things
 
 modifyRoom
-  :: HasID o
+  :: MonadWorld s m
+  => HasID o
   => o
   -> (Room s -> Room s)
-  -> State (World s) ()
+  -> m ()
 modifyRoom = modifyObjectFrom rooms
 
 setThing
-  :: Thing s
-  -> State (World s) ()
+  :: MonadWorld s m
+  => Thing s
+  -> m ()
 setThing = setObjectFrom things
 
 setRoom
-  :: Room s
-  -> State (World s) ()
+  :: MonadWorld s m
+  => Room s
+  -> m ()
 setRoom = setObjectFrom rooms
 
-setThing'
-  :: Thing s
-  -> World s
-  -> World s
-setThing' = execState . setThing
-
-setRoom'
-  :: Room s
-  -> World s
-  -> World s
-setRoom' = execState . setRoom
-
 setAbstractObjectFrom
-  :: StoreLens' s d
+  :: MonadWorld s m
+  => StoreLens' s d
   -> AbstractObject s d
-  -> State (World s) ()
+  -> m ()
 setAbstractObjectFrom l o = do
     l % at (getID o) ?= o
     tickGlobalTime
 
 setAbstractThing
-  :: AbstractThing s
-  -> State (World s) ()
+  :: MonadWorld s m
+  => AbstractThing s
+  -> m ()
 setAbstractThing = setAbstractObjectFrom things
 
 setAbstractRoom
-  :: AbstractRoom s
-  -> State (World s) ()
+  :: MonadWorld s m
+  => AbstractRoom s
+  -> m ()
 setAbstractRoom = setAbstractObjectFrom rooms
-
-setAbstractThing'
-  :: AbstractThing s
-  -> World s
-  -> World s
-setAbstractThing' = execState . setAbstractThing
-
-setAbstractRoom'
-  :: AbstractRoom s
-  -> World s
-  -> World s
-setAbstractRoom' = execState . setAbstractRoom

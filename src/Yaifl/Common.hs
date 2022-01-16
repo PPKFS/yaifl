@@ -36,14 +36,23 @@ import Yaifl.Prelude
 import Yaifl.Messages
 import Yaifl.Types
 
-objectL :: Lens' (AbstractObject s d) (Object s d)
-objectL = lens
+updateCachedObject 
+  :: TimestampedObject s d
+  -> Object s d 
+  -> Timestamp 
+  -> TimestampedObject s d
+updateCachedObject ts n t = ts & set tsCachedObject n
+                                            & set tsCacheStamp t
+objectL
+  :: Timestamp
+  -> Lens' (AbstractObject s d) (Object s d)
+objectL t = lens
   (\case
     StaticObject o -> o
     DynamicObject (TimestampedObject o _ _) -> o)
   (\o n -> case o of
     StaticObject _ -> StaticObject n
-    DynamicObject ts -> DynamicObject $ set tsCachedObject n ts
+    DynamicObject ts -> DynamicObject (updateCachedObject ts n t)
   )
 
 containedBy :: forall s. Lens' (Thing s) Entity
@@ -62,22 +71,26 @@ isRoom
 isRoom = not . isThing
 
 reifyObject
-  :: StoreLens' s d
+  :: MonadWorld s m
+  => StoreLens' s d
   -> AbstractObject s d
-  -> World s
-  -> (Object s d, World s)
-reifyObject _ (StaticObject v) w = (v, w)
-reifyObject l (DynamicObject t) w = if _tsCacheStamp t == getGlobalTime w
-                    then (co, w)
-                    else runState (do
-                      -- update the object
-                      updatedObj <- gets $ updateObject (runUpdateFunction t) co
-                      -- update the world
-                      l % at (getID co) ?= DynamicObject
-                        (updateCachedObject t updatedObj)
-                      return updatedObj) w
-                    where co = _tsCachedObject t
-                          runUpdateFunction = _tsUpdateFunc
+  -> m (Object s d)
+reifyObject _ (StaticObject v) = return v
+reifyObject l (DynamicObject ts) = do
+  let co = _tsCachedObject ts
+  now <- getGlobalTime
+  if 
+    _tsCacheStamp ts == now
+  then 
+    return co
+  else
+    do
+      -- update the object
+      updatedObj <- updateObject (_tsUpdateFunc ts) co
+      -- update the world
+      t <- gets getGlobalTime
+      l % at (getID co) ?= DynamicObject (updateCachedObject ts updatedObj t)
+      return updatedObj
 
 class HasID n where
   getID :: n -> Entity
@@ -98,20 +111,22 @@ instance HasID (TimestampedObject s d) where
 -- | Obtain the current timestamp. This is a function in case I want to change the
 -- implementation in the future.
 getGlobalTime
-  :: World o
-  -> Timestamp
-getGlobalTime = _globalTime
+  :: MonadReader (World s) m
+  => m Timestamp
+getGlobalTime = asks _globalTime
 
 tickGlobalTime
-  :: State (World o) ()
+  :: MonadWorld s m
+  => m ()
 tickGlobalTime = do
   globalTime %= (+1)
-  logVerbose "Dong."
+  --logVerbose "Dong."
 
 -- | Update the game title.
 setTitle
-  :: Text -- ^ New title.
-  -> State (World o) ()
+  :: MonadWorld s m
+  => Text -- ^ New title.
+  -> m ()
 setTitle = (title .=)
 
 -- | Generate a new entity ID.
@@ -146,24 +161,28 @@ instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
   toAny (StaticObject s) = StaticObject $ toAny s
   toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
     DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a w -> maybe a (\v -> Right <$> tsf v w) (fromAny a))
+    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Right <$$> tsf r') (fromAny a))
 
   fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
   fromAny ((DynamicObject
     (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
     Nothing -> Nothing
     Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
+        r' <- tsf $ toAny v
+        return $ fromMaybe v (fromAny r') ))
 
 instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
   toAny (StaticObject s) = StaticObject $ toAny s
   toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
     DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a w -> maybe a (\v -> Left <$> tsf v w) (fromAny a))
+    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Left <$$> tsf r') (fromAny a))
 
   fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
   fromAny ((DynamicObject
     (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
     Nothing -> Nothing
     Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v w -> fromMaybe v (fromAny $ tsf (toAny v) w) ))
+      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
+        r' <- tsf $ toAny v
+        return $ fromMaybe v (fromAny r') ))

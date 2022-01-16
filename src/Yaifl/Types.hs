@@ -82,6 +82,8 @@ import Yaifl.Prelude
 import Yaifl.Messages
 import qualified Data.EnumSet as ES
 import qualified Data.EnumMap.Strict as EM
+import Katip
+import Control.Exception
 
 class Default e where
   blank :: e
@@ -162,11 +164,9 @@ data TimestampedObject s d = TimestampedObject
   , _tsUpdateFunc :: ObjectUpdate s d
   }
 
-
-
 -- | Function to update an object
 newtype ObjectUpdate s d = ObjectUpdate 
-  { updateObject :: Object s d -> World s -> Object s d
+  { updateObject :: forall m. (MonadReader (World s) m, KatipContext m) => Object s d -> m (Object s d)
   }
 
 type Thing s = Object s ThingData
@@ -209,6 +209,9 @@ data RoomData = RoomData
 
 defaultVoidID :: Entity
 defaultVoidID = Entity (-1)
+
+defaultPlayerID :: Entity
+defaultPlayerID = Entity 1
 
 -- | Whether a thing is inherently lit or not. This counts for lighting up spaces.
 data ThingLit = Lit | NotLit deriving (Eq, Show)
@@ -262,8 +265,16 @@ data RoomDescriptions
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule s v r = Rule
   { _ruleName :: !Text
-  , _runRule :: v -> State (World s) (v, Maybe r)
+  , _runRule :: forall m. MonadWorld s m => v -> m (v, Maybe r)
   }
+
+instance Default (Text -> Rule s v r) where
+  blank n = Rule n (\v -> do
+    logLocM InfoS $ ls (n <> " needs implementing") 
+    return (v, Nothing))
+
+--instance HasBuffer (World s) 'LogBuffer => Default (String -> Rule s v r) where
+--  blank = blank . toText
 
 -- | A 'Rulebook' is a composition of functions ('Rule's) with short-circuiting (if
 -- a Just value is returned) over an object universe `o`, input arguments `ia`, variables `v`
@@ -290,24 +301,24 @@ newtype UnverifiedArgs s = UnverifiedArgs
   { unArgs :: Args s [AnyObject s]
   }
 
+instance Default (Timestamp -> UnverifiedArgs s) where
+  blank = UnverifiedArgs . Args Nothing []
+
+instance Default (UnverifiedArgs s) where
+  blank = UnverifiedArgs $ Args Nothing [] 0
+
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect 
 -- their arguments to be pre-verified; this allows for the passing of state.
-newtype ActionRulebook s v = ActionRulebook
-  { unActionRulebook :: Rulebook s (Args s v) (Args s v) Bool
-  }
+type ActionRulebook s v = Rulebook s (Args s v) (Args s v) Bool
 
 -- | A `StandardRulebook` is one which expects to verify its own arguments.
-newtype StandardRulebook s v r = StandardRulebook
-  { unStandardRulebook :: Rulebook s (UnverifiedArgs s) v r
-  }
+type StandardRulebook s v r = Rulebook s (UnverifiedArgs s) v r
 
 newtype ParseArguments s ia v = ParseArguments
-  { runParseArguments :: ia -> World s -> Maybe v
+  { runParseArguments :: forall m. MonadWorldRO s m => ia -> m (Maybe v)
   }
 
-newtype ActionParseArguments s v = ActionParseArguments
-  { runActionParseArguments :: UnverifiedArgs s -> World s -> Maybe v
-  } 
+type ActionParseArguments s v = ParseArguments s (UnverifiedArgs s) v
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -336,7 +347,7 @@ data ActivityCollection o = ActivityCollection
   { _printingNameOfADarkRoom :: !(Activity o () ())
   }
 
-data World o = World
+data World s = World
   { _title :: !Text
   , _entityCounter :: !(Entity, Entity)
   , _globalTime :: !Timestamp
@@ -345,16 +356,41 @@ data World o = World
   , _currentPlayer :: !Entity
 
   , _firstRoom :: !(Maybe Entity)
-  , _things :: !(Store (AbstractThing o))
-  , _rooms :: !(Store (AbstractRoom o))
+  , _things :: !(Store (AbstractThing s))
+  , _rooms :: !(Store (AbstractRoom s))
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
-  , _actions :: !(Map Text (Action o))
-  , _activities :: !(ActivityCollection o)
-  , _whenPlayBegins :: !(Rulebook o () () Bool)
+  , _actions :: !(Map Text (Action s))
+  , _activities :: !(ActivityCollection s)
+  , _whenPlayBegins :: !(Rulebook s () () Bool)
   , _messageBuffers :: !(MessageBuffer, MessageBuffer)
-  , _actionProcessing :: !(Action o -> UnverifiedArgs o ->
-                           World o -> (Maybe Bool, World o))
+  , _actionProcessing :: !(forall m. MonadWorld s m => Action s -> UnverifiedArgs s -> m (Maybe Bool))
   }
+
+newtype Game s a = Game 
+  { unGame :: KatipContextT (StateT (World s) IO) a
+  } deriving newtype (Functor, Applicative, Monad, MonadIO, Katip, KatipContext, MonadState (World s))
+
+runGame :: Game s a -> World s -> IO a --World s -> IO (World s)
+runGame f i = do
+  handleScribe <- mkHandleScribe ColorIfTerminal stdout (permitItem InfoS) V2
+  let makeLogEnv = registerScribe "stdout" handleScribe defaultScribeSettings =<< initLogEnv "MyApp" "production"
+  -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
+  bracket makeLogEnv closeScribes $ \le -> do
+    let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
+    let initialNamespace = "main"
+    evalStateT (runKatipContextT le initialContext initialNamespace (unGame f)) i
+
+instance MonadReader (World s) (Game s) where
+  ask = get 
+  local f g = do
+    s <- get
+    put (f s)
+    r <- g
+    put s
+    return r
+--in case we have both a read-only and a read-write constraint on the world.
+type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, KatipContext m)
+type MonadWorldRO s m = (MonadReader (World s) m, KatipContext m)
 
 makeLenses ''World
 makeLenses ''Object

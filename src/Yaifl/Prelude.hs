@@ -23,6 +23,9 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List.NonEmpty as NonEmpty
 import Data.List ((\\))
+
+default (Integer, Double, Text)
+
 -- first let's define our own alterF for EnumMap...
 alterEMF
   :: (Functor f, Enum k)

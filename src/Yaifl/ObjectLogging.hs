@@ -44,20 +44,22 @@ shortPrint
   :: Object s d
   -> Text
 shortPrint Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")"
-
+{-
 logObject
-  :: ObjectLike s o
+  :: MonadReader ObjectLike s o
   => Text
   -> o
-  -> State (World s) ()
+  -> m ()
 logObject n e = do
   o <- getObject e
   logVerbose $ n <> "\n" <> prettify o
   whenJust o $ \Object{..} -> logVerbose _objName
-
+-}
 objectName
-  :: ObjectLike s o
+  :: MonadWorld s m
+  => ObjectLike s o
   => o
-  -> World s
-  -> Text
-objectName o w = maybe "Nothing" _objName $ getObject' o w
+  -> m Text
+objectName o = do
+  o' <- getObject o
+  return $ maybe "Nothing" _objName o'

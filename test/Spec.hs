@@ -8,14 +8,14 @@ import Yaifl
 import Test.HUnit
 import qualified Data.Text as T
 
-ex2World :: World ()
+ex2World :: IO (World ())
 ex2World = newWorld $ do
    setTitle "Bic"
    addRoom' "The Staff Break Room" "" pass
    addThing' "Bic pen" "" pass
    addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
    addThing' "napkin" "Slightly crumpled." pass
-   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" ruleEnd
+   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" rulePass
     {-
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
@@ -57,7 +57,7 @@ consumeLooking t d = consumeLine t >=> consumeLine d
 
 data YaiflTestCase where
     YaiflTestCase :: { testCaseName :: String
-    , testCaseWorld :: World o
+    , testCaseWorld :: IO (World o)
     , testCommands :: [Text]
     , testCaseExpected :: Text -> Either Assertion Text
     } -> YaiflTestCase
@@ -91,16 +91,18 @@ w2 <- runWorld (do
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
 -}
 
-testHarness :: World o -> [Text] -> (Text -> Either Assertion Text) -> Assertion
-testHarness w _ consume = do
-    let w2 = execState (do
+testHarness :: IO (World o) -> [Text] -> (Text -> Either Assertion Text) -> Assertion
+testHarness ioW _ consume = do
+    w <- ioW
+    w2 <- runGame (do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
-                logInfo "Validating...no validation implemented."
-                logInfo "\n---------------"
+                --logInfo "Validating...no validation implemented."
+                --logInfo "\n---------------"
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
-                state $ runRulebook (_whenPlayBegins w') ()
+                runRulebook (_whenPlayBegins w') ()
                 --do the commands...
+                get
                 ) w
     w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
     let (x, _) = flushBufferToText (Proxy @'SayBuffer) w3

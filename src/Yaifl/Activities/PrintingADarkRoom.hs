@@ -10,4 +10,4 @@ import Yaifl.Rulebooks
 import Yaifl.Messages
 printingNameOfADarkRoomImpl :: Activity o () ()
 printingNameOfADarkRoomImpl = makeActivity "Printing name of a dark room"
-    $ makeRule' "" (\w -> (Just (), say "Darkness" w))
+    $ makeRule' "" (say "Darkness" >> rulePass)

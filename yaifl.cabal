@@ -34,6 +34,7 @@ common common-options
                      , enummapset
                      , raw-strings-qq
                      , haskell-src-meta
+                     , katip
 
 
   ghc-options:         -Wall
@@ -63,7 +64,6 @@ common common-options
   default-extensions:
     NoImplicitPrelude
     OverloadedStrings
-    ApplicativeDo
     BangPatterns
     BlockArguments
     ConstraintKinds
@@ -73,26 +73,18 @@ common common-options
     DeriveFunctor
     DeriveGeneric
     DeriveLift
-    DeriveTraversable
     DerivingStrategies
-    EmptyCase
-    ExistentialQuantification
     FlexibleContexts
     FlexibleInstances
     FunctionalDependencies
     GADTs
     GeneralizedNewtypeDeriving
-    InstanceSigs
-    KindSignatures
     LambdaCase
     MultiParamTypeClasses
-    MultiWayIf
     NamedFieldPuns
-    NoMonomorphismRestriction
     OverloadedStrings
     PatternSynonyms
     PolyKinds
-    QualifiedDo
     QuasiQuotes
     RankNTypes
     RecordWildCards
@@ -102,9 +94,6 @@ common common-options
     TupleSections
     TypeApplications
     TypeFamilies
-    TypeFamilyDependencies
-    TypeOperators
-    UndecidableInstances
 library
   import:              common-options
   hs-source-dirs:      src

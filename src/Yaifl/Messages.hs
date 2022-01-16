@@ -19,16 +19,11 @@ module Yaifl.Messages
   , bufferL
 
   -- * Buffer modification
-  , setStyle
+  --, setStyle
   , setSayStyle
   , say
   , sayLn
   , sayIf
-  , logInfo
-  , logError
-  , logVerbose
-  , addLogContext
-  , popLogContext
 
   -- ** Flushing
   , flushBufferToStdOut
@@ -75,21 +70,22 @@ sb = Proxy
 data BufferTypes = LogBuffer | SayBuffer
 
 sayInternal
-  :: (HasBuffer d p)
+  :: (HasBuffer w p)
+  => MonadState w m
   => Proxy p
   -> StyledDoc
-  -> d
-  -> d
-sayInternal prox msg w = w & bufferL prox % msgBufBuffer %~ (:)
-    (sayContext buf `joinOp` maybe id PP.annotate style msg)
-  where
-    buf = w ^. bufferL prox
+  -> m ()
+sayInternal prox msg = do
+  buf <- use $ bufferL prox
+  let
     style = buf ^. msgBufStyle
     cxt = buf ^. msgBufContext
     joinOp = case cxt of
      [] -> (<>)
      _ -> (PP.<+>)
-
+  bufferL prox % msgBufBuffer %= (:)
+    (sayContext buf `joinOp` maybe id PP.annotate style msg)
+    
 sayContext
   :: MessageBuffer
   -> StyledDoc
@@ -98,29 +94,29 @@ sayContext = PP.hcat . _msgBufContext
 -- | Print @message@ to the regular @say@ buffer.
 say
   :: (HasBuffer w 'SayBuffer)
+  => MonadState w m
   => Text -- ^ Message.
-  -> w
-  -> w
+  -> m ()
 say = sayInternal sb . PP.pretty
 
 -- | Print @message@ to the say buffer with a newline.
 sayLn
   :: (HasBuffer w 'SayBuffer)
+  => MonadState w m
   => Text -- ^ Message.
-  -> w
-  -> w
+  -> m ()
 sayLn a = say (a <> "\n")
 
 -- | Conditionally print @message@ to the say buffer.
 sayIf
   :: (HasBuffer w 'SayBuffer)
+  => MonadState w m
   => Bool -- ^ Condition to evaluate.
   -> Text -- ^ Message.
-  -> w
-  -> w
+  -> m ()
 sayIf True = say
-sayIf False = const id
-
+sayIf False = const pass
+{-
 -- | Print @message@ to the logging buffer.
 log
   :: (HasBuffer w 'LogBuffer)
@@ -199,24 +195,6 @@ logContextPrefix colour prefix = PP.surround
         (PP.pretty prefix))
         (bf "[") (bf "]")
     where bf = PP.annotate PPTTY.bold
--- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
--- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setStyle
-  :: (HasBuffer w p)
-  => Proxy p
-  -> Maybe PPTTY.AnsiStyle -- ^ The updated style.
-  -> w
-  -> w
-setStyle prox = set $ bufferL prox % msgBufStyle
-
--- | Update the style of the say buffer. Setting to 'Just' overwrites the style,
--- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setSayStyle
-  :: (HasBuffer w 'SayBuffer)
-  => Maybe PPTTY.AnsiStyle
-  -> w
-  -> w
-setSayStyle = setStyle sb
 
 -- | Update the style of the logging buffer. Setting to 'Just' overwrites
 -- the style, whereas 'Nothing' will remove it.
@@ -242,6 +220,26 @@ popLogContext
   => w
   -> w
 popLogContext w = w & bufferL lb % msgBufContext %~ (fromMaybe [] . viaNonEmpty init)
+-}
+
+-- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
+-- | whereas 'Nothing' will remove it. This will not affect previous messages.
+setStyle
+  :: (HasBuffer w p)
+  => MonadState w m
+  => Proxy p
+  -> Maybe PPTTY.AnsiStyle -- ^ The updated style.
+  -> m ()
+setStyle prox s = bufferL prox % msgBufStyle .= s
+
+-- | Update the style of the say buffer. Setting to 'Just' overwrites the style,
+-- | whereas 'Nothing' will remove it. This will not affect previous messages.
+setSayStyle
+  :: (HasBuffer w 'SayBuffer)
+  => MonadState w m
+  => Maybe PPTTY.AnsiStyle
+  -> m ()
+setSayStyle = setStyle sb
 
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.

@@ -13,10 +13,7 @@ import Data.Text (replace)
 data SpecificsFunctions =
     GetX
     | SetX
-    | GetX'
-    | SetX'
     | ModifyX
-    | ModifyX'
     deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
 {-
@@ -35,12 +32,9 @@ makeSpecificsWithout l prop = do
 makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
     return $ (case sf of
-        GetX -> replaceTH "getXSUBHERE :: HasProperty s XSUBHERE => ObjectLike s o => o -> State (World s) (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
-        GetX' -> replaceTH "getXSUBHERE':: HasProperty s XSUBHERE => ObjectLike s o => o -> World s -> Maybe XSUBHERE\ngetXSUBHERE' = evalState . getXSUBHERE"
-        SetX -> replaceTH "setXSUBHERE :: HasProperty s XSUBHERE => HasID o => o-> XSUBHERE-> State (World s) ()\nsetXSUBHERE = defaultPropertySetter"
-        SetX' -> replaceTH "setXSUBHERE' :: HasProperty s XSUBHERE => HasID o => o-> XSUBHERE -> World s -> World s\nsetXSUBHERE' o e = execState (setXSUBHERE o e)"
-        ModifyX -> replaceTH "modifyXSUBHERE :: HasProperty s XSUBHERE => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> State (World s) ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
-        ModifyX' -> replaceTH "--" --replaceTH "modifyXSUBHERE' :: HasProperty s XSUBHERE => HasID o=> o-> (XSUBHERE -> XSUBHERE)-> World s -> World s\nmodifyXSUBHERE' = evalState . (modifyProperty getXSUBHERE setXSUBHERE)"
+        GetX -> replaceTH "getXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+        SetX -> replaceTH "setXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
+        ModifyX -> replaceTH "modifyXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
         ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]

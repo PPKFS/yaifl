@@ -10,4 +10,4 @@ makeActionRulebook
   :: Text
   -> [Rule o (Args o v) Bool]
   -> ActionRulebook o v
-makeActionRulebook n r = ActionRulebook $ Rulebook n Nothing (ParseArguments $ const . Just) r
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Just x)

@@ -1,7 +1,8 @@
 module Yaifl.Actions.Looking
-( lookingActionImpl
-, HasLookingProperties
-) where
+--( lookingActionImpl
+--, HasLookingProperties
+--) where
+  where
 
 import Yaifl.Prelude
 import Yaifl.Common
@@ -13,7 +14,7 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Actions.Common
 import Yaifl.Rulebooks
 import Yaifl.Messages
-
+{-
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 
 data LookingActionVariables s = LookingActionVariables
@@ -34,7 +35,7 @@ lookingActionImpl
 lookingActionImpl = Action
   "looking"
   ["look", "looking"]
-  lookingActionSet
+  (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
   carryOutLookingRules
@@ -51,7 +52,7 @@ lookingActionSet
   => UnverifiedArgs s
   -> World s
   -> Maybe (LookingActionVariables s)
-lookingActionSet Args{..} w = do
+lookingActionSet (UnverifiedArgs Args{..}) w = do
   (asThing :: Maybe (Thing s)) <- fromAny <$> _argsSource ^? _Just
   asThing' <- asThing
   loc <- asThing ^? _Just % containedBy
@@ -183,20 +184,20 @@ hasLight
 hasLight e w = do
   -- short circuits if o is an invalid object
   litObj <- objectItselfHasLight e w
-  let isSeeThroughObj = maybe False (`isSeeThrough` w) (getThing' e w)
+  let isSeeThroughObj = maybe False (`isSeeThrough` w) (getThing e w)
   return $ litObj || isSeeThroughObj && containsLitObj e w
 
 carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   makeRule "room description heading rule"
-        (\rb -> runState $ do
-          modify $ setSayStyle (Just PPTTY.bold)
+        (\rb -> do
+          setSayStyle (Just PPTTY.bold)
           let (LookingActionVariables _ cnt lvls _) = _argsVariables rb
-          logVerbose $ prettify (_argsVariables rb)
+          --logVerbose $ prettify (_argsVariables rb)
           let visCeil = viaNonEmpty last lvls
-          logVerbose $
-            "Printing room description heading with visibility ceiling " <> prettify (shortPrint <$> visCeil) <>
-              " and visibility count " <> show cnt
+          --logVerbose $
+          --  "Printing room description heading with visibility ceiling " <> prettify (shortPrint <$> visCeil) <>
+         --     " and visibility count " <> show cnt
         {-}
           if
             | cnt == 0 -> do
@@ -262,4 +263,5 @@ foreachVisibilityHolder e = do
   ifM (e `isType` "supporter") (say "(on ") (say "(in ")
   printName e
   say ")"
+-}
 -}

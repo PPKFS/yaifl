@@ -1,6 +1,6 @@
 module Yaifl.Activities.Common
 (
-  doActivity'
+  doActivity
 , makeActivity
 ) where
 
@@ -17,22 +17,17 @@ makeActivity n r = Activity n Nothing
   ((blankRulebook ("Carry Out " <> n)) { _rbRules = [r]})
   (blankRulebook ("After " <> n))
   where
-    blankRulebook n' = Rulebook n' Nothing (\x _ -> Just x) []
+    blankRulebook n' = Rulebook n' Nothing (ParseArguments (return . Just)) []
 
-doActivity'
-  :: (ActivityCollection s -> Activity s v r)
-  -> v
-  -> World s
-  -> (Maybe r, World s)
-doActivity' l c = runState (doActivity l c)
 
 doActivity
-  :: (ActivityCollection s -> Activity s v r)
+  :: MonadWorld s m
+  => (ActivityCollection s -> Activity s v r)
   -> v
-  -> State (World s) (Maybe r)
+  -> m (Maybe r)
 doActivity l c = do
   ac <- gets $ l . _activities
-  x <- state $ runRulebookAndReturnVariables (_activityBeforeRules ac) c
-  mr <- state $ runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
-  _ <- state $ runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
+  x <- runRulebookAndReturnVariables (_activityBeforeRules ac) c
+  mr <- runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
+  _ <- runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
   return $ snd =<< mr

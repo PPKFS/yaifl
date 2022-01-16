@@ -27,9 +27,9 @@ import Yaifl.Activities
 
 newWorld
   :: HasStandardProperties s
-  => State (World s) v
-  -> World s
-newWorld = (`execState` addBaseActions blankWorld)
+  => Game s v
+  -> IO (World s)
+newWorld g = runGame (modify addBaseActions >> g >> get) blankWorld
 
 type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container, HasProperty s Enterable)
 blankWorld
@@ -42,10 +42,10 @@ blankWorld = World
   , _darknessWitnessed = False
   , _firstRoom = Nothing
   , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
-  , _currentPlayer = Entity defaultPlayerID
-  , _things = emptyStore
+  , _currentPlayer = defaultPlayerID
+  , _things = blank
   , _concepts = () --emptyStore
-  , _rooms = emptyStore
+  , _rooms = blank
   , _messageBuffers = (emptyMessageBuffer, emptyMessageBuffer)
   , _actions = DM.empty
   , _activities = defaultActivities

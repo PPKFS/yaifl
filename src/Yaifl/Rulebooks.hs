@@ -5,11 +5,10 @@ module Yaifl.Rulebooks
     introText,
     runRulebook,
     runRulebookAndReturnVariables,
-    noArgs,
 
     makeRule,
     makeRule',
-    ruleEnd,
+    rulePass
   )
 where
 
@@ -25,37 +24,35 @@ import Yaifl.Messages
 -- to write rule bodies with a _ -> prefixed on).
 makeRule'
   :: Text -- ^ Rule name.
-  -> (World o -> (Maybe r, World o)) -- ^ Rule function.
-  -> Rule o v r
+  -> (forall m. MonadWorld s m => m (Maybe r)) -- ^ Rule function.
+  -> Rule s v r
 makeRule' n f = makeRule n (const f)
 
 makeRule
   :: Text -- ^ Rule name.
-  -> (v -> World o -> (Maybe r, World o)) -- ^ Rule function.
-  -> Rule o v r
-makeRule n f = Rule n (\v w -> first (v,) $ f v w)
+  -> (forall m. MonadWorld s m => v -> m (Maybe r)) -- ^ Rule function.
+  -> Rule s v r
+makeRule n f = Rule n (\v -> do
+  r <- f v 
+  return (v,r))
 
-blankRule
-  :: Text
-  -> Rule o v r
-blankRule n = Rule n (\a w -> ((a, Nothing), execState (logVerbose (n <> " needs implementing")) w))
-
--- | Append this to the end of a rule to remove any unnecessary return values
-ruleEnd
-  :: World o
-  -> (Maybe r, World o)
-ruleEnd = (Nothing,)
+blankRule :: Text -> Rule s v r
+blankRule = blank
 
 defaultActionProcessingRules
-  :: Action o
-  -> UnverifiedArgs o
-  -> World o
-  -> (Maybe Bool, World o)
+  :: MonadWorld s m
+  => Action s
+  -> UnverifiedArgs s
+  -> m (Maybe Bool)
 defaultActionProcessingRules Action{..} = runRulebook (Rulebook
   "Action Processing"
   (Just True)
-  (\uv w -> (\x -> fmap (const x) uv) <$> _actionParseArguments uv w)
-  -- v -> World s -> ((v, Maybe r), World s)
+  -- I have no idea how this works
+  (ParseArguments (\uv -> do
+    rs <- runParseArguments _actionParseArguments uv
+    case rs of
+      Nothing -> return Nothing 
+      Just x -> return $ Just $ fmap (const x) (unArgs uv)))
   [ blankRule "Before stage rule"
   , blankRule "carrying requirements rule"
   , blankRule "basic visibility rule"
@@ -67,7 +64,9 @@ defaultActionProcessingRules Action{..} = runRulebook (Rulebook
   --v -> World s -> ((v, Maybe r), World s)
   -- Rulebook o (Args o v) (Args o v) RuleOutcome -> Args o v -> World o -> (Maybe RuleOutcome, World o)
   , Rule "carry out stage rule"
-        ( \v w -> first (fromMaybe (v, Nothing)) $ runRulebookAndReturnVariables _actionCarryOutRules v w)
+        ( \v -> do
+          r <- runRulebookAndReturnVariables _actionCarryOutRules v
+          return (fromMaybe (v, Nothing) r))
   , blankRule "after stage rule"
   , blankRule "investigate player awareness after rule"
   , blankRule "report stage rule"
@@ -77,79 +76,85 @@ defaultActionProcessingRules Action{..} = runRulebook (Rulebook
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction
-  :: Text -- ^ text of command
-  -> (Timestamp -> UnverifiedArgs o) -- ^ Arguments without a timestamp
-  -> World o
-  -> (Bool, World o)
-tryAction an a = runState $ do
-  ta <- gets (a . getGlobalTime)
-  ac <- gets (getAction an ta)
-  unless (isJust ac) (logError ("Couldn't find a matching action for " <> an))
+  :: MonadWorld s m
+  => Text -- ^ text of command
+  -> (Timestamp -> UnverifiedArgs s) -- ^ Arguments without a timestamp
+  -> m Bool
+tryAction an f = do
+  ta <- getGlobalTime
+  let uva = f ta
+  ac <- getAction an uva
+  --unless (isJust ac) (logError ("Couldn't find a matching action for " <> an))
   -- either run the action if we parsed it successfully, or
   -- pipe through the error message
-  res <- maybe (return Nothing) (state . runAction ta) ac
+  res <- maybe (return Nothing) (runAction uva) ac
   return $ isNothing res
 
 getAction
-  :: Text
-  -> UnverifiedArgs o
-  -> World o
-  -> Maybe (Action o)
-getAction n _ w = w ^. actions % at n
+  :: MonadWorldRO s m
+  => Text
+  -> UnverifiedArgs s
+  -> m (Maybe (Action s))
+getAction n _ = gview $ actions % at n
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction
-  :: UnverifiedArgs o
-  -> Action o
-  -> World o
-  -> (Maybe Bool, World o)
-runAction args act w = _actionProcessing w act args w
+  :: MonadWorld s m
+  => UnverifiedArgs s
+  -> Action s
+  -> m (Maybe Bool)
+runAction args act = do
+  w <- get
+  let ap = _actionProcessing w
+  ap act args
 
 -- | Run a rulebook. Mostly this just adds some logging baggage.
 runRulebook
-  :: Rulebook o ia v re
+  :: MonadWorld s m
+  => Rulebook s ia v re
   -> ia
-  -> World o
-  -> (Maybe re, World o)
-runRulebook rb ia w = first (snd =<<) $ runRulebookAndReturnVariables rb ia w
-
+  -> m (Maybe re)
+runRulebook rb ia = do
+  mvre <- runRulebookAndReturnVariables rb ia
+  return $ mvre >>= snd
+--m (Maybe (v, Maybe re))
 runRulebookAndReturnVariables
-  :: Rulebook o ia v re
+  :: MonadWorld s m
+  => Rulebook s ia v re
   -> ia
-  -> World o
-  -> (Maybe (v, Maybe re), World o)
-runRulebookAndReturnVariables Rulebook{..} args = runState $ do
-  modify $ addLogContext _rbName
-  logInfo $ "Following the " <> _rbName <> " rulebook"
-  argParse <- gets $ _rbParseArguments args
-  case argParse of
-    Nothing -> logError $ "Couldn't parse rulebook vars for " <> _rbName
-    Just _ -> logVerbose "Parsed args..."
+  -> m (Maybe (v, Maybe re))
+runRulebookAndReturnVariables Rulebook{..} args = do
+  --modify $ addLogContext _rbName
+  --logInfo $ "Following the " <> _rbName <> " rulebook"
+  argParse <- runParseArguments _rbParseArguments args
+  --case argParse of
+  --  Nothing -> logError $ "Couldn't parse rulebook vars for " <> _rbName
+  --  Just _ -> logVerbose "Parsed args..."
   -- TODO: logging
   res <- maybe (return Nothing) (\x -> do
-    (v, r1) <- (state . processRuleList _rbRules) x
+    (v, r1) <- (processRuleList _rbRules) x
     return $ Just (v, r1)) argParse
-  logInfo $ "Finished the " <> _rbName <> " rulebook"
-  modify popLogContext
+  --logInfo $ "Finished the " <> _rbName <> " rulebook"
+  --modify popLogContext
   return $ (\(v, r1) -> Just (v, r1 <|> _rbDefaultOutcome)) =<< res
 
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
 processRuleList
-  :: [Rule o v re]
+  :: MonadWorld s m
+  => [Rule s v re]
   -> v
-  -> World o
-  -> ((v, Maybe re), World o)
-processRuleList [] v = ((v, Nothing),)
-processRuleList (x : xs) args = runState $ do
-        unless (_ruleName x == "")
-          (logVerbose $ "Following the " <> _ruleName x <> " rule")
-        (v, res) <- state $ _runRule x args
+  -> m (v, Maybe re)
+processRuleList [] v = return (v, Nothing)
+processRuleList (x : xs) args = do
+        --unless (_ruleName x == "")
+        --  (logVerbose $ "Following the " <> _ruleName x <> " rule")
+        (v, res) <- _runRule x args
         -- if we hit nothing, continue; otherwise return
-        whenJust res (const $ logVerbose $ "Finishing rulebook on rule " <> _ruleName x)
-        state (\w' -> maybe
-          (processRuleList xs v w')
-          (\r -> ((v, Just r), w')) res)
+        --whenJust res (const $ logVerbose $ "Finishing rulebook on rule " <> _ruleName x)
+        case res of
+          Nothing -> processRuleList xs v
+          Just r -> return (v, Just r)
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "When Play Begins"
@@ -161,70 +166,80 @@ whenPlayBeginsRules
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
-    (const $ const (Just ()))
-    [ makeRule' "Display Banner" $ ruleEnd . sayIntroText
-    , makeRule' "Position player in world" (runState positionPlayer)
+    (ParseArguments (const $ return (Just ())) )
+    [ makeRule' "Display Banner" $ sayIntroText >> rulePass
+    , makeRule' "Position player in world" positionPlayer
     , makeRule' "Initial room description" initRoomDescription
     ]
 
+rulePass 
+  :: Monad m
+  => m (Maybe a)
+rulePass = return Nothing
+
 initRoomDescription
-  :: World o
-  -> (Maybe a, World o)
-initRoomDescription w = (Nothing, snd $ tryAction "looking" (playerNoArgs w) w)
+  :: MonadWorld s m
+  => m (Maybe a)
+initRoomDescription = do
+  ua <- playerNoArgs
+  tryAction "looking" ua >> rulePass
 
 -- | No Arguments, player source.
 playerNoArgs
-  :: World s
-  -> Timestamp
-  -> UnverifiedArgs s
-playerNoArgs w = withPlayerSource w <$> noArgs
-
--- | No Arguments, no source.
-noArgs
-  :: Timestamp
-  -> UnverifiedArgs o
-noArgs = Args Nothing []
+  :: forall s m.
+     MonadWorld s m
+  => m (Timestamp -> UnverifiedArgs s)
+playerNoArgs = do
+  ua <- withPlayerSource blank
+  return (\ts -> ua & coercedTo @(Args s [AnyObject s]) % argsTimestamp .~ ts)
 
 withPlayerSource
-  :: World s
-  -> Args s v
-  -> Args s v
-withPlayerSource w = argsSource .~ (toAny <$> getPlayer w)
+  :: forall s m. MonadWorld s m
+  => UnverifiedArgs s
+  -> m (UnverifiedArgs s)
+withPlayerSource u = do
+  p <- getPlayer
+  return $ u & coercedTo @(Args s [AnyObject s]) % argsSource .~ (toAny <$> p)
 
 positionPlayer
-  :: HasProperty s Enclosing
-  => State (World s) (Maybe Bool)
+  :: MonadWorld s m
+  => HasProperty s Enclosing
+  => m (Maybe Bool)
 positionPlayer = do
   fr <- gets _firstRoom
   pl <- gets _currentPlayer
   case fr of
-    Nothing -> state $ failRuleWithError
+    Nothing -> failRuleWithError
       "No rooms have been made, so cannot place the player."
     Just fr' -> do
       m <- move pl fr'
-      if m then return Nothing else state $ failRuleWithError "Failed to move the player."
+      if m then return Nothing else failRuleWithError "Failed to move the player."
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.
 failRuleWithError
-  :: Text -- ^ Error message.
-  -> World o
-  -> (Maybe Bool, World o)
-failRuleWithError t w = (Just False, execState (logError t) w)
+  :: MonadState w m
+  => Text -- ^ Error message.
+  -> m (Maybe Bool)
+failRuleWithError t = do
+  --(logError t)
+  return $ Just False
 
 getPlayer
-  :: World o
-  -> Maybe (Thing o)
-getPlayer w = getThing' (_currentPlayer w) w
+  :: MonadWorld s m
+  => m (Maybe (Thing s))
+getPlayer = do
+  cp <- gets _currentPlayer
+  getThing cp
 
 sayIntroText
-  :: World o
-  -> World o
-sayIntroText = execState $ do
-  modify $ setSayStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
+  :: MonadWorld s m
+  => m ()
+sayIntroText = do
+  setSayStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
   t <- gets _title
-  modify (say $ introText t)
-  modify $ setSayStyle Nothing
+  say $ introText t
+  setSayStyle Nothing
   pass
 
 introText
@@ -241,8 +256,9 @@ introText w = fold
       (2 * T.length shortBorder + T.length w + 2) "-"
 
 addWhenPlayBegins
-  :: Rule o () Bool
-  -> State (World o) ()
+  :: MonadWorld s m
+  => Rule s () Bool
+  -> m ()
 addWhenPlayBegins r = whenPlayBegins %= addRule r
 
 addRule
