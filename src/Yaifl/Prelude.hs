@@ -13,6 +13,8 @@ module Yaifl.Prelude
   , eitherJoin
   , thenATraverse
   , universeSans
+  , (%!)
+  , module Formatting
   ) where
 
 import Relude hiding (mapMaybeM)
@@ -23,8 +25,13 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List.NonEmpty as NonEmpty
 import Data.List ((\\))
+import Formatting hiding ((%))
+import qualified Formatting as F
 
 default (Integer, Double, Text)
+
+(%!) :: F.Format r a -> F.Format r' r -> F.Format r' a
+(%!) = (F.%)
 
 -- first let's define our own alterF for EnumMap...
 alterEMF

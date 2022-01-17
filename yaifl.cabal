@@ -36,6 +36,7 @@ common common-options
                      , haskell-src-meta
                      , katip
                      , aeson
+                     , formatting
 
 
   ghc-options:         -Wall

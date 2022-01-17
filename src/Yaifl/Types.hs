@@ -92,6 +92,7 @@ import Data.Aeson.Types hiding (Object)
 import qualified Data.Text.Lazy.Builder as TLB
 import GHC.Stack (srcLocFile, srcLocPackage, srcLocModule, srcLocStartLine, srcLocStartCol, srcLocEndLine, srcLocEndCol)
 
+
 class Default e where
   blank :: e
 
@@ -173,7 +174,7 @@ data TimestampedObject s d = TimestampedObject
 
 -- | Function to update an object
 newtype ObjectUpdate s d = ObjectUpdate
-  { updateObject :: forall m. (MonadReader (World s) m, KatipContext m) => Object s d -> m (Object s d)
+  { updateObject :: forall m. (MonadWorldRO s m) => Object s d -> m (Object s d)
   }
 
 type Thing s = Object s ThingData
@@ -277,7 +278,7 @@ data Rule s v r = Rule
 
 instance Default (Text -> Rule s v r) where
   blank n = Rule n (\v -> do
-    logLocM InfoS $ ls (n <> " needs implementing")
+    warn $ bformat (stext %! " needs implementing") n
     return (v, Nothing))
 
 --instance HasBuffer (World s) 'LogBuffer => Default (String -> Rule s v r) where
@@ -415,8 +416,8 @@ instance MonadReader (World s) (Game s) where
     put s
     return r
 --in case we have both a read-only and a read-write constraint on the world.
-type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, KatipContext m)
-type MonadWorldRO s m = (MonadReader (World s) m, KatipContext m)
+type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, Logger m)
+type MonadWorldRO s m = (MonadReader (World s) m, Logger m)
 
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a

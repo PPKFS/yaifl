@@ -1,8 +1,5 @@
 module Yaifl.Activities.DescribingLocale
-( describingLocaleImpl
-, choosingNotableLocaleObjectsImpl
-, printingLocaleParagraphAboutImpl
-, HasLocaleProperties
+(
 ) where
 import Yaifl.Common
 import Yaifl.Activities.Common
@@ -16,7 +13,7 @@ import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Yaifl.Activities.PrintingNameOfSomething
 import Data.List (groupBy)
-
+{-
 choosingNotableLocaleObjectsImpl
   :: HasProperty s Enclosing
   => Activity s (AnyObject s) (LocalePriorities s)
@@ -394,4 +391,5 @@ listingContentsOfSomethingImpl =
           $ zip (toList contentsToList) [0 ..]
         return $ Just True
     )
+-}
 -}
