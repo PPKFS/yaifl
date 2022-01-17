@@ -7,13 +7,9 @@ import Relude hiding (error)
 import Yaifl
 import Test.HUnit
 import qualified Data.Text as T
-import Katip
-import Katip.Core
-import qualified Language.Haskell.TH.Syntax
-import Language.Haskell.TH (ExpQ)
 
-ex2World :: IO (World ())
-ex2World = newWorld "3.1.2" $ do
+ex2World :: Game () (World ())
+ex2World = newWorld $ do
    setTitle "Bic"
    addRoom' "The Staff Break Room" "" pass
    addThing' "Bic pen" "" pass
@@ -32,7 +28,7 @@ ex2World = newWorld "3.1.2" $ do
 
 
 tests :: Test
-tests = makeTests [YaiflTestCase "Bic - 3.1.2" ex2World [] ex2Test]
+tests = makeTests [YaiflTestCase "3.1.2" "Bic - 3.1.2" ex2World [] ex2Test]
 
 testMeWith :: [Text] -> Text -> [Text -> Either Assertion Text] -> Text -> Either Assertion Text
 testMeWith _ t c = consumeTitle t >=> foldr (>=>) return c
@@ -60,9 +56,10 @@ consumeLooking :: Text -> Text -> Text -> Either Assertion Text
 consumeLooking t d = consumeLine t >=> consumeLine d
 
 data YaiflTestCase where
-    YaiflTestCase :: { 
-    testCaseName :: String
-    , testCaseWorld :: IO (World o)
+    YaiflTestCase :: HasStandardProperties o => {
+    testCaseShortName :: Text
+    , testCaseName :: String
+    , testCaseWorld :: Game o (World o)
     , testCommands :: [Text]
     , testCaseExpected :: Text -> Either Assertion Text
     } -> YaiflTestCase
@@ -76,7 +73,7 @@ ex2Test = testMeWith [] "Bic" [
 makeTests :: [YaiflTestCase] -> Test
 makeTests lst = TestList $
     map (\YaiflTestCase{..} -> TestLabel testCaseName $
-        TestCase (testHarness testCaseWorld testCommands testCaseExpected)) lst
+        TestCase (testHarness testCaseShortName testCaseWorld testCommands testCaseExpected)) lst
 
 {-
 w2 <- runWorld (do
@@ -96,20 +93,19 @@ w2 <- runWorld (do
         ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
 -}
 
-testHarness :: IO (World o) -> [Text] -> (Text -> Either Assertion Text) -> Assertion
-testHarness ioW _ consume = do
-    w <- ioW
-    let sn = _shortName w
+testHarness :: HasStandardProperties o => Text -> Game o (World o) -> [Text] -> (Text -> Either Assertion Text) -> Assertion
+testHarness sn ioW _ consume = do
     w2 <- runGame sn (do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
                 --logInfo "Validating...no validation implemented."
                 --logInfo "\n---------------"
+                ioW
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
                 runRulebook (_whenPlayBegins w') ()
                 --do the commands...
                 get
-                ) w
+                ) blankWorld
     --w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
     let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
     (case Right x >>= consume of

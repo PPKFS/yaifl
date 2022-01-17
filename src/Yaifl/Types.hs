@@ -314,7 +314,7 @@ instance Default (Timestamp -> UnverifiedArgs s) where
 instance Default (UnverifiedArgs s) where
   blank = UnverifiedArgs $ Args Nothing [] 0
 
--- | 'ActionRulebook's run over specific arguments; specifically, they expect 
+-- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
 type ActionRulebook s v = Rulebook s (Args s v) (Args s v) Bool
 
@@ -355,8 +355,7 @@ data ActivityCollection o = ActivityCollection
   }
 
 data World s = World
-  { _shortName :: !Text
-  , _title :: !Text
+  { _title :: !Text
   , _entityCounter :: !(Entity, Entity)
   , _globalTime :: !Timestamp
   , _darknessWitnessed :: !Bool
