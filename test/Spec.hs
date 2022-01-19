@@ -7,6 +7,7 @@ import Relude hiding (error)
 import Yaifl
 import Test.HUnit
 import qualified Data.Text as T
+import Yaifl.Prelude
 
 ex2World :: Game () (World ())
 ex2World = newWorld $ do
@@ -99,14 +100,15 @@ testHarness sn ioW _ consume = do
                 --modify $ setSayStyle $ (Just PPTTY.bold)
                 --logInfo "Validating...no validation implemented."
                 --logInfo "\n---------------"
+                info $ bformat ("Building world " %! stext %! "...") sn
                 ioW
+                info $ bformat "World construction finished, beginning game..."
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
                 runRulebook (_whenPlayBegins w') ()
                 --do the commands...
                 get
                 ) blankWorld
-    --w3 <- flushBufferToStdOut (Proxy @'LogBuffer) w2
     let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
     (case Right x >>= consume of
         Left res -> res

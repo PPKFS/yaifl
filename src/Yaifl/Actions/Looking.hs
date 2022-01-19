@@ -1,8 +1,7 @@
 module Yaifl.Actions.Looking
---( lookingActionImpl
---, HasLookingProperties
---) where
-  where
+  ( lookingActionImpl
+  , HasLookingProperties
+  ) where
 
 import Yaifl.Prelude
 import Yaifl.Common
@@ -14,7 +13,7 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Actions.Common
 import Yaifl.Rulebooks
 import Yaifl.Messages
-{-
+
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 
 data LookingActionVariables s = LookingActionVariables
@@ -32,14 +31,14 @@ instance Prettify (LookingActionVariables s) where
 lookingActionImpl
   :: HasLookingProperties s
   => Action s
-lookingActionImpl = Action
+lookingActionImpl = error "" {-Action
   "looking"
   ["look", "looking"]
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
   carryOutLookingRules
-  (makeActionRulebook "report looking rulebook" [])
+  (makeActionRulebook "report looking rulebook" [])-}
 
 -- if we have no source, then we have no idea where we are looking 'from'; return nothing
 -- lightLevels (recalc light) is how many levels we can actually see because of light
@@ -47,31 +46,31 @@ lookingActionImpl = Action
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
 lookingActionSet
-  :: forall s.
+  :: forall s m.
   HasLookingProperties s
+  => MonadWorldRO s m
   => UnverifiedArgs s
-  -> World s
-  -> Maybe (LookingActionVariables s)
-lookingActionSet (UnverifiedArgs Args{..}) w = do
-  (asThing :: Maybe (Thing s)) <- fromAny <$> _argsSource ^? _Just
-  asThing' <- asThing
-  loc <- asThing ^? _Just % containedBy
-  reifyLoc <- getObject' loc w
-  vl <- getVisibilityLevels reifyLoc w
-  let lightLevels = (`recalculateLightOfParent` w) asThing'
-  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking"
+  -> m (Maybe (LookingActionVariables s))
+lookingActionSet (UnverifiedArgs Args{..}) = error "" {-runMaybeT $ hoistMaybe $ do
+  as <- _argsSource ^? _Just
+  t <- fromAny as
+  let loc = t ^. containedBy
+  reifyLoc <- getObject loc
+  rl' <- reifyLoc
+  vl <- getVisibilityLevels rl'
+  lightLevels <- recalculateLightOfParent t
+  return $ LookingActionVariables rl' lightLevels (take lightLevels vl) "looking"-}
 
 getVisibilityLevels
   :: HasLookingProperties s
   => AnyObject s
-  -> World s
-  -> Maybe [AnyObject s]
-getVisibilityLevels e w = do
+  -> m (Maybe [AnyObject s])
+getVisibilityLevels e = error " "{- do
   vh <- findVisibilityHolder e w
   if vh `eqObject` e
       then return [e]
-      else (vh :) <$> getVisibilityLevels vh w
-
+      else (vh :) <$> getVisibilityLevels vh w-}
+{-
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder
   :: HasLookingProperties s

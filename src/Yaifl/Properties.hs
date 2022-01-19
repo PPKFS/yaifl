@@ -281,19 +281,17 @@ move eObj eLoc = do
   obj <- getThing eObj
   loc <- getEnclosing eLoc
   f <- maybeOrReport2 obj loc
-        pass--(logError "Could not find object to move.")
-        pass--(logError "Could not find enclosing part of location.")
+        (err "Could not find object to move.")
+        (err "Could not find enclosing part of location.")
         (\o' _ -> do
           -- obtain the current container of the thing
           let container = o' ^. containedBy
           oName <- objectName o'
           contName <- objectName container
           eLocName <- objectName eLoc
-          --logVerbose $ "Moving " <> oName <> " from " <> contName <> " to " <> eLocName
-
+          debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) oName contName eLocName
           -- update the old location
           container `noLongerContains` o'
-
           -- update the thing moved
           eLoc `nowContains` o'
         )

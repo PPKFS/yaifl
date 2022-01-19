@@ -16,29 +16,33 @@ module Yaifl.ObjectLookup
 
 import Yaifl.Prelude
 import Yaifl.Common
+import Control.Monad.Except
+
 class HasID o => ObjectLike s o where
-  getRoom :: MonadWorld s m => o -> m (Maybe (Room s))
-  default getRoom :: MonadWorld s m => o -> m (Maybe (Room s))
-  --todo: add logging error here
-  getRoom = const $ return Nothing
-  getThing :: MonadWorld s m => o -> m (Maybe (Thing s))
-  default getThing :: MonadWorld s m => o -> m (Maybe (Thing s))
-  --todo: add logging error here
-  getThing = const $ return Nothing
+  getRoom :: MonadWorld s m => o -> m (Room s)
+  default getRoom :: MonadWorld s m => o -> m ((Room s))
+  getRoom _ = do
+    throwError "Called getRoom on an object with no instance."
+  getThing :: MonadWorld s m => o -> m (Thing s)
+  default getThing :: MonadWorld s m => o -> m (Thing s)
+  getThing _ = do
+    throwError "Called getThing on an object with no instance."
 
 instance ObjectLike s Entity where
   getThing = getObjectFrom things
   getRoom = getObjectFrom rooms
 
 instance ObjectLike s (Thing s) where
-  getThing = return . Just
+  getThing = pure
 
 instance ObjectLike s (Room s) where
-  getRoom = return . Just
+  getRoom = pure
 
 instance ObjectLike s (AnyObject s) where
-  getThing = return . fromAny
-  getRoom = return . fromAny
+  getThing t = liftEither (maybeToRight 
+    ("Tried to get a thing from " <> show (_objID t) <> " but it was a room.") (fromAny t))
+  getRoom t = liftEither (maybeToRight 
+    ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (fromAny t))
 
 -- ** getX
 -- sets of signatures
@@ -58,33 +62,35 @@ getObjectFrom
   => HasID o
   => StoreLens' s d
   -> o
-  -> m (Maybe (Object s d))
+  -> m (Object s d)
 getObjectFrom l e = do
     o <- gets $ getAbstractObjectFrom l e
-    mapMaybeM o (reifyObject l)
+    reifyObject l o
 
 getAbstractObjectFrom
   :: MonadReader (World s) m
   => HasID o
   => StoreLens' s d
   -> o
-  -> m (Maybe (AbstractObject s d))
+  -> m (AbstractObject s d)
 getAbstractObjectFrom l e = do
   w <- ask
-  return $ w & preview (l % ix (getID e))
+  let i = getID e
+  liftEither (maybeToRight ("Cannot find object with id " <> show i) (preview (l % ix i) w) )
+  
 
 getAbstractThing
   :: MonadReader (World s) m
   => HasID o
   => o
-  -> m (Maybe (AbstractThing s))
+  -> m (AbstractThing s)
 getAbstractThing = getAbstractObjectFrom things
 
 getAbstractRoom
   :: MonadReader (World s) m
   => HasID o
   => o
-  -> m (Maybe (AbstractRoom s))
+  -> m (AbstractRoom s)
 getAbstractRoom = getAbstractObjectFrom rooms
 
 getObject
@@ -96,11 +102,11 @@ getObject e = if isThing e
   then
     (do
       o <- getThing e
-      return $ toAny <$> o)
+      return $ toAny o)
   else
     (do
       o <- getRoom e
-      return $ toAny <$> o)
+      return $ toAny o)
 
 getAbstractObject
   :: HasID o
@@ -109,9 +115,9 @@ getAbstractObject
   -> Maybe (AnyAbstractObject s)
 getAbstractObject e w = if isThing e
   then
-    toAny <$> getAbstractObjectFrom things e w
+    toAny $ getAbstractObjectFrom things e w
   else
-    toAny <$> getAbstractObjectFrom rooms e w
+    toAny $ getAbstractObjectFrom rooms e w
 
 {-
 -- the getter on this doesn't update the cache...
@@ -162,14 +168,14 @@ asThingOrRoom'
   => o
   -> (Thing s -> a)
   -> (Room s -> a)
-  -> m (Maybe a)
+  -> m a
 asThingOrRoom' o tf rf =
   if
     isThing o
   then
-    tf <$$> getThing o
+    tf <$> getThing o
   else
-     rf <$$> getRoom o
+     rf <$> getRoom o
 
 modifyObjectFrom
   :: MonadWorld s m

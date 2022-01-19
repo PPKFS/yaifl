@@ -15,9 +15,9 @@ addAction ac =
   actions % at (_actionName ac) ?~ ac
 
 addBaseActions
-  :: ()--HasLookingProperties s
+  :: HasLookingProperties s
   => World s
   -> World s
 addBaseActions = foldr (.) id [
-    --addAction lookingActionImpl
+    addAction lookingActionImpl
   ]

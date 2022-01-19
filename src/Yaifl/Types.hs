@@ -137,7 +137,7 @@ instance Ixed (Store a)
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
   } deriving stock   (Show, Generic, Eq)
-    deriving newtype (Num, Enum, Ord)
+    deriving newtype (Num, Enum, Ord, Real, Integral)
 
 instance Default Timestamp where
   blank = Timestamp 0
@@ -381,6 +381,7 @@ class Monad m => Logger m where
   info :: HasCallStack => TLB.Builder -> m ()
   warn :: HasCallStack => TLB.Builder -> m ()
   err :: HasCallStack => TLB.Builder -> m ()
+  withContext :: HasCallStack => TLB.Builder -> m a -> m a
 
 newtype Game s a = Game
   { unGame :: KatipContextT (StateT (World s) IO) a
@@ -392,6 +393,7 @@ instance Logger (Game s) where
   info = logItemM (toLoc ?callStack) InfoS . LogStr
   warn = logItemM (toLoc ?callStack) WarningS . LogStr
   err = logItemM (toLoc ?callStack) ErrorS . LogStr
+  withContext n = katipAddNamespace (Namespace [toStrict $ TLB.toLazyText n])
 
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
@@ -422,9 +424,6 @@ type MonadWorldRO s m = (MonadReader (World s) m, Logger m)
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving newtype (Generic, Functor)
-
-logInf :: ExpQ
-logInf = [| logLocM InfoS |]
 
 instance A.ToJSON a => A.ToJSON (YaiflItem a) where
     toJSON (YaiflItem Item{..}) = A.object $

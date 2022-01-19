@@ -126,8 +126,8 @@ tickGlobalTime
   :: MonadWorld s m
   => m ()
 tickGlobalTime = do
-  globalTime %= (+1)
-  --logVerbose "Dong."
+  r <- globalTime <%= (+1)
+  debug (bformat ("Dong. The time is now " %! int %! ".") r)
 
 -- | Update the game title.
 setTitle
@@ -214,7 +214,7 @@ jsonFormatYaifl withColor verb i =
 runGame :: Text -> Game s a -> World s -> IO a --World s -> IO (World s)
 runGame t f i = do
   withFile "log.json" AppendMode \fh -> do
-    handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal fh (permitItem InfoS) V2
+    handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal fh (permitItem DebugS) V2
     let makeLogEnv = registerScribe "file" handleScribe defaultScribeSettings =<< initLogEnv "" ""
     -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
     bracket makeLogEnv closeScribes $ \le -> do

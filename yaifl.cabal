@@ -102,7 +102,7 @@ library
                       Yaifl.Rulebooks
                       Yaifl.Properties
                       Yaifl.Messages
-                      --, Yaifl.Prelude
+                      Yaifl.Prelude
                       Yaifl.TH
                       Yaifl.Types
                       --, Yaifl.Components
@@ -111,7 +111,6 @@ library
                       Yaifl.Activities
                       Yaifl.ObjectLookup
   other-modules:
-                      Yaifl.Prelude
                       Yaifl.ObjectLogging
                       Yaifl.Activities.PrintingADarkRoom
                       Yaifl.Activities.Common
