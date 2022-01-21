@@ -31,14 +31,14 @@ instance Prettify (LookingActionVariables s) where
 lookingActionImpl
   :: HasLookingProperties s
   => Action s
-lookingActionImpl = error "" {-Action
+lookingActionImpl = Action
   "looking"
   ["look", "looking"]
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
-  carryOutLookingRules
-  (makeActionRulebook "report looking rulebook" [])-}
+  (makeActionRulebook "check looking rulebook" []) --carryOutLookingRules
+  (makeActionRulebook "report looking rulebook" [])
 
 -- if we have no source, then we have no idea where we are looking 'from'; return nothing
 -- lightLevels (recalc light) is how many levels we can actually see because of light
@@ -46,46 +46,53 @@ lookingActionImpl = error "" {-Action
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
 lookingActionSet
-  :: forall s m.
-  HasLookingProperties s
-  => MonadWorldRO s m
+  :: forall s m. HasLookingProperties s
+  => MonadWorld s m
   => UnverifiedArgs s
   -> m (Maybe (LookingActionVariables s))
-lookingActionSet (UnverifiedArgs Args{..}) = error "" {-runMaybeT $ hoistMaybe $ do
-  as <- _argsSource ^? _Just
-  t <- fromAny as
+lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (runMaybeT $ do
+  as <- hoistMaybe $ _argsSource ^? _Just
+  (t :: Thing s) <- hoistMaybe $ fromAny as
   let loc = t ^. containedBy
   reifyLoc <- getObject loc
-  rl' <- reifyLoc
+  let rl' = reifyLoc
   vl <- getVisibilityLevels rl'
-  lightLevels <- recalculateLightOfParent t
-  return $ LookingActionVariables rl' lightLevels (take lightLevels vl) "looking"-}
+  let lightLevels = 0 -- <- recalculateLightOfParent t
+  return $ LookingActionVariables rl' lightLevels (take lightLevels vl) "looking") (handleMissingObject "" Nothing)
 
 getVisibilityLevels
-  :: HasLookingProperties s
+  :: MonadWorld s m
+  => NoMissingObjects s m
+  => HasLookingProperties s
   => AnyObject s
-  -> m (Maybe [AnyObject s])
-getVisibilityLevels e = error " "{- do
-  vh <- findVisibilityHolder e w
+  -> m [AnyObject s]
+getVisibilityLevels e = do
+  vh <- findVisibilityHolder e
   if vh `eqObject` e
       then return [e]
-      else (vh :) <$> getVisibilityLevels vh w-}
-{-
+      else (vh :) <$> getVisibilityLevels vh
+
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder
-  :: HasLookingProperties s
-  => AnyObject s
-  -> World s
-  -> Maybe (AnyObject s)
-findVisibilityHolder e' w =
+  :: MonadWorld s m
+  => HasLookingProperties s
+  => NoMissingObjects s m
+  => ObjectLike s o
+  => CanBeAny o (AnyObject s)
+  => o
+  -> m (AnyObject s)
+findVisibilityHolder e' = do
+  mCont <- getContainer e'
   if
-    isRoom e' || isOpaqueClosedContainer e' w
+    isRoom e' || isOpaqueClosedContainer <$?> mCont
   then
-    Just e'
+    --return it
+    return (toAny e')
   else
     do
-      t <- getThing' e' w ^? _Just % containedBy
-      getObject' t w
+      --get its container; we know it's a thing at this stage
+      t <- getThing e'
+      getObject (t ^. containedBy)
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -94,22 +101,25 @@ findVisibilityHolder e' w =
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent
-  :: HasLookingProperties s
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => HasLookingProperties s
   => ObjectLike s o
   => o
-  -> World s
-  -> Int
-recalculateLightOfParent e w = case parent of
-  Nothing -> 0
-  Just p ->
-    if
-      fromMaybe False $ offersLight p w
-    then
-      maybe 0 (\v -> 1 + recalculateLightOfParent v w) parent
-    else
-      0
-  where
-    parent = view containedBy <$> getThing' e w
+  -> m Int
+recalculateLightOfParent e = do
+  (parent :: Maybe Entity) <- view containedBy <$$> getThingMaybe e
+  case parent of
+    Nothing -> return 0
+    Just p -> do
+      ol <- offersLight p
+      if 
+        ol
+      then 
+        (1+) <$> recalculateLightOfParent p
+      else
+        return 0
+    
 
 -- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
@@ -117,53 +127,62 @@ recalculateLightOfParent e w = case parent of
 -- - it is see-through and its parent offers light
 -- this goes DOWN the object tree; the light goes to its contents
 offersLight
-  :: HasLookingProperties s
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => HasLookingProperties s
   => ObjectLike s o
   => o
-  -> World s
-  -> Maybe Bool
-offersLight e w = do
-  -- this will short circuit if we can't find e
-  objIsLit <- objectItselfHasLight e w
-  -- it is an object (else Nothing)
-  -- it is see through
-  -- its parent offers light
-  let seeThruWithParent = maybe False
-        (\o -> all (( == True) . fromMaybe False) [Just $ isSeeThrough o w, parentOffersLight o w]) (getThing' e w)
-      parentOffersLight o = offersLight (o ^. containedBy)
-  return $ objIsLit || seeThruWithParent || containsLitObj e w
+  -> m Bool
+offersLight e = do
+  let parentOffersLight o = offersLight (o ^. containedBy)
+      seeThruWithParent = maybe (return False) (\o' -> isSeeThrough o' &&^ parentOffersLight o')
+  o <- getThingMaybe e
 
--- | an object is see through if it's transparent, a supporter, an open container, or enterable but not a container
+  objectItselfHasLight e -- it is a lit thing (lit thing or lighted room)
+    ||^ seeThruWithParent o -- - it is see-through and its parent offers light
+    ||^ containsLitObj e -- - it contains a thing that has light
+
+-- | an object is see through if...
 isSeeThrough
-  :: HasLookingProperties s
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => HasLookingProperties s
   => Thing s
-  -> World s
-  -> Bool
-isSeeThrough e w = isSupporter || isTransparent || isEnterableNotContainer || isOpenContainer where
-  isSupporter = isType e (ObjType "supporter") w
-  isContainer = isType e (ObjType "container") w
-  c = getContainer' e w
-  en = getEnterable' e w
-  isTransparent = fmap _containerOpacity c == Just Transparent
-  isOpenContainer = (fmap _containerOpenable c == Just Open) && isContainer
-  isEnterableNotContainer = en == Just Enterable && not isContainer
+  -> m Bool
+isSeeThrough e = do
+  c <- getContainer e
+  en <- getEnterable e
+  s <- isType e (ObjType "supporter")
+  isContainer <- isType e (ObjType "container")
+  let isOpenContainer = (fmap _containerOpenable c == Just Open) && isContainer
+      isTransparent = fmap _containerOpacity c == Just Transparent
+      isEnterableNotContainer = en == Just Enterable && not isContainer
+  return $ s --if it's a supporter
+      || isTransparent -- it's transparent=
+      || isEnterableNotContainer -- it's enterable but not a container
+      || isOpenContainer -- it's an open container
 
 containsLitObj
-  :: HasLookingProperties s
+  :: NoMissingObjects s m
+  => HasLookingProperties s
   => ObjectLike s o
+  => MonadWorld s m
   => o
-  -> World s
-  -> Bool
-containsLitObj e w = maybe False (\e' -> any hasLightOrNothing (DES.elems $ e' ^. enclosingContains)) (getEnclosing' e w)
-  where
-    hasLightOrNothing o = fromMaybe False (hasLight o w)
+  -> m Bool
+containsLitObj e = do
+  enc <- getEnclosing e
+  case enc of
+    Nothing -> return False 
+    Just encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains)
+    
 
 -- | either a lit object or a lighted room
 objectItselfHasLight
-  :: ObjectLike s o
+  :: NoMissingObjects s m
+  => ObjectLike s o
+  => MonadWorld s m
   => o
-  -> World s
-  -> Maybe Bool
+  -> m Bool
 objectItselfHasLight e = asThingOrRoom' e
   (\x -> x ^. objData % thingLit == Lit)
   (\x -> x ^. objData % roomDarkness == Lighted)
@@ -175,16 +194,17 @@ objectItselfHasLight e = asThingOrRoom' e
 -- ignoring (c) for now; TODO?
 -- this goes UP the object tree
 hasLight
-  :: HasLookingProperties s
+  :: NoMissingObjects s m
+  => HasLookingProperties s
+  => MonadWorld s m
   => ObjectLike s o
   => o
-  -> World s
-  -> Maybe Bool
-hasLight e w = do
-  -- short circuits if o is an invalid object
-  litObj <- objectItselfHasLight e w
-  let isSeeThroughObj = maybe False (`isSeeThrough` w) (getThing e w)
-  return $ litObj || isSeeThroughObj && containsLitObj e w
+  -> m Bool
+hasLight e = do
+  ts <- getThingMaybe e
+  let isSeeThroughObj = maybe (return False) isSeeThrough ts
+      litObj = objectItselfHasLight e
+  litObj ||^ (isSeeThroughObj &&^ containsLitObj e)
 
 carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
@@ -214,9 +234,8 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
           return Nothing)
 
   ]
+
 {-
-
-
 carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
 carryOutLookingRules =
   makeRulebookWithVariables
@@ -262,5 +281,4 @@ foreachVisibilityHolder e = do
   ifM (e `isType` "supporter") (say "(on ") (say "(in ")
   printName e
   say ")"
--}
 -}

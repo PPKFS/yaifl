@@ -7,6 +7,7 @@ module Yaifl.Activities.Common
 import Yaifl.Common
 import Yaifl.Prelude
 import Yaifl.Rulebooks
+import Yaifl.Properties (withoutMissingObjects, handleMissingObject)
 
 makeActivity
   :: Text
@@ -25,9 +26,10 @@ doActivity
   => (ActivityCollection s -> Activity s v r)
   -> v
   -> m (Maybe r)
-doActivity l c = do
+doActivity l c = withoutMissingObjects (do
   ac <- gets $ l . _activities
   x <- runRulebookAndReturnVariables (_activityBeforeRules ac) c
   mr <- runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
   _ <- runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
-  return $ snd =<< mr
+  return $ snd =<< mr) (handleMissingObject "" Nothing)
+  

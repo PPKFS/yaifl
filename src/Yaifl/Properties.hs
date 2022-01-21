@@ -19,6 +19,8 @@ module Yaifl.Properties
   -- * querying objects
 
   , isOpaqueClosedContainer
+  , withoutMissingObjects
+  , handleMissingObject
 
 
   -- * get/set/modify
@@ -40,11 +42,12 @@ module Yaifl.Properties
 
 import Yaifl.Prelude
 import Yaifl.Common
-import Yaifl.Messages
 import Yaifl.ObjectLookup
 import qualified Data.EnumSet as ES
 import Yaifl.ObjectLogging
 import Yaifl.TH
+import Control.Monad.Except ( throwError )
+import qualified Data.Text.Lazy.Builder as TLB
 
 -- | Create a new object and assign it an entity ID, but do **not** add it to any
 -- stores. See also 'addObject' for a version that adds it to a store.
@@ -164,7 +167,8 @@ instance HasProperty ObjectSpecifics Enterable where
   propertyL = _ContainerSpecifics % containerEnterable
 
 getEnclosing
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => HasProperty s Enclosing
   => ObjectLike s o
   => o
@@ -174,7 +178,7 @@ getEnclosing e = if isThing e
     defaultPropertyGetter e
   else (do
     o <- getRoom e
-    return $ o ^? _Just % objData % roomEnclosing
+    return $ Just $ o ^. objData % roomEnclosing
   )
 
 setEnclosing
@@ -191,14 +195,15 @@ setEnclosing e v = if isThing e
     modifyRoom e (objData % roomEnclosing .~ v)
 
 getThingLit
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => ObjectLike s o
   => o
   -> m (Maybe ThingLit)
 getThingLit e = if isThing e
   then (do
     o <- getThing e
-    return $ o ^? _Just % objData % thingLit)
+    return $ Just $ o ^. objData % thingLit)
   else
     return Nothing -- property that makes no sense if it's a room
 
@@ -239,7 +244,8 @@ defaultPropertySetter
 defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
 
 defaultPropertyGetter
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => HasProperty ObjectSpecifics v
   => HasProperty s v
   => ObjectLike s o
@@ -247,7 +253,7 @@ defaultPropertyGetter
   -> m (Maybe v)
 defaultPropertyGetter e = do
   o <- getObject e
-  return $ preview (objSpecifics % propertyL) =<< o
+  return $ preview (objSpecifics % propertyL) o
 
 makeSpecificsWithout [GetX, SetX] ''Enclosing
 makeSpecificsWithout [] ''Container
@@ -255,50 +261,61 @@ makeSpecificsWithout [] ''Enterable
 --makeSpecificsWithout [GetX, SetX] ''ThingLit --TODO: flag
 
 getLocation
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => ObjectLike s o
   => o
   -> m (Maybe Entity)
 getLocation o = do
   v <- getThing o
-  let enclosedby = v ^? _Just % containedBy
-  v' <- mapMaybeM enclosedby (\x -> if
-      isRoom x
-    then
-      return $ Just x
-    else
-      getLocation x)
-  return $ join v'
+  let enclosedby = v ^. containedBy
+  if
+    isRoom enclosedby
+  then
+    return $ Just enclosedby
+  else
+    getLocation enclosedby
 
 move
-  :: MonadWorld s m
+  :: HasCallStack
+  => MonadWorld s m
   => HasProperty s Enclosing
   => Entity
   -> Entity
   -> m Bool
-move eObj eLoc = do
+move eObj eLoc = withoutMissingObjects (do
   -- reify both objects
-  obj <- getThing eObj
-  loc <- getEnclosing eLoc
-  f <- maybeOrReport2 obj loc
-        (err "Could not find object to move.")
-        (err "Could not find enclosing part of location.")
-        (\o' _ -> do
-          -- obtain the current container of the thing
-          let container = o' ^. containedBy
-          oName <- objectName o'
-          contName <- objectName container
-          eLocName <- objectName eLoc
-          debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) oName contName eLocName
-          -- update the old location
-          container `noLongerContains` o'
-          -- update the thing moved
-          eLoc `nowContains` o'
-        )
-  return $ isJust f
+  o' <- getThing eObj
+  loc <- isJust <$> getEnclosing eLoc
+  if 
+    loc
+  then
+    isJust <$> (do
+      -- obtain the current container of the thing
+      let container = o' ^. containedBy
+      oName <- objectName o'
+      contName <- objectName container
+      eLocName <- objectName eLoc
+      debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) oName contName eLocName
+      -- update the old location
+      container `noLongerContains` o'
+      -- update the thing moved
+      eLoc `nowContains` o'
+      return $ Just True)
+  else
+    throwError $ MissingObject "Could not find enclosing part of location." eLoc)
+    (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID" %! int ) eObj eLoc) False)
+
+
+
+handleMissingObject :: (HasCallStack, Logger m) => TLB.Builder -> a ->  MissingObject s -> m a
+handleMissingObject msg def (MissingObject t o) = do
+  err (msg <> bformat (stext %! "; Object ID: " %! stext) t (show o))
+  return def
 
 noLongerContains
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => HasProperty s Enclosing
   => ObjectLike s cont
   => ObjectLike s obj
@@ -309,7 +326,8 @@ noLongerContains cont obj = modifyEnclosing cont
   (enclosingContains %~ ES.delete (getID obj))
 
 nowContains
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => HasProperty s Enclosing
   => ObjectLike s cont
   => ObjectLike s obj

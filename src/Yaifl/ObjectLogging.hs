@@ -56,10 +56,11 @@ logObject n e = do
   whenJust o $ \Object{..} -> logVerbose _objName
 -}
 objectName
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => ObjectLike s o
   => o
   -> m Text
 objectName o = do
   o' <- getObject o
-  return $ maybe "Nothing" _objName o'
+  return $ _objName o'

@@ -93,6 +93,7 @@ common common-options
     UndecidableInstances
     CPP
     ImplicitParams
+    MultiWayIf
 library
   import:              common-options
   hs-source-dirs:      src

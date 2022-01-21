@@ -14,6 +14,7 @@ module Yaifl.Prelude
   , thenATraverse
   , universeSans
   , (%!)
+  , (<$?>)
   , module Formatting
   ) where
 
@@ -109,7 +110,7 @@ maybeOrReport2 c1 c2 err1 err2 f = do
     when (isNothing c2) err2
     sequenceA (f <$> c1 <*> c2)
 
-infixl 4 <$$>
+infixl 4 <$$>, <$?>
 (<$$>)
   :: Functor f
   => Functor g
@@ -117,6 +118,12 @@ infixl 4 <$$>
   -> f (g a)
   -> f (g b)
 h <$$> m = fmap h <$> m
+
+(<$?>)
+  :: (a -> Bool)
+  -> Maybe a
+  -> Bool
+f <$?> m = maybe False f m
 
 eitherJoin
   :: AffineTraversal' a f

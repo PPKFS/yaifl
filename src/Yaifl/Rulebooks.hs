@@ -25,13 +25,13 @@ import Data.Text.Lazy.Builder (fromText)
 -- to write rule bodies with a _ -> prefixed on).
 makeRule'
   :: Text -- ^ Rule name.
-  -> (forall m. MonadWorld s m => m (Maybe r)) -- ^ Rule function.
+  -> (forall m. NoMissingObjects s m => MonadWorld s m => m (Maybe r)) -- ^ Rule function.
   -> Rule s v r
 makeRule' n f = makeRule n (const f)
 
 makeRule
   :: Text -- ^ Rule name.
-  -> (forall m. MonadWorld s m => v -> m (Maybe r)) -- ^ Rule function.
+  -> (forall m. NoMissingObjects s m => MonadWorld s m => v -> m (Maybe r)) -- ^ Rule function.
   -> Rule s v r
 makeRule n f = Rule n (\v -> do
   r <- f v
@@ -45,7 +45,7 @@ defaultActionProcessingRules
   => Action s
   -> UnverifiedArgs s
   -> m (Maybe Bool)
-defaultActionProcessingRules Action{..} = runRulebook (Rulebook
+defaultActionProcessingRules Action{..} u = withoutMissingObjects (runRulebook (Rulebook
   "Action Processing"
   (Just True)
   -- I have no idea how this works
@@ -72,7 +72,7 @@ defaultActionProcessingRules Action{..} = runRulebook (Rulebook
   , blankRule "investigate player awareness after rule"
   , blankRule "report stage rule"
   , blankRule "clean actions rule"
-  ])
+  ]) u) (handleMissingObject "" (Just False))
 
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
@@ -110,14 +110,16 @@ runAction args act = do
 
 -- | Run a rulebook. Mostly this just adds some logging baggage.
 runRulebook
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => Rulebook s ia v re
   -> ia
   -> m (Maybe re)
 runRulebook rb ia = runRulebookAndReturnVariables rb ia >>= (\mvre -> return $ mvre >>= snd)
 
 runRulebookAndReturnVariables
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => Rulebook s ia v re
   -> ia
   -> m (Maybe (v, Maybe re))
@@ -137,7 +139,8 @@ runRulebookAndReturnVariables Rulebook{..} args = do
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
 processRuleList
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => [Rule s v re]
   -> v
   -> m (v, Maybe re)
@@ -172,7 +175,8 @@ rulePass
 rulePass = return Nothing
 
 initRoomDescription
-  :: MonadWorld s m
+  :: NoMissingObjects s m
+  => MonadWorld s m
   => m (Maybe a)
 initRoomDescription = do
   ua <- playerNoArgs
@@ -180,20 +184,21 @@ initRoomDescription = do
 
 -- | No Arguments, player source.
 playerNoArgs
-  :: forall s m.
-     MonadWorld s m
+  :: forall s m. NoMissingObjects s m
+  => MonadWorld s m
   => m (Timestamp -> UnverifiedArgs s)
 playerNoArgs = do
   ua <- withPlayerSource blank
   return (\ts -> ua & coercedTo @(Args s [AnyObject s]) % argsTimestamp .~ ts)
 
 withPlayerSource
-  :: forall s m. MonadWorld s m
+  :: forall s m. NoMissingObjects s m
+  => MonadWorld s m
   => UnverifiedArgs s
   -> m (UnverifiedArgs s)
 withPlayerSource u = do
   p <- getPlayer
-  return $ u & coercedTo @(Args s [AnyObject s]) % argsSource .~ (toAny <$> p)
+  return $ u & coercedTo @(Args s [AnyObject s]) % argsSource ?~ toAny p
 
 positionPlayer
   :: MonadWorld s m
@@ -220,8 +225,9 @@ failRuleWithError t = do
   return $ Just False
 
 getPlayer
-  :: MonadWorld s m
-  => m (Maybe (Thing s))
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => m (Thing s)
 getPlayer = do
   cp <- gets _currentPlayer
   getThing cp

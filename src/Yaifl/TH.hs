@@ -32,9 +32,12 @@ makeSpecificsWithout l prop = do
 makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
     return $ (case sf of
-        GetX -> replaceTH "getXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
-        SetX -> replaceTH "setXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
-        ModifyX -> replaceTH "modifyXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
+        GetX -> replaceTH 
+            "getXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+        SetX -> replaceTH 
+            "setXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
+        ModifyX -> replaceTH 
+            "modifyXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
         ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]

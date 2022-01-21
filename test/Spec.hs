@@ -105,7 +105,9 @@ testHarness sn ioW _ consume = do
                 info $ bformat "World construction finished, beginning game..."
                 w' <- get
                 --when I write a proper game loop, this is where it needs to go
-                runRulebook (_whenPlayBegins w') ()
+                withoutMissingObjects (do
+                    runRulebook (_whenPlayBegins w') ())
+                    (handleMissingObject "Failed when beginning" (Just False))
                 --do the commands...
                 get
                 ) blankWorld

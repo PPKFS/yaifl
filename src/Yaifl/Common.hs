@@ -13,6 +13,7 @@ module Yaifl.Common
   , isRoom
   , HasID(..)
   , CanBeAny(..)
+  , withoutMissingObjects
 
   -- * Lenses
 
@@ -146,16 +147,20 @@ newEntityID False = entityCounter % _2 <<-~ 1
 
 -- | Calculate whether one object type is a subclass of another
 isType
-  :: Object s d
+  :: MonadWorldRO s m
+  => Object s d
   -> ObjType
-  -> World s
-  -> Bool
-isType _ _ _ = False
+  -> m Bool
+isType _ _ = return False
 
 class CanBeAny o d where
   toAny :: o -> d
   fromAny :: d -> Maybe o
 
+instance CanBeAny o o where
+  toAny = id
+  fromAny = Just
+  
 instance CanBeAny (Object s RoomData) (AnyObject s) where
   toAny = fmap Right
   fromAny = traverse rightToMaybe
@@ -220,3 +225,10 @@ runGame t f i = do
     bracket makeLogEnv closeScribes $ \le -> do
       let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
       evalStateT (runKatipContextT le initialContext (Namespace [t]) (unGame f)) i
+
+withoutMissingObjects :: (HasCallStack, Monad m) => (HasCallStack => ExceptT (MissingObject s) m a) -> (HasCallStack => MissingObject s -> m a) -> m a
+withoutMissingObjects f def = do
+  r <- runExceptT f
+  case r of
+    Left m -> def m
+    Right x -> return x

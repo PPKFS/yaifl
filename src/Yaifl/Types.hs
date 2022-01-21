@@ -91,6 +91,7 @@ import qualified Data.Text as T
 import Data.Aeson.Types hiding (Object)
 import qualified Data.Text.Lazy.Builder as TLB
 import GHC.Stack (srcLocFile, srcLocPackage, srcLocModule, srcLocStartLine, srcLocStartCol, srcLocEndLine, srcLocEndCol)
+import Control.Monad.Except (MonadError)
 
 
 class Default e where
@@ -101,7 +102,7 @@ class Default e where
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic, Eq)
-    deriving newtype (Num, Enum, Ord)
+    deriving newtype (Num, Enum, Ord, Real, Integral)
 
 -- | ObjTypes make a DAG that approximates inheritance; for instance, we may only care
 -- that an object *is* a kind of food, but we don't necessarily know what the @a@ is
@@ -273,7 +274,7 @@ data RoomDescriptions
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule s v r = Rule
   { _ruleName :: !Text
-  , _runRule :: forall m. MonadWorld s m => v -> m (v, Maybe r)
+  , _runRule :: forall m. NoMissingObjects s m => MonadWorld s m => v -> m (v, Maybe r)
   }
 
 instance Default (Text -> Rule s v r) where
@@ -323,7 +324,7 @@ type ActionRulebook s v = Rulebook s (Args s v) (Args s v) Bool
 type StandardRulebook s v r = Rulebook s (UnverifiedArgs s) v r
 
 newtype ParseArguments s ia v = ParseArguments
-  { runParseArguments :: forall m. MonadWorldRO s m => ia -> m (Maybe v)
+  { runParseArguments :: forall m. (NoMissingObjects s m, MonadWorld s m) => ia -> m (Maybe v)
   }
 
 type ActionParseArguments s v = ParseArguments s (UnverifiedArgs s) v
@@ -395,6 +396,20 @@ instance Logger (Game s) where
   err = logItemM (toLoc ?callStack) ErrorS . LogStr
   withContext n = katipAddNamespace (Namespace [toStrict $ TLB.toLazyText n])
 
+instance Logger m => Logger (ExceptT e m) where
+  debug = lift . debug
+  info = lift . info
+  warn = lift . warn
+  err = lift . err
+  withContext b (ExceptT f) = ExceptT (withContext b f)
+
+instance Logger m => Logger (MaybeT m) where
+  debug = lift . debug
+  info = lift . info
+  warn = lift . warn
+  err = lift . err
+  withContext b (MaybeT f) = MaybeT (withContext b f)
+
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
 toLoc :: CallStack -> Maybe Loc
@@ -417,9 +432,12 @@ instance MonadReader (World s) (Game s) where
     r <- g
     put s
     return r
+
+data MissingObject s = MissingObject Text Entity
 --in case we have both a read-only and a read-write constraint on the world.
 type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, Logger m)
 type MonadWorldRO s m = (MonadReader (World s) m, Logger m)
+type NoMissingObjects s m = (MonadError (MissingObject s) m)
 
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
