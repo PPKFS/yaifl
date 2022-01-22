@@ -1,22 +1,18 @@
-module Main
-    (
-        main
-    ) where
-import Relude hiding (error)
+module Main ( main ) where
 
 import Yaifl
-import Test.HUnit
+import Test.Hspec
 import qualified Data.Text as T
 import Yaifl.Prelude
 
 ex2World :: Game () (World ())
 ex2World = newWorld $ do
-   setTitle "Bic"
-   addRoom' "The Staff Break Room" "" pass
-   addThing' "Bic pen" "" pass
-   addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
-   addThing' "napkin" "Slightly crumpled." pass
-   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" rulePass
+  setTitle "Bic"
+  addRoom' "The Staff Break Room" "" pass
+  addThing' "Bic pen" "" pass
+  addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
+  addThing' "napkin" "Slightly crumpled." pass
+  addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" rulePass
     {-
     addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
         foreachObject things (do
@@ -27,137 +23,65 @@ ex2World = newWorld $ do
         return Nothing)
     -}
 
+ex2Test :: [Text]
+ex2Test = 
+  [ expectLooking "The Staff Break Room" ""
+  , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
+  , expectLine "Bic pen has no description."]
 
-tests :: Test
-tests = makeTests [YaiflTestCase "3.1.2" "Bic - 3.1.2" ex2World [] ex2Test]
+tests :: Spec
+tests = describe "Chapter 3: " $ do
+  it "runs chapter 3.1.2" $ 
+    testHarness "Bic - 3.1.2" ex2World [] ex2Test
 
-testMeWith :: [Text] -> Text -> [Text -> Either Assertion Text] -> Text -> Either Assertion Text
-testMeWith _ t c = consumeTitle t >=> foldr (>=>) return c
+testHarness :: 
+  HasStandardProperties o 
+  => Text 
+  -> Game o (World o)
+  -> [Text] 
+  -> [Text]
+  -> Expectation
+testHarness fullTitle initWorld actionsToDo expected = do
+  let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
+  w2 <- runGame shortName (do
+    info $ bformat ("Building world " %! stext %! "...") shortName
+    w' <- initWorld
+    info $ bformat "World construction finished, beginning game..."
+    --when I write a proper game loop, this is where it needs to go
+    withoutMissingObjects 
+      (runRulebook (_whenPlayBegins w') ())
+      (handleMissingObject "Failed when beginning" (Just False))
+    --do the commands...
+    get) blankWorld
+  let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
+      buildExpected = mconcat (expectTitle t : expected )
+  x `shouldBe` buildExpected
 
-consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
-consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
+expectLine :: Text -> Text
+expectLine t1 = t1 <> "\n"
+
+expectTitle :: Text -> Text
+expectTitle = introText
+
+expectYouCanSee :: [Text] -> Text
+expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")
 
 listThings :: [Text] -> Text
 listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
                 (if v == length t1 - 2 then "and " else "")) t1 [0..]
 
+expectLooking :: Text -> Text -> Text
+expectLooking t d = expectLine t <> expectLine d
+
+{-
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
 consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
-
-consumeLine :: Text -> Text -> Either Assertion Text
-consumeLine t1 = consumeText (mconcat [t1, "\n"])
-consumeTitle :: Text -> Text -> Either Assertion Text
-consumeTitle t = consumeText (introText t)
-consumeText :: Text -> Text -> Either Assertion Text
-consumeText t1 t2 = case T.stripPrefix t1 t2 of
-    Just x -> Right x
-    Nothing -> Left $ t2 @?= t1
-
-consumeLooking :: Text -> Text -> Text -> Either Assertion Text
-consumeLooking t d = consumeLine t >=> consumeLine d
-
-data YaiflTestCase where
-    YaiflTestCase :: HasStandardProperties o => {
-    testCaseShortName :: Text
-    , testCaseName :: String
-    , testCaseWorld :: Game o (World o)
-    , testCommands :: [Text]
-    , testCaseExpected :: Text -> Either Assertion Text
-    } -> YaiflTestCase
-
-ex2Test :: Text -> Either Assertion Text
-ex2Test = testMeWith [] "Bic" [
-            consumeLooking "The Staff Break Room" "",
-            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"],
-            consumeLine "Bic pen has no description."]
-
-makeTests :: [YaiflTestCase] -> Test
-makeTests lst = TestList $
-    map (\YaiflTestCase{..} -> TestLabel testCaseName $
-        TestCase (testHarness testCaseShortName testCaseWorld testCommands testCaseExpected)) lst
-
-{-
-w2 <- runWorld (do
-        logInfo "Started world building..."
-        addBaseActions
-        addBaseActivities
-        w
-        addExtrasToBeTH
-        logInfo "Finished world building. Now validating..."
-        logInfo "No validation implemented."
-        logInfo "Finished validation, now running game..."
-        logInfo "\n-------------------"
-        --when I write a proper game loop, this is where it needs to go
-
-        wpbr <- use $ rulebookStore . at whenPlayBeginsName
-        maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
-        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
 -}
 
-testHarness :: HasStandardProperties o => Text -> Game o (World o) -> [Text] -> (Text -> Either Assertion Text) -> Assertion
-testHarness sn ioW _ consume = do
-    w2 <- runGame sn (do
-                --modify $ setSayStyle $ (Just PPTTY.bold)
-                --logInfo "Validating...no validation implemented."
-                --logInfo "\n---------------"
-                info $ bformat ("Building world " %! stext %! "...") sn
-                ioW
-                info $ bformat "World construction finished, beginning game..."
-                w' <- get
-                --when I write a proper game loop, this is where it needs to go
-                withoutMissingObjects (do
-                    runRulebook (_whenPlayBegins w') ())
-                    (handleMissingObject "Failed when beginning" (Just False))
-                --do the commands...
-                get
-                ) blankWorld
-    let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
-    (case Right x >>= consume of
-        Left res -> res
-        Right "" -> pass
-        Right x' -> assertFailure $ "Was left with " <> toString x')
-
 main :: IO ()
-main = do
-    v <- runTestTT tests
-    if errors v + failures v == 0 then
-      exitSuccess
-    else
-      die "you FAIL miette? you fail her tests like weakly typed language? oh! oh! jail for mother! jail for mother for One Thousand Years!!!"
+main = hspec tests
+      --die "you FAIL miette? you fail her tests like weakly typed language? oh! oh! jail for mother! jail for mother for One Thousand Years!!!"
 {-
-
-
-addRuleLast :: Rulebook w v a -> Rule w v a -> Rulebook w v a
-addRuleLast (Rulebook n d rs) r = Rulebook n d (rs <> [r])
-addRuleLast (RulebookWithVariables n d s rs) r = RulebookWithVariables n d s (rs <> [r])
-
-ex2World :: forall w. HasStandardWorld w => World w ()
-ex2World = do
-    setTitle "Bic"
-    makeRoom "The Staff Break Room" "" pass
-    thereIs' @(Thing w) "Bic pen" ""
-    thereIs' @(Thing w) "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
-    thereIs' @(Thing w) "napkin" "Slightly crumpled."
-    addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
-        foreachObject things (do
-            t <- getForeachObject
-            whenM (("" ==) <$> evalDescription t) (do
-                printName t
-                sayLn " has no description."))
-        return Nothing)
-    pass
-
-ex2Test :: Text -> Either Assertion Text
-ex2Test = testMeWith [] "Bic" [
-            consumeLooking "The Staff Break Room" "",
-            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"],
-            consumeLine "Bic pen has no description."]
-
-consumeLooking :: Text -> Text -> Text -> Either Assertion Text
-consumeLooking t d = consumeLine t >=> consumeLine d
-
-testMeWith :: [Text] -> Text -> [Text -> Either Assertion Text] -> Text -> Either Assertion Text
-testMeWith _ t c = consumeTitle t >=> foldr (>=>) return c
 
 ex3World :: HasStandardWorld w => World w ()
 ex3World = do
@@ -238,86 +162,7 @@ isInsideFrom = error "not implemented"
 isAbove :: RoomObject w -> State (RoomObject w) a3
 isAbove = error "not implemented"
 
-
-
-setTitle :: WithGameData w m => Text -> m ()
-setTitle t = title .= t
-
-consumeYouCanSee :: [Text] -> Text -> Either Assertion Text
-consumeYouCanSee t1 = consumeLine ("You can see " <> listThings t1 <> " here.\n")
-
-listThings :: [Text] -> Text
-listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
-                (if v == length t1 - 2 then "and " else "")) t1 [0..]
-
-consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
-consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
-
-consumeLine :: Text -> Text -> Either Assertion Text
-consumeLine t1 = consumeText (mconcat [t1, "\n"])
-consumeTitle :: Text -> Text -> Either Assertion Text
-consumeTitle t = consumeText (mconcat $ introText t)
-consumeText :: Text -> Text -> Either Assertion Text
-consumeText t1 t2 = case T.stripPrefix t1 t2 of
-    Just x -> Right x
-    Nothing -> Left $ t2 @?= t1
-
-main :: IO ()
-main = do
-    v <- runTestTT tests
-    if errors v + failures v == 0 then
-      exitSuccess
-    else
-      die "uh oh, you made a serious fwcky wucky, now you have to get in the forever box"
-
-tests :: Test
-tests = makeTests [("Bic - 3.1.2", ex2World, ex2Test)]
-
-makeTests :: [(String, World GameWorld a, Text -> Either Assertion Text)] -> Test
-makeTests lst = TestList $
-    map (\(z, x, y) -> TestLabel z  $ TestCase (testExample x [] y)) lst
-
---testExampleBlank :: (Text -> Either Assertion Text) -> IO ()
---testExampleBlank w1 ts = testExample w1 [] ts
-
-addExtrasToBeTH :: HasStandardWorld w => World w ()
-addExtrasToBeTH = do
-    updateFirstRoom
-    makePlayer defaultPlayerID
-    pass
-testExample :: World GameWorld a -> [Text] -> (Text -> Either Assertion Text) -> IO ()
-testExample w _ ts = do
-    w2 <- runWorld (do
-        logInfo "Started world building..."
-        addBaseActions
-        addBaseActivities
-        w
-        addExtrasToBeTH
-        logInfo "Finished world building. Now validating..."
-        logInfo "No validation implemented."
-        logInfo "Finished validation, now running game..."
-        logInfo "\n-------------------"
-        --when I write a proper game loop, this is where it needs to go
-
-        wpbr <- use $ rulebookStore . at whenPlayBeginsName
-        maybe (liftIO $ assertFailure "Couldn't find the when play begins rulebook..") (\(BoxedRulebook r) -> runRulebook r) wpbr
-        ) (blankGameData blankGameWorld id) (Env (LogAction (liftIO . putTextLn . fmtMessage )))
-    let x = foldl' (\v p -> v <> show p) ("" :: Text) $ reverse $ w2 ^. messageBuffer . buffer
-    --putStrLn "-------------\n"
-    case Right x >>= ts of
-        Left res -> res
-        Right "" -> pass
-        Right x' -> assertFailure $ "Was left with " <> toString x'
-
-
 {-
-
-ex2 :: Assertion
-ex2 = testExampleBlank example1World (\z -> consumeTitle "Bic" z >>=
-            consumeLine "The Staff Break Room" >>=
-            consumeBlankRoomDescription "The Staff Break Room" >>=
-            consumeYouCanSee ["a Bic pen", "a orange", "a napkin"] >>=
-            consumeLine "Bic pen has no description.")
 
 ex2 :: Assertion
 ex2 = testExample example2World [] (\v -> consumeTitle "Verbosity" v >>=

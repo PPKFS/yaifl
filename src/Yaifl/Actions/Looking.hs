@@ -28,8 +28,8 @@ instance Prettify (LookingActionVariables s) where
   prettify (LookingActionVariables fr _ lvls _) = "Looking from "
     <> shortPrint fr <> " with levels " <> mconcat (map shortPrint lvls)
 
-lookingActionImpl
-  :: HasLookingProperties s
+lookingActionImpl :: 
+  HasLookingProperties s
   => Action s
 lookingActionImpl = Action
   "looking"
@@ -37,7 +37,7 @@ lookingActionImpl = Action
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
-  (makeActionRulebook "check looking rulebook" []) --carryOutLookingRules
+  carryOutLookingRules
   (makeActionRulebook "report looking rulebook" [])
 
 -- if we have no source, then we have no idea where we are looking 'from'; return nothing
@@ -45,8 +45,8 @@ lookingActionImpl = Action
 -- vl is how many levels we could see in perfect light.
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
-lookingActionSet
-  :: forall s m. HasLookingProperties s
+lookingActionSet :: 
+  forall s m. HasLookingProperties s
   => MonadWorld s m
   => UnverifiedArgs s
   -> m (Maybe (LookingActionVariables s))
@@ -64,7 +64,7 @@ getVisibilityLevels
   :: MonadWorld s m
   => NoMissingObjects s m
   => HasLookingProperties s
-  => AnyObject s
+  => AnyObject s -- ^ 
   -> m [AnyObject s]
 getVisibilityLevels e = do
   vh <- findVisibilityHolder e
@@ -73,8 +73,8 @@ getVisibilityLevels e = do
       else (vh :) <$> getVisibilityLevels vh
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
-findVisibilityHolder
-  :: MonadWorld s m
+findVisibilityHolder ::
+  MonadWorld s m
   => HasLookingProperties s
   => NoMissingObjects s m
   => ObjectLike s o
@@ -167,7 +167,7 @@ containsLitObj
   => HasLookingProperties s
   => ObjectLike s o
   => MonadWorld s m
-  => o
+  => o -- ^ the object
   -> m Bool
 containsLitObj e = do
   enc <- getEnclosing e
@@ -176,23 +176,28 @@ containsLitObj e = do
     Just encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains)
     
 
--- | either a lit object or a lighted room
+{- | (4) An object itself has light if:  
+  (a) it's a room with the lighted property,  
+  (b) it's a thing with the lit property.  
+  If you want to include transitive light, you want `hasLight`.
+-}
 objectItselfHasLight
   :: NoMissingObjects s m
   => ObjectLike s o
   => MonadWorld s m
-  => o
+  => o -- ^ the object
   -> m Bool
 objectItselfHasLight e = asThingOrRoom' e
   (\x -> x ^. objData % thingLit == Lit)
   (\x -> x ^. objData % roomDarkness == Lighted)
 
--- | (4) An object has light if:
--- (a) it itself has the light attribute set, or
--- (b) it is see-through and any of its immediate possessions have light, or
--- (c) any object it places in scope using the property add_to_scope has light.
--- ignoring (c) for now; TODO?
--- this goes UP the object tree
+{- | (4) An object has light if:  
+  (a) it itself has the light attribute set, or  
+  (b) it is see-through and any of its immediate possessions have light, or  
+  (c) any object it places in scope using the property add_to_scope has light.  
+  ignoring (c) for now; TODO?  
+  this goes UP the object tree; it provides light TO its surroundings.  
+-}
 hasLight
   :: NoMissingObjects s m
   => HasLookingProperties s
@@ -202,9 +207,9 @@ hasLight
   -> m Bool
 hasLight e = do
   ts <- getThingMaybe e
-  let isSeeThroughObj = maybe (return False) isSeeThrough ts
-      litObj = objectItselfHasLight e
-  litObj ||^ (isSeeThroughObj &&^ containsLitObj e)
+  objectItselfHasLight e
+    ||^ (maybe (return False) isSeeThrough ts 
+      &&^ containsLitObj e)
 
 carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [

@@ -1,8 +1,0 @@
-resolver: nightly-2022-01-06
-
-extra-deps: 
-  - Cabal-3.6.2.0@sha256:e2266e14758c1f799220fad7f0d4b0b4ec567d81b7ba3faea17ff76d4c31de95,12437
-  - random-1.2.1@sha256:8bee24dc0c985a90ee78d94c61f8aed21c49633686f0f1c14c5078d818ee43a2,6598
-  - hackage-security-0.6.0.1@sha256:ae6cdda307237c0b7efeebfb0bf23ff8a26c30f5ba295dce5e4f81ef6e63fff6,12304
-  - ed25519-0.0.5.0@sha256:fb98b08de467d51f788f8bd9391f0e9ab9bd4d8dfc264296b895ffea0d822dfa,4165
-allow-newer: true
