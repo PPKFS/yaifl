@@ -13,13 +13,12 @@ module Yaifl.Rulebooks
 where
 
 import qualified Data.Text as T
-import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
+import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Prelude
 import Yaifl.Common
 import Yaifl.Properties
 import Yaifl.ObjectLookup
 import Yaifl.Messages
-import Data.Text.Lazy.Builder (fromText)
 
 -- | Rule smart constructor for rules that do not have any arguments (else you'd have
 -- to write rule bodies with a _ -> prefixed on).
@@ -88,7 +87,7 @@ tryAction an f = do
   ac <- getAction an uva
   case ac of
     Nothing -> err (bformat ("Couldn't find a matching action for '" %! stext %! "'") an) >> return False
-    Just a -> withContext (fromText $ _actionName a) $ fromMaybe False <$> runAction uva a
+    Just a -> fromMaybe False <$> runAction uva a
 
 getAction
   :: MonadWorldRO s m
@@ -124,16 +123,16 @@ runRulebookAndReturnVariables
   -> ia
   -> m (Maybe (v, Maybe re))
 runRulebookAndReturnVariables Rulebook{..} args = do
-  debug $ bformat ("Running the " %! stext %! " rulebook") _rbName
+  unless (null _rbRules) $ debug $ bformat ("Running the " %! stext %! " rulebook") _rbName
   withContext (bformat stext _rbName) $ do
 
     argParse <- runParseArguments _rbParseArguments args
     case argParse of
       Nothing -> err (bformat ("Failed to parse rulebook arguments for " %! stext %! " rulebook") _rbName) >> return Nothing
       Just a -> do
-        debug $ bformat ("Successfully parsed rulebook arguments for " %! stext %! " rulebook") _rbName
+        --debug $ bformat ("Successfully parsed rulebook arguments for " %! stext %! " rulebook") _rbName
         res <- (fmap Just . processRuleList _rbRules) a
-        debug $ bformat ("Finished the " %! stext %! " rulebook") _rbName
+        --debug $ bformat ("Finished the " %! stext %! " rulebook") _rbName
         return $ (\(v, r1) -> Just (v, r1 <|> _rbDefaultOutcome)) =<< res
 
 -- | Mostly this is a very complicated "run a list of functions until you get
@@ -146,8 +145,8 @@ processRuleList
   -> m (v, Maybe re)
 processRuleList [] v = return (v, Nothing)
 processRuleList (x : xs) args = do
-        unless (_ruleName x == "") (debug $ bformat ("Following the " %! stext %! " rule") (_ruleName x))
-        (v, res) <- withContext (bformat (stext %! " rule") $ _ruleName x) (_runRule x args)
+        -- unless (_ruleName x == "") (debug $ bformat ("Following the " %! stext %! " rule") (_ruleName x))
+        (v, res) <- _runRule x args
         -- if we hit nothing, continue; otherwise return
         case res of
           Nothing -> processRuleList xs v

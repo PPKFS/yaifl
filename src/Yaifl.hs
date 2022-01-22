@@ -30,7 +30,7 @@ newWorld
   :: HasStandardProperties s
   => Game s v
   -> Game s (World s)
-newWorld g = modify addBaseActions >> g >> get
+newWorld g = modify addBaseActions >> addBaseObjects >> g >> get
 
 type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container, HasProperty s Enterable)
 blankWorld
@@ -38,7 +38,7 @@ blankWorld
   => World s
 blankWorld = World
   { _title = "Untitled"
-  , _entityCounter = (Entity 1, Entity (-2))
+  , _entityCounter = (Entity 1, Entity (-1))
   , _globalTime = 0
   , _darknessWitnessed = False
   , _firstRoom = Nothing
@@ -52,4 +52,6 @@ blankWorld = World
   , _activities = defaultActivities
   , _whenPlayBegins = whenPlayBeginsRules
   , _actionProcessing = defaultActionProcessingRules
+  , _previousRoom = defaultVoidID
+  , _dirtyTime = False
   }

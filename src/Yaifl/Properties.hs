@@ -15,6 +15,7 @@ module Yaifl.Properties
   , addThing
   , addThing'
   , addObject
+  , addBaseObjects
 
   -- * querying objects
 
@@ -68,85 +69,6 @@ makeObject n d ty isT specifics details upd = do
   let obj = Object n d e ty t specifics details
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
-addObject
-  :: MonadWorld s m
-  => (forall m1. MonadWorld s m1 => AbstractObject s d -> m1 ())
-  -> Text
-  -> Text
-  -> ObjType
-  -> Bool
-  -> Either ObjectSpecifics s
-  -> d
-  -> Maybe (ObjectUpdate s d)
-  -> m Entity
--- hilariously the pointfree version of this is
--- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
-addObject updWorld n d ty isT specifics details updateFunc = do
-  obj <- makeObject n d ty isT specifics details updateFunc
-  updWorld (snd obj)
-  return (fst obj)
-
--- | Create a new 'Thing' and add it to the relevant stores.
-addThing
-  :: MonadWorld s m
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
-  -> ObjType -- ^ Type.
-  -> Maybe (Either ObjectSpecifics s)
-  -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Maybe (ObjectUpdate s ThingData) -- ^ Static/Dynamic.
-  -> m Entity
-addThing name desc objtype specifics details = addObject setAbstractThing name desc objtype
-  True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blank details)
-
--- | A version of 'addThing' that uses a state monad to provide imperative-like
--- descriptions of the internals of the object. Compare
--- @
--- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
--- @ with @
--- addThing' n d o (someLensField .= 5)
--- @
-addThing'
-  :: MonadWorld s m
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
-  -> State ThingData r -- ^ Build your own thing monad!
-  -> m Entity
-addThing' n d stateUpdate = addThing n d (ObjType "thing")
-    Nothing (Just $ execState stateUpdate blank) Nothing
-
--- | Create a new 'Room' and add it to the relevant stores.
-addRoom
-  :: MonadWorld s m
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
-  -> ObjType -- ^ Type.
-  -> Maybe (Either ObjectSpecifics s)
-  -> Maybe RoomData -- ^
-  -> Maybe (ObjectUpdate s RoomData)  -- ^
-  -> m Entity
-addRoom name desc objtype specifics details upd = do
-  e <- addObject setAbstractRoom name desc objtype False
-        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blank details) upd
-  w <- get
-  when (isNothing $ w ^. firstRoom) (firstRoom ?= e)
-  return e
-
--- | A version of 'addRoom' that uses a state monad to provide imperative-like
--- descriptions of the internals of the object. Compare
--- @
--- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
--- @ with @
--- addThing' n d o (someLensField .= 5)
--- @
-addRoom'
-  :: MonadWorld s m
-  => Text
-  -> Text
-  -> State RoomData v
-  -> m Entity
-addRoom' n d rd = addRoom n d (ObjType "room")
-  Nothing (Just (execState rd blank)) Nothing
 
 class HasProperty o v where
   default propertyL :: AffineTraversal' o v
@@ -276,17 +198,20 @@ getLocation o = do
   else
     getLocation enclosedby
 
-move
-  :: HasCallStack
+move :: 
+  HasCallStack
   => MonadWorld s m
   => HasProperty s Enclosing
-  => Entity
-  -> Entity
+  => ObjectLike s o1
+  => ObjectLike s o2
+  => o1
+  -> o2
   -> m Bool
 move eObj eLoc = withoutMissingObjects (do
   -- reify both objects
   o' <- getThing eObj
   loc <- isJust <$> getEnclosing eLoc
+  debug $ TLB.fromText (prettify o')
   if 
     loc
   then
@@ -301,10 +226,11 @@ move eObj eLoc = withoutMissingObjects (do
       container `noLongerContains` o'
       -- update the thing moved
       eLoc `nowContains` o'
+      tickGlobalTime True
       return $ Just True)
   else
-    throwError $ MissingObject "Could not find enclosing part of location." eLoc)
-    (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID" %! int ) eObj eLoc) False)
+    throwError $ MissingObject "Could not find enclosing part of location." (getID eLoc))
+    (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID " %! int ) (getID eObj) (getID eLoc)) False)
 
 
 
@@ -342,3 +268,107 @@ isOpaqueClosedContainer
   :: Container
   -> Bool
 isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == Closed)
+
+
+addObject :: 
+  MonadWorld s m
+  => HasProperty s Enclosing
+  => (ObjectLike s (AbstractObject s d))
+  => (forall m1. MonadWorld s m1 => AbstractObject s d -> m1 ())
+  -> Text
+  -> Text
+  -> ObjType
+  -> Bool
+  -> Either ObjectSpecifics s
+  -> d
+  -> Maybe (ObjectUpdate s d)
+  -> m Entity
+-- hilariously the pointfree version of this is
+-- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
+addObject updWorld n d ty isT specifics details updateFunc = do
+  obj <- makeObject n d ty isT specifics details updateFunc
+  debug $ bformat ("Made a new " %! stext %! " called " %! stext %! " with ID " %! int)
+    (if isThing (snd obj) then "thing" else "room") n (getID $ snd obj)
+  updWorld (snd obj)
+  let e = snd obj
+  asThing <- getThingMaybe e
+  lastRoom <- use previousRoom
+  case asThing of
+    Nothing -> previousRoom .= fst obj
+    Just t -> move t lastRoom >> pass -- move it if we're still 
+    
+  return (fst obj)
+
+-- | Create a new 'Thing' and add it to the relevant stores.
+addThing ::
+  MonadWorld s m
+  => HasProperty s Enclosing
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> ObjType -- ^ Type.
+  -> Maybe (Either ObjectSpecifics s)
+  -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ObjectUpdate s ThingData) -- ^ Static/Dynamic.
+  -> m Entity
+addThing name desc objtype specifics details = addObject setAbstractThing name desc objtype
+  True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blank details)
+
+-- | A version of 'addThing' that uses a state monad to provide imperative-like
+-- descriptions of the internals of the object. Compare
+-- @
+-- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
+-- @ with @
+-- addThing' n d o (someLensField .= 5)
+-- @
+addThing' :: 
+  MonadWorld s m
+  => HasProperty s Enclosing
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> State ThingData r -- ^ Build your own thing monad!
+  -> m Entity
+addThing' n d stateUpdate = addThing n d (ObjType "thing")
+    Nothing (Just $ execState stateUpdate blank) Nothing
+
+-- | Create a new 'Room' and add it to the relevant stores.
+addRoom
+  :: MonadWorld s m
+  => HasProperty s Enclosing
+  => Text -- ^ Name.
+  -> Text -- ^ Description.
+  -> ObjType -- ^ Type.
+  -> Maybe (Either ObjectSpecifics s)
+  -> Maybe RoomData -- ^
+  -> Maybe (ObjectUpdate s RoomData)  -- ^
+  -> m Entity
+addRoom name desc objtype specifics details upd = do
+  e <- addObject setAbstractRoom name desc objtype False
+        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blank details) upd
+  w <- get
+  when (isNothing $ w ^. firstRoom) (firstRoom ?= e)
+  return e
+
+-- | A version of 'addRoom' that uses a state monad to provide imperative-like
+-- descriptions of the internals of the object. Compare
+-- @
+-- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
+-- @ with @
+-- addThing' n d o (someLensField .= 5)
+-- @
+addRoom' :: 
+  MonadWorld s m
+  => HasProperty s Enclosing
+  => Text
+  -> Text
+  -> State RoomData v
+  -> m Entity
+addRoom' n d rd = addRoom n d (ObjType "room")
+  Nothing (Just (execState rd blank)) Nothing
+
+addBaseObjects ::
+  MonadWorld s m
+  => HasProperty s Enclosing
+  => m ()
+addBaseObjects = do
+  addRoom' "The Void" "If you're seeing this, you did something wrong." pass
+  firstRoom .= Nothing

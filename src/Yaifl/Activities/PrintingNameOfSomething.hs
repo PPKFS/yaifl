@@ -9,7 +9,7 @@ module Yaifl.Activities.PrintingNameOfSomething
 ) where
 
 import Yaifl.Activities.Common
-import Yaifl.Common
+import Yaifl.Types
 import Yaifl.Prelude
 import Yaifl.Rulebooks
 import Yaifl.Messages
@@ -29,29 +29,31 @@ capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
 printName
-  :: ObjectLike s o
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => ObjectLike s o
   => o
-  -> State (World s) ()
+  -> m ()
 printName o = printNameEx o noSayOptions
 
 printNameEx
-  :: ObjectLike s o
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => ObjectLike s o
   => o
   -> SayOptions
-  -> State (World s) ()
+  -> m ()
 printNameEx o p = do
   e <- getObject o
-  let pr = doActivity printingNameOfSomething <$> e
-  whenJust pr (\p' -> do
-    case p of
-        NoOptions -> p'
-        SayOptions Indefinite Capitalised -> do say "A "; p'
-        SayOptions Definite Capitalised -> do say "The "; p'
-        SayOptions Indefinite Uncapitalised -> do say "a "; p'
-        SayOptions Definite Uncapitalised -> do say "the "; p'
-    pass )
+  let pr = doActivity printingNameOfSomething e
+  case p of
+    NoOptions -> pr
+    SayOptions Indefinite Capitalised -> do say "A "; pr
+    SayOptions Definite Capitalised -> do say "The "; pr
+    SayOptions Indefinite Uncapitalised -> do say "a "; pr
+    SayOptions Definite Uncapitalised -> do say "the "; pr
   pass
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    (makeRule "" (\o w -> (Just (), say' (_objName o) w)))
+    (makeRule "" (\o -> say (_objName o) >> return (Just ())))

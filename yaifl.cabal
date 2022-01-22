@@ -105,14 +105,17 @@ library
                       Yaifl.Prelude
                       Yaifl.TH
                       Yaifl.Types
-                      --, Yaifl.Components
-                      --, Yaifl.Rulebooks
                       Yaifl.Actions
                       Yaifl.Activities
                       Yaifl.ObjectLookup
   other-modules:
                       Yaifl.ObjectLogging
                       Yaifl.Activities.PrintingADarkRoom
+                      Yaifl.Activities.PrintingNameOfSomething
+                      Yaifl.Activities.PrintingDescriptionOfADarkRoom
+                      Yaifl.Activities.ChoosingNotableLocaleObjects
+                      Yaifl.Activities.DescribingLocale
+                      Yaifl.Activities.PrintingLocaleParagraphAbout
                       Yaifl.Activities.Common
                       Yaifl.Actions.Common
                       Yaifl.Actions.Looking

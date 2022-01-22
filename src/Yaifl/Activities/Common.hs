@@ -7,7 +7,7 @@ module Yaifl.Activities.Common
 import Yaifl.Common
 import Yaifl.Prelude
 import Yaifl.Rulebooks
-import Yaifl.Properties (withoutMissingObjects, handleMissingObject)
+import Yaifl.Properties
 
 makeActivity
   :: Text
@@ -17,8 +17,6 @@ makeActivity n r = Activity n Nothing
   (blankRulebook ("Before " <> n))
   ((blankRulebook ("Carry Out " <> n)) { _rbRules = [r]})
   (blankRulebook ("After " <> n))
-  where
-    blankRulebook n' = Rulebook n' Nothing (ParseArguments (return . Just)) []
 
 
 doActivity

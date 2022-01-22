@@ -35,7 +35,7 @@ makePropertyFunction n sf = do
         GetX -> replaceTH 
             "getXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
         SetX -> replaceTH 
-            "setXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
+            "setXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
         ModifyX -> replaceTH 
             "modifyXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
         ) (toText $ nameBase n)

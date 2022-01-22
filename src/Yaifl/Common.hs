@@ -14,6 +14,7 @@ module Yaifl.Common
   , HasID(..)
   , CanBeAny(..)
   , withoutMissingObjects
+  , isBlankDescription
 
   -- * Lenses
 
@@ -28,21 +29,19 @@ module Yaifl.Common
 
   , reifyObject
 
-  , isType
   , runGame
   , module Yaifl.Types
   )
 where
 
 import Yaifl.Prelude
-import Yaifl.Messages
 import Yaifl.Types
 import Katip
 import qualified Data.Aeson as A
 import qualified Data.Text.Lazy.Builder as B
 import Control.Exception (bracket)
 import Katip.Scribes.Handle (colorBySeverity)
-import GHC.IO.Handle.FD
+import qualified Data.Text as T
 
 updateCachedObject
   :: TimestampedObject s d
@@ -65,6 +64,9 @@ objectL t = lens
 
 containedBy :: forall s. Lens' (Thing s) Entity
 containedBy = coercedTo @(Object s ThingData) % objData % thingContainedBy
+
+isBlankDescription :: Text -> Bool 
+isBlankDescription = (T.empty==)
 
 isThing
   :: (HasID a)
@@ -125,8 +127,11 @@ getGlobalTime = asks _globalTime
 
 tickGlobalTime
   :: MonadWorld s m
-  => m ()
-tickGlobalTime = do
+  => Bool
+  -> m ()
+tickGlobalTime False = dirtyTime .= True
+tickGlobalTime True = do
+  dirtyTime .= False
   r <- globalTime <%= (+1)
   debug (bformat ("Dong. The time is now " %! int %! ".") r)
 
@@ -145,13 +150,6 @@ newEntityID
 newEntityID True = entityCounter % _1 <<+~ 1
 newEntityID False = entityCounter % _2 <<-~ 1
 
--- | Calculate whether one object type is a subclass of another
-isType
-  :: MonadWorldRO s m
-  => Object s d
-  -> ObjType
-  -> m Bool
-isType _ _ = return False
 
 class CanBeAny o d where
   toAny :: o -> d
@@ -160,7 +158,7 @@ class CanBeAny o d where
 instance CanBeAny o o where
   toAny = id
   fromAny = Just
-  
+
 instance CanBeAny (Object s RoomData) (AnyObject s) where
   toAny = fmap Right
   fromAny = traverse rightToMaybe
@@ -202,12 +200,12 @@ instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
 -- | Convert log item to its JSON representation while trimming its
 -- payload based on the desired verbosity. Backends that push JSON
 -- messages should use this to obtain their payload.
-itemJsonYaifl 
-  :: LogItem a 
-  => Verbosity 
-  -> YaiflItem a 
+itemJsonYaifl
+  :: LogItem a
+  => Verbosity
+  -> YaiflItem a
   -> A.Value
-itemJsonYaifl verb (YaiflItem a) = A.toJSON 
+itemJsonYaifl verb (YaiflItem a) = A.toJSON
   $ YaiflItem $ a { _itemPayload = payloadObject verb (_itemPayload a) }
 
 jsonFormatYaifl :: LogItem a => ItemFormatter a

@@ -13,6 +13,9 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Actions.Common
 import Yaifl.Rulebooks
 import Yaifl.Messages
+import qualified Data.Text.Lazy.Builder as TLB
+import Yaifl.Activities.Common
+import Yaifl.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
 
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 
@@ -28,11 +31,13 @@ instance Prettify (LookingActionVariables s) where
   prettify (LookingActionVariables fr _ lvls _) = "Looking from "
     <> shortPrint fr <> " with levels " <> mconcat (map shortPrint lvls)
 
-lookingActionImpl :: 
+lookingActionName :: Text 
+lookingActionName = "looking"
+lookingActionImpl ::
   HasLookingProperties s
   => Action s
 lookingActionImpl = Action
-  "looking"
+  lookingActionName
   ["look", "looking"]
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
@@ -45,7 +50,7 @@ lookingActionImpl = Action
 -- vl is how many levels we could see in perfect light.
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
-lookingActionSet :: 
+lookingActionSet ::
   forall s m. HasLookingProperties s
   => MonadWorld s m
   => UnverifiedArgs s
@@ -53,12 +58,10 @@ lookingActionSet ::
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (runMaybeT $ do
   as <- hoistMaybe $ _argsSource ^? _Just
   (t :: Thing s) <- hoistMaybe $ fromAny as
-  let loc = t ^. containedBy
-  reifyLoc <- getObject loc
-  let rl' = reifyLoc
-  vl <- getVisibilityLevels rl'
-  let lightLevels = 0 -- <- recalculateLightOfParent t
-  return $ LookingActionVariables rl' lightLevels (take lightLevels vl) "looking") (handleMissingObject "" Nothing)
+  reifyLoc <- getObject (t ^. containedBy)
+  vl <- getVisibilityLevels reifyLoc
+  lightLevels <- recalculateLightOfParent t
+  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking") (handleMissingObject "" Nothing)
 
 getVisibilityLevels
   :: MonadWorld s m
@@ -83,11 +86,14 @@ findVisibilityHolder ::
   -> m (AnyObject s)
 findVisibilityHolder e' = do
   mCont <- getContainer e'
+  n <- objectName e'
   if
     isRoom e' || isOpaqueClosedContainer <$?> mCont
   then
-    --return it
-    return (toAny e')
+    do
+      debug $ bformat ("The visibility holder of " %! stext %! " is itself ") n
+      --return it
+      return (toAny e')
   else
     do
       --get its container; we know it's a thing at this stage
@@ -113,13 +119,13 @@ recalculateLightOfParent e = do
     Nothing -> return 0
     Just p -> do
       ol <- offersLight p
-      if 
+      if
         ol
-      then 
+      then
         (1+) <$> recalculateLightOfParent p
       else
         return 0
-    
+
 
 -- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
@@ -152,9 +158,9 @@ isSeeThrough
 isSeeThrough e = do
   c <- getContainer e
   en <- getEnterable e
-  s <- isType e (ObjType "supporter")
+  s <- isSupporter e
   isContainer <- isType e (ObjType "container")
-  let isOpenContainer = (fmap _containerOpenable c == Just Open) && isContainer
+  let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer
   return $ s --if it's a supporter
@@ -172,9 +178,9 @@ containsLitObj
 containsLitObj e = do
   enc <- getEnclosing e
   case enc of
-    Nothing -> return False 
+    Nothing -> return False
     Just encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains)
-    
+
 
 {- | (4) An object itself has light if:  
   (a) it's a room with the lighted property,  
@@ -208,82 +214,68 @@ hasLight
 hasLight e = do
   ts <- getThingMaybe e
   objectItselfHasLight e
-    ||^ (maybe (return False) isSeeThrough ts 
+    ||^ (maybe (return False) isSeeThrough ts
       &&^ containsLitObj e)
 
 carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   makeRule "room description heading rule"
-        (\rb -> do
-          setSayStyle (Just PPTTY.bold)
-          let (LookingActionVariables _ cnt lvls _) = _argsVariables rb
-          --logVerbose $ prettify (_argsVariables rb)
-          let visCeil = viaNonEmpty last lvls
-          --logVerbose $
-          --  "Printing room description heading with visibility ceiling " <> prettify (shortPrint <$> visCeil) <>
-         --     " and visibility count " <> show cnt
-        {-}
-          if
-            | cnt == 0 -> do
-              doActivity' printingNameOfADarkRoom ()
-              pass --no light, print darkness
-            | visCeil == getID loc ->
-              traverse_ printName visCeil --if the ceiling is the location, then print [the location]
-            | True ->
-              traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
-          mapM_ foreachVisibilityHolder (drop 1 lvls)
-          modify $ sayLn ""
-          modify $ setSayStyle Nothing
-          --TODO: "run paragraph on with special look spacing"?
-        -}
-          return Nothing)
+    (\rb -> do
+      setSayStyle (Just PPTTY.bold)
+      let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
+          visCeil = viaNonEmpty last lvls
+      debug $ TLB.fromText $ prettify (_argsVariables rb)
+      debug (bformat
+        ("Printing room description heading with visibility ceiling " %! stext %! " and visibility count " %! int)
+        (prettify (shortPrint <$> visCeil))
+        cnt)
+      if
+        | cnt == 0 -> do
+          doActivity printingNameOfADarkRoom ()
+          pass --no light, print darkness
+        | (getID <$> visCeil) == Just (getID loc) ->
+          traverse_ printName visCeil --if the ceiling is the location, then print [the location]
+        | True ->
+          traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
+      mapM_ foreachVisibilityHolder (drop 1 lvls)
+      sayLn ""
+      setSayStyle Nothing
+      --TODO: "run paragraph on with special look spacing"?
+      return Nothing),
+  makeRule "room description body rule"
+    (\rb -> do
+      let (LookingActionVariables loc cnt lvls ac) = _argsVariables rb
+          visCeil = viaNonEmpty last lvls
+      roomDesc <- use roomDescriptions
+      dw <- use darknessWitnessed
+      let abbrev = roomDesc == AbbreviatedRoomDescriptions
+          someAbbrev = roomDesc == SometimesAbbreviatedRoomDescriptions
+      if
+        | cnt == 0 -> 
+          unless (abbrev || (someAbbrev && dw)) $ do
+            doActivity printingDescriptionOfADarkRoom () 
+            pass
+        | (getID <$> visCeil) == Just (getID loc) ->
+          unless (abbrev || (someAbbrev && ac /= lookingActionName)) $ do
+            let desc = _objDescription loc
+            unless (isBlankDescription desc)
+              (sayLn (_objDescription loc))
+        | otherwise -> pass
+      return Nothing),
+  makeRule "room description paragraphs about objects rule"
+    (\rb -> do
+      let (LookingActionVariables _ _ lvls _) = _argsVariables rb
 
+      mapM_ (\o -> doActivity describingLocale (LocaleVariables blank o 0)) lvls
+      return Nothing)
   ]
 
-{-
-carryOutLookingRules :: HasPhysicalStore w => LookingActionVariables -> Rulebook w LookingActionVariables RuleOutcome
-carryOutLookingRules =
-  makeRulebookWithVariables
-    "carry out looking rulebook"
-    [ RuleWithVariables
-
-      RuleWithVariables
-        "room description body rule"
-        do
-          LookingActionVariables cnt lvls ac <- getRulebookVariables
-          let visCeil = viaNonEmpty last lvls
-          loc <- getActor >>= getLocation
-          roomDesc <- use roomDescriptions
-          dw <- use darknessWitnessed
-          let abbrev = roomDesc == AbbreviatedRoomDescriptions
-              someAbbrev = roomDesc == SometimesAbbreviatedRoomDescriptions
-          if
-              | cnt == 0 ->
-                unless
-                  (abbrev || (someAbbrev && dw))
-                  do
-                    _ <- doActivity' printingDescriptionOfADarkRoomName
-                    pass
-              | visCeil == loc ->
-                unless
-                  (abbrev || (someAbbrev && ac /= lookingActionName))
-                  ( do
-                      desc <- traverse evalDescription loc
-                      whenJust desc sayLn
-                  )
-              | otherwise -> pass
-          return Nothing,
-      RuleWithVariables
-        "room description paragraphs about objects rule"
-        do
-          LookingActionVariables _ lvls _ <- getRulebookVariables
-          mapM_ (doActivity describingLocaleActivityName . return) lvls
-          return Nothing
-    ]
-
-foreachVisibilityHolder :: (WithGameData w m, HasObjectStore w) => Entity -> RuleVarsT LookingActionVariables m ()
+foreachVisibilityHolder :: 
+  NoMissingObjects s m
+  => MonadWorld s m
+  => AnyObject s
+  -> m ()
 foreachVisibilityHolder e = do
-  ifM (e `isType` "supporter") (say "(on ") (say "(in ")
+  ifM (isSupporter e) (say "(on ") (say "(in ")
   printName e
   say ")"
--}

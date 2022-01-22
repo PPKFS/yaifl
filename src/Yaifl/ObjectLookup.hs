@@ -13,6 +13,9 @@ module Yaifl.ObjectLookup
   , setAbstractThing
   , setAbstractRoom
 
+  , isType
+  , isSupporter
+
 ) where
 
 import Yaifl.Prelude
@@ -45,6 +48,11 @@ instance ObjectLike s (AnyObject s) where
     (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
       (fromAny t))
 
+instance ObjectLike s (AbstractThing s ) where
+  getThing = reifyObject things
+
+instance ObjectLike s (AbstractRoom s ) where
+  getRoom = reifyObject rooms
 
 -- ** getX
 -- sets of signatures
@@ -134,21 +142,7 @@ getThingMaybe
   => o
   -> m (Maybe (Thing s))
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
-{-
--- the getter on this doesn't update the cache...
--- but it does return an updated object.
-object
-  :: ObjectLike s o
-  => o
-  -> AffineTraversal' (World s) (AnyObject s)
-object e = atraversal
-  (if isThing e
-    then
-      \w -> maybeToRight w $ toAny <$> evalState (getThing e) w
-    else
-      \w -> maybeToRight w $ toAny <$> evalState (getRoom e) w)
-  (\w o -> execState (setObject o) w)
--}
+
 setObject
   :: MonadWorld s m
   => AnyObject s
@@ -203,7 +197,7 @@ modifyObjectFrom
 modifyObjectFrom l o s = do
   ts <- gets getGlobalTime
   l % ix (getID o) % objectL ts %= s
-  tickGlobalTime
+  tickGlobalTime False
   pass
 
 setObjectFrom
@@ -248,7 +242,7 @@ setAbstractObjectFrom
   -> m ()
 setAbstractObjectFrom l o = do
     l % at (getID o) ?= o
-    tickGlobalTime
+    tickGlobalTime False
 
 setAbstractThing
   :: MonadWorld s m
@@ -261,3 +255,19 @@ setAbstractRoom
   => AbstractRoom s
   -> m ()
 setAbstractRoom = setAbstractObjectFrom rooms
+
+-- | Calculate whether one object type is a subclass of another
+isType
+  :: MonadWorldRO s m
+  => ObjectLike s o
+  => o
+  -> ObjType
+  -> m Bool
+isType _ _ = return False
+
+isSupporter ::
+  MonadWorldRO s m
+  => ObjectLike s o
+  => o
+  -> m Bool
+isSupporter = (`isType` ObjType "supporter")

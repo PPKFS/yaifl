@@ -161,32 +161,5 @@ isInsideFrom = error "not implemented"
 
 isAbove :: RoomObject w -> State (RoomObject w) a3
 isAbove = error "not implemented"
-
-{-
-
-ex2 :: Assertion
-ex2 = testExample example2World [] (\v -> consumeTitle "Verbosity" v >>=
-            consumeLine "The Wilkie Memorial Research Wing" >>=
-            consumeLine [r|"The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
-
-The Men's Restroom is immediately west of this point."|])
-
-
---parse the input
---run the input
---apply this over every test?
-runActions :: [Text] -> World -> World
-runActions = error "not implemented"
-
-
-        -- I have no idea what this is
-    {-mapM_ (\(a, v) -> do
-        printName a (SayOptions Indefinite Uncapitalised)
-        when (v < length stuff - 1) (say ", ")
-        when (v == length stuff - 2) (say "and ")
-        component' physicalComponent a . mentioned .= True
-        ) $ zip (toList stuff) [0..]-}
-
--}
 -}
 

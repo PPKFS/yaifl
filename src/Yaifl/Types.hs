@@ -1,82 +1,4 @@
-module Yaifl.Types
- {- (
-  -- * Objects
-  Entity (..)
-  , Timestamp(..)
-  , ObjType(..)
-  , Store(..)
-  , StoreLens'
-  , Object (..)
-  , Thing
-  , Room
-  , AnyObject
-  , AbstractObject (..)
-  , TimestampedObject (..)
-  , AbstractThing
-  , AbstractRoom
-  , AnyAbstractObject
-  , ObjectUpdate
-  -- * Object Data
-  , ThingLit(..)
-  , ThingData(..)
-
-  , Darkness(..)
-  , IsVisited(..)
-  , RoomData(..)
-
-    -- * Object Specifics
-  , Enclosing(..)
-  , Container(..)
-  , Opacity(..)
-  , Enterable(..)
-  , Openable(..)
-  , ObjectSpecifics(..)
-  -- * Rules
-  , Rulebook (..)
-  , Rule (..)
-  -- * Actions
-  , ActionRulebook
-  , Action (..)
-  , UnverifiedArgs
-  , ActivityCollection(..)
-  , Args (..)
-  , Activity(..)
-  -- * World
-  , World (..)
-  , MessageBuffer (..)
-  , RoomDescriptions (..)
-  -- * Functions
-  , eqObject
-  -- * Lenses
-  , actions
-  , whenPlayBegins
-  , concepts
-  , rbRules
-  , firstRoom
-  , objData
-  , objSpecifics
-  , thingContainedBy
-  , roomEnclosing
-  , roomDarkness
-  , tsCachedObject
-  , things
-  , rooms
-  , argsSource
-  , globalTime
-  , title
-  , entityCounter
-  , activities
-
-  , thingLit
-
-  , enclosingContains
-  , containerEnclosing
-  , containerOpenable
-  , containerEnterable
-
-  , _EnclosingSpecifics
-  , _ContainerSpecifics
-  ) -} where
+module Yaifl.Types where
 
 import Yaifl.Prelude
 import Yaifl.Messages
@@ -128,6 +50,13 @@ type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
 
+type LocalePriorities s = Store (LocaleInfo s)
+
+data LocaleInfo s = LocaleInfo
+  { _priority :: Int
+  , _localeObject :: AnyObject s
+  , _isMentioned :: Bool
+  }
 -- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
 -- modification is made to the 'World'; therefore it does not directly correspond to
 -- some sort of in-game turn counter. For example, throwing an object would result in
@@ -296,6 +225,13 @@ data Rulebook s ia v r where
     , _rbRules :: ![Rule s v r]
     } -> Rulebook s ia v r
 
+instance Default (Text -> Rulebook s v v r) where
+  blank n = Rulebook n Nothing (ParseArguments (return . Just)) []
+
+blankRulebook ::
+  Text 
+  -> Rulebook s v v r
+blankRulebook = blank
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
 -- (see 'UnverifiedArgs') or known (concrete instantation).
@@ -351,19 +287,31 @@ data Activity o v r = Activity
     , _activityAfterRules :: !(Rulebook o v v ())
     }
 
+data LocaleVariables s = LocaleVariables
+  { _localePriorities :: LocalePriorities s
+  , _localeDomain :: !(AnyObject s)
+  , _localeParagraphCount :: Int
+  }
+
 -- | TODO
-data ActivityCollection o = ActivityCollection
-  { _printingNameOfADarkRoom :: !(Activity o () ())
+data ActivityCollection s = ActivityCollection
+  { printingNameOfADarkRoom :: !(Activity s () ())
+  , printingNameOfSomething :: !(Activity s (AnyObject s) ())
+  , printingDescriptionOfADarkRoom :: !(Activity s () ())
+  , choosingNotableLocaleObjects :: !(Activity s (AnyObject s) (LocalePriorities s))
+  , printingLocaleParagraphAbout :: !(Activity s (LocaleInfo s) (LocaleVariables s))
+  , describingLocale :: !(Activity s (LocaleVariables s) ())
   }
 
 data World s = World
   { _title :: !Text
   , _entityCounter :: !(Entity, Entity)
+  , _dirtyTime :: !Bool
   , _globalTime :: !Timestamp
   , _darknessWitnessed :: !Bool
   , _roomDescriptions :: !RoomDescriptions
+  , _previousRoom :: !Entity
   , _currentPlayer :: !Entity
-
   , _firstRoom :: !(Maybe Entity)
   , _things :: !(Store (AbstractThing s))
   , _rooms :: !(Store (AbstractRoom s))
@@ -465,6 +413,7 @@ makeLenses ''Enclosing
 makeLenses ''TimestampedObject
 makeLenses ''Container
 makePrisms ''ObjectSpecifics
+makeLenses ''LocaleVariables
 
 --instance HasBuffer (World s) 'LogBuffer where
 --  bufferL _ = messageBuffers % _2

@@ -6,8 +6,7 @@ module Yaifl.ObjectLogging
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Common
-import Yaifl.Messages
+import Yaifl.Types
 import Yaifl.ObjectLookup
 import Text.Pretty.Simple (pString)
 
