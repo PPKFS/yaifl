@@ -2,6 +2,7 @@ module Yaifl.ObjectLookup
 (
   ObjectLike(..)
   , getThingMaybe
+  , getRoomMaybe
   , asThingOrRoom'
   , getObject
   , setThing
@@ -23,10 +24,10 @@ import Yaifl.Common
 import Control.Monad.Except
 
 class HasID o => ObjectLike s o where
-  getRoom :: (NoMissingObjects s m, MonadWorld s m) => o -> m (Room s)
+  getRoom :: (NoMissingObjects s m, MonadWorldNoLog s m) => o -> m (Room s)
   default getRoom :: NoMissingObjects s m => o -> m (Room s)
   getRoom o = throwError $ MissingObject "Called getRoom on an object with no instance."  (getID o)
-  getThing :: (NoMissingObjects s m, MonadWorld s m) => o -> m (Thing s)
+  getThing :: (NoMissingObjects s m, MonadWorldNoLog s m) => o -> m (Thing s)
   default getThing :: NoMissingObjects s m => o -> m (Thing s)
   getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
 
@@ -67,9 +68,9 @@ instance ObjectLike s (AbstractRoom s ) where
 -- getAbstractObject
 -- affine traversals
 -- object, abstractObject, thing, room
-getObjectFrom
-  :: NoMissingObjects s m
-  => MonadWorld s m
+getObjectFrom :: 
+  NoMissingObjects s m
+  => MonadWorldNoLog s m
   => HasID o
   => StoreLens' s d
   -> o
@@ -108,9 +109,9 @@ getAbstractRoom
   -> m (AbstractRoom s)
 getAbstractRoom = getAbstractObjectFrom rooms
 
-getObject
-  :: NoMissingObjects s m
-  => MonadWorld s m
+getObject :: 
+  NoMissingObjects s m
+  => MonadWorldNoLog s m
   => ObjectLike s o
   => o
   -> m (AnyObject s)
@@ -143,14 +144,21 @@ getThingMaybe
   -> m (Maybe (Thing s))
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
 
+getRoomMaybe
+  :: ObjectLike s o
+  => MonadWorld s m
+  => o
+  -> m (Maybe (Room s))
+getRoomMaybe o = withoutMissingObjects (getRoom o <&> Just) (const (return Nothing))
+
 setObject
   :: MonadWorld s m
   => AnyObject s
   -> m ()
 setObject o = modifyObject o id
 
-modifyObject
-  :: MonadWorld s m
+modifyObject :: 
+  MonadWorldNoLog s m
   => HasID o
   => o
   -> (AnyObject s -> AnyObject s)
@@ -187,8 +195,8 @@ asThingOrRoom' o tf rf =
   else
      rf <$> getRoom o
 
-modifyObjectFrom
-  :: MonadWorld s m
+modifyObjectFrom :: 
+  MonadWorldNoLog s m
   => HasID o
   => StoreLens' s d
   -> o
@@ -215,8 +223,8 @@ modifyThing
   -> m ()
 modifyThing = modifyObjectFrom things
 
-modifyRoom
-  :: MonadWorld s m
+modifyRoom :: 
+  MonadWorldNoLog s m
   => HasID o
   => o
   -> (Room s -> Room s)

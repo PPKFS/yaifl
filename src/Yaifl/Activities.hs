@@ -25,6 +25,8 @@ import Yaifl.Activities.DescribingLocale
 
 defaultActivities :: 
   HasProperty s Enclosing
+  => HasProperty s Container 
+  => HasProperty s Openable
   => ActivityCollection s
 defaultActivities = ActivityCollection
   { printingNameOfADarkRoom = printingNameOfADarkRoomImpl

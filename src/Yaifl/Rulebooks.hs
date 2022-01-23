@@ -150,7 +150,10 @@ processRuleList (x : xs) args = do
         -- if we hit nothing, continue; otherwise return
         case res of
           Nothing -> processRuleList xs v
-          Just r -> debug (bformat ("Succeeded after following the " %! stext %! " rule") (_ruleName x)) >> return (v, Just r)
+          Just r -> do
+            unless (T.empty == _ruleName x)
+              $ debug (bformat ("Succeeded after following the " %! stext %! " rule") (_ruleName x))
+            return (v, Just r)
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "When Play Begins"

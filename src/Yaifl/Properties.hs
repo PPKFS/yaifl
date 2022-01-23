@@ -36,6 +36,11 @@ module Yaifl.Properties
 
   , getLocation
 
+  , getOpenable
+
+  , getThingLit
+  , getWornBy
+
   -- * Property stuff
   , HasProperty
 
@@ -88,9 +93,12 @@ instance HasProperty ObjectSpecifics Container where
 instance HasProperty ObjectSpecifics Enterable where
   propertyL = _ContainerSpecifics % containerEnterable
 
+instance HasProperty ObjectSpecifics Openable where
+  propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
+
 getEnclosing
   :: NoMissingObjects s m
-  => MonadWorld s m
+  => MonadWorldNoLog s m
   => HasProperty s Enclosing
   => ObjectLike s o
   => o
@@ -104,7 +112,7 @@ getEnclosing e = if isThing e
   )
 
 setEnclosing
-  :: MonadWorld s m
+  :: MonadWorldNoLog s m
   => HasProperty s Enclosing
   => HasID o
   => o
@@ -116,8 +124,8 @@ setEnclosing e v = if isThing e
   else
     modifyRoom e (objData % roomEnclosing .~ v)
 
-getThingLit
-  :: NoMissingObjects s m
+getThingLit :: 
+  NoMissingObjects s m
   => MonadWorld s m
   => ObjectLike s o
   => o
@@ -129,8 +137,8 @@ getThingLit e = if isThing e
   else
     return Nothing -- property that makes no sense if it's a room
 
-setThingLit
-  :: MonadWorld s m
+setThingLit :: 
+  MonadWorld s m
   => HasID o
   => o
   -> ThingLit
@@ -141,8 +149,33 @@ setThingLit e v = if isThing e
   else
     pass
 
-modifyProperty
-  :: MonadWorld s m
+getWornBy :: 
+  NoMissingObjects s m
+  => MonadWorld s m
+  => ObjectLike s o
+  => o
+  -> m (Maybe Entity)
+getWornBy e = if isThing e
+  then (do
+    o <- getThing e
+    return $ o ^? objData % thingWearable % _Wearable % _Just)
+  else
+    return Nothing -- property that makes no sense if it's a room
+
+setWornBy :: 
+  MonadWorld s m
+  => HasID o
+  => o
+  -> Maybe Entity
+  -> m ()
+setWornBy e v = if isThing e
+  then
+    modifyThing e (objData % thingWearable % _Wearable .~ v)
+  else
+    pass
+
+modifyProperty :: 
+  MonadWorldNoLog s m
   => (o -> m (Maybe p))
   -> (o -> p -> m ())
   -> o
@@ -155,8 +188,8 @@ modifyProperty g s o f = do
     pass)
   whenJust e (s o . f)
 
-defaultPropertySetter
-  :: MonadWorld s m
+defaultPropertySetter :: 
+  MonadWorldNoLog s m
   => HasProperty ObjectSpecifics v
   => HasProperty s v
   => HasID o
@@ -167,7 +200,7 @@ defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
 
 defaultPropertyGetter
   :: NoMissingObjects s m
-  => MonadWorld s m
+  => MonadWorldNoLog s m
   => HasProperty ObjectSpecifics v
   => HasProperty s v
   => ObjectLike s o
@@ -180,6 +213,7 @@ defaultPropertyGetter e = do
 makeSpecificsWithout [GetX, SetX] ''Enclosing
 makeSpecificsWithout [] ''Container
 makeSpecificsWithout [] ''Enterable
+makeSpecificsWithout [] ''Openable
 --makeSpecificsWithout [GetX, SetX] ''ThingLit --TODO: flag
 
 getLocation
@@ -187,14 +221,14 @@ getLocation
   => MonadWorld s m
   => ObjectLike s o
   => o
-  -> m (Maybe Entity)
+  -> m Entity
 getLocation o = do
   v <- getThing o
   let enclosedby = v ^. containedBy
   if
     isRoom enclosedby
   then
-    return $ Just enclosedby
+    return enclosedby
   else
     getLocation enclosedby
 

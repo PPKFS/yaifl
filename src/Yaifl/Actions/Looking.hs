@@ -238,7 +238,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
         | True ->
           traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
       mapM_ foreachVisibilityHolder (drop 1 lvls)
-      sayLn ""
+      sayLn "\n"
       setSayStyle Nothing
       --TODO: "run paragraph on with special look spacing"?
       return Nothing),

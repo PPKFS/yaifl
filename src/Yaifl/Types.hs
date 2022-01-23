@@ -104,7 +104,7 @@ data TimestampedObject s d = TimestampedObject
 
 -- | Function to update an object
 newtype ObjectUpdate s d = ObjectUpdate
-  { updateObject :: forall m. (MonadWorldRO s m) => Object s d -> m (Object s d)
+  { updateObject :: forall m. (MonadReader (World s) m) => Object s d -> m (Object s d)
   }
 
 type Thing s = Object s ThingData
@@ -154,10 +154,14 @@ defaultPlayerID = Entity 1
 -- | Whether a thing is inherently lit or not. This counts for lighting up spaces.
 data ThingLit = Lit | NotLit deriving (Eq, Show)
 
+data ThingWearability = NotWearable | Wearable (Maybe Entity) deriving (Eq, Show)
+
+
 -- | Details for things. This is anything tangible.
 data ThingData = ThingData
   { _thingContainedBy :: !Entity
   , _thingLit :: !ThingLit
+  , _thingWearable :: !ThingWearability
   } deriving stock (Generic, Show)
 
 data Enclosing = Enclosing
@@ -169,7 +173,7 @@ instance Default Enclosing where
   blank = Enclosing ES.empty Nothing
 
 instance Default ThingData where
-  blank = ThingData defaultVoidID NotLit
+  blank = ThingData defaultVoidID NotLit NotWearable
 
 instance Default RoomData where
   blank = RoomData Unvisited Lighted blank Nothing blank
@@ -188,7 +192,10 @@ data Container = Container
 data ObjectSpecifics =
   NoSpecifics
   | EnclosingSpecifics Enclosing
-  | ContainerSpecifics Container deriving stock (Show)
+  | ContainerSpecifics Container 
+  | OpenableSpecifics Openable
+  
+  deriving stock (Show)
 
 -- | Again lifted directly from Inform; this sets whether to always print room
 -- descriptions (No..) even if the room is visited, to only print them on the first
@@ -385,6 +392,7 @@ data MissingObject s = MissingObject Text Entity
 --in case we have both a read-only and a read-write constraint on the world.
 type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, Logger m)
 type MonadWorldRO s m = (MonadReader (World s) m, Logger m)
+type MonadWorldNoLog s m = (MonadReader (World s) m, MonadState (World s) m)
 type NoMissingObjects s m = (MonadError (MissingObject s) m)
 
 newtype YaiflItem a = YaiflItem
@@ -413,6 +421,7 @@ makeLenses ''Enclosing
 makeLenses ''TimestampedObject
 makeLenses ''Container
 makePrisms ''ObjectSpecifics
+makePrisms ''ThingWearability
 makeLenses ''LocaleVariables
 
 --instance HasBuffer (World s) 'LogBuffer where

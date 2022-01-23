@@ -33,11 +33,11 @@ makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
     return $ (case sf of
         GetX -> replaceTH 
-            "getXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+            "getXSUBHERE :: MonadReader (World s) m => NoMissingObjects s m => HasProperty s XSUBHERE => MonadState (World s) m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
         SetX -> replaceTH 
-            "setXSUBHERE :: HasProperty s XSUBHERE => MonadWorld s m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
+            "setXSUBHERE :: MonadReader (World s) m => HasProperty s XSUBHERE => MonadState (World s) m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
         ModifyX -> replaceTH 
-            "modifyXSUBHERE :: NoMissingObjects s m => HasProperty s XSUBHERE => MonadWorld s m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
+            "modifyXSUBHERE :: MonadReader (World s) m => NoMissingObjects s m => HasProperty s XSUBHERE => MonadState (World s) m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
         ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]

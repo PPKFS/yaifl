@@ -32,7 +32,12 @@ newWorld
   -> Game s (World s)
 newWorld g = modify addBaseActions >> addBaseObjects >> g >> get
 
-type HasStandardProperties s = (HasProperty s Enclosing, HasProperty s Container, HasProperty s Enterable)
+type HasStandardProperties s = (
+  HasProperty s Enclosing
+  , HasProperty s Container
+  , HasProperty s Enterable
+  , HasProperty s Openable)
+  
 blankWorld
   :: HasStandardProperties s
   => World s

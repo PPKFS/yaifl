@@ -80,8 +80,8 @@ isRoom
   -> Bool
 isRoom = not . isThing
 
-reifyObject
-  :: MonadWorld s m
+reifyObject :: 
+  MonadWorldNoLog s m
   => StoreLens' s d
   -> AbstractObject s d
   -> m (Object s d)
@@ -126,14 +126,16 @@ getGlobalTime
 getGlobalTime = asks _globalTime
 
 tickGlobalTime
-  :: MonadWorld s m
+  :: MonadWorldNoLog s m
   => Bool
   -> m ()
+--I have no idea what my plans were for this flag.
 tickGlobalTime False = dirtyTime .= True
 tickGlobalTime True = do
   dirtyTime .= False
-  r <- globalTime <%= (+1)
-  debug (bformat ("Dong. The time is now " %! int %! ".") r)
+  _ <- globalTime <%= (+1)
+  pass
+  -- debug (bformat ("Dong. The time is now " %! int %! ".") r)
 
 -- | Update the game title.
 setTitle
