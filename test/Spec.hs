@@ -4,6 +4,9 @@ import Yaifl
 import Test.Hspec
 import qualified Data.Text as T
 import Yaifl.Prelude
+import Yaifl.Activities
+import qualified Data.EnumMap as DEM
+import Yaifl.ObjectLookup
 
 ex2World :: Game () (World ())
 ex2World = newWorld $ do
@@ -12,16 +15,28 @@ ex2World = newWorld $ do
   addThing' "Bic pen" "" pass
   addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
   addThing' "napkin" "Slightly crumpled." pass
-  addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" rulePass
-    {-
-    addRule whenPlayBeginsRules $ Rule "run property checks at the start of play rule" (do
-        foreachObject things (do
-            t <- getForeachObject
-            whenM (("" ==) <$> evalDescription t) (do
-                printName t
-                sayLn " has no description."))
+  addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
+    do
+      foreachObject things (\t -> do
+        when (isBlankDescription (_objDescription t)) (do
+          printName t
+          sayLn " has no description.")
         return Nothing)
-    -}
+      return Nothing
+
+foreachObject :: 
+  MonadWorld s m
+  => StoreLens' s d
+  -> (Object s d -> m (Maybe (Object s d)))
+  -> m ()
+foreachObject sl f = do
+  store <- use sl
+  DEM.traverseWithKey (\_ o -> do
+    robj <- reifyObject sl o
+    updObj <- f robj
+    whenJust updObj (setObjectFrom sl)
+    ) (unStore store)
+  pass
 
 ex2Test :: [Text]
 ex2Test = 
