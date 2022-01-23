@@ -10,6 +10,8 @@ module Yaifl.ObjectLookup
   , modifyRoom
   , modifyThing
   , modifyObject
+  , modifyObjectFrom
+  , setObjectFrom
 
   , setAbstractThing
   , setAbstractRoom

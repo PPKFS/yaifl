@@ -1,5 +1,7 @@
 module Yaifl.Activities
   ( defaultActivities
+  , printName
+  , printNameEx
     {-
 
     printingNameOfADarkRoomName,

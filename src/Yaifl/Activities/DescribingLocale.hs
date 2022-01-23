@@ -29,7 +29,6 @@ describingLocaleImpl = Activity "Describing the locale of something" Nothing
     })
   (blankRulebook "After describing locale")
 
-
 findNotable :: Rule s (LocaleVariables s) r
 findNotable = Rule "Find notable objects" (\v ->
   do
@@ -216,7 +215,6 @@ paragraphBreak ::
   MonadWorld s m
   => m ()
 paragraphBreak = say ".\n\n"
-
 
 --p2275 of the complete program, in B/lwt
 getContainerProps ::
