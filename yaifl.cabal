@@ -31,7 +31,8 @@ common common-options
                      , text
                      , mtl
                      , enummapset
-                     , raw-strings-qq
+                     , neat-interpolation
+                     , attoparsec
                      , haskell-src-meta
                      , katip
                      , aeson

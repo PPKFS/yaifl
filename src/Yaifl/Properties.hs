@@ -405,4 +405,6 @@ addBaseObjects ::
   => m ()
 addBaseObjects = do
   addRoom' "The Void" "If you're seeing this, you did something wrong." pass
+  addThing' "player" "It's you, looking handsome as always" (
+    thingDescribed .= Undescribed)
   firstRoom .= Nothing

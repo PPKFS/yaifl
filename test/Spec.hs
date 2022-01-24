@@ -7,111 +7,28 @@ import Yaifl.Prelude
 import Yaifl.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.ObjectLookup
+import qualified Yaifl.Test.Chapter3.Common as Chapter3
 
-ex2World :: Game () (World ())
-ex2World = newWorld $ do
-  setTitle "Bic"
-  addRoom' "The Staff Break Room" "" pass
-  addThing' "Bic pen" "" pass
-  addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
-  addThing' "napkin" "Slightly crumpled." pass
-  addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
-    do
-      foreachObject things (\t -> do
-        when (isBlankDescription (_objDescription t)) (do
-          printName t
-          sayLn " has no description.")
-        return Nothing)
-      return Nothing
+main :: IO ()
+main = hspec $ do
+  Chapter3.spec
 
-foreachObject :: 
-  MonadWorld s m
-  => StoreLens' s d
-  -> (Object s d -> m (Maybe (Object s d)))
-  -> m ()
-foreachObject sl f = do
-  store <- use sl
-  DEM.traverseWithKey (\_ o -> do
-    robj <- reifyObject sl o
-    updObj <- f robj
-    whenJust updObj (setObjectFrom sl)
-    ) (unStore store)
-  pass
 
-ex2Test :: [Text]
-ex2Test = 
-  [ expectLooking "The Staff Break Room" ""
-  , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
-  , expectLine "Bic pen has no description."]
 
-tests :: Spec
-tests = describe "Chapter 3: " $ do
-  it "runs chapter 3.1.2" $ 
-    testHarness "Bic - 3.1.2" ex2World [] ex2Test
 
-testHarness :: 
-  HasStandardProperties o 
-  => Text 
-  -> Game o (World o)
-  -> [Text] 
-  -> [Text]
-  -> Expectation
-testHarness fullTitle initWorld actionsToDo expected = do
-  let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
-  w2 <- runGame shortName (do
-    info $ bformat ("Building world " %! stext %! "...") shortName
-    w' <- initWorld
-    info $ bformat "World construction finished, beginning game..."
-    --when I write a proper game loop, this is where it needs to go
-    withoutMissingObjects 
-      (runRulebook (_whenPlayBegins w') ())
-      (handleMissingObject "Failed when beginning" (Just False))
-    --do the commands...
-    get) blankWorld
-  let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
-      buildExpected = mconcat (expectTitle t : expected )
-  x `shouldBe` buildExpected
 
-expectLine :: Text -> Text
-expectLine t1 = t1 <> "\n"
 
-expectTitle :: Text -> Text
-expectTitle = introText
 
-expectYouCanSee :: [Text] -> Text
-expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")
-
-listThings :: [Text] -> Text
-listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
-                (if v == length t1 - 2 then "and " else "")) t1 [0..]
-
-expectLooking :: Text -> Text -> Text
-expectLooking t d = expectLine t <> expectLine d
 
 {-
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
 consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
 -}
 
-main :: IO ()
-main = hspec tests
+
       --die "you FAIL miette? you fail her tests like weakly typed language? oh! oh! jail for mother! jail for mother for One Thousand Years!!!"
 {-
 
-ex3World :: HasStandardWorld w => World w ()
-ex3World = do
-    setTitle "Verbosity"
-    -- inform7 uses superbrief, brief, and verbose as the command words
-    -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
-    roomDescriptions .= SometimesAbbreviatedRoomDescriptions
-    w <- makeRoom "The Wilkie Memorial Research Wing" [r|The research wing was built onto the science building in 1967, when the college's finances were good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north and south; drab olive doors open onto the laboratories of individual faculty members. The twitchy fluorescent lighting makes the whole thing flicker, as though it might wink out of existence at any moment.
-
-The Men's Restroom is immediately west of this point.|] pass
-
-    makeRoom "The Men's Restroom" [r|The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. But the nearest women's room is on the other side of the building, and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things scrawled over the urinals which might have been intended in confidence.|] (isWestOf w)
-    pass
-
-    --testMe ["west", "east", "verbose", "west"]
 
 isWestOf :: RoomObject w -> State (RoomObject w) a0
 isWestOf = error "not implemented"

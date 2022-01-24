@@ -26,7 +26,7 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List.NonEmpty as NonEmpty
 import Data.List ((\\))
-import Formatting hiding ((%), now)
+import Formatting hiding ((%), now, text)
 import qualified Formatting as F
 
 default (Integer, Double, Text)

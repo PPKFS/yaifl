@@ -156,12 +156,14 @@ data ThingLit = Lit | NotLit deriving (Eq, Show)
 
 data ThingWearability = NotWearable | Wearable (Maybe Entity) deriving (Eq, Show)
 
+data ThingDescribed = Undescribed | Described deriving (Eq, Show)
 
 -- | Details for things. This is anything tangible.
 data ThingData = ThingData
   { _thingContainedBy :: !Entity
   , _thingLit :: !ThingLit
   , _thingWearable :: !ThingWearability
+  , _thingDescribed :: !ThingDescribed
   } deriving stock (Generic, Show)
 
 data Enclosing = Enclosing
@@ -173,7 +175,7 @@ instance Default Enclosing where
   blank = Enclosing ES.empty Nothing
 
 instance Default ThingData where
-  blank = ThingData defaultVoidID NotLit NotWearable
+  blank = ThingData defaultVoidID NotLit NotWearable Described
 
 instance Default RoomData where
   blank = RoomData Unvisited Lighted blank Nothing blank
@@ -306,7 +308,7 @@ data ActivityCollection s = ActivityCollection
   , printingNameOfSomething :: !(Activity s (AnyObject s) ())
   , printingDescriptionOfADarkRoom :: !(Activity s () ())
   , choosingNotableLocaleObjects :: !(Activity s (AnyObject s) (LocalePriorities s))
-  , printingLocaleParagraphAbout :: !(Activity s (LocaleInfo s) (LocaleVariables s))
+  , printingLocaleParagraphAbout :: !(Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s))
   , describingLocale :: !(Activity s (LocaleVariables s) ())
   }
 
@@ -322,6 +324,7 @@ data World s = World
   , _firstRoom :: !(Maybe Entity)
   , _things :: !(Store (AbstractThing s))
   , _rooms :: !(Store (AbstractRoom s))
+  --, _directions :: !(Store Direction)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   , _actions :: !(Map Text (Action s))
   , _activities :: !(ActivityCollection s)
@@ -423,6 +426,7 @@ makeLenses ''Container
 makePrisms ''ObjectSpecifics
 makePrisms ''ThingWearability
 makeLenses ''LocaleVariables
+makeLenses ''LocaleInfo
 
 --instance HasBuffer (World s) 'LogBuffer where
 --  bufferL _ = messageBuffers % _2

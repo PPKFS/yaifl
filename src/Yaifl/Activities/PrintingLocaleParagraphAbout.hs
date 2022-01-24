@@ -2,22 +2,52 @@ module Yaifl.Activities.PrintingLocaleParagraphAbout where
 
 import Yaifl.Prelude
 import Yaifl.Types
+import Yaifl.Rulebooks
+import Yaifl.ObjectLookup (getThingMaybe)
 
-
-printingLocaleParagraphAboutImpl :: Activity s (LocaleInfo s) (LocaleVariables s)
+printingLocaleParagraphAboutImpl :: Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing
   (blankRulebook "Before printing a locale paragraph")
   ((blankRulebook "Carry out printing a locale paragraph")
-    { _rbRules = []
+    { _rbRules = [
+      dontMentionUndescribed
+      ]
       {- [ dontMentionSupporter
       , dontMentionScenery
-      , dontMentionUndescribed
+      , 
       , offerItems
       , useInitialAppearance
       , describeOnScenery
       ] -}
     })
   (blankRulebook "After printing a locale paragraph")
+
+dontMentionUndescribed :: Rule s (LocaleVariables s, LocaleInfo s) (LocaleVariables s)
+dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule"
+        (\(v, LocaleInfo _ e _) -> do
+          asThing <- getThingMaybe e
+          let isDesc = asThing ^? _Just % objData % thingDescribed
+          if
+            isDesc == Just Undescribed
+          then
+            return . Just $ removeFromLocale e v --setLocalePriority e v 0
+          else
+            return Nothing
+        )
+
+setLocalePriority :: 
+  AnyObject s
+  -> LocaleVariables v
+  -> Int
+  -> LocaleVariables v
+setLocalePriority e lv i = lv & localePriorities % at (_objID e) % _Just % priority .~ i
+
+removeFromLocale :: 
+  AnyObject s
+  -> LocaleVariables v
+  -> LocaleVariables v
+removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
+
 {-
       [ Rule
         "don’t mention player’s supporter in room descriptions rule"
@@ -32,14 +62,7 @@ printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about s
             get1st >>= (\e -> whenM (e `isType` "scenery") (setLocalePriority e 0))
             return Nothing
         ),
-      Rule
-        "don’t mention undescribed items in room descriptions rule"
-        ( do
-            e <- get1st
-            b <- isDescribed e
-            unless b (setLocalePriority e 0)
-            return Nothing
-        ),
+      ,
       Rule
         "offer items to writing a paragraph about rule"
         ( do
