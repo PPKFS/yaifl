@@ -5,7 +5,7 @@ module Yaifl.TH
   , SpecificsFunctions(..)
 ) where
 
-import Yaifl.Prelude
+import Solitude
 import Language.Haskell.TH
 import Language.Haskell.Meta
 import Data.Text (replace)

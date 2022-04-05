@@ -8,8 +8,9 @@ Stability   : No
 -}
 
 module Yaifl.Properties
-  ( -- * Adding objects
-
+  ( -- * Specifics
+  ObjectSpecifics(..)
+{-
     addRoom
   , addRoom'
   , addThing
@@ -43,18 +44,23 @@ module Yaifl.Properties
 
   -- * Property stuff
   , HasProperty
-
+-}
   ) where
 
-import Yaifl.Prelude
+import Solitude
 import Yaifl.Common
-import Yaifl.ObjectLookup
-import qualified Data.EnumSet as ES
-import Yaifl.ObjectLogging
-import Yaifl.TH
-import Control.Monad.Except ( throwError )
-import qualified Data.Text.Lazy.Builder as TLB
+import Yaifl.Properties.Enclosing
+import Yaifl.Properties.Container
+import Yaifl.Properties.Openable
 
+data ObjectSpecifics =
+  NoSpecifics
+  | EnclosingSpecifics Enclosing
+  | ContainerSpecifics Container 
+  | OpenableSpecifics Openable
+  deriving stock (Show)
+
+{--
 -- | Create a new object and assign it an entity ID, but do **not** add it to any
 -- stores. See also 'addObject' for a version that adds it to a store.
 makeObject
@@ -408,3 +414,4 @@ addBaseObjects = do
   addThing' "player" "It's you, looking handsome as always" (
     thingDescribed .= Undescribed)
   firstRoom .= Nothing
+-}

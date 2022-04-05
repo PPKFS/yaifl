@@ -13,7 +13,7 @@ category:            Game Development
 build-type:          Simple
 extra-doc-files:     README.md
                      CHANGELOG.md
-tested-with:         GHC == 9.0.1
+tested-with:         GHC == 9.2.1
 source-repository head
   type:                git
   location:            https://github.com/PPKFS/yaifl.git
@@ -21,7 +21,7 @@ source-repository head
 common common-options
   build-depends:
                      base >= 4.15.0.0
-                     , relude >= 1.0.0.0
+                     , solitude
                      , optics
                      , prettyprinter
                      , prettyprinter-ansi-terminal
@@ -59,67 +59,45 @@ common common-options
 
   default-language:    Haskell2010
   default-extensions:
+    GHC2021
+    DataKinds
     NoImplicitPrelude
     OverloadedStrings
-    BangPatterns
-    BlockArguments
-    ConstraintKinds
-    DataKinds
-    DefaultSignatures
-    DeriveFoldable
-    DeriveFunctor
-    DeriveGeneric
-    DeriveLift
     DerivingStrategies
-    FlexibleContexts
-    FlexibleInstances
-    FunctionalDependencies
-    GADTs
-    GeneralizedNewtypeDeriving
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    OverloadedStrings
-    PatternSynonyms
-    PolyKinds
-    QuasiQuotes
-    RankNTypes
-    RecordWildCards
-    ScopedTypeVariables
-    StandaloneDeriving
-    TemplateHaskell
-    TupleSections
-    TypeApplications
     TypeFamilies
-    UndecidableInstances
-    ImplicitParams
-    MultiWayIf
+    FunctionalDependencies
+    LambdaCase
+    BlockArguments
+
 library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:
                       Yaifl
+                      Yaifl.Objects.Object
+                      Yaifl.Objects.ObjectData
                       Yaifl.Common
                       Yaifl.Rulebooks
                       Yaifl.Properties
-                      Yaifl.Messages
-                      Yaifl.Prelude
+                      --Yaifl.Messages
+                      --Yaifl.Prelude
                       Yaifl.TH
                       Yaifl.Types
-                      Yaifl.Actions
-                      Yaifl.Activities
-                      Yaifl.ObjectLookup
+                      --Yaifl.Actions
+                      --Yaifl.Activities
+                      --Yaifl.ObjectLookup
   other-modules:
-                      Yaifl.ObjectLogging
-                      Yaifl.Activities.PrintingADarkRoom
-                      Yaifl.Activities.PrintingNameOfSomething
-                      Yaifl.Activities.PrintingDescriptionOfADarkRoom
-                      Yaifl.Activities.ChoosingNotableLocaleObjects
-                      Yaifl.Activities.DescribingLocale
-                      Yaifl.Activities.PrintingLocaleParagraphAbout
-                      Yaifl.Activities.Common
-                      Yaifl.Actions.Common
-                      Yaifl.Actions.Looking
+                      Yaifl.Properties.Enclosing
+                      -- Yaifl.ObjectLogging
+                      --Yaifl.Activities.PrintingADarkRoom
+                      --Yaifl.Activities.PrintingNameOfSomething
+                      --Yaifl.Activities.PrintingDescriptionOfADarkRoom
+                      --Yaifl.Activities.ChoosingNotableLocaleObjects
+                      --Yaifl.Activities.DescribingLocale
+                      --Yaifl.Activities.PrintingLocaleParagraphAbout
+                      --Yaifl.Activities.Common
+                      --Yaifl.Actions.Common
+                      --Yaifl.Actions.Looking
 test-suite yaifl-test
   import:              common-options
   type:                exitcode-stdio-1.0

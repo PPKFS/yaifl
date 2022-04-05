@@ -23,6 +23,7 @@ module Yaifl.ObjectLookup
 
 import Yaifl.Prelude
 import Yaifl.Common
+import Yaifl.Types
 import Control.Monad.Except
 
 class HasID o => ObjectLike s o where
@@ -262,9 +263,10 @@ setAbstractThing = setAbstractObjectFrom things
 
 setAbstractRoom
   :: MonadWorld s m
-  => AbstractRoom s
+  => HasRoomsC s s'
+  => AbstractRoom s'
   -> m ()
-setAbstractRoom = setAbstractObjectFrom rooms
+setAbstractRoom = setAbstractObjectFrom (worldModel % wmL)
 
 -- | Calculate whether one object type is a subclass of another
 isType

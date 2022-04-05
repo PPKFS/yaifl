@@ -1,5 +1,5 @@
 module Yaifl.Rulebooks
-  ( whenPlayBeginsRules,
+    {-whenPlayBeginsRules,
     addWhenPlayBegins,
     defaultActionProcessingRules,
     introText,
@@ -8,10 +8,54 @@ module Yaifl.Rulebooks
 
     makeRule,
     makeRule',
-    rulePass
-  )
+    rulePass-}
 where
 
+import Solitude
+import Yaifl.Common
+import {-# SOURCE #-} Yaifl.World
+import Yaifl.Objects.Object
+
+-- | Arguments for an action, activity, or rulebook. These are parameterised over
+-- the closed 's' universe and the variables, which are either unknown
+-- (see 'UnverifiedArgs') or known (concrete instantation).
+data Args s v = Args
+  { _argsSource :: !(Maybe (AnyObject s))
+  , _argsVariables :: !v
+  , _argsTimestamp :: !Timestamp
+  }
+
+-- | Before 'Args' are parsed, the variables are a list of objects.
+newtype UnverifiedArgs s = UnverifiedArgs
+  { unArgs :: Args s [AnyObject s]
+  }
+
+-- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
+-- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
+data Rule s v r = Rule
+  { _ruleName :: !Text
+  , _runRule :: forall m. (NoMissingObjects s m, MonadWorld s m) => v -> m (v, Maybe r)
+  }
+
+-- | A 'Rulebook' is a composition of functions ('Rule's) with short-circuiting (if
+-- a Just value is returned) over an object universe `o`, input arguments `ia`, variables `v`
+-- and returns an `r`.
+data Rulebook s ia v r where
+  Rulebook ::
+    { _rbName :: !Text
+    , _rbDefaultOutcome :: !(Maybe r)
+    , _rbParseArguments :: !(ParseArguments s ia v)
+    , _rbRules :: ![Rule s v r]
+    } -> Rulebook s ia v r
+
+-- | A `StandardRulebook` is one which expects to verify its own arguments.
+type StandardRulebook s v r = Rulebook s (UnverifiedArgs s) v r
+
+newtype ParseArguments s ia v = ParseArguments
+  { runParseArguments :: forall m. (NoMissingObjects s m, MonadWorld s m) => ia -> m (Maybe v)
+  }
+  
+{-
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Prelude
@@ -268,3 +312,4 @@ addRule
   -> Rulebook o ia v r
   -> Rulebook o ia v r
 addRule r = rbRules %~ (++ [r])
+-}

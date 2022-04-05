@@ -7,19 +7,19 @@ Yet another interactive fiction library.
 -}
 module Yaifl
 (
-    module Yaifl.Common
-  , module Yaifl.Messages
-  , module Yaifl.Rulebooks
-  , module Yaifl.Properties
+    --module Yaifl.Common
+ -- , module Yaifl.Messages
+--  , module Yaifl.Rulebooks
+ -- , module Yaifl.Properties
   --, module Yaifl.Activities
-  , newWorld
-  , blankWorld
-  , HasStandardProperties
+  --, newWorld
+  blankWorld
+  --, HasStandardProperties
 ) where
 
-import Yaifl.Common
-import Relude
-import Yaifl.Properties
+import Yaifl.World
+import Solitude
+{-import Yaifl.Properties
 import Yaifl.Actions
 import Yaifl.Rulebooks
 import Yaifl.Messages
@@ -37,11 +37,12 @@ type HasStandardProperties s = (
   , HasProperty s Container
   , HasProperty s Enterable
   , HasProperty s Openable)
-  
+  -}
 blankWorld
-  :: HasStandardProperties s
+  :: --  HasStandardProperties s
+  (Show String)
   => World s
-blankWorld = World
+blankWorld = error "" {- World
   { _title = "Untitled"
   , _entityCounter = (Entity 1, Entity (-1))
   , _globalTime = 0
@@ -59,4 +60,4 @@ blankWorld = World
   , _actionProcessing = defaultActionProcessingRules
   , _previousRoom = defaultVoidID
   , _dirtyTime = False
-  }
+  }-}

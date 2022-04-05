@@ -7,12 +7,16 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 module Yaifl.Common
-  (-- * Smart constructors and default settings
+  (-- * Datatypes
+  Entity(..)
+  , Store(..)
+  , Timestamp(..)
+  , NoMissingObjects
   -- * Object querying
-  isThing
+  , isThing
   , isRoom
   , HasID(..)
-  , CanBeAny(..)
+  {-, CanBeAny(..)
   , withoutMissingObjects
   , isBlankDescription
 
@@ -30,55 +34,98 @@ module Yaifl.Common
   , reifyObject
 
   , runGame
-  , module Yaifl.Types
+  , module Yaifl.Types-}
   )
 where
 
-import Yaifl.Prelude
-import Yaifl.Types
-import Katip
-import qualified Data.Aeson as A
-import qualified Data.Text.Lazy.Builder as B
-import Control.Exception (bracket)
-import Katip.Scribes.Handle (colorBySeverity)
-import qualified Data.Text as T
+import Solitude
+import qualified Data.EnumMap.Strict as EM
+import qualified Data.IntMap.Strict as IM
+import Control.Monad.Except (MonadError)
 
-updateCachedObject
-  :: TimestampedObject s d
-  -> Object s d
-  -> Timestamp
-  -> TimestampedObject s d
-updateCachedObject ts n t = ts & set tsCachedObject n
-                                            & set tsCacheStamp t
-objectL
-  :: Timestamp
-  -> Lens' (AbstractObject s d) (Object s d)
-objectL t = lens
-  (\case
-    StaticObject o -> o
-    DynamicObject (TimestampedObject o _ _) -> o)
-  (\o n -> case o of
-    StaticObject _ -> StaticObject n
-    DynamicObject ts -> DynamicObject (updateCachedObject ts n t)
-  )
+-- | An 'Entity' is an integer ID that is used to reference between objects.
+newtype Entity = Entity
+  { unID :: Int
+  } deriving stock   (Show, Generic)
+    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
 
+-- | A way to extract an `Entity` from something.
+class HasID n where
+  getID :: n -> Entity
+
+instance HasID Entity where
+  getID = id
+
+-- | This is kind of hacky, but it works: a `Thing` has ID above 0, and a `Room` has a negative ID.
+isThing :: 
+  (HasID a)
+  => a
+  -> Bool
+isThing a = getID a >= 0
+
+isRoom :: 
+  (HasID a)
+  => a
+  -> Bool
+isRoom = not . isThing
+
+-- | A 'Store' is a map from 'Entity's to @a@s.
+newtype Store a = Store
+  { unStore :: EM.EnumMap Entity a
+  } deriving stock   (Generic)
+    deriving newtype (Show, Eq, Ord)
+
+-- first let's define our own alterF for EnumMap...
+alterEMF
+  :: (Functor f, Enum k)
+  => (Maybe a -> f (Maybe a))
+  -> k
+  -> EM.EnumMap k a -> f (EM.EnumMap k a)
+alterEMF upd k m = EM.intMapToEnumMap <$> IM.alterF upd (fromEnum k) (EM.enumMapToIntMap m)
+
+-- | alterF wrapper for Store, since it's a wrapper around a wrapper...
+alterNewtypeEMF
+  :: Functor f
+  => Enum k
+  => (Maybe a -> f (Maybe a))
+  -> k
+  -> (nt -> EM.EnumMap k a)
+  -> (EM.EnumMap k a -> nt)
+  -> nt
+  -> f nt
+alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
+
+instance At (Store a) where
+  at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
+
+type instance IxValue (Store a) = a
+type instance Index (Store a) = Entity
+instance Ixed (Store a)
+
+-- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
+-- modification is made to the 'World'; therefore it does not directly correspond to
+-- some sort of in-game turn counter. For example, throwing an object would result in
+-- multiple timestamp jumps (an object moving, potential interactions on it hitting
+-- something) whereas a sequence of 10 look actions will not (as the world does not
+-- change). This is primarily used to ensure we can cache updates of objects that
+-- change properties (e.g. strings).
+newtype Timestamp = Timestamp
+  { unTimestamp :: Int
+  } deriving stock   (Show, Generic)
+    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
+
+
+data MissingObject s = MissingObject Text Entity
+type NoMissingObjects s m = (MonadError (MissingObject s) m)
+
+{-
 containedBy :: forall s. Lens' (Thing s) Entity
 containedBy = coercedTo @(Object s ThingData) % objData % thingContainedBy
 
 isBlankDescription :: Text -> Bool 
 isBlankDescription = (T.empty==)
 
-isThing
-  :: (HasID a)
-  => a
-  -> Bool
-isThing a = getID a >= 0
 
-isRoom
-  :: (HasID a)
-  => a
-  -> Bool
-isRoom = not . isThing
 
 reifyObject :: 
   MonadWorldNoLog s m
@@ -102,11 +149,7 @@ reifyObject l (DynamicObject ts) = do
       l % at (getID co) ?= DynamicObject (updateCachedObject ts updatedObj t)
       return updatedObj
 
-class HasID n where
-  getID :: n -> Entity
 
-instance HasID Entity where
-  getID = id
 
 instance HasID (Object s d) where
   getID = _objID
@@ -232,3 +275,4 @@ withoutMissingObjects f def = do
   case r of
     Left m -> def m
     Right x -> return x
+-}

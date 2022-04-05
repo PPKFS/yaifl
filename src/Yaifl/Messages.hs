@@ -6,6 +6,9 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
+
+{-# LANGUAGE TemplateHaskell #-}
+
 module Yaifl.Messages
   ( -- * Types
     MessageBuffer (..)
@@ -34,7 +37,7 @@ where
 
 import qualified Data.Text.Prettyprint.Doc as PP
 import qualified Data.Text.Prettyprint.Doc.Render.Terminal as PPTTY
-import Yaifl.Prelude
+import Solitude
 
 -- | A type d contains (some number of) buffers, indexed by a phantom type.
 class HasBuffer d p where
