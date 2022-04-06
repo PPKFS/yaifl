@@ -1,5 +1,5 @@
 module Yaifl.ObjectLookup
-(
+{-(
   ObjectLike(..)
   , getThingMaybe
   , getRoomMaybe
@@ -19,13 +19,13 @@ module Yaifl.ObjectLookup
   , isType
   , isSupporter
 
-) where
+)-} where
 
-import Yaifl.Prelude
+import Solitude
 import Yaifl.Common
 import Yaifl.Types
 import Control.Monad.Except
-
+{-}
 class HasID o => ObjectLike s o where
   getRoom :: (NoMissingObjects s m, MonadWorldNoLog s m) => o -> m (Room s)
   default getRoom :: NoMissingObjects s m => o -> m (Room s)
@@ -71,7 +71,7 @@ instance ObjectLike s (AbstractRoom s ) where
 -- getAbstractObject
 -- affine traversals
 -- object, abstractObject, thing, room
-getObjectFrom :: 
+getObjectFrom ::
   NoMissingObjects s m
   => MonadWorldNoLog s m
   => HasID o
@@ -112,7 +112,7 @@ getAbstractRoom
   -> m (AbstractRoom s)
 getAbstractRoom = getAbstractObjectFrom rooms
 
-getObject :: 
+getObject ::
   NoMissingObjects s m
   => MonadWorldNoLog s m
   => ObjectLike s o
@@ -160,7 +160,7 @@ setObject
   -> m ()
 setObject o = modifyObject o id
 
-modifyObject :: 
+modifyObject ::
   MonadWorldNoLog s m
   => HasID o
   => o
@@ -198,7 +198,7 @@ asThingOrRoom' o tf rf =
   else
      rf <$> getRoom o
 
-modifyObjectFrom :: 
+modifyObjectFrom ::
   MonadWorldNoLog s m
   => HasID o
   => StoreLens' s d
@@ -226,7 +226,7 @@ modifyThing
   -> m ()
 modifyThing = modifyObjectFrom things
 
-modifyRoom :: 
+modifyRoom ::
   MonadWorldNoLog s m
   => HasID o
   => o
@@ -283,3 +283,4 @@ isSupporter ::
   => o
   -> m Bool
 isSupporter = (`isType` ObjType "supporter")
+-}

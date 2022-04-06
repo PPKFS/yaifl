@@ -11,7 +11,7 @@ import Yaifl.Properties
 -- that an object *is* a kind of food, but we don't necessarily know what the @a@ is
 -- or looks like.
 newtype ObjType = ObjType
-  { unObjType :: Text 
+  { unObjType :: Text
   } deriving stock   (Show, Generic)
     deriving newtype (Eq, Ord)
 
@@ -50,10 +50,10 @@ data TimestampedObject w specifics objData = TimestampedObject
 newtype ObjectUpdate w specifics objData = ObjectUpdate
   { updateObject :: forall m. (MonadReader w m) => Object specifics objData -> m (Object specifics objData)
   }
-  
+
 makeLenses ''TimestampedObject
 -- | Update a cached object at a specified time
-updateCachedObject :: 
+updateCachedObject ::
   TimestampedObject w s d
   -> Object s d
   -> Timestamp
@@ -61,8 +61,16 @@ updateCachedObject ::
 updateCachedObject ts n t = ts & set tsCachedObject n
                                & set tsCacheStamp t
 
+
+-- | An abstract object is either a static object (which does not need to update itself)
+-- or a timestamped object. Whilst this is what is stored internally, you shouldn't
+-- need to pass these around; instead reify the object with 'reifyObject'.
+data AbstractObject w s d
+  = DynamicObject (TimestampedObject w s d)
+  | StaticObject (Object s d)
+
 -- | A lens to reify (and therefore also set) an object, but without updating on get.
-objectL :: 
+objectL ::
   Timestamp
   -> Lens' (AbstractObject w s d) (Object s d)
 objectL t = lens
@@ -74,15 +82,6 @@ objectL t = lens
     DynamicObject ts -> DynamicObject (updateCachedObject ts n t)
   )
 
-
-
--- | An abstract object is either a static object (which does not need to update itself)
--- or a timestamped object. Whilst this is what is stored internally, you shouldn't
--- need to pass these around; instead reify the object with 'reifyObject'.
-data AbstractObject w s d
-  = DynamicObject (TimestampedObject w s d)
-  | StaticObject (Object s d)
-
 type Thing s = Object s ThingData
 type Room s = Object s RoomData
 type AnyObject s = Object s (Either ThingData RoomData)
@@ -91,3 +90,58 @@ type AbstractThing s = AbstractObject s ThingData
 type AbstractRoom s = AbstractObject s RoomData
 type AnyAbstractObject s = AbstractObject s (Either ThingData RoomData)
 
+-- | An o can always be a d, and a d may be an o.
+-- Laws: toAny . fromAny === Just
+
+class CanBeAny o d where
+  toAny :: o -> d
+  fromAny :: d -> Maybe o
+
+instance CanBeAny o o where
+  toAny = id
+  fromAny = Just
+
+instance CanBeAny (Object s RoomData) (AnyObject s) where
+  toAny = fmap Right
+  fromAny = traverse rightToMaybe
+
+instance CanBeAny (Object s ThingData) (AnyObject s) where
+  toAny = fmap Left
+  fromAny = traverse leftToMaybe
+
+instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
+  toAny (StaticObject s) = StaticObject $ toAny s
+  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
+    DynamicObject $ TimestampedObject
+    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Right <$$> tsf r') (fromAny a))
+
+  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
+  fromAny ((DynamicObject
+    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
+    Nothing -> Nothing
+    Just s -> Just $ DynamicObject
+      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
+        r' <- tsf $ toAny v
+        return $ fromMaybe v (fromAny r') ))
+
+instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
+  toAny (StaticObject s) = StaticObject $ toAny s
+  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
+    DynamicObject $ TimestampedObject
+    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Left <$$> tsf r') (fromAny a))
+
+  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
+  fromAny ((DynamicObject
+    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
+    Nothing -> Nothing
+    Just s -> Just $ DynamicObject
+      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
+        r' <- tsf $ toAny v
+        return $ fromMaybe v (fromAny r') ))
+
+withoutMissingObjects :: (HasCallStack, Monad m) => (HasCallStack => ExceptT (MissingObject s) m a) -> (HasCallStack => MissingObject s -> m a) -> m a
+withoutMissingObjects f def = do
+  r <- runExceptT f
+  case r of
+    Left m -> def m
+    Right x -> return x

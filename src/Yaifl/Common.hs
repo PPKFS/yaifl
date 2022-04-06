@@ -57,13 +57,13 @@ instance HasID Entity where
   getID = id
 
 -- | This is kind of hacky, but it works: a `Thing` has ID above 0, and a `Room` has a negative ID.
-isThing :: 
+isThing ::
   (HasID a)
   => a
   -> Bool
 isThing a = getID a >= 0
 
-isRoom :: 
+isRoom ::
   (HasID a)
   => a
   -> Bool
@@ -122,12 +122,12 @@ type NoMissingObjects s m = (MonadError (MissingObject s) m)
 containedBy :: forall s. Lens' (Thing s) Entity
 containedBy = coercedTo @(Object s ThingData) % objData % thingContainedBy
 
-isBlankDescription :: Text -> Bool 
+isBlankDescription :: Text -> Bool
 isBlankDescription = (T.empty==)
 
 
 
-reifyObject :: 
+reifyObject ::
   MonadWorldNoLog s m
   => StoreLens' s d
   -> AbstractObject s d
@@ -187,77 +187,8 @@ setTitle
   -> m ()
 setTitle = (title .=)
 
--- | Generate a new entity ID.
-newEntityID
-  :: Bool
-  -> World o
-  -> (Entity, World o)
-newEntityID True = entityCounter % _1 <<+~ 1
-newEntityID False = entityCounter % _2 <<-~ 1
 
 
-class CanBeAny o d where
-  toAny :: o -> d
-  fromAny :: d -> Maybe o
-
-instance CanBeAny o o where
-  toAny = id
-  fromAny = Just
-
-instance CanBeAny (Object s RoomData) (AnyObject s) where
-  toAny = fmap Right
-  fromAny = traverse rightToMaybe
-
-instance CanBeAny (Object s ThingData) (AnyObject s) where
-  toAny = fmap Left
-  fromAny = traverse leftToMaybe
-
-instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
-  toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
-    DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Right <$$> tsf r') (fromAny a))
-
-  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
-  fromAny ((DynamicObject
-    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
-    Nothing -> Nothing
-    Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
-        r' <- tsf $ toAny v
-        return $ fromMaybe v (fromAny r') ))
-
-instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
-  toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
-    DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Left <$$> tsf r') (fromAny a))
-
-  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
-  fromAny ((DynamicObject
-    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
-    Nothing -> Nothing
-    Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
-        r' <- tsf $ toAny v
-        return $ fromMaybe v (fromAny r') ))
-
--- | Convert log item to its JSON representation while trimming its
--- payload based on the desired verbosity. Backends that push JSON
--- messages should use this to obtain their payload.
-itemJsonYaifl
-  :: LogItem a
-  => Verbosity
-  -> YaiflItem a
-  -> A.Value
-itemJsonYaifl verb (YaiflItem a) = A.toJSON
-  $ YaiflItem $ a { _itemPayload = payloadObject verb (_itemPayload a) }
-
-jsonFormatYaifl :: LogItem a => ItemFormatter a
-jsonFormatYaifl withColor verb i =
-  B.fromText $
-  colorBySeverity withColor (_itemSeverity i) $
-  toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
 
 runGame :: Text -> Game s a -> World s -> IO a --World s -> IO (World s)
 runGame t f i = do
@@ -269,10 +200,5 @@ runGame t f i = do
       let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
       evalStateT (runKatipContextT le initialContext (Namespace [t]) (unGame f)) i
 
-withoutMissingObjects :: (HasCallStack, Monad m) => (HasCallStack => ExceptT (MissingObject s) m a) -> (HasCallStack => MissingObject s -> m a) -> m a
-withoutMissingObjects f def = do
-  r <- runExceptT f
-  case r of
-    Left m -> def m
-    Right x -> return x
+
 -}

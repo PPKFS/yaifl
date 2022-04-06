@@ -33,15 +33,6 @@ instance Default ThingData where
 instance Default RoomData where
   blank = RoomData Unvisited Lighted blank Nothing blank
 
-
--}
-
-{-
-
-
-
-
-
 instance Default (Text -> Rule s v r) where
   blank n = Rule n (\v -> do
     warn $ bformat (stext %! " needs implementing") n
@@ -56,7 +47,7 @@ instance Default (Text -> Rulebook s v v r) where
   blank n = Rulebook n Nothing (ParseArguments (return . Just)) []
 
 blankRulebook ::
-  Text 
+  Text
   -> Rulebook s v v r
 blankRulebook = blank
 
@@ -67,44 +58,13 @@ instance Default (Timestamp -> UnverifiedArgs s) where
 instance Default (UnverifiedArgs s) where
   blank = UnverifiedArgs $ Args Nothing [] 0
 
--- | 'ActionRulebook's run over specific arguments; specifically, they expect
--- their arguments to be pre-verified; this allows for the passing of state.
-type ActionRulebook s v = Rulebook s (Args s v) (Args s v) Bool
 
-
-
-
-data Activity o v r = Activity
-    { _activityName :: !Text
-    , _activityDefault :: Maybe r
-    , _activityBeforeRules :: !(Rulebook o v v ())
-    , _activityCarryOutRules :: !(Rulebook o v v r)
-    , _activityAfterRules :: !(Rulebook o v v ())
-    }
-
-data LocaleVariables s = LocaleVariables
-  { _localePriorities :: LocalePriorities s
-  , _localeDomain :: !(AnyObject s)
-  , _localeParagraphCount :: Int
-  }
 
 -- | TODO
-data ActivityCollection s = ActivityCollection
-  { printingNameOfADarkRoom :: !(Activity s () ())
-  , printingNameOfSomething :: !(Activity s (AnyObject s) ())
-  , printingDescriptionOfADarkRoom :: !(Activity s () ())
-  , choosingNotableLocaleObjects :: !(Activity s (AnyObject s) (LocalePriorities s))
-  , printingLocaleParagraphAbout :: !(Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s))
-  , describingLocale :: !(Activity s (LocaleVariables s) ())
-  }
 
 
-data WorldModel s d v o = WorldModel
-  { _things :: !(Store (AbstractThing s))
-  , _rooms :: !(Store (AbstractRoom s))
-  --, _directions :: !
-  , _values :: !v
-  }
+
+
 
 
 newtype Game s a = Game
@@ -138,22 +98,6 @@ type MonadWorldNoLog s m = (MonadReader (World s) m, MonadState (World s) m)
 
 class HasRooms s r | s -> r where
   wmL :: Lens' s (Store (AbstractRoom r))
-
-newtype YaiflItem a = YaiflItem
-  { toKatipItem :: Item a
-  } deriving newtype (Functor)
-
-instance A.ToJSON a => A.ToJSON (YaiflItem a) where
-    toJSON (YaiflItem Item{..}) = A.object $
-      [ "level" A..= _itemSeverity
-      , "message" A..= B.toLazyText (unLogStr _itemMessage)
-      , "timestamp" A..= formatAsLogTime _itemTime
-      , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
-      , "loc" A..= fmap reshapeFilename _itemLoc
-      ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
-
-reshapeFilename :: Loc -> String
-reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) <> ":" <> show (fst loc_start) <> ":" <> show (snd loc_start)
 
 makeLenses ''World
 makeLenses ''Object
@@ -191,11 +135,4 @@ instance HasRooms (WorldModel s' d v o) s' where
   type StoreLens' s d = (Lens' (World s) (Store (AbstractObject s d)))
 
 
-type LocalePriorities s = Store (LocaleInfo s)
-
-data LocaleInfo s = LocaleInfo
-  { _priority :: Int
-  , _localeObject :: AnyObject s
-  , _isMentioned :: Bool
-  }
 -}

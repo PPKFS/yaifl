@@ -1,10 +1,5 @@
-module Yaifl.ObjectLogging
-  (
-  Prettify(..)
-  , shortPrint
-  , objectName
-  ) where
-
+module Yaifl.ObjectLogging where
+{-
 import Yaifl.Prelude
 import Yaifl.Types
 import Yaifl.ObjectLookup
@@ -43,7 +38,7 @@ shortPrint
   :: Object s d
   -> Text
 shortPrint Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")"
-{-
+
 logObject
   :: MonadReader ObjectLike s o
   => Text
@@ -53,7 +48,7 @@ logObject n e = do
   o <- getObject e
   logVerbose $ n <> "\n" <> prettify o
   whenJust o $ \Object{..} -> logVerbose _objName
--}
+
 objectName
   :: NoMissingObjects s m
   => MonadWorld s m
@@ -63,3 +58,4 @@ objectName
 objectName o = do
   o' <- getObject o
   return $ _objName o'
+-}

@@ -2,7 +2,9 @@ module Yaifl.Actions where
 
 import Yaifl.Common
 import Solitude
+import Yaifl.Rulebooks
 
+type ActionParseArguments s v = ParseArguments s (UnverifiedArgs s) v
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -18,6 +20,10 @@ data Action s where
     , _actionReportRules :: !(ActionRulebook s v)
     } -> Action s
 
+
+-- | 'ActionRulebook's run over specific arguments; specifically, they expect
+-- their arguments to be pre-verified; this allows for the passing of state.
+type ActionRulebook s v = Rulebook s (Args s v) (Args s v) Bool
 
 {-
 addAction

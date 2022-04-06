@@ -4,6 +4,9 @@ import Solitude
 import Yaifl.Common
 import Yaifl.Rulebooks
 import Yaifl.Logger
+import Yaifl.Messages
+import Yaifl.Actions
+import Yaifl.Activities
 
 -- | Again lifted directly from Inform; this sets whether to always print room
 -- descriptions (No..) even if the room is visited, to only print them on the first
@@ -16,6 +19,13 @@ data RoomDescriptions
 
 type MonadWorld s m = (MonadReader (World s) m, MonadState (World s) m, Logger m)
 
+data WorldModel s d v o = WorldModel
+  { _things :: !(Store (AbstractThing s))
+  , _rooms :: !(Store (AbstractRoom s))
+  --, _directions :: !
+  , _values :: !v
+  }
+
 data World s = World
   { _title :: !Text
   , _entityCounter :: !(Entity, Entity)
@@ -27,7 +37,7 @@ data World s = World
   , _previousRoom :: !Entity
   , _currentPlayer :: !Entity
   , _firstRoom :: !(Maybe Entity)
-  
+
   --, _directions :: !(Store Direction)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   , _actions :: !(Map Text (Action s))
@@ -36,3 +46,11 @@ data World s = World
   , _messageBuffers :: !(MessageBuffer, MessageBuffer)
   , _actionProcessing :: !(forall m. MonadWorld s m => Action s -> UnverifiedArgs s -> m (Maybe Bool))
   }
+
+-- | Generate a new entity ID.
+newEntityID
+  :: Bool
+  -> World o
+  -> (Entity, World o)
+newEntityID True = entityCounter % _1 <<+~ 1
+newEntityID False = entityCounter % _2 <<-~ 1

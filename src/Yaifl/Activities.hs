@@ -1,7 +1,4 @@
 module Yaifl.Activities
-  ( defaultActivities
-  , printName
-  , printNameEx
     {-
 
     printingNameOfADarkRoomName,
@@ -12,22 +9,59 @@ module Yaifl.Activities
     capitalThe,
     printingLocaleParagraphAboutActivityImpl,
     printingLocaleParagraphAboutActivityName,-}
-  )
 where
 
-import Yaifl.Types
-import Yaifl.Properties (HasProperty)
+import Solitude
+import Yaifl.Rulebooks
+import Yaifl.Objects.Object
+import Yaifl.Common
 
+{-}
 import Yaifl.Activities.PrintingADarkRoom
 import Yaifl.Activities.PrintingNameOfSomething
 import Yaifl.Activities.PrintingDescriptionOfADarkRoom
 import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Activities.DescribingLocale
+-}
 
-defaultActivities :: 
+data LocaleVariables s = LocaleVariables
+  { _localePriorities :: LocalePriorities s
+  , _localeDomain :: !(AnyObject s)
+  , _localeParagraphCount :: Int
+  }
+
+
+type LocalePriorities s = Store (LocaleInfo s)
+
+data LocaleInfo s = LocaleInfo
+  { _priority :: Int
+  , _localeObject :: AnyObject s
+  , _isMentioned :: Bool
+  }
+
+data Activity o v r = Activity
+    { _activityName :: !Text
+    , _activityDefault :: Maybe r
+    , _activityBeforeRules :: !(Rulebook o v v ())
+    , _activityCarryOutRules :: !(Rulebook o v v r)
+    , _activityAfterRules :: !(Rulebook o v v ())
+    }
+
+data ActivityCollection s = ActivityCollection
+  { printingNameOfADarkRoom :: !(Activity s () ())
+  , printingNameOfSomething :: !(Activity s (AnyObject s) ())
+  , printingDescriptionOfADarkRoom :: !(Activity s () ())
+  , choosingNotableLocaleObjects :: !(Activity s (AnyObject s) (LocalePriorities s))
+  , printingLocaleParagraphAbout :: !(Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s))
+  , describingLocale :: !(Activity s (LocaleVariables s) ())
+  }
+
+{-}
+
+defaultActivities ::
   HasProperty s Enclosing
-  => HasProperty s Container 
+  => HasProperty s Container
   => HasProperty s Openable
   => ActivityCollection s
 defaultActivities = ActivityCollection
@@ -272,4 +306,5 @@ willRecurse e = do
 
 isMatchingContainers :: (HasStore w Openable, WithGameData w m) => Entity -> Entity -> m Bool
 isMatchingContainers e1 e2 = getComponent @Openable e2 <==> getComponent @Openable e1
+-}
 -}

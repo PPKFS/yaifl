@@ -42,3 +42,36 @@ toLoc stk =
             loc_start = (srcLocStartLine loc, srcLocStartCol loc),
             loc_end = (srcLocEndLine loc, srcLocEndCol loc)
           }
+
+newtype YaiflItem a = YaiflItem
+  { toKatipItem :: Item a
+  } deriving newtype (Functor)
+
+instance A.ToJSON a => A.ToJSON (YaiflItem a) where
+    toJSON (YaiflItem Item{..}) = A.object $
+      [ "level" A..= _itemSeverity
+      , "message" A..= B.toLazyText (unLogStr _itemMessage)
+      , "timestamp" A..= formatAsLogTime _itemTime
+      , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
+      , "loc" A..= fmap reshapeFilename _itemLoc
+      ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
+
+reshapeFilename :: Loc -> String
+reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) <> ":" <> show (fst loc_start) <> ":" <> show (snd loc_start)
+
+-- | Convert log item to its JSON representation while trimming its
+-- payload based on the desired verbosity. Backends that push JSON
+-- messages should use this to obtain their payload.
+itemJsonYaifl
+  :: LogItem a
+  => Verbosity
+  -> YaiflItem a
+  -> A.Value
+itemJsonYaifl verb (YaiflItem a) = A.toJSON
+  $ YaiflItem $ a { _itemPayload = payloadObject verb (_itemPayload a) }
+
+jsonFormatYaifl :: LogItem a => ItemFormatter a
+jsonFormatYaifl withColor verb i =
+  B.fromText $
+  colorBySeverity withColor (_itemSeverity i) $
+  toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
