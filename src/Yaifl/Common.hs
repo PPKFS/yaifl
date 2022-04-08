@@ -1,53 +1,39 @@
 {-|
 Module      : Yaifl.Common
-Description : Mostly defining types to be used everywhere and some helper functions.
+Description : Entities (IDs) and Stores (maps of entities to objects). Otherwise basic stuff.
 Copyright   : (c) Avery, 2022
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
+
 module Yaifl.Common
   (-- * Datatypes
   Entity(..)
   , Store(..)
+  , HasID(..)
   , Timestamp(..)
-  , NoMissingObjects
+  , WorldModel(..)
+  , defaultVoidID
+  , emptyStore
   -- * Object querying
   , isThing
   , isRoom
-  , HasID(..)
-  {-, CanBeAny(..)
-  , withoutMissingObjects
-  , isBlankDescription
-
-  -- * Lenses
-
-  , objectL
-  , containedBy
-
-  -- * World lookups and modifications
-  , getGlobalTime
-  , tickGlobalTime
-  , setTitle
-  , newEntityID
-
-  , reifyObject
-
-  , runGame
-  , module Yaifl.Types-}
+    -- * Type family nonsense
+  , ObjSpecifics
+  , Values
   )
 where
 
 import Solitude
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
-import Control.Monad.Except (MonadError)
 
 -- | An 'Entity' is an integer ID that is used to reference between objects.
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
-    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
+    deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
 
 -- | A way to extract an `Entity` from something.
 class HasID n where
@@ -56,6 +42,8 @@ class HasID n where
 instance HasID Entity where
   getID = id
 
+defaultVoidID :: Entity
+defaultVoidID = Entity (-1)
 -- | This is kind of hacky, but it works: a `Thing` has ID above 0, and a `Room` has a negative ID.
 isThing ::
   (HasID a)
@@ -72,8 +60,23 @@ isRoom = not . isThing
 -- | A 'Store' is a map from 'Entity's to @a@s.
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
-  } deriving stock   (Generic)
-    deriving newtype (Show, Eq, Ord)
+  } deriving stock   (Show, Generic)
+    deriving newtype (Eq, Ord, Read)
+
+emptyStore :: Store a
+emptyStore = Store EM.empty
+
+-- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
+-- modification is made to the 'World'; therefore it does not directly correspond to
+-- some sort of in-game turn counter. For example, throwing an object would result in
+-- multiple timestamp jumps (an object moving, potential interactions on it hitting
+-- something) whereas a sequence of 10 look actions will not (as the world does not
+-- change). This is primarily used to ensure we can cache updates of objects that
+-- change properties (e.g. strings).
+newtype Timestamp = Timestamp
+  { unTimestamp :: Int
+  } deriving stock   (Show, Read, Generic)
+    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
 
 -- first let's define our own alterF for EnumMap...
 alterEMF
@@ -102,103 +105,12 @@ type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
 
--- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
--- modification is made to the 'World'; therefore it does not directly correspond to
--- some sort of in-game turn counter. For example, throwing an object would result in
--- multiple timestamp jumps (an object moving, potential interactions on it hitting
--- something) whereas a sequence of 10 look actions will not (as the world does not
--- change). This is primarily used to ensure we can cache updates of objects that
--- change properties (e.g. strings).
-newtype Timestamp = Timestamp
-  { unTimestamp :: Int
-  } deriving stock   (Show, Generic)
-    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
+-- | A WorldModel is the canonical implementation of the `wm` world model parameter.
+-- the reason for its existence is primarily so we can avoid having massive type
+-- sigs everywhere for `World`.
+data WorldModel = WorldModel Type Type Type Type
 
-
-data MissingObject s = MissingObject Text Entity
-type NoMissingObjects s m = (MonadError (MissingObject s) m)
-
-{-
-containedBy :: forall s. Lens' (Thing s) Entity
-containedBy = coercedTo @(Object s ThingData) % objData % thingContainedBy
-
-isBlankDescription :: Text -> Bool
-isBlankDescription = (T.empty==)
-
-
-
-reifyObject ::
-  MonadWorldNoLog s m
-  => StoreLens' s d
-  -> AbstractObject s d
-  -> m (Object s d)
-reifyObject _ (StaticObject v) = return v
-reifyObject l (DynamicObject ts) = do
-  let co = _tsCachedObject ts
-  now <- getGlobalTime
-  if
-    _tsCacheStamp ts == now
-  then
-    return co
-  else
-    do
-      -- update the object
-      updatedObj <- updateObject (_tsUpdateFunc ts) co
-      -- update the world
-      t <- gets getGlobalTime
-      l % at (getID co) ?= DynamicObject (updateCachedObject ts updatedObj t)
-      return updatedObj
-
-
-
-instance HasID (Object s d) where
-  getID = _objID
-
-instance HasID (AbstractObject s d) where
-  getID (StaticObject o) = getID o
-  getID (DynamicObject ts) = getID ts
-
-instance HasID (TimestampedObject s d) where
-  getID (TimestampedObject o _ _) = getID o
-
--- | Obtain the current timestamp. This is a function in case I want to change the
--- implementation in the future.
-getGlobalTime
-  :: MonadReader (World s) m
-  => m Timestamp
-getGlobalTime = asks _globalTime
-
-tickGlobalTime
-  :: MonadWorldNoLog s m
-  => Bool
-  -> m ()
---I have no idea what my plans were for this flag.
-tickGlobalTime False = dirtyTime .= True
-tickGlobalTime True = do
-  dirtyTime .= False
-  _ <- globalTime <%= (+1)
-  pass
-  -- debug (bformat ("Dong. The time is now " %! int %! ".") r)
-
--- | Update the game title.
-setTitle
-  :: MonadWorld s m
-  => Text -- ^ New title.
-  -> m ()
-setTitle = (title .=)
-
-
-
-
-runGame :: Text -> Game s a -> World s -> IO a --World s -> IO (World s)
-runGame t f i = do
-  withFile "log.json" AppendMode \fh -> do
-    handleScribe <- mkHandleScribeWithFormatter jsonFormatYaifl ColorIfTerminal fh (permitItem DebugS) V2
-    let makeLogEnv = registerScribe "file" handleScribe defaultScribeSettings =<< initLogEnv "" ""
-    -- closeScribes will stop accepting new logs, flush existing ones and clean up resources
-    bracket makeLogEnv closeScribes $ \le -> do
-      let initialContext = () -- this context will be attached to every log in your app and merged w/ subsequent contexts
-      evalStateT (runKatipContextT le initialContext (Namespace [t]) (unGame f)) i
-
-
--}
+type family ObjSpecifics (r :: WorldModel) :: Type where
+  ObjSpecifics ('WorldModel objSpec dir o v) = objSpec
+type family Values (r :: WorldModel) :: Type where
+  Values ('WorldModel objSpec dir o v) = o

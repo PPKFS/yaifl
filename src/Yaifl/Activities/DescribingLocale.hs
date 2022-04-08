@@ -1,9 +1,7 @@
 module Yaifl.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
-import Yaifl.Types
 import Yaifl.Activities.Common
-import Yaifl.Prelude
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.ObjectLookup
 import Yaifl.Activities.PrintingNameOfSomething
@@ -80,7 +78,7 @@ alsoSee = Rule "You can also see" (\v ->
     -- I think now we're including the mentioned flag it's worth putting in here too
     let lp = DEM.filter (\(LocaleInfo x _ m) -> x > 0 && not m) (unStore $ v ^. localePriorities)
 
-
+TODO: extract
     unless (null lp) $ do
       let (LocaleVariables prior dom p) = v
       plID <- gets _currentPlayer

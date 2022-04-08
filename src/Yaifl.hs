@@ -19,6 +19,10 @@ module Yaifl
 
 import Yaifl.World
 import Solitude
+import qualified Data.Map as DM
+import Yaifl.Common
+import Yaifl.Say
+import Yaifl.Rulebooks.ActionProcessing
 {-import Yaifl.Properties
 import Yaifl.Actions
 import Yaifl.Rulebooks
@@ -40,24 +44,24 @@ type HasStandardProperties s = (
   -}
 blankWorld
   :: --  HasStandardProperties s
-  (Show String)
-  => World s
-blankWorld = error "" {- World
+  World (s :: WorldModel)
+blankWorld = World
   { _title = "Untitled"
   , _entityCounter = (Entity 1, Entity (-1))
   , _globalTime = 0
   , _darknessWitnessed = False
   , _firstRoom = Nothing
   , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
-  , _currentPlayer = defaultPlayerID
-  , _things = blank
+  , _currentPlayer = Entity 1
+  , _things = emptyStore
   , _concepts = () --emptyStore
-  , _rooms = blank
+  , _rooms = emptyStore
+  , _values = DM.empty
   , _messageBuffers = (emptyMessageBuffer, emptyMessageBuffer)
   , _actions = DM.empty
-  , _activities = defaultActivities
-  , _whenPlayBegins = whenPlayBeginsRules
+  , _activities = error "" -- defaultActivities
+  , _whenPlayBegins = error "" -- whenPlayBeginsRules
   , _actionProcessing = defaultActionProcessingRules
   , _previousRoom = defaultVoidID
   , _dirtyTime = False
-  }-}
+  }

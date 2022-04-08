@@ -1,11 +1,10 @@
-module Yaifl.Test.Chapter3.Bic ( ex2World, ex2Test ) where
+module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-import Yaifl.Prelude
-import Yaifl.Activities
-import Yaifl.Test.Common
-
+import Solitude
+{-
 ex2World :: Game () (World ())
+
 ex2World = newWorld $ do
   setTitle "Bic"
   addRoom' "The Staff Break Room" "" pass
@@ -20,10 +19,11 @@ ex2World = newWorld $ do
           sayLn " has no description.")
         return Nothing)
       return Nothing
-
+-}
 ex2Test :: [Text]
-ex2Test = 
+ex2Test = []
+{-
   [ expectLooking "The Staff Break Room" ""
   , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
   , expectLine "Bic pen has no description."
-  ]
+  ]-}

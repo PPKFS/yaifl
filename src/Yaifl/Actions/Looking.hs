@@ -17,6 +17,14 @@ import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Activities.Common
 import Yaifl.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
 
+TODO: extract
+makeActionRulebook
+  :: Text
+  -> [Rule o (Args o v) Bool]
+  -> ActionRulebook o v
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Just x)
+
+TODO: extract
 type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
 
 data LookingActionVariables s = LookingActionVariables

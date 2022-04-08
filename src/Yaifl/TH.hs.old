@@ -16,6 +16,7 @@ data SpecificsFunctions =
     | ModifyX
     deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
+TODO: extract
 {-
 getX :: HasProperty s X
 => HasID o

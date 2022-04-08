@@ -1,147 +1,180 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-|
+Module      : Yaifl.Objects.Object
+Description : A game entity.
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
 
-module Yaifl.Objects.Object where
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
+
+module Yaifl.Objects.Object 
+  ( -- * Types
+    ObjType(..)
+  , Object(..)
+  , ObjectLike(..)
+  , Thing
+  , Room
+  , AnyObject
+
+  -- * Object Helpers
+  , objectEquals
+
+  -- * Lenses
+  , objName
+  , objDescription
+  , objID
+  , objType
+  , objCreationTime
+  , objSpecifics
+  , objData
+  , containedBy
+  , _Room
+  , _Thing
+  ) where
 
 import Solitude
 import Yaifl.Common
+import Yaifl.ObjectSpecifics (ObjectSpecifics)
 import Yaifl.Objects.ObjectData
-import Yaifl.Properties
+import Yaifl.Objects.Missing
+import {-# SOURCE #-} Yaifl.World
+import Control.Monad.Except (liftEither, throwError)
 
 -- | ObjTypes make a DAG that approximates inheritance; for instance, we may only care
 -- that an object *is* a kind of food, but we don't necessarily know what the @a@ is
 -- or looks like.
 newtype ObjType = ObjType
   { unObjType :: Text
-  } deriving stock   (Show, Generic)
-    deriving newtype (Eq, Ord)
+  } deriving stock (Eq, Show)
+    deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
 
 -- | An 'Object' is any kind of game object, where @a@ should either be ThingData/RoomData
 -- or Either ThingData RoomData
-data Object specifics objData = Object
+data Object wm objData = Object
   { _objName :: !Text
   , _objDescription :: !Text
   , _objID :: !Entity
   , _objType :: !ObjType
   , _objCreationTime :: !Timestamp
-  , _objSpecifics :: !(Either ObjectSpecifics specifics)
+  , _objSpecifics :: !(Either ObjectSpecifics (ObjSpecifics wm))
   , _objData :: !objData
-  } deriving stock (Generic, Show)
+  } deriving stock (Generic)
 
-instance Eq (Object specifics objData) where
-  (==) = eqObject
+deriving stock instance (Show (ObjSpecifics wm), Show d) => Show (Object wm d)
+deriving stock instance (Read (ObjSpecifics wm), Read d) => Read (Object wm d)
 
--- | We extract this because we can compare objects with different data payloads.
-eqObject
-  :: Object specifics objData
-  -> Object specifics objData'
+instance HasID (Object wm d) where
+  getID = _objID
+  
+-- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
+type Thing wm = Object wm ThingData
+type Room wm = Object wm RoomData
+type AnyObject wm = Object wm (Either ThingData RoomData)
+
+instance Eq (Object wm d) where
+  (==) = objectEquals
+
+-- | Maybe I'll need this instance for something or other? 
+instance Ord (Object wm d) where
+  compare = (. _objID) . compare . _objID
+
+-- | A more generic version of `(==)` that allows the type parameters to vary.
+objectEquals :: 
+  Object wm d
+  -> Object wm d'
   -> Bool
-eqObject a b = _objID a == _objID b
+objectEquals = (. _objID) . (==) . _objID
 
--- | A 'TimestampedObject' is an object which has been cached at time '_tsCacheStamp'
--- and contains a function to update it given the state of the world. For instance,
--- this allows descriptions to be dynamic.
-data TimestampedObject w specifics objData = TimestampedObject
-  { _tsCachedObject :: !(Object specifics objData)
-  , _tsCacheStamp :: !Timestamp
-  , _tsUpdateFunc :: ObjectUpdate w specifics objData
-  }
+makeLenses ''Object
 
--- | Function to update an object
-newtype ObjectUpdate w specifics objData = ObjectUpdate
-  { updateObject :: forall m. (MonadReader w m) => Object specifics objData -> m (Object specifics objData)
-  }
+instance Functor (Object wm) where
+  fmap :: 
+    (a -> b)
+    -> Object wm a
+    -> Object wm b
+  fmap f = objData %~ f
 
-makeLenses ''TimestampedObject
--- | Update a cached object at a specified time
-updateCachedObject ::
-  TimestampedObject w s d
-  -> Object s d
-  -> Timestamp
-  -> TimestampedObject w s d
-updateCachedObject ts n t = ts & set tsCachedObject n
-                               & set tsCacheStamp t
+instance Foldable (Object wm) where
+  foldMap :: 
+    (a -> m)
+    -> Object wm a 
+    -> m
+  foldMap f = f . _objData
+
+instance Traversable (Object wm) where
+  traverse :: 
+    Applicative f 
+    => (a -> f b) 
+    -> Object wm a 
+    -> f (Object wm b)
+  traverse f o = (\v -> o {_objData = v}) <$> f (_objData o)
 
 
--- | An abstract object is either a static object (which does not need to update itself)
--- or a timestamped object. Whilst this is what is stored internally, you shouldn't
--- need to pass these around; instead reify the object with 'reifyObject'.
-data AbstractObject w s d
-  = DynamicObject (TimestampedObject w s d)
-  | StaticObject (Object s d)
+-- | A prism for rooms.
+_Room :: Prism' (AnyObject wm) (Room wm)
+_Room = prism' (fmap Right) (traverse rightToMaybe)
 
--- | A lens to reify (and therefore also set) an object, but without updating on get.
-objectL ::
-  Timestamp
-  -> Lens' (AbstractObject w s d) (Object s d)
-objectL t = lens
-  (\case
-    StaticObject o -> o
-    DynamicObject (TimestampedObject o _ _) -> o)
-  (\o n -> case o of
-    StaticObject _ -> StaticObject n
-    DynamicObject ts -> DynamicObject (updateCachedObject ts n t)
+-- | A prism for things.
+_Thing :: Prism' (AnyObject wm) (Thing wm)
+_Thing = prism' (fmap Left) (traverse leftToMaybe)
+
+-- | Something is `ObjectLike` if you can query (or update) the world to get an object out of it.
+class HasID o => ObjectLike wm o where
+  getRoom :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Room wm)
+  default getRoom :: (NoMissingObjects m) => o -> m (Room wm)
+  getRoom o = throwError $ MissingObject "Called getRoom on an object with no instance."  (getID o)
+  
+  getThing :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Thing wm)
+  default getThing :: (NoMissingObjects m) => o -> m (Thing wm)
+  getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
+{-
+instance ObjectLike wm s Entity where
+  getThing = getObjectFrom things
+  getRoom = getObjectFrom rooms
+-}
+rooms :: a
+rooms = error ""
+getObjectFrom :: a
+getObjectFrom = error "not implemented"
+
+instance ObjectLike wm (Thing wm) where
+  getThing = pure
+
+instance ObjectLike wm (Room wm) where
+  getRoom = pure
+
+instance ObjectLike wm (AnyObject wm) where
+  getThing t = liftEither
+    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (_objID t) <> " but it was a room.") (getID t))
+      (preview _Thing t))
+  getRoom t = liftEither
+    (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
+      (preview _Room t))
+      
+containedBy :: forall wm. Lens' (Thing wm) Entity
+containedBy = coercedTo @(Object wm ThingData) % objData % thingContainedBy
+
+{-
+
+-}
+
+{-
+getEnclosing
+  :: NoMissingObjects s m
+  => MonadWorld s m
+  => HasProperty s Enclosing
+  => ObjectLike s o
+  => o
+  -> m (Maybe Enclosing)
+getEnclosing e = if isThing e
+  then
+    defaultPropertyGetter e
+  else (do
+    o <- getRoom e
+    return $ Just $ o ^. objData % roomEnclosing
   )
-
-type Thing s = Object s ThingData
-type Room s = Object s RoomData
-type AnyObject s = Object s (Either ThingData RoomData)
-
-type AbstractThing s = AbstractObject s ThingData
-type AbstractRoom s = AbstractObject s RoomData
-type AnyAbstractObject s = AbstractObject s (Either ThingData RoomData)
-
--- | An o can always be a d, and a d may be an o.
--- Laws: toAny . fromAny === Just
-
-class CanBeAny o d where
-  toAny :: o -> d
-  fromAny :: d -> Maybe o
-
-instance CanBeAny o o where
-  toAny = id
-  fromAny = Just
-
-instance CanBeAny (Object s RoomData) (AnyObject s) where
-  toAny = fmap Right
-  fromAny = traverse rightToMaybe
-
-instance CanBeAny (Object s ThingData) (AnyObject s) where
-  toAny = fmap Left
-  fromAny = traverse leftToMaybe
-
-instance CanBeAny (AbstractObject s RoomData) (AnyAbstractObject s) where
-  toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
-    DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Right <$$> tsf r') (fromAny a))
-
-  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
-  fromAny ((DynamicObject
-    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
-    Nothing -> Nothing
-    Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
-        r' <- tsf $ toAny v
-        return $ fromMaybe v (fromAny r') ))
-
-instance CanBeAny (AbstractObject s ThingData) (AnyAbstractObject s) where
-  toAny (StaticObject s) = StaticObject $ toAny s
-  toAny (DynamicObject (TimestampedObject tsobj tsts (ObjectUpdate tsf))) =
-    DynamicObject $ TimestampedObject
-    (toAny tsobj) tsts (ObjectUpdate $ \a -> maybe (return a) (\r' -> Left <$$> tsf r') (fromAny a))
-
-  fromAny ((StaticObject s)) = fmap StaticObject (fromAny s)
-  fromAny ((DynamicObject
-    (TimestampedObject tsobj tsts (ObjectUpdate tsf)))) = case fromAny tsobj of
-    Nothing -> Nothing
-    Just s -> Just $ DynamicObject
-      (TimestampedObject s tsts (ObjectUpdate $ \v -> do
-        r' <- tsf $ toAny v
-        return $ fromMaybe v (fromAny r') ))
-
-withoutMissingObjects :: (HasCallStack, Monad m) => (HasCallStack => ExceptT (MissingObject s) m a) -> (HasCallStack => MissingObject s -> m a) -> m a
-withoutMissingObjects f def = do
-  r <- runExceptT f
-  case r of
-    Left m -> def m
-    Right x -> return x
+-}

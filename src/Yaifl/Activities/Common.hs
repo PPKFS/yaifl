@@ -5,7 +5,6 @@ module Yaifl.Activities.Common
 ) where
 
 import Yaifl.Common
-import Yaifl.Prelude
 import Yaifl.Rulebooks
 import Yaifl.Properties
 
@@ -18,7 +17,7 @@ makeActivity n r = Activity n Nothing
   ((blankRulebook ("Carry Out " <> n)) { _rbRules = [r]})
   (blankRulebook ("After " <> n))
 
-
+TODO: extract
 doActivity
   :: MonadWorld s m
   => (ActivityCollection s -> Activity s v r)

@@ -11,7 +11,7 @@ import Yaifl.ObjectLookup
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Yaifl.ObjectLogging (objectName)
-
+TODO: extract
 choosingNotableLocaleObjectsImpl
   :: HasProperty s Enclosing
   => Activity s (AnyObject s) (LocalePriorities s)

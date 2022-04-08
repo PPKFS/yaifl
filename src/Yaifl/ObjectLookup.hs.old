@@ -23,40 +23,11 @@ module Yaifl.ObjectLookup
 
 import Solitude
 import Yaifl.Common
-import Yaifl.Types
 import Control.Monad.Except
 {-}
-class HasID o => ObjectLike s o where
-  getRoom :: (NoMissingObjects s m, MonadWorldNoLog s m) => o -> m (Room s)
-  default getRoom :: NoMissingObjects s m => o -> m (Room s)
-  getRoom o = throwError $ MissingObject "Called getRoom on an object with no instance."  (getID o)
-  getThing :: (NoMissingObjects s m, MonadWorldNoLog s m) => o -> m (Thing s)
-  default getThing :: NoMissingObjects s m => o -> m (Thing s)
-  getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
 
-instance ObjectLike s Entity where
-  getThing = getObjectFrom things
-  getRoom = getObjectFrom rooms
+TODO: extract
 
-instance ObjectLike s (Thing s) where
-  getThing = pure
-
-instance ObjectLike s (Room s) where
-  getRoom = pure
-
-instance ObjectLike s (AnyObject s) where
-  getThing t = liftEither
-    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (_objID t) <> " but it was a room.") (getID t))
-      (fromAny t))
-  getRoom t = liftEither
-    (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
-      (fromAny t))
-
-instance ObjectLike s (AbstractThing s ) where
-  getThing = reifyObject things
-
-instance ObjectLike s (AbstractRoom s ) where
-  getRoom = reifyObject rooms
 
 -- ** getX
 -- sets of signatures

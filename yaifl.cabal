@@ -8,7 +8,7 @@ bug-reports:         https://github.com/PPKFS/yaifl/issues
 license:             MIT
 author:              Avery
 maintainer:          Avery <thecommunistduck@hotmail.co.uk>
-copyright:           2021 Avery
+copyright:           2022 Avery
 category:            Game Development
 build-type:          Simple
 extra-doc-files:     README.md
@@ -37,6 +37,7 @@ common common-options
                      , katip
                      , aeson
                      , formatting
+                     , profunctors
 
 
   ghc-options:         -Wall
@@ -47,7 +48,8 @@ common common-options
                        -Wincomplete-record-updates
                        -fhide-source-paths
                        -Wno-unused-top-binds
-                       -O3
+                       -Wmissing-deriving-strategies
+                       -O2
                        -flate-specialise
                        -fspecialise-aggressively
                        -fprint-potential-instances
@@ -68,26 +70,41 @@ common common-options
     FunctionalDependencies
     LambdaCase
     BlockArguments
+    MultiWayIf
 
 library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:
-                      Yaifl
-                      Yaifl.Objects.Object
-                      Yaifl.Objects.ObjectData
-                      Yaifl.Common
-                      Yaifl.Rulebooks
-                      Yaifl.Properties
+    Yaifl
+    Yaifl.World
+    Yaifl.Say
+                      
+
+    Yaifl.Common
+    Yaifl.ObjectSpecifics
                       --Yaifl.Messages
                       --Yaifl.Prelude
-                      Yaifl.TH
-                      Yaifl.Types
+    --Yaifl.TH
                       --Yaifl.Actions
                       --Yaifl.Activities
                       --Yaifl.ObjectLookup
   other-modules:
-                      Yaifl.Properties.Enclosing
+    Yaifl.Actions.Action
+
+    Yaifl.Objects.Dynamic
+    Yaifl.Objects.Object
+    Yaifl.Objects.ObjectData
+    Yaifl.Objects.Missing
+
+    Yaifl.Properties.Container
+    Yaifl.Properties.Enclosing
+    Yaifl.Properties.Openable
+
+    Yaifl.Rulebooks.Rulebook
+    Yaifl.Rulebooks.ActionProcessing
+
+    Yaifl.Logger
                       -- Yaifl.ObjectLogging
                       --Yaifl.Activities.PrintingADarkRoom
                       --Yaifl.Activities.PrintingNameOfSomething

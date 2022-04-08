@@ -1,13 +1,15 @@
 {-|
-Module      : Yaifl.Properties
-Description : Creating, modifying, querying objects.
+Module      : Yaifl.ObjectSpecifics
+Description : The 'standard' array of object specifics.
 Copyright   : (c) Avery, 2021
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.Properties
+{-# LANGUAGE TemplateHaskell #-}
+
+module Yaifl.ObjectSpecifics
   ( -- * Specifics
   ObjectSpecifics(..)
 {-
@@ -48,19 +50,34 @@ module Yaifl.Properties
   ) where
 
 import Solitude
-import Yaifl.Common
 import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Container
 import Yaifl.Properties.Openable
+import Yaifl.Properties.Property
 
 data ObjectSpecifics =
   NoSpecifics
   | EnclosingSpecifics Enclosing
   | ContainerSpecifics Container 
   | OpenableSpecifics Openable
-  deriving stock (Show)
+  deriving stock (Eq, Show, Read)
+
+makePrisms ''ObjectSpecifics
+instance HasProperty ObjectSpecifics Enclosing where
+  propertyL = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing)
+
+
+instance HasProperty ObjectSpecifics Container where
+  propertyL = castOptic _ContainerSpecifics
+
+instance HasProperty ObjectSpecifics Enterable where
+  propertyL = _ContainerSpecifics % containerEnterable
+
+instance HasProperty ObjectSpecifics Openable where
+  propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
 
 {--
+TODO: extract
 -- | Create a new object and assign it an entity ID, but do **not** add it to any
 -- stores. See also 'addObject' for a version that adds it to a store.
 makeObject
@@ -81,41 +98,8 @@ makeObject n d ty isT specifics details upd = do
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 
-class HasProperty o v where
-  default propertyL :: AffineTraversal' o v
-  propertyL = atraversal Left const
-  propertyL :: AffineTraversal' o v
 
-instance (HasProperty a v, HasProperty b v) => HasProperty (Either a b) v where
-  propertyL = propertyL `eitherJoin` propertyL
 
-instance HasProperty ObjectSpecifics Enclosing where
-  propertyL = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing)
-instance HasProperty () a
-
-instance HasProperty ObjectSpecifics Container where
-  propertyL = castOptic _ContainerSpecifics
-
-instance HasProperty ObjectSpecifics Enterable where
-  propertyL = _ContainerSpecifics % containerEnterable
-
-instance HasProperty ObjectSpecifics Openable where
-  propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
-
-getEnclosing
-  :: NoMissingObjects s m
-  => MonadWorldNoLog s m
-  => HasProperty s Enclosing
-  => ObjectLike s o
-  => o
-  -> m (Maybe Enclosing)
-getEnclosing e = if isThing e
-  then
-    defaultPropertyGetter e
-  else (do
-    o <- getRoom e
-    return $ Just $ o ^. objData % roomEnclosing
-  )
 
 setEnclosing
   :: MonadWorldNoLog s m
@@ -274,10 +258,6 @@ move eObj eLoc = withoutMissingObjects (do
 
 
 
-handleMissingObject :: (HasCallStack, Logger m) => TLB.Builder -> a ->  MissingObject s -> m a
-handleMissingObject msg def (MissingObject t o) = do
-  err (msg <> bformat (stext %! "; Object ID: " %! stext) t (show o))
-  return def
 
 noLongerContains
   :: NoMissingObjects s m

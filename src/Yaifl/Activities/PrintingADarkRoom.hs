@@ -11,3 +11,4 @@ import Yaifl.Messages
 printingNameOfADarkRoomImpl :: Activity o () ()
 printingNameOfADarkRoomImpl = makeActivity "Printing name of a dark room"
     $ makeRule' "" (say "Darkness" >> rulePass)
+    TODO: extract

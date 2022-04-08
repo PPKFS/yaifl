@@ -12,9 +12,9 @@ module Yaifl.Activities
 where
 
 import Solitude
-import Yaifl.Rulebooks
-import Yaifl.Objects.Object
+import Yaifl.Rulebooks.Rulebook
 import Yaifl.Common
+import Yaifl.Objects.Object
 
 {-}
 import Yaifl.Activities.PrintingADarkRoom
@@ -58,7 +58,7 @@ data ActivityCollection s = ActivityCollection
   }
 
 {-}
-
+TODO: extract
 defaultActivities ::
   HasProperty s Enclosing
   => HasProperty s Container

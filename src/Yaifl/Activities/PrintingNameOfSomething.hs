@@ -7,10 +7,8 @@ module Yaifl.Activities.PrintingNameOfSomething
 , Article(..)
 , Capitalisation(..)
 ) where
-
+TODO: extract
 import Yaifl.Activities.Common
-import Yaifl.Types
-import Yaifl.Prelude
 import Yaifl.Rulebooks
 import Yaifl.Messages
 import Yaifl.ObjectLookup

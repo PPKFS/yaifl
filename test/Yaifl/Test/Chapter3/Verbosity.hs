@@ -1,11 +1,11 @@
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Prelude
-import Yaifl.Activities
-import Yaifl.Test.Common
+--import Yaifl.Prelude
+--import Yaifl.Activities
+--import Yaifl.Test.Common
 import NeatInterpolation
-
+{-
 ex3World :: Game () (World ())
 ex3World = newWorld $ do
     setTitle "Verbosity"
@@ -35,3 +35,4 @@ ex3World = newWorld $ do
 
 ex3Test :: [Text]
 ex3Test = ["aaa"]
+-}

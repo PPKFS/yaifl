@@ -1,10 +1,8 @@
 module Yaifl.Activities.PrintingLocaleParagraphAbout where
 
-import Yaifl.Prelude
-import Yaifl.Types
 import Yaifl.Rulebooks
 import Yaifl.ObjectLookup (getThingMaybe)
-
+TODO: extract
 printingLocaleParagraphAboutImpl :: Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing
   (blankRulebook "Before printing a locale paragraph")
