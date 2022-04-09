@@ -21,9 +21,13 @@ module Yaifl.Objects.Dynamic
   , updateCachedObject
   , reifyObject
     -- * Lenses
+  , StoreLens'
   , tsCachedObject
   , tsCacheStamp
   , tsUpdateFunc
+  , _AbstractThing
+  , _AbstractRoom
+  , objectL
   ) where
 
 import Solitude

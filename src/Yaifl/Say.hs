@@ -24,6 +24,7 @@ module Yaifl.Say
 
   -- * Buffer modification
   , setStyle
+  , setSayStyle
   , say
   , sayLn
   , sayIf
@@ -112,6 +113,13 @@ sayIf ::
   -> m ()
 sayIf True = say
 sayIf False = const pass
+
+setSayStyle :: 
+  (HasBuffer w 'SayBuffer)
+  => MonadState w m
+  => Maybe PPTTY.AnsiStyle -- ^ The updated style.
+  -> m ()
+setSayStyle = setStyle (Proxy @'SayBuffer)
 
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.

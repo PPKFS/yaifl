@@ -1,15 +1,25 @@
 module Yaifl.Test.Common where
 
 import Solitude
-{-
+
 import Yaifl
 import qualified Data.EnumMap as DEM
 import qualified Data.Text as T
 import Test.Hspec
-import Yaifl.ObjectLookup (setObjectFrom)
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Language.Haskell.TH
 import Data.Char (isSpace)
+import Yaifl.Game
+import Yaifl.World
+import Yaifl.Say
+import Yaifl.Objects.Dynamic
+import Yaifl.Objects.Object
+import Yaifl.Objects.Missing
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Logger
+import Yaifl.Objects.Query
+import Yaifl.Common
+import Yaifl.Rulebooks.WhenPlayBegins
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -99,4 +109,3 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
 
 expectLooking :: Text -> Text -> Text
 expectLooking t d = expectLine t <> expectLine d
--}

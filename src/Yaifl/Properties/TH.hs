@@ -1,4 +1,14 @@
-module Yaifl.TH
+{-|
+Module      : Yaifl.Actions.Action
+Description : An action is a verb that is carried out by the player (or an NPC).
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
+
+module Yaifl.Properties.TH
 (
     makeSpecificsWithout
   , makePropertyFunction
@@ -16,7 +26,6 @@ data SpecificsFunctions =
     | ModifyX
     deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
-TODO: extract
 {-
 getX :: HasProperty s X
 => HasID o
@@ -34,11 +43,11 @@ makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
     return $ (case sf of
         GetX -> replaceTH 
-            "getXSUBHERE :: MonadReader (World s) m => NoMissingObjects s m => HasProperty s XSUBHERE => MonadState (World s) m => ObjectLike s o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+            "getXSUBHERE :: MonadReader (World wm) m => Logger m => NoMissingObjects m => WMHasProperty wm XSUBHERE => MonadState (World wm) m => ObjectLike wm o => o -> m (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
         SetX -> replaceTH 
-            "setXSUBHERE :: MonadReader (World s) m => HasProperty s XSUBHERE => MonadState (World s) m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
+            "setXSUBHERE :: MonadReader (World wm) m => Logger m => WMHasProperty wm XSUBHERE => MonadState (World wm) m => HasID o => o-> XSUBHERE-> m ()\nsetXSUBHERE = defaultPropertySetter"
         ModifyX -> replaceTH 
-            "modifyXSUBHERE :: MonadReader (World s) m => NoMissingObjects s m => HasProperty s XSUBHERE => MonadState (World s) m => ObjectLike s o => o-> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
+            "modifyXSUBHERE :: MonadReader (World wm) m => Logger m => NoMissingObjects m => WMHasProperty wm XSUBHERE => MonadState (World wm) m => ObjectLike wm o => o -> (XSUBHERE -> XSUBHERE) -> m ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
         ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]

@@ -15,6 +15,9 @@ module Yaifl.Rulebooks.Args where
 import Yaifl.Objects.Object
 import Solitude
 import Yaifl.Common
+import Yaifl.Objects.Missing
+import Yaifl.WorldInfo
+import Yaifl.Objects.Query ()
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
@@ -25,8 +28,8 @@ data Args wm v = Args
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
-deriving stock instance (Show (ObjSpecifics wm), Show v) => Show (Args wm v)
-deriving stock instance (Read (ObjSpecifics wm), Read v) => Read (Args wm v)
+deriving stock instance (Show (WMObjSpecifics wm), Show v) => Show (Args wm v)
+deriving stock instance (Read (WMObjSpecifics wm), Read v) => Read (Args wm v)
 
 -- | Before 'Args' are parsed, the variables are a list of objects.
 newtype UnverifiedArgs wm = UnverifiedArgs
@@ -36,6 +39,38 @@ newtype UnverifiedArgs wm = UnverifiedArgs
 
 
 makeLenses ''Args
+
+withPlayerSource :: 
+  forall wm m. 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => UnverifiedArgs wm
+  -> m (UnverifiedArgs wm)
+withPlayerSource u = do
+  p <- getPlayer
+  return $ u & coercedTo @(Args wm [AnyObject wm]) % argsSource ?~ review _Thing p
+
+-- | This should be moved somewhere else I guess
+getPlayer :: 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => m (Thing wm)
+getPlayer = do
+  plID <- use currentPlayer
+  getThing plID
+
+-- | No Arguments, player source.
+playerNoArgs ::
+  forall wm m. 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => m (Timestamp -> UnverifiedArgs wm)
+playerNoArgs = do
+  ua <- withPlayerSource blank
+  return (\ts -> ua & coercedTo @(Args wm [AnyObject wm]) % argsTimestamp .~ ts)
+
+blank :: UnverifiedArgs wm
+blank = error "not implemented"
 
 instance Functor (Args wm) where
   fmap f = argsVariables %~ f

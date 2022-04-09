@@ -2,9 +2,21 @@ module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
 import Solitude
-{-
-ex2World :: Game () (World ())
+import Yaifl.Game
+import Yaifl.World
+import Yaifl.Common
+import Yaifl.Objects.Create
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Test.Common
+import Yaifl.Say
+import Yaifl.Activities.PrintingNameOfSomething
+import Yaifl.Rulebooks.WhenPlayBegins
+import Yaifl.Objects.Object
+import qualified Data.Text as T
 
+isBlankDescription :: Text -> Bool
+isBlankDescription d = T.empty == d
+ex2World :: Game PlainWorldModel (World PlainWorldModel)
 ex2World = newWorld $ do
   setTitle "Bic"
   addRoom' "The Staff Break Room" "" pass
@@ -19,11 +31,10 @@ ex2World = newWorld $ do
           sayLn " has no description.")
         return Nothing)
       return Nothing
--}
+
 ex2Test :: [Text]
-ex2Test = []
-{-
+ex2Test = 
   [ expectLooking "The Staff Break Room" ""
   , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
   , expectLine "Bic pen has no description."
-  ]-}
+  ]

@@ -1,69 +1,39 @@
-module Yaifl.Activities
-    {-
+{-|
+Module      : Yaifl.ActivityCollection
+Description : A collection of the default activities.
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
 
-    printingNameOfADarkRoomName,
-    printingDescriptionOfADarkRoomName,
-    describingLocaleActivityName,
-    printNameEx,
-    printName,
-    capitalThe,
-    printingLocaleParagraphAboutActivityImpl,
-    printingLocaleParagraphAboutActivityName,-}
-where
+module Yaifl.ActivityCollection
+  ( ActivityCollection(..)
+  , defaultActivities
+
+  ) where
 
 import Solitude
-import Yaifl.Rulebooks.Rulebook
 import Yaifl.Common
 import Yaifl.Objects.Object
+import Yaifl.Activities.Activity
+import Yaifl.Properties.Property
+import Yaifl.Properties.Enclosing
+import Yaifl.Properties.Container
+import Yaifl.Properties.Openable
 
-{-}
 import Yaifl.Activities.PrintingADarkRoom
 import Yaifl.Activities.PrintingNameOfSomething
 import Yaifl.Activities.PrintingDescriptionOfADarkRoom
-import Yaifl.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Activities.ChoosingNotableLocaleObjects 
 import Yaifl.Activities.DescribingLocale
--}
+import Yaifl.Activities.PrintingLocaleParagraphAbout
 
-data LocaleVariables s = LocaleVariables
-  { _localePriorities :: LocalePriorities s
-  , _localeDomain :: !(AnyObject s)
-  , _localeParagraphCount :: Int
-  }
-
-
-type LocalePriorities s = Store (LocaleInfo s)
-
-data LocaleInfo s = LocaleInfo
-  { _priority :: Int
-  , _localeObject :: AnyObject s
-  , _isMentioned :: Bool
-  }
-
-data Activity o v r = Activity
-    { _activityName :: !Text
-    , _activityDefault :: Maybe r
-    , _activityBeforeRules :: !(Rulebook o v v ())
-    , _activityCarryOutRules :: !(Rulebook o v v r)
-    , _activityAfterRules :: !(Rulebook o v v ())
-    }
-
-data ActivityCollection s = ActivityCollection
-  { printingNameOfADarkRoom :: !(Activity s () ())
-  , printingNameOfSomething :: !(Activity s (AnyObject s) ())
-  , printingDescriptionOfADarkRoom :: !(Activity s () ())
-  , choosingNotableLocaleObjects :: !(Activity s (AnyObject s) (LocalePriorities s))
-  , printingLocaleParagraphAbout :: !(Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s))
-  , describingLocale :: !(Activity s (LocaleVariables s) ())
-  }
-
-{-}
-TODO: extract
 defaultActivities ::
-  HasProperty s Enclosing
-  => HasProperty s Container
-  => HasProperty s Openable
-  => ActivityCollection s
+  WMHasProperty wm Enclosing
+  => WMHasProperty wm Container
+  => WMHasProperty wm Openable
+  => ActivityCollection wm
 defaultActivities = ActivityCollection
   { printingNameOfADarkRoom = printingNameOfADarkRoomImpl
   , printingNameOfSomething = printingNameOfSomethingImpl
@@ -72,6 +42,10 @@ defaultActivities = ActivityCollection
   , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
   , describingLocale = describingLocaleImpl
   }
+
+{-}
+TODO: extract
+
 {-}
 listingContentsOfSomethingName :: Text
 listingContentsOfSomethingName = "listing contents of something activity"

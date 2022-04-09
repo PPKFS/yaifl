@@ -1,9 +1,23 @@
+{-|
+Module      : Yaifl.ActivityCollection
+Description : A collection of the default activities.
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
 module Yaifl.Activities.PrintingLocaleParagraphAbout where
 
-import Yaifl.Rulebooks
-import Yaifl.ObjectLookup (getThingMaybe)
-TODO: extract
-printingLocaleParagraphAboutImpl :: Activity s (LocaleVariables s, LocaleInfo s) (LocaleVariables s)
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Objects.Query (getThingMaybe)
+import Yaifl.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Objects.Object
+import Solitude
+import Yaifl.Activities.Activity
+import Yaifl.Objects.ObjectData
+
+printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing
   (blankRulebook "Before printing a locale paragraph")
   ((blankRulebook "Carry out printing a locale paragraph")
@@ -20,7 +34,7 @@ printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about s
     })
   (blankRulebook "After printing a locale paragraph")
 
-dontMentionUndescribed :: Rule s (LocaleVariables s, LocaleInfo s) (LocaleVariables s)
+dontMentionUndescribed :: Rule wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule"
         (\(v, LocaleInfo _ e _) -> do
           asThing <- getThingMaybe e
@@ -45,7 +59,6 @@ removeFromLocale ::
   -> LocaleVariables v
   -> LocaleVariables v
 removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
-
 {-
       [ Rule
         "don’t mention player’s supporter in room descriptions rule"
@@ -54,14 +67,13 @@ removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
             get1st >>= (\e -> whenM (playerID `isEnclosedBy` e) (setLocalePriority e 0))
             return (v, Nothing)
         ),
-      Rule
+        Rule
         "don’t mention scenery in room descriptions rule"
         ( do
             get1st >>= (\e -> whenM (e `isType` "scenery") (setLocalePriority e 0))
             return Nothing
         ),
-      ,
-      Rule
+        Rule
         "offer items to writing a paragraph about rule"
         ( do
             e <- get1st
@@ -133,7 +145,8 @@ removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
                 )
             return Nothing
         )
-    ])
+    ]
+
                 makeRule " describe what’s on scenery supporters in room descriptions rule" (do
                     (w, (e, _)) <- get
                     phy <- use $ component' physicalComponent e
@@ -152,4 +165,4 @@ removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
                             mentionedLens' e .= True
                             say ".\n\n"
                         pass
-                      -}
+-}

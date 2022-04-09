@@ -14,13 +14,14 @@ module Yaifl.Common
   , HasID(..)
   , Timestamp(..)
   , WorldModel(..)
+  , PlainWorldModel
   , defaultVoidID
   , emptyStore
   -- * Object querying
   , isThing
   , isRoom
     -- * Type family nonsense
-  , ObjSpecifics
+  , WMObjSpecifics
   , Values
   )
 where
@@ -110,7 +111,9 @@ instance Ixed (Store a)
 -- sigs everywhere for `World`.
 data WorldModel = WorldModel Type Type Type Type
 
-type family ObjSpecifics (r :: WorldModel) :: Type where
-  ObjSpecifics ('WorldModel objSpec dir o v) = objSpec
+type PlainWorldModel = 'WorldModel () () () ()
+
+type family WMObjSpecifics (r :: WorldModel) :: Type where
+  WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
 type family Values (r :: WorldModel) :: Type where
   Values ('WorldModel objSpec dir o v) = o

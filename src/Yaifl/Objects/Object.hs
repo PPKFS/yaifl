@@ -10,6 +10,7 @@ Stability   : No
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Yaifl.Objects.Object 
   ( -- * Types
@@ -22,6 +23,7 @@ module Yaifl.Objects.Object
 
   -- * Object Helpers
   , objectEquals
+  , isType
 
   -- * Lenses
   , objName
@@ -60,12 +62,12 @@ data Object wm objData = Object
   , _objID :: !Entity
   , _objType :: !ObjType
   , _objCreationTime :: !Timestamp
-  , _objSpecifics :: !(Either ObjectSpecifics (ObjSpecifics wm))
+  , _objSpecifics :: !(Either ObjectSpecifics (WMObjSpecifics wm))
   , _objData :: !objData
   } deriving stock (Generic)
 
-deriving stock instance (Show (ObjSpecifics wm), Show d) => Show (Object wm d)
-deriving stock instance (Read (ObjSpecifics wm), Read d) => Read (Object wm d)
+deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
+deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
 
 instance HasID (Object wm d) where
   getID = _objID
@@ -113,7 +115,17 @@ instance Traversable (Object wm) where
     -> f (Object wm b)
   traverse f o = (\v -> o {_objData = v}) <$> f (_objData o)
 
-
+{-
+instance Prettify Text where
+  prettify = id
+instance Prettify (Object s d) where
+  prettify Object{..} = _objName <> " (ID: " <>  show (unID _objID) <> ")\n" <> toStrict (pString (toString s)) where
+    s = "{ Description = " <> _objDescription <>
+        ", Type = " <> prettify _objType <>
+        -- F.% ", Creation Time = " F.% F.stext
+        ", Specifics = " <> prettify _objSpecifics <>
+        ", Data = " <> prettify _objData
+-}
 -- | A prism for rooms.
 _Room :: Prism' (AnyObject wm) (Room wm)
 _Room = prism' (fmap Right) (traverse rightToMaybe)
@@ -131,15 +143,6 @@ class HasID o => ObjectLike wm o where
   getThing :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Thing wm)
   default getThing :: (NoMissingObjects m) => o -> m (Thing wm)
   getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
-{-
-instance ObjectLike wm s Entity where
-  getThing = getObjectFrom things
-  getRoom = getObjectFrom rooms
--}
-rooms :: a
-rooms = error ""
-getObjectFrom :: a
-getObjectFrom = error "not implemented"
 
 instance ObjectLike wm (Thing wm) where
   getThing = pure
@@ -158,23 +161,13 @@ instance ObjectLike wm (AnyObject wm) where
 containedBy :: forall wm. Lens' (Thing wm) Entity
 containedBy = coercedTo @(Object wm ThingData) % objData % thingContainedBy
 
-{-
-
--}
-
-{-
-getEnclosing
-  :: NoMissingObjects s m
-  => MonadWorld s m
-  => HasProperty s Enclosing
-  => ObjectLike s o
+-- | Calculate whether one object type is a subclass of another
+isType
+  :: MonadReader (World wm) m
+  -- => ObjectLike wm o
   => o
-  -> m (Maybe Enclosing)
-getEnclosing e = if isThing e
-  then
-    defaultPropertyGetter e
-  else (do
-    o <- getRoom e
-    return $ Just $ o ^. objData % roomEnclosing
-  )
--}
+  -> ObjType
+  -> m Bool
+isType _ _ = return False
+
+

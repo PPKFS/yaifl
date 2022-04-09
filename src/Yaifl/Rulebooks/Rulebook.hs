@@ -30,6 +30,8 @@ module Yaifl.Rulebooks.Rulebook
   , failRuleWithError
   , addRuleFirst
   , addRuleLast
+  , rulePass
+  , blankRulebook
 
     -- * Evaluation
   , runRulebook
@@ -48,7 +50,7 @@ module Yaifl.Rulebooks.Rulebook
   ) where
 
 import Solitude
-import {-# SOURCE #-} Yaifl.World
+import Yaifl.WorldInfo
 import qualified Data.Text as T
 import Yaifl.Logger
 import Yaifl.Objects.Missing
@@ -97,6 +99,11 @@ data Rulebook wm ia v r = Rulebook
   , _rbParseArguments :: ParseArguments wm ia v
   , _rbRules :: [Rule wm v r]
   }
+
+blankRulebook :: 
+  Text 
+  -> Rulebook wm v v r 
+blankRulebook n = Rulebook n Nothing (ParseArguments (return . Just)) []
 
 -- | A `StandardRulebook` is one which expects to verify its own arguments.
 type StandardRulebook wm v r = Rulebook wm (UnverifiedArgs wm) v r
@@ -179,15 +186,17 @@ addRuleFirst ::
   -> Rulebook wm ia v r
 addRuleFirst r = rbRules %~ (r :)
 
+-- | Remove any unwanted return values from a `Rule`.
+rulePass :: 
+  Monad m
+  => m (Maybe a)
+rulePass = return Nothing
+
 --TODO: add in specific places
 --TODO: add in replacement
 --TODO: reorder
 {-
 
-rulePass
-  :: Monad m
-  => m (Maybe a)
-rulePass = return Nothing
 
 initRoomDescription
   :: NoMissingObjects wm m
@@ -226,8 +235,6 @@ positionPlayer = do
     Nothing -> failRuleWithError
       "No rooms have been made, so cannot place the player."
     Just fr' -> do      m <- move pl fr'
-> Rule wm () Bool
-  -> m ()
-addWhenPlayBegins r = whenPlayBegins %= addRule r
+
 
 -}

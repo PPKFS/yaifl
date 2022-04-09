@@ -37,7 +37,8 @@ common common-options
                      , katip
                      , aeson
                      , formatting
-                     , profunctors
+                     , display
+                     , hspec
 
 
   ghc-options:         -Wall
@@ -59,9 +60,8 @@ common common-options
                        ---ddump-splices
                        ---ddump-to-file
 
-  default-language:    Haskell2010
+  default-language:    GHC2021
   default-extensions:
-    GHC2021
     DataKinds
     NoImplicitPrelude
     OverloadedStrings
@@ -79,41 +79,50 @@ library
     Yaifl
     Yaifl.World
     Yaifl.Say
-                      
+    Yaifl.Rulebooks.Rulebook
+    Yaifl.Rulebooks.WhenPlayBegins
+    Yaifl.Objects.Create
+    Yaifl.Game
+    Yaifl.Logger
+    Yaifl.Objects.Missing
+    Yaifl.Objects.Object
+    Yaifl.Objects.Dynamic
+    Yaifl.Common          
+    Yaifl.Objects.Query  
+    Yaifl.Objects.Move
+    Yaifl.Activities.PrintingNameOfSomething
 
-    Yaifl.Common
-    Yaifl.ObjectSpecifics
-                      --Yaifl.Messages
-                      --Yaifl.Prelude
-    --Yaifl.TH
-                      --Yaifl.Actions
-                      --Yaifl.Activities
-                      --Yaifl.ObjectLookup
   other-modules:
     Yaifl.Actions.Action
-
-    Yaifl.Objects.Dynamic
-    Yaifl.Objects.Object
+    Yaifl.WorldInfo
+    
+    Yaifl.Activities.Activity
+    
+    Yaifl.ObjectSpecifics
+    
+    
+    
     Yaifl.Objects.ObjectData
-    Yaifl.Objects.Missing
+    
 
     Yaifl.Properties.Container
     Yaifl.Properties.Enclosing
     Yaifl.Properties.Openable
-
-    Yaifl.Rulebooks.Rulebook
+    Yaifl.Properties.Property
+    Yaifl.Properties.Query
+    Yaifl.Properties.TH
+    
     Yaifl.Rulebooks.ActionProcessing
+    Yaifl.Rulebooks.Args
+    
+    Yaifl.ActivityCollection
 
-    Yaifl.Logger
-                      -- Yaifl.ObjectLogging
-                      --Yaifl.Activities.PrintingADarkRoom
-                      --Yaifl.Activities.PrintingNameOfSomething
-                      --Yaifl.Activities.PrintingDescriptionOfADarkRoom
-                      --Yaifl.Activities.ChoosingNotableLocaleObjects
-                      --Yaifl.Activities.DescribingLocale
-                      --Yaifl.Activities.PrintingLocaleParagraphAbout
-                      --Yaifl.Activities.Common
-                      --Yaifl.Actions.Common
+    Yaifl.Activities.PrintingADarkRoom
+    
+    Yaifl.Activities.PrintingDescriptionOfADarkRoom
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.DescribingLocale
+    Yaifl.Activities.PrintingLocaleParagraphAbout
                       --Yaifl.Actions.Looking
 test-suite yaifl-test
   import:              common-options
@@ -125,3 +134,6 @@ test-suite yaifl-test
   ghc-options:         -threaded
                        -rtsopts
                        -with-rtsopts=-N
+  default-extensions:  
+    TemplateHaskell
+    QuasiQuotes

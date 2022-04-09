@@ -1,19 +1,32 @@
+{-|
+Module      : Yaifl.Activities.ChoosingNotableLocaleObjects
+Description : The activity for choosing notable objects in the locale.
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
 module Yaifl.Activities.ChoosingNotableLocaleObjects
-( choosingNotableLocaleObjectsImpl
-) where
+  ( choosingNotableLocaleObjectsImpl
+  ) where
 
 import Yaifl.Common
-import Yaifl.Activities.Common
-import Yaifl.Prelude
-import Yaifl.Rulebooks
-import Yaifl.Properties
-import Yaifl.ObjectLookup
+import Yaifl.Activities.Activity
+import Solitude
+import Yaifl.Properties.Property
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Yaifl.ObjectLogging (objectName)
-TODO: extract
-choosingNotableLocaleObjectsImpl
-  :: HasProperty s Enclosing
+import Yaifl.Properties.Enclosing
+import Yaifl.Objects.Object
+import Yaifl.Properties.Query
+import Yaifl.Logger
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Objects.Query
+
+
+choosingNotableLocaleObjectsImpl :: 
+  WMHasProperty s Enclosing
   => Activity s (AnyObject s) (LocalePriorities s)
 choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" $ makeRule "" 
   (\v -> do

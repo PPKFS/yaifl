@@ -35,6 +35,7 @@ module Yaifl.Objects.ObjectData
   , roomMapConnections
   , roomContainingRegion
   , roomEnclosing
+  , _Wearable
   ) where
 
 import Solitude 
@@ -101,3 +102,5 @@ blankRoomData = RoomData Unvisited Lighted (MapConnections emptyStore) (Containi
 
 makeLenses ''ThingData
 makeLenses ''RoomData
+
+makePrisms ''ThingWearability

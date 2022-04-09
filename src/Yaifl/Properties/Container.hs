@@ -22,9 +22,9 @@ module Yaifl.Properties.Container
   , containerEnterable
   ) where
 
-import Solitude ( Eq, Ord, Read, Show, Generic, makeLenses )
+import Solitude
 import Yaifl.Properties.Enclosing ( Enclosing )
-import Yaifl.Properties.Openable ( Openable )
+import Yaifl.Properties.Openable ( Openable(..) )
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent 
@@ -43,3 +43,17 @@ data Container = Container
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeLenses ''Container
+
+isOpaqueClosedContainer :: 
+  Container
+  -> Bool
+isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == Closed)
+
+{- TODO: extract to `Supporter`
+isSupporter ::
+  MonadWorldRO s m
+  => ObjectLike s o
+  => o
+  -> m Bool
+isSupporter = (`isType` ObjType "supporter")
+-}

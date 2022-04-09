@@ -27,6 +27,12 @@ module Yaifl.World
   , actions
   , things
   , rooms
+  , previousRoom
+  , firstRoom
+  , whenPlayBegins
+  , addBaseActions
+  , activities
+  , currentPlayer
   ) where
 
 import Solitude
@@ -34,7 +40,7 @@ import Yaifl.Common
 import Yaifl.Say
 import Yaifl.Rulebooks.Rulebook
 import Yaifl.Logger
-import Yaifl.Activities
+import Yaifl.Activities.Activity
 import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
 
@@ -112,13 +118,12 @@ tickGlobalTime True = do
   pass
   -- debug (bformat ("Dong. The time is now " %! int %! ".") r)
 
+instance HasBuffer (World wm) 'SayBuffer where
+  bufferL _ = messageBuffers % _1
 
-{-
-addBaseActions
-  :: HasLookingProperties s
-  => World s
+addBaseActions :: -- HasLookingProperties s
+  World s
   -> World s
 addBaseActions = foldr (.) id [
-    addAction lookingActionImpl
+    -- addAction lookingActionImpl
   ]
--}

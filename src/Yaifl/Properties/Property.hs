@@ -1,4 +1,3 @@
-{-# LANGUAGE DefaultSignatures #-}
 {-|
 Module      : Yaifl.Properties.Property
 Description : The basics of the property system.
@@ -8,15 +7,18 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
+{-# LANGUAGE DefaultSignatures #-}
+
 module Yaifl.Properties.Property 
   ( HasProperty(..)
   , WMHasProperty
   ) where
+    
 import Solitude
 import Yaifl.Common
 
 -- | A helper to define that a world model `wm` has a Property.
-type WMHasProperty wm v = HasProperty (ObjSpecifics wm) v
+type WMHasProperty wm v = HasProperty (WMObjSpecifics wm) v
 
 class HasProperty o v where
   default propertyL :: AffineTraversal' o v
