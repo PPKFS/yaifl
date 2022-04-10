@@ -1,0 +1,7 @@
+source-repository-package
+  type: git
+  location: https://github.com/kowainik/relude.git
+
+packages:
+  ./yaifl.cabal
+  solitude/solitude.cabal

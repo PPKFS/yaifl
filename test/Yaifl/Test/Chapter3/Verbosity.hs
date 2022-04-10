@@ -1,12 +1,19 @@
+
+
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Prelude
-import Yaifl.Activities
+--import Yaifl.Prelude
+--import Yaifl.Activities
 import Yaifl.Test.Common
 import NeatInterpolation
+import Solitude
+import Yaifl.Game
+import Yaifl.World
+import Yaifl.Objects.Create
+import Yaifl.Common
 
-ex3World :: Game () (World ())
+ex3World :: Game ('WorldModel () () () ()) (World ('WorldModel () () () ()))
 ex3World = newWorld $ do
     setTitle "Verbosity"
     -- inform7 uses superbrief, brief, and verbose as the command words

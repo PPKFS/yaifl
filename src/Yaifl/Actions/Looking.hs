@@ -1,41 +1,71 @@
+
+{-|
+Module      : Yaifl.Actions.Looking
+Description : The looking action.
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Yaifl.Actions.Looking
   ( lookingActionImpl
   , HasLookingProperties
   ) where
 
-import Yaifl.Prelude
+import Solitude
 import Yaifl.Common
-import Yaifl.ObjectLookup
-import Yaifl.Properties
-import Yaifl.ObjectLogging
+import Yaifl.Objects.Query
+import Yaifl.Properties.Property
 import qualified Data.EnumSet as DES
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Actions.Common
-import Yaifl.Rulebooks
-import Yaifl.Messages
+import Yaifl.Actions.Action
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Say
 import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Activities.Common
 import Yaifl.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
+import Yaifl.Properties.Enclosing
+import Yaifl.Properties.Container
+import Yaifl.Objects.Object
+import Display
+import Yaifl.WorldInfo
+import Yaifl.Objects.Missing
+import Yaifl.Properties.Query
+import Yaifl.Logger
+import Yaifl.Properties.Openable
+import Yaifl.Objects.ObjectData
+import Yaifl.Activities.Activity
+import Yaifl.Properties.Supporter
+import qualified Data.Text as T
 
-type HasLookingProperties s = (HasProperty s Enclosing, HasProperty s Enterable, HasProperty s Container)
+-- | An easier way to describe the 3 requirements to look.
+type HasLookingProperties wm = 
+  (WMHasProperty wm Enclosing, WMHasProperty wm Enterable, WMHasProperty wm Container)
 
-data LookingActionVariables s = LookingActionVariables
-  { _lookingFrom :: !(AnyObject s)
+data LookingActionVariables wm = LookingActionVariables
+  { _lookingFrom :: !(AnyObject wm)
   , _visibilityCount :: !Int
-  , _visibilityLevels :: [AnyObject s]
+  , _visibilityLevels :: [AnyObject wm]
   , _roomDescribingAction :: !Text
   }
-  deriving (Show)
+  deriving stock (Eq, Generic)
 
-instance Prettify (LookingActionVariables s) where
-  prettify (LookingActionVariables fr _ lvls _) = "Looking from "
-    <> shortPrint fr <> " with levels " <> mconcat (map shortPrint lvls)
+deriving stock instance (Show (WMObjSpecifics wm)) => Show (LookingActionVariables wm)
+deriving stock instance (Read (WMObjSpecifics wm)) => Read (LookingActionVariables wm)
+
+instance Display (LookingActionVariables s) where
+  display (LookingActionVariables fr _ lvls _) = "Looking from "
+    <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
 
 lookingActionName :: Text 
 lookingActionName = "looking"
+
 lookingActionImpl ::
-  HasLookingProperties s
-  => Action s
+  HasLookingProperties wm
+  => Action wm
 lookingActionImpl = Action
   lookingActionName
   ["look", "looking"]
@@ -51,27 +81,27 @@ lookingActionImpl = Action
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
 lookingActionSet ::
-  forall s m. HasLookingProperties s
-  => MonadWorld s m
-  => UnverifiedArgs s
-  -> m (Maybe (LookingActionVariables s))
+  HasLookingProperties wm
+  => MonadWorld wm m
+  => UnverifiedArgs wm
+  -> m (Maybe (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (runMaybeT $ do
   as <- hoistMaybe $ _argsSource ^? _Just
-  (t :: Thing s) <- hoistMaybe $ fromAny as
+  (t :: Thing s) <- hoistMaybe $ preview _Thing as
   reifyLoc <- getObject (t ^. containedBy)
   vl <- getVisibilityLevels reifyLoc
   lightLevels <- recalculateLightOfParent t
   return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking") (handleMissingObject "" Nothing)
 
-getVisibilityLevels
-  :: MonadWorld s m
-  => NoMissingObjects s m
-  => HasLookingProperties s
-  => AnyObject s -- ^ 
-  -> m [AnyObject s]
+getVisibilityLevels :: 
+  MonadWorld wm m
+  => NoMissingObjects m
+  => HasLookingProperties wm
+  => AnyObject wm
+  -> m [AnyObject wm]
 getVisibilityLevels e = do
   vh <- findVisibilityHolder e
-  if vh `eqObject` e
+  if vh `objectEquals` e
       then return [e]
       else (vh :) <$> getVisibilityLevels vh
 
@@ -79,9 +109,9 @@ getVisibilityLevels e = do
 findVisibilityHolder ::
   MonadWorld s m
   => HasLookingProperties s
-  => NoMissingObjects s m
+  => NoMissingObjects m
+  => CanBeAny s o
   => ObjectLike s o
-  => CanBeAny o (AnyObject s)
   => o
   -> m (AnyObject s)
 findVisibilityHolder e' = do
@@ -106,11 +136,11 @@ findVisibilityHolder e' = do
 -- has light is if it's lit, or see through and it contains light
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
-recalculateLightOfParent
-  :: NoMissingObjects s m
-  => MonadWorld s m
-  => HasLookingProperties s
-  => ObjectLike s o
+recalculateLightOfParent :: 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => HasLookingProperties wm
+  => ObjectLike wm o
   => o
   -> m Int
 recalculateLightOfParent e = do
@@ -132,11 +162,11 @@ recalculateLightOfParent e = do
 -- - it contains a thing that has light
 -- - it is see-through and its parent offers light
 -- this goes DOWN the object tree; the light goes to its contents
-offersLight
-  :: NoMissingObjects s m
-  => MonadWorld s m
-  => HasLookingProperties s
-  => ObjectLike s o
+offersLight :: 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => HasLookingProperties wm
+  => ObjectLike wm o
   => o
   -> m Bool
 offersLight e = do
@@ -149,11 +179,11 @@ offersLight e = do
     ||^ containsLitObj e -- - it contains a thing that has light
 
 -- | an object is see through if...
-isSeeThrough
-  :: NoMissingObjects s m
-  => MonadWorld s m
-  => HasLookingProperties s
-  => Thing s
+isSeeThrough :: 
+  NoMissingObjects m
+  => MonadWorld wm m
+  => HasLookingProperties wm
+  => Thing wm
   -> m Bool
 isSeeThrough e = do
   c <- getContainer e
@@ -168,8 +198,8 @@ isSeeThrough e = do
       || isEnterableNotContainer -- it's enterable but not a container
       || isOpenContainer -- it's an open container
 
-containsLitObj
-  :: NoMissingObjects s m
+containsLitObj :: 
+  NoMissingObjects m
   => HasLookingProperties s
   => ObjectLike s o
   => MonadWorld s m
@@ -188,12 +218,12 @@ containsLitObj e = do
   If you want to include transitive light, you want `hasLight`.
 -}
 objectItselfHasLight
-  :: NoMissingObjects s m
+  :: NoMissingObjects m
   => ObjectLike s o
   => MonadWorld s m
   => o -- ^ the object
   -> m Bool
-objectItselfHasLight e = asThingOrRoom' e
+objectItselfHasLight e = asThingOrRoom e
   (\x -> x ^. objData % thingLit == Lit)
   (\x -> x ^. objData % roomDarkness == Lighted)
 
@@ -205,7 +235,7 @@ objectItselfHasLight e = asThingOrRoom' e
   this goes UP the object tree; it provides light TO its surroundings.  
 -}
 hasLight
-  :: NoMissingObjects s m
+  :: NoMissingObjects m
   => HasLookingProperties s
   => MonadWorld s m
   => ObjectLike s o
@@ -217,17 +247,17 @@ hasLight e = do
     ||^ (maybe (return False) isSeeThrough ts
       &&^ containsLitObj e)
 
-carryOutLookingRules :: ActionRulebook s (LookingActionVariables s)
+carryOutLookingRules :: ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   makeRule "room description heading rule"
     (\rb -> do
       setSayStyle (Just PPTTY.bold)
       let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
-      debug $ TLB.fromText $ prettify (_argsVariables rb)
+      debug $ TLB.fromString $ displayString $ _argsVariables rb
       debug (bformat
         ("Printing room description heading with visibility ceiling " %! stext %! " and visibility count " %! int)
-        (prettify (shortPrint <$> visCeil))
+        ( "") --todo: replace the vis ceiling log here
         cnt)
       if
         | cnt == 0 -> do
@@ -258,7 +288,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= lookingActionName)) $ do
             let desc = _objDescription loc
-            unless (isBlankDescription desc)
+            unless (desc == T.empty)
               (sayLn (_objDescription loc))
         | otherwise -> pass
       return Nothing),
@@ -266,12 +296,12 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
     (\rb -> do
       let (LookingActionVariables _ _ lvls _) = _argsVariables rb
 
-      mapM_ (\o -> doActivity describingLocale (LocaleVariables blank o 0)) lvls
+      mapM_ (\o -> doActivity describingLocale (LocaleVariables emptyStore o 0)) lvls
       return Nothing)
   ]
 
 foreachVisibilityHolder :: 
-  NoMissingObjects s m
+  NoMissingObjects m
   => MonadWorld s m
   => AnyObject s
   -> m ()

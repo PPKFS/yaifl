@@ -1,23 +1,43 @@
+{-|
+Module      : Yaifl.Actions.Action
+Description : An action is a verb that is carried out by the player (or an NPC).
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
+
 module Yaifl.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
-import Yaifl.Types
-import Yaifl.Activities.Common
-import Yaifl.Prelude
+
 import qualified Data.EnumMap.Strict as DEM
-import Yaifl.ObjectLookup
 import Yaifl.Activities.PrintingNameOfSomething
-import Yaifl.Messages
 import Yaifl.Common
-import Yaifl.Properties
 import Data.List (groupBy)
 import qualified Data.EnumSet as DES
-import Yaifl.ObjectLogging
+import Yaifl.Properties.Property
+import Yaifl.Activities.Activity
+import Yaifl.Properties.Enclosing
+import Yaifl.Properties.Container
+import Yaifl.Properties.Openable
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Objects.Missing
+import Yaifl.WorldInfo
+import Yaifl.Objects.Object
+import Solitude
+import Yaifl.Say
+import Yaifl.Properties.Query
+import Yaifl.Logger
+import Yaifl.Objects.Move
+import Yaifl.Objects.ObjectData
+import Yaifl.Objects.Query
 
 describingLocaleImpl ::
-  HasProperty s Enclosing
-  => HasProperty s Container
-  => HasProperty s Openable
+  WMHasProperty s Enclosing
+  => WMHasProperty s Container
+  => WMHasProperty s Openable
   => Activity s (LocaleVariables s) ()
 describingLocaleImpl = Activity "Describing the locale of something" Nothing
   (blankRulebook "Before describing locale")
@@ -56,7 +76,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     return (newP, Nothing))
 
 sayDomain ::
-  NoMissingObjects s m
+  NoMissingObjects m
   => MonadWorld s m
   => ObjectLike s o
   => Text
@@ -68,9 +88,9 @@ sayDomain x e = do
   say " you "
 
 alsoSee ::
-  HasProperty s Enclosing
-  => HasProperty s Container
-  => HasProperty s Openable
+  WMHasProperty s Enclosing
+  => WMHasProperty s Container
+  => WMHasProperty s Openable
   => Rule s (LocaleVariables s) r
 alsoSee = Rule "You can also see" (\v ->
   do
@@ -80,15 +100,14 @@ alsoSee = Rule "You can also see" (\v ->
     -- I think now we're including the mentioned flag it's worth putting in here too
     let lp = DEM.filter (\(LocaleInfo x _ m) -> x > 0 && not m) (unStore $ v ^. localePriorities)
 
-
     unless (null lp) $ do
       let (LocaleVariables prior dom p) = v
-      plID <- gets _currentPlayer
+      plID <- use currentPlayer
       isASupporter <- dom `isType` ObjType "supporter"
       isAnAnimal <- dom `isType` ObjType "animal"
       playerLocE <- getLocation plID
       plRoom <- getRoomMaybe playerLocE
-      let isInLoc = maybe False (dom `eqObject`) plRoom
+      let isInLoc = maybe False (dom `objectEquals`) plRoom
       if
         | isRoom dom ->
           if isInLoc then say "You " else sayDomain "In " dom
@@ -174,10 +193,10 @@ data GroupingProperties s = GroupingProperties
   }
 
 getGroupingProperties ::
-  NoMissingObjects s m
-  => HasProperty s Enclosing
-  => HasProperty s Container
-  => HasProperty s Openable
+  NoMissingObjects m
+  => WMHasProperty s Enclosing
+  => WMHasProperty s Container
+  => WMHasProperty s Openable
   => MonadWorld s m
   => AnyObject s
   -> m (GroupingProperties s)
@@ -191,8 +210,8 @@ getGroupingProperties o = do
   return $ GroupingProperties o n hc wr gwb ((Lit==) <$?> gtl) op ic
 
 hasChildren
-  :: NoMissingObjects s m
-  => HasProperty s Enclosing
+  :: NoMissingObjects m
+  => WMHasProperty s Enclosing
   => MonadWorld s m
   => ObjectLike s o
   => o
@@ -200,8 +219,8 @@ hasChildren
 hasChildren e = maybe False (\e' -> DES.size (_enclosingContains e') == 0) <$> getEnclosing e
 
 willRecurse ::
-  NoMissingObjects s m
-  => HasProperty s Container
+  NoMissingObjects m
+  => WMHasProperty s Container
   => MonadWorld s m
   => ObjectLike s o
   => o
@@ -218,8 +237,8 @@ paragraphBreak = say ".\n\n"
 
 --p2275 of the complete program, in B/lwt
 getContainerProps ::
-  NoMissingObjects s m
-  => HasProperty s Openable
+  NoMissingObjects m
+  => WMHasProperty s Openable
   => MonadWorld s m
   => ObjectLike s o1
   => o1

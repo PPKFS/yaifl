@@ -1,3 +1,12 @@
+{-|
+Module      : Yaifl.Actions.Action
+Description : An action is a verb that is carried out by the player (or an NPC).
+Copyright   : (c) Avery, 2022
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+Stability   : No
+-}
+
 module Yaifl.Activities.PrintingNameOfSomething
 ( printNameEx
 , printName
@@ -8,12 +17,15 @@ module Yaifl.Activities.PrintingNameOfSomething
 , Capitalisation(..)
 ) where
 
-import Yaifl.Activities.Common
-import Yaifl.Types
-import Yaifl.Prelude
-import Yaifl.Rulebooks
-import Yaifl.Messages
-import Yaifl.ObjectLookup
+import Yaifl.Activities.Activity
+import Yaifl.Rulebooks.Rulebook
+import Yaifl.Say
+import Yaifl.Objects.Missing
+import Yaifl.Objects.Object
+import Yaifl.WorldInfo
+import Yaifl.Objects.Query
+import Solitude
+
 
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
@@ -29,7 +41,7 @@ capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
 printName
-  :: NoMissingObjects s m
+  :: NoMissingObjects m
   => MonadWorld s m
   => ObjectLike s o
   => o
@@ -37,7 +49,7 @@ printName
 printName o = printNameEx o noSayOptions
 
 printNameEx
-  :: NoMissingObjects s m
+  :: NoMissingObjects m
   => MonadWorld s m
   => ObjectLike s o
   => o

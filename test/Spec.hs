@@ -1,5 +1,5 @@
 module Main ( main ) where
-
+{-
 import Yaifl
 import Test.Hspec
 import qualified Data.Text as T
@@ -7,6 +7,9 @@ import Yaifl.Prelude
 import Yaifl.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.ObjectLookup
+-}
+import Solitude
+import Test.Hspec
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 
 main :: IO ()

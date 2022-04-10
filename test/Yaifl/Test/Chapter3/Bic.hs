@@ -1,11 +1,22 @@
-module Yaifl.Test.Chapter3.Bic ( ex2World, ex2Test ) where
+module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-import Yaifl.Prelude
-import Yaifl.Activities
+import Solitude
+import Yaifl.Game
+import Yaifl.World
+import Yaifl.Common
+import Yaifl.Objects.Create
+import Yaifl.Rulebooks.Rulebook
 import Yaifl.Test.Common
+import Yaifl.Say
+import Yaifl.Activities.PrintingNameOfSomething
+import Yaifl.Rulebooks.WhenPlayBegins
+import Yaifl.Objects.Object
+import qualified Data.Text as T
 
-ex2World :: Game () (World ())
+isBlankDescription :: Text -> Bool
+isBlankDescription d = T.empty == d
+ex2World :: Game PlainWorldModel (World PlainWorldModel)
 ex2World = newWorld $ do
   setTitle "Bic"
   addRoom' "The Staff Break Room" "" pass
