@@ -35,9 +35,8 @@ ex3World = newWorld $ do
       The Men's Restroom is west of the Research Wing. "Well, yes, you really shouldn't be in here. 
       But the nearest women's room is on the other side of the building, and at this hour you have 
       the labs mostly to yourself. All the same, you try not to read any of the things scrawled over
-      the urinals which might have been intended in confidence.|] pass -- (isWestOf w)
+      the urinals which might have been intended in confidence.|] (isWestOf w)
     pass
-
     --testMe ["west", "east", "verbose", "west"]
 
 ex3Test :: [Text]

@@ -54,8 +54,10 @@ makeDirection ::
   -> m Entity
 makeDirection n o = do
   e <- addThing n Text ObjType (Maybe (Either ObjectSpecifics s)) (Maybe ThingData) (Maybe (ObjectUpdate s ThingData)) n "" "direction"
+  /
   whenJust o (setOpposite e)
   return e
+
 TODO: extract
 setOpposite ::
   Text 
