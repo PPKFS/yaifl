@@ -18,7 +18,6 @@ import Yaifl.Common
 import Data.List (groupBy)
 import qualified Data.EnumSet as DES
 import Yaifl.Properties.Property
-import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.Activity
 import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Container

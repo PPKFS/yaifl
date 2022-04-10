@@ -66,11 +66,11 @@ playerNoArgs ::
   => MonadWorld wm m
   => m (Timestamp -> UnverifiedArgs wm)
 playerNoArgs = do
-  ua <- withPlayerSource blank
+  ua <- withPlayerSource blankArgs
   return (\ts -> ua & coercedTo @(Args wm [AnyObject wm]) % argsTimestamp .~ ts)
 
-blank :: UnverifiedArgs wm
-blank = error "not implemented"
+blankArgs :: UnverifiedArgs wm
+blankArgs = UnverifiedArgs $ Args Nothing [] 0
 
 instance Functor (Args wm) where
   fmap f = argsVariables %~ f

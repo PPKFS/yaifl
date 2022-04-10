@@ -10,7 +10,7 @@ module Yaifl.World where
   import Yaifl.Say
   import {-# SOURCE #-} Yaifl.Rulebooks.Rulebook
   import {-# SOURCE #-} Yaifl.Activities.Activity
-  
+
   type role World nominal
   data World (wm :: WorldModel)
   -- data WorldModel (s :: Type) (d :: Type) (v :: Type) (o :: Type) 
@@ -23,6 +23,8 @@ module Yaifl.World where
   firstRoom :: Lens' (World wm) (Maybe Entity)
   currentPlayer :: Lens' (World wm) Entity
   actionProcessing :: Lens' (World wm) (ActionProcessing wm)
+  roomDescriptions :: Lens' (World wm) RoomDescriptions
+  darknessWitnessed :: Lens' (World wm) Bool
 
   getGlobalTime :: MonadReader (World wm) m => m Timestamp
   tickGlobalTime :: MonadWorld wm m => Bool -> m ()

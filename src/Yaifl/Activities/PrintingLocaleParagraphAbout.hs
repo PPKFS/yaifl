@@ -11,7 +11,6 @@ module Yaifl.Activities.PrintingLocaleParagraphAbout where
 
 import Yaifl.Rulebooks.Rulebook
 import Yaifl.Objects.Query (getThingMaybe)
-import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Objects.Object
 import Solitude
 import Yaifl.Activities.Activity

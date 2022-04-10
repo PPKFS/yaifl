@@ -22,6 +22,7 @@ module Yaifl.Objects.ObjectData
   -- * Rooms
   , MapConnections(..)
   , ContainingRegion(..)
+  , Darkness(..)
   , RoomData(..)
   , blankRoomData
   

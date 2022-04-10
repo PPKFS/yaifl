@@ -14,6 +14,8 @@ module Yaifl.Actions.Action
   , ActionProcessing(..)
   , getAction
   , tryAction
+  , addAction
+  , makeActionRulebook
   ) where
 
 import Solitude
@@ -24,9 +26,11 @@ import Yaifl.Logger
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
-type ActionParseArguments wm v = forall s. ParseArguments wm (UnverifiedArgs s) v
+type ActionParseArguments wm v = ParseArguments wm (UnverifiedArgs wm) v
 
-data ActionProcessing wm = ActionProcessing (forall m s. (MonadWorld wm m) => Action wm -> UnverifiedArgs s -> m (Maybe Bool))
+-- | This can't be newtype'd because of hs-boot shenanigans :(
+{- HLINT ignore "Use newtype instead of data" -}
+data ActionProcessing wm = ActionProcessing (forall m. (MonadWorld wm m) => Action wm -> UnverifiedArgs wm -> m (Maybe Bool))
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -45,16 +49,17 @@ data Action (wm :: WorldModel) where
 
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
-type ActionRulebook wm v = forall s. Rulebook wm (Args s v) (Args s v) Bool
+type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
 
-getAction
-  :: MonadReader (World wm) m
+-- | Lookup an action from the world. TODO: handle "did you mean", synonyms, etc.
+getAction :: 
+  MonadReader (World wm) m
   => Text
   -> UnverifiedArgs wm
   -> m (Maybe (Action wm))
 getAction n _ = gview $ actions % at n
 
-
+-- | Add an action to the registry.
 addAction :: 
   Action wm 
   -> World wm 
@@ -81,10 +86,16 @@ tryAction an f = do
 -- | Run an action. This assumes that all parsing has been completed.
 runAction :: 
   MonadWorld wm m
-  => UnverifiedArgs s
+  => UnverifiedArgs wm
   -> Action wm 
   -> m (Maybe Bool)
 runAction args act = do
   w <- use actionProcessing
   let (ActionProcessing ap) = w
   ap act args
+
+makeActionRulebook :: 
+  Text
+  -> [Rule o (Args o v) Bool]
+  -> ActionRulebook o v
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Just x)

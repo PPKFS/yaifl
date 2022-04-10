@@ -22,6 +22,8 @@ module Yaifl.Properties.Query
 
   , getWornBy
   , getThingLit
+
+  , getEnterable
   ) where
 
 import Yaifl.Objects.Missing
@@ -38,7 +40,6 @@ import Yaifl.Properties.TH
 import Yaifl.Properties.Container
 import Yaifl.Properties.Openable
 import Yaifl.Logger
-
 
 objectName :: 
   NoMissingObjects m

@@ -11,8 +11,7 @@ Stability   : No
 
 module Yaifl.World
   ( -- * Types
-    RoomDescriptions(..)
-  , World(..)
+    World(..)
   , MonadWorld
    -- * Modifying the world
   , newEntityID
@@ -43,15 +42,9 @@ import Yaifl.Logger
 import Yaifl.Activities.Activity
 import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
+import Yaifl.Actions.Looking
 
--- | Again lifted directly from Inform; this sets whether to always print room
--- descriptions (No..) even if the room is visited, to only print them on the first
--- entry (Sometimes..) or never.
-data RoomDescriptions
-  = SometimesAbbreviatedRoomDescriptions
-  | AbbreviatedRoomDescriptions
-  | NoAbbreviatedRoomDescriptions
-  deriving stock (Eq, Show, Read, Ord, Generic)
+
 
 -- | A convenient type synonym for a read-write World monad + logging
 type MonadWorld wm m = (MonadReader (World wm) m, MonadState (World wm) m, Logger m)
@@ -121,9 +114,10 @@ tickGlobalTime True = do
 instance HasBuffer (World wm) 'SayBuffer where
   bufferL _ = messageBuffers % _1
 
-addBaseActions :: -- HasLookingProperties s
-  World s
-  -> World s
+addBaseActions :: 
+  HasLookingProperties wm
+  => World wm
+  -> World wm
 addBaseActions = foldr (.) id [
-    -- addAction lookingActionImpl
+    addAction lookingActionImpl
   ]

@@ -15,6 +15,8 @@ module Yaifl.Properties.Container
     Opacity(..)
   , Enterable(..)
   , Container(..)
+
+  , isOpaqueClosedContainer
     -- * Lenses
   , containerOpacity
   , containerEnclosing
@@ -50,10 +52,5 @@ isOpaqueClosedContainer ::
 isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == Closed)
 
 {- TODO: extract to `Supporter`
-isSupporter ::
-  MonadWorldRO s m
-  => ObjectLike s o
-  => o
-  -> m Bool
-isSupporter = (`isType` ObjType "supporter")
+
 -}

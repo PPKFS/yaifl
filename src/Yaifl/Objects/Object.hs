@@ -17,6 +17,7 @@ module Yaifl.Objects.Object
     ObjType(..)
   , Object(..)
   , ObjectLike(..)
+  , CanBeAny(..)
   , Thing
   , Room
   , AnyObject
@@ -134,6 +135,22 @@ _Room = prism' (fmap Right) (traverse rightToMaybe)
 _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (fmap Left) (traverse leftToMaybe)
 
+class CanBeAny wm o where
+  toAny :: o -> AnyObject wm
+  fromAny :: AnyObject wm -> Maybe o
+
+instance CanBeAny wm (Room wm) where
+  toAny = review _Room
+  fromAny = preview _Room
+
+instance CanBeAny wm (Thing wm) where
+  toAny = review _Thing
+  fromAny = preview _Thing
+
+instance CanBeAny wm (AnyObject wm) where
+  toAny = id
+  fromAny = Just
+  
 -- | Something is `ObjectLike` if you can query (or update) the world to get an object out of it.
 class HasID o => ObjectLike wm o where
   getRoom :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Room wm)

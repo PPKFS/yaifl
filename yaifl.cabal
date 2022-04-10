@@ -1,139 +1,132 @@
-cabal-version:       3.0
-name:                yaifl
-version:             0.0.0.0
-synopsis:            Yet another interactive fiction library.
-description:         Yet another interactive fiction library.
-homepage:            https://github.com/PPKFS/yaifl
-bug-reports:         https://github.com/PPKFS/yaifl/issues
-license:             MIT
-author:              Avery
-maintainer:          Avery <thecommunistduck@hotmail.co.uk>
-copyright:           2022 Avery
-category:            Game Development
-build-type:          Simple
-extra-doc-files:     README.md
-                     CHANGELOG.md
-tested-with:         GHC == 9.2.1
+cabal-version:   3.0
+name:            yaifl
+version:         0.0.0.1
+synopsis:        Yet another interactive fiction library.
+description:     Yet another interactive fiction library.
+homepage:        https://github.com/PPKFS/yaifl
+bug-reports:     https://github.com/PPKFS/yaifl/issues
+license:         MIT
+author:          Avery
+maintainer:      Avery <thecommunistduck@hotmail.co.uk>
+copyright:       2022 Avery
+category:        Game Development
+build-type:      Simple
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.2.1
+
 source-repository head
-  type:                git
-  location:            https://github.com/PPKFS/yaifl.git
+  type:     git
+  location: https://github.com/PPKFS/yaifl.git
 
 common common-options
   build-depends:
-                     base >= 4.15.0.0
-                     , solitude
-                     , optics
-                     , prettyprinter
-                     , prettyprinter-ansi-terminal
-                     , pretty-simple
-                     , template-haskell
-                     , containers
-                     , text
-                     , mtl
-                     , enummapset
-                     , neat-interpolation
-                     , attoparsec
-                     , haskell-src-meta
-                     , katip
-                     , aeson
-                     , formatting
-                     , display
-                     , hspec
+    , aeson
+    , attoparsec
+    , base
+    , containers
+    , display
+    , enummapset
+    , formatting
+    , haskell-src-meta
+    , hspec
+    , katip
+    , mtl
+    , neat-interpolation
+    , optics
+    , pretty-simple
+    , prettyprinter
+    , prettyprinter-ansi-terminal
+    , solitude
+    , template-haskell
+    , text
 
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wincomplete-record-updates
+    -fhide-source-paths -Wno-unused-top-binds
+    -Wmissing-deriving-strategies -O2 -flate-specialise
+    -fspecialise-aggressively -fprint-potential-instances
+    -fno-warn-unused-do-bind -haddock -fwrite-ide-info
 
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Widentities
-                       -Wincomplete-uni-patterns
-                       -Wredundant-constraints
-                       -Wincomplete-record-updates
-                       -fhide-source-paths
-                       -Wno-unused-top-binds
-                       -Wmissing-deriving-strategies
-                       -O2
-                       -flate-specialise
-                       -fspecialise-aggressively
-                       -fprint-potential-instances
-                       -fno-warn-unused-do-bind
-                       -haddock
-                       ---DStable
-                       ---ddump-splices
-                       ---ddump-to-file
-
-  default-language:    GHC2021
+  default-language:   GHC2021
   default-extensions:
-    DataKinds
     NoImplicitPrelude
-    OverloadedStrings
+    BlockArguments
+    DataKinds
     DerivingStrategies
-    TypeFamilies
     FunctionalDependencies
     LambdaCase
-    BlockArguments
     MultiWayIf
+    OverloadedStrings
+    TypeFamilies
 
 library
-  import:              common-options
-  hs-source-dirs:      src
+  import:          common-options
+  hs-source-dirs:  src
   exposed-modules:
     Yaifl
-    Yaifl.World
-    Yaifl.Say
-    Yaifl.Rulebooks.Rulebook
-    Yaifl.Rulebooks.WhenPlayBegins
-    Yaifl.Objects.Create
-    Yaifl.Game
-    Yaifl.Logger
-    Yaifl.Objects.Missing
-    Yaifl.Objects.Object
-    Yaifl.Objects.Dynamic
-    Yaifl.Common          
-    Yaifl.Objects.Query  
-    Yaifl.Objects.Move
+
+    Yaifl.Actions.Action
+    Yaifl.Actions.Looking
+
+    Yaifl.Activities.Activity
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.DescribingLocale
+    Yaifl.Activities.PrintingADarkRoom
+    Yaifl.Activities.PrintingDescriptionOfADarkRoom
+    Yaifl.Activities.PrintingLocaleParagraphAbout
     Yaifl.Activities.PrintingNameOfSomething
 
-  other-modules:
-    Yaifl.Actions.Action
-    Yaifl.WorldInfo
-    
-    Yaifl.Activities.Activity
-    
-    Yaifl.ObjectSpecifics
-    
-    
-    
-    Yaifl.Objects.ObjectData
-    
+    Yaifl.ActivityCollection
+    Yaifl.Common
+    Yaifl.Game
+    Yaifl.Logger
 
+    Yaifl.Objects.Create
+    Yaifl.Objects.Dynamic
+    Yaifl.Objects.Missing
+    Yaifl.Objects.Move
+    Yaifl.Objects.Object
+    Yaifl.Objects.ObjectData
+    Yaifl.Objects.Query
+
+    Yaifl.ObjectSpecifics
     Yaifl.Properties.Container
     Yaifl.Properties.Enclosing
     Yaifl.Properties.Openable
     Yaifl.Properties.Property
     Yaifl.Properties.Query
+    Yaifl.Properties.Supporter
     Yaifl.Properties.TH
-    
+
     Yaifl.Rulebooks.ActionProcessing
     Yaifl.Rulebooks.Args
-    
-    Yaifl.ActivityCollection
+    Yaifl.Rulebooks.Rulebook
+    Yaifl.Rulebooks.WhenPlayBegins
 
-    Yaifl.Activities.PrintingADarkRoom
-    
-    Yaifl.Activities.PrintingDescriptionOfADarkRoom
-    Yaifl.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Activities.DescribingLocale
-    Yaifl.Activities.PrintingLocaleParagraphAbout
-                      --Yaifl.Actions.Looking
+    Yaifl.Say
+    Yaifl.World
+    Yaifl.WorldInfo
+
 test-suite yaifl-test
-  import:              common-options
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Spec.hs
-  build-depends:       yaifl
-                       , hspec
-  ghc-options:         -threaded
-                       -rtsopts
-                       -with-rtsopts=-N
-  default-extensions:  
-    TemplateHaskell
+  import:             common-options
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Spec.hs
+  build-depends:
+    , hspec
+    , yaifl
+
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
     QuasiQuotes
+    TemplateHaskell
+
+  other-modules:
+    Yaifl.Test.Chapter3.Bic
+    Yaifl.Test.Chapter3.Common
+    Yaifl.Test.Chapter3.Verbosity
+    Yaifl.Test.Common

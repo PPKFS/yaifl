@@ -13,9 +13,6 @@ module Yaifl.ActivityCollection
 
   ) where
 
-import Solitude
-import Yaifl.Common
-import Yaifl.Objects.Object
 import Yaifl.Activities.Activity
 import Yaifl.Properties.Property
 import Yaifl.Properties.Enclosing

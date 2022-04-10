@@ -21,6 +21,7 @@ module Yaifl.Objects.Query
   , getThingMaybe
   , getRoomMaybe
   , getObjectFrom
+  , asThingOrRoom
 
     -- * Set
   , setObject

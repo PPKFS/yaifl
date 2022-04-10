@@ -9,8 +9,8 @@ module Yaifl.WorldInfo
   , tickGlobalTime
     -- * Lenses
   --, title
-  --, darknessWitnessed
-  --, roomDescriptions
+  , darknessWitnessed
+  , roomDescriptions
   , actions
   , actionProcessing
   , things

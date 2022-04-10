@@ -7,6 +7,9 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
+-- for Display a (sorry not sorry, Hécate)
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Yaifl.Common
   (-- * Datatypes
   Entity(..)
@@ -14,6 +17,7 @@ module Yaifl.Common
   , HasID(..)
   , Timestamp(..)
   , WorldModel(..)
+  , RoomDescriptions(..)
   , PlainWorldModel
   , defaultVoidID
   , emptyStore
@@ -29,6 +33,18 @@ where
 import Solitude
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
+import Display
+
+instance {-# OVERLAPPABLE #-} Display a where
+  display = const "No display instance"
+  
+-- | Again lifted directly from Inform; this sets whether to always print room
+-- descriptions (No..) even if the room is visited, to only print them on the first
+-- entry (Sometimes..) or never.
+data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
+  | AbbreviatedRoomDescriptions
+  | NoAbbreviatedRoomDescriptions 
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
 -- | An 'Entity' is an integer ID that is used to reference between objects.
 newtype Entity = Entity
