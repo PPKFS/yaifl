@@ -94,6 +94,7 @@ runAction args act = do
   let (ActionProcessing ap) = w
   ap act args
 
+-- | Helper function to make a rulebook of an action.
 makeActionRulebook :: 
   Text
   -> [Rule o (Args o v) Bool]

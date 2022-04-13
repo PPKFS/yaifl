@@ -26,7 +26,8 @@ module Yaifl.Common
   , isRoom
     -- * Type family nonsense
   , WMObjSpecifics
-  , Values
+  , WMValues
+  , WMDirections
   )
 where
 
@@ -131,5 +132,7 @@ type PlainWorldModel = 'WorldModel () () () ()
 
 type family WMObjSpecifics (r :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
-type family Values (r :: WorldModel) :: Type where
-  Values ('WorldModel objSpec dir o v) = o
+type family WMValues (r :: WorldModel) :: Type where
+  WMValues ('WorldModel objSpec dir o v) = o
+type family WMDirections (r :: WorldModel) :: Type where
+  WMDirections ('WorldModel objSpec dir o v) = dir 

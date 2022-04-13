@@ -1,84 +1,43 @@
 module Yaifl.Directions where
 
+import Solitude hiding (Down)
 import Yaifl.Common
-import Yaifl.Prelude
-import Yaifl.Properties (addObject, addThing)
 
-newtype Direction = Direction
-  { _directionName :: Text
-  , _opposite :: Entity
-  } deriving (Eq, Show)
+class WithStandardDirections d where
+  injectDirection :: Direction -> d
 
-directionBlockIDs :: Entity
-directionBlockIDs = 2
+type WMHasDirections (wm :: WorldModel) = WithStandardDirections (WMDirections wm)
+class HasOpposite d where
+  opposite :: d -> d
 
-north :: Entity
-north = directionBlockIDs
+data Direction = 
+  North
+  | South
+  | East
+  | West
+  | NorthWest
+  | NorthEast
+  | SouthWest
+  | SouthEast
+  | In
+  | Out
+  | Up
+  | Down
 
-northeast :: Entity
-northeast = directionBlockIDs + 1
+instance WithStandardDirections Direction where
+  injectDirection = id
 
-east :: Entity
-east = directionBlockIDs + 2
-
-southeast :: Entity
-southeast = directionBlockIDs + 3
-
-south :: Entity
-south = directionBlockIDs + 4
-
-southwest :: Entity
-southwest = directionBlockIDs + 5
-
-west :: Entity
-west = directionBlockIDs + 6
-
-northwest :: Entity
-northwest = directionBlockIDs + 7
-
-up :: Entity
-up = directionBlockIDs + 8
-
-down :: Entity
-down = directionBlockIDs + 9
-
-insideDirection :: Entity
-insideDirection = directionBlockIDs + 10
-
-outsideDirection :: Entity
-outsideDirection = directionBlockIDs + 11
-
-makeDirection :: 
-  Text 
-  -> Maybe Entity 
-  -> m Entity
-makeDirection n o = do
-  e <- addThing n Text ObjType (Maybe (Either ObjectSpecifics s)) (Maybe ThingData) (Maybe (ObjectUpdate s ThingData)) n "" "direction"
-  /
-  whenJust o (setOpposite e)
-  return e
-
-TODO: extract
-setOpposite ::
-  Text 
-  -> Maybe Entity 
-  -> m Entity
-setOpposite e o = do
-  addComponent e (Direction o)
-  addComponent o (Direction e)
-
-makeDirections :: m ()
-makeDirections = do
-  n <- makeDirection "north" Nothing
-  ne <- makeDirection "north-east" Nothing
-  e <- makeDirection "east" Nothing
-  se <- makeDirection "south-east" Nothing
-  _ <- makeDirection "south" $ Just n
-  _ <- makeDirection "south-west" $ Just ne
-  _ <- makeDirection "west" $ Just e
-  _ <- makeDirection "north-west" $ Just se
-  u <- makeDirection "up" Nothing
-  _ <- makeDirection "down" $ Just u
-  i <- makeDirection "inside" Nothing
-  _ <- makeDirection "outside" $ Just i
-  pass
+instance HasOpposite Direction where
+  opposite = \case
+    North -> South
+    South -> North
+    West -> East
+    East -> West
+    NorthWest -> SouthEast
+    NorthEast -> SouthWest
+    SouthEast -> NorthWest
+    SouthWest -> NorthEast
+    In -> Out
+    Out -> In
+    Up -> Down
+    Down -> Up
