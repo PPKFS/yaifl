@@ -24,6 +24,8 @@ module Yaifl.Objects.ObjectData
   , ContainingRegion(..)
   , Darkness(..)
   , RoomData(..)
+  , Explicitness(..)
+  , Connection(..)
   , blankRoomData
   
   -- * Lenses
@@ -37,11 +39,15 @@ module Yaifl.Objects.ObjectData
   , roomContainingRegion
   , roomEnclosing
   , _Wearable
+
+  , connectionExplicitness
+  , connectionRoom
   ) where
 
 import Solitude 
 import Yaifl.Common
 import Yaifl.Properties.Enclosing
+import qualified Data.Map as Map
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit 
@@ -77,11 +83,24 @@ data Darkness = Lighted | Dark
 data IsVisited = Visited | Unvisited 
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
+data Explicitness = Explicit | Implicit 
+  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+
+data Connection = Connection 
+  { _connectionExplicitness :: Explicitness
+  , _connectionRoom :: Entity
+  } deriving stock (Eq, Show, Read, Ord, Generic)
+
 -- | The connections from a one room to another, stored by direction ID.
-newtype MapConnections = MapConnections
-  { unMapConnections :: Store Entity 
-  } deriving stock (Eq, Show)
-    deriving newtype (Read, Ord, Generic)
+newtype MapConnections wm = MapConnections
+  { unMapConnections :: Map.Map (WMDirections wm) Connection 
+  }
+
+deriving newtype instance (Generic (Map (WMDirections wm) Connection)) => Generic (MapConnections wm)
+deriving newtype instance (Ord (WMDirections wm)) => Ord (MapConnections wm)
+deriving newtype instance (Read (WMDirections wm), Ord (WMDirections wm)) => Read (MapConnections wm)
+deriving newtype instance (Show (WMDirections wm)) => Show (MapConnections wm)
+deriving stock instance (Eq (WMDirections wm)) => Eq (MapConnections wm)
 
 -- | An abstract grouping of rooms.
 newtype ContainingRegion = ContainingRegion
@@ -90,18 +109,24 @@ newtype ContainingRegion = ContainingRegion
     deriving newtype (Read, Ord, Generic)
 
 -- | Details for room objects. This is anything which is...well, a room. Nontangible.
-data RoomData = RoomData
+data RoomData wm = RoomData
   { _roomIsVisited :: IsVisited
   , _roomDarkness :: Darkness
-  , _roomMapConnections :: MapConnections
+  , _roomMapConnections :: MapConnections wm
   , _roomContainingRegion :: ContainingRegion
   , _roomEnclosing :: Enclosing
-  } deriving stock (Eq, Show, Read, Ord, Generic)
+  } deriving stock (Generic)
 
-blankRoomData :: RoomData
-blankRoomData = RoomData Unvisited Lighted (MapConnections emptyStore) (ContainingRegion Nothing) blankEnclosing
+deriving stock instance (Ord (WMDirections wm)) => Ord (RoomData wm)
+deriving stock instance (Read (WMDirections wm), Ord (WMDirections wm)) => Read (RoomData wm)
+deriving stock instance (Show (WMDirections wm)) => Show (RoomData wm)
+deriving stock instance (Eq (WMDirections wm)) => Eq (RoomData wm)
+
+blankRoomData :: RoomData wm
+blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
 
 makeLenses ''ThingData
 makeLenses ''RoomData
+makeLenses ''Connection
 
 makePrisms ''ThingWearability

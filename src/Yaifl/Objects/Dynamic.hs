@@ -65,8 +65,8 @@ instance HasID (AbstractObject wm d) where
   getID (DynamicObject ts) = getID ts
 
 type AbstractThing wm = AbstractObject wm ThingData
-type AbstractRoom wm = AbstractObject wm RoomData
-type AnyAbstractObject wm = AbstractObject wm (Either ThingData RoomData)
+type AbstractRoom wm = AbstractObject wm (RoomData wm)
+type AnyAbstractObject wm = AbstractObject wm (Either ThingData (RoomData wm))
 
 type StoreLens' wm d = (Lens' (World wm) (Store (AbstractObject wm d)))
   

@@ -16,7 +16,7 @@ module Yaifl.World where
   -- data WorldModel (s :: Type) (d :: Type) (v :: Type) (o :: Type) 
   type MonadWorld wm m = (MonadReader (World wm) m, MonadState (World wm) m, Logger m)
   things :: Lens' (World wm) (Store (AbstractObject wm ThingData))
-  rooms :: Lens' (World wm) (Store (AbstractObject wm RoomData))
+  rooms :: Lens' (World wm) (Store (AbstractObject wm (RoomData wm)))
   actions :: Lens' (World wm) (Map Text (Action wm))
   activities :: Lens' (World wm) (ActivityCollection wm)
   previousRoom :: Lens' (World wm) Entity

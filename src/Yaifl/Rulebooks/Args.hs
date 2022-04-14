@@ -28,8 +28,8 @@ data Args wm v = Args
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
-deriving stock instance (Show (WMObjSpecifics wm), Show v) => Show (Args wm v)
-deriving stock instance (Read (WMObjSpecifics wm), Read v) => Read (Args wm v)
+deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
+deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 
 -- | Before 'Args' are parsed, the variables are a list of objects.
 newtype UnverifiedArgs wm = UnverifiedArgs

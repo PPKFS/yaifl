@@ -82,6 +82,7 @@ library
 
     Yaifl.ActivityCollection
     Yaifl.Common
+    Yaifl.Directions
     Yaifl.Game
     Yaifl.Logger
 
@@ -92,6 +93,7 @@ library
     Yaifl.Objects.Object
     Yaifl.Objects.ObjectData
     Yaifl.Objects.Query
+    Yaifl.Objects.Room
 
     Yaifl.ObjectSpecifics
     Yaifl.Properties.Container

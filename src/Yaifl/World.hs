@@ -62,7 +62,7 @@ data World (wm :: WorldModel) = World
   , _things :: !(Store (AbstractThing wm))
   , _rooms :: !(Store (AbstractRoom wm))
   --, _directions :: !
-  , _values :: !(Map Text (Values wm))
+  , _values :: !(Map Text (WMValues wm))
   , _previousRoom :: !Entity
   , _currentPlayer :: !Entity
   , _firstRoom :: !(Maybe Entity)

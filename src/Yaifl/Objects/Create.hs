@@ -107,8 +107,8 @@ addRoom ::
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
   -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
-  -> Maybe RoomData -- ^
-  -> Maybe (ObjectUpdate wm RoomData)  -- ^
+  -> Maybe (RoomData wm) -- ^
+  -> Maybe (ObjectUpdate wm (RoomData wm))  -- ^
   -> m Entity
 addRoom name desc objtype specifics details upd = do
   e <- addObject setAbstractRoom name desc objtype False
@@ -129,7 +129,7 @@ addRoom' ::
   => WMHasProperty wm Enclosing
   => Text
   -> Text
-  -> State RoomData v
+  -> State (RoomData wm) v
   -> m Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
   Nothing (Just (execState rd blankRoomData)) Nothing

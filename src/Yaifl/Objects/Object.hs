@@ -75,8 +75,8 @@ instance HasID (Object wm d) where
   
 -- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
 type Thing wm = Object wm ThingData
-type Room wm = Object wm RoomData
-type AnyObject wm = Object wm (Either ThingData RoomData)
+type Room wm = Object wm (RoomData wm)
+type AnyObject wm = Object wm (Either ThingData (RoomData wm))
 
 instance Eq (Object wm d) where
   (==) = objectEquals

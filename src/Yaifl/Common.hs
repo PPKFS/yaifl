@@ -28,6 +28,11 @@ module Yaifl.Common
   , WMObjSpecifics
   , WMValues
   , WMDirections
+
+  , WMShow
+  , WMRead
+  , WMOrd
+  , WMEq
   )
 where
 
@@ -136,3 +141,9 @@ type family WMValues (r :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v) = o
 type family WMDirections (r :: WorldModel) :: Type where
   WMDirections ('WorldModel objSpec dir o v) = dir 
+
+type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirections wm))
+type WMShow wm = WMConstr Show wm
+type WMRead wm = WMConstr Read wm
+type WMOrd wm = WMConstr Ord wm
+type WMEq wm = WMConstr Eq wm

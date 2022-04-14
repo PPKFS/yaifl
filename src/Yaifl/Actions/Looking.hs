@@ -53,8 +53,8 @@ data LookingActionVariables wm = LookingActionVariables
   }
   deriving stock (Eq, Generic)
 
-deriving stock instance (Show (WMObjSpecifics wm)) => Show (LookingActionVariables wm)
-deriving stock instance (Read (WMObjSpecifics wm)) => Read (LookingActionVariables wm)
+deriving stock instance (WMShow wm) => Show (LookingActionVariables wm)
+deriving stock instance (WMRead wm, WMOrd wm) => Read (LookingActionVariables wm)
 
 instance Display (LookingActionVariables s) where
   display (LookingActionVariables fr _ lvls _) = "Looking from "
