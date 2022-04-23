@@ -22,7 +22,6 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import qualified Data.Text as T
 import Yaifl.Objects.Missing
 import Yaifl.Say
-import Yaifl.Rulebooks.Args
 import Yaifl.Objects.Move
 import Yaifl.Actions.Action
 
@@ -70,8 +69,7 @@ initRoomDescription ::
   => MonadWorld wm m
   => m (Maybe a)
 initRoomDescription = do
-  ua <- playerNoArgs
-  tryAction "looking" ua >> rulePass
+  parseAction "looking" >> rulePass
 
   
 positionPlayer :: 

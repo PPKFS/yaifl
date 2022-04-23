@@ -20,6 +20,7 @@ import Yaifl.Logger
 import Yaifl.Objects.Query
 import Yaifl.Common
 import Yaifl.Rulebooks.WhenPlayBegins
+import Yaifl.Actions.Action
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -73,8 +74,10 @@ testHarness fullTitle initWorld actionsToDo expected = do
     --when I write a proper game loop, this is where it needs to go
     withoutMissingObjects
       (runRulebook (_whenPlayBegins w') ())
-      (handleMissingObject "Failed when beginning" (Just False))
+      (handleMissingObject "Failed when beginning" (return $ Just False))
     --do the commands...
+    rs <- mapM parseAction actionsToDo
+    print rs
     get) blankWorld
   let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
       buildExpected = mconcat (expectTitle t : expected )

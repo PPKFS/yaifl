@@ -18,7 +18,7 @@ module Yaifl.Common
   , Timestamp(..)
   , WorldModel(..)
   , RoomDescriptions(..)
-  , PlainWorldModel
+  , WorldStage(..)
   , defaultVoidID
   , emptyStore
   -- * Object querying
@@ -51,6 +51,8 @@ data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+data WorldStage = Construction | Playing deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
 -- | An 'Entity' is an integer ID that is used to reference between objects.
 newtype Entity = Entity
@@ -133,7 +135,6 @@ instance Ixed (Store a)
 -- sigs everywhere for `World`.
 data WorldModel = WorldModel Type Type Type Type
 
-type PlainWorldModel = 'WorldModel () () () ()
 
 type family WMObjSpecifics (r :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec

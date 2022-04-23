@@ -23,7 +23,7 @@ import Yaifl.Objects.Query ()
 -- the closed 's' universe and the variables, which are either unknown
 -- (see 'UnverifiedArgs') or known (concrete instantation).
 data Args wm v = Args
-  { _argsSource :: Maybe (AnyObject wm)
+  { _argsSource :: Thing wm
   , _argsVariables :: v
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
@@ -31,12 +31,35 @@ data Args wm v = Args
 deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
 deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 
+-- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the 
+-- refreshVariables function is called to replace and update the objects
+class Refreshable wm av where
+  refreshVariables :: forall m. (NoMissingObjects m, MonadWorld wm m) => av -> m av
+
+instance Refreshable wm () where
+  refreshVariables = pure
+
+data ArgSubject wm = 
+  RegularSubject Entity -- GET LAMP
+  | ConceptSubject Text -- TALK TO BOB ABOUT *PHILOSOPHY*
+  | DirectionSubject (WMDirections wm)
+  | MatchedSubject Text Entity -- GO *THROUGH DOOR*
+  deriving stock (Generic)
+
+deriving stock instance (WMEq wm) => Eq (ArgSubject wm)
+deriving stock instance (WMShow wm) => Show (ArgSubject wm)
+deriving stock instance (WMOrd wm) => Ord (ArgSubject wm)
+deriving stock instance (WMRead wm) => Read (ArgSubject wm)
+
 -- | Before 'Args' are parsed, the variables are a list of objects.
 newtype UnverifiedArgs wm = UnverifiedArgs
-  { unArgs :: Args wm [AnyObject wm]
-  } deriving stock (Eq)
-    deriving newtype (Ord, Generic)
+  { unArgs :: Args wm [ArgSubject wm]
+  } deriving newtype (Generic)
 
+deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
+deriving stock instance (WMShow wm) => Show (UnverifiedArgs wm)
+deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
+deriving newtype instance (WMRead wm, WMOrd wm) => Read (UnverifiedArgs wm)
 
 makeLenses ''Args
 
@@ -44,11 +67,9 @@ withPlayerSource ::
   forall wm m. 
   NoMissingObjects m
   => MonadWorld wm m
-  => UnverifiedArgs wm
+  => (Thing wm -> UnverifiedArgs wm)
   -> m (UnverifiedArgs wm)
-withPlayerSource u = do
-  p <- getPlayer
-  return $ u & coercedTo @(Args wm [AnyObject wm]) % argsSource ?~ review _Thing p
+withPlayerSource = flip fmap getPlayer
 
 -- | This should be moved somewhere else I guess
 getPlayer :: 
@@ -67,10 +88,14 @@ playerNoArgs ::
   => m (Timestamp -> UnverifiedArgs wm)
 playerNoArgs = do
   ua <- withPlayerSource blankArgs
-  return (\ts -> ua & coercedTo @(Args wm [AnyObject wm]) % argsTimestamp .~ ts)
+  return (\ts -> ua & coercedTo @(Args wm [ArgSubject wm]) % argsTimestamp .~ ts)
 
-blankArgs :: UnverifiedArgs wm
-blankArgs = UnverifiedArgs $ Args Nothing [] 0
+blankArgs :: 
+  Thing wm
+  -> UnverifiedArgs wm
+blankArgs o = UnverifiedArgs $ Args o [] 0
 
 instance Functor (Args wm) where
   fmap f = argsVariables %~ f
+
+makePrisms ''ArgSubject

@@ -6,7 +6,10 @@ import Yaifl.Common
 class WithStandardDirections d where
   injectDirection :: Direction -> d
 
-type WMHasDirections (wm :: WorldModel) = WithStandardDirections (WMDirections wm)
+
+type WithDirections (wm :: WorldModel) = (Ord (WMDirections wm), HasOpposite (WMDirections wm))
+type WMStdDirections (wm :: WorldModel) = (WithStandardDirections (WMDirections wm), WithDirections wm)
+
 class HasOpposite d where
   opposite :: d -> d
 
@@ -23,6 +26,7 @@ data Direction =
   | Out
   | Up
   | Down
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic, Bounded)
 
 instance WithStandardDirections Direction where
   injectDirection = id

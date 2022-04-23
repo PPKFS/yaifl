@@ -55,7 +55,7 @@ move eObj eLoc = withoutMissingObjects (do
       return $ Just True)
   else
     throwError $ MissingObject "Could not find enclosing part of location." (getID eLoc))
-    (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID " %! int ) (getID eObj) (getID eLoc)) False)
+    (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID " %! int ) (getID eObj) (getID eLoc)) $ return False)
 
 display :: Thing wm -> Text
 display = error "not implemented"

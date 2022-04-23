@@ -16,6 +16,7 @@ module Yaifl.Objects.Missing
   , NoMissingObjects
   , withoutMissingObjects
   , handleMissingObject
+  , failHorriblyIfMissing
     -- * Lenses
   , moExpected
   , moEntity
@@ -54,9 +55,20 @@ handleMissingObject ::
   HasCallStack
   => Logger m 
   => TLB.Builder 
-  -> a 
+  -> m a 
   -> MissingObject
   -> m a
 handleMissingObject msg def (MissingObject t o) = do
   err (msg <> bformat (stext %! "; Object ID: " %! stext) t (show o))
-  return def
+  def
+
+failHorriblyIfMissing ::
+  HasCallStack
+  => Logger m 
+  => (HasCallStack => ExceptT MissingObject m a)
+  -> m a
+failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
+  let msg = "Failing horribly and erroring out because we can't recover"
+      emsg = msg <> bformat (stext %! "; Object ID: " %! stext) t (show o)
+  err emsg
+  error $ show emsg)

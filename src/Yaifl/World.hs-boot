@@ -25,6 +25,7 @@ module Yaifl.World where
   actionProcessing :: Lens' (World wm) (ActionProcessing wm)
   roomDescriptions :: Lens' (World wm) RoomDescriptions
   darknessWitnessed :: Lens' (World wm) Bool
+  currentStage :: Lens' (World wm) WorldStage
 
   getGlobalTime :: MonadReader (World wm) m => m Timestamp
   tickGlobalTime :: MonadWorld wm m => Bool -> m ()
@@ -32,3 +33,5 @@ module Yaifl.World where
   whenPlayBegins :: Lens' (World wm) (Rulebook wm () () Bool)
 
   instance HasBuffer (World wm) 'SayBuffer 
+
+  whenConstructingM :: MonadWorld wm m => m Bool -> m () -> m ()

@@ -4,7 +4,6 @@ import Yaifl
 import Solitude
 import Yaifl.Game
 import Yaifl.World
-import Yaifl.Common
 import Yaifl.Objects.Create
 import Yaifl.Rulebooks.Rulebook
 import Yaifl.Test.Common

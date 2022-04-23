@@ -40,6 +40,7 @@ import Yaifl.Objects.ObjectData
 import Yaifl.Activities.Activity
 import Yaifl.Properties.Supporter
 import qualified Data.Text as T
+import Yaifl.Rulebooks.Args
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm = 
@@ -60,6 +61,12 @@ instance Display (LookingActionVariables s) where
   display (LookingActionVariables fr _ lvls _) = "Looking from "
     <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
 
+instance Refreshable wm (LookingActionVariables wm) where
+  refreshVariables av = do
+    lf <- getObject (_lookingFrom av)
+    vls <- mapM getObject (_visibilityLevels av)
+    return $ av { _lookingFrom = lf, _visibilityLevels = vls }
+
 lookingActionName :: Text 
 lookingActionName = "looking"
 
@@ -68,6 +75,7 @@ lookingActionImpl ::
   => Action wm
 lookingActionImpl = Action
   lookingActionName
+  [] --todo: add "at => examine"
   ["look", "looking"]
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
@@ -86,12 +94,11 @@ lookingActionSet ::
   => UnverifiedArgs wm
   -> m (Maybe (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (runMaybeT $ do
-  as <- hoistMaybe $ _argsSource ^? _Just
-  (t :: Thing s) <- hoistMaybe $ preview _Thing as
+  let t = _argsSource
   reifyLoc <- getObject (t ^. containedBy)
   vl <- getVisibilityLevels reifyLoc
   lightLevels <- recalculateLightOfParent t
-  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking") (handleMissingObject "" Nothing)
+  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking") (handleMissingObject "" $ return Nothing)
 
 getVisibilityLevels :: 
   MonadWorld wm m
@@ -257,7 +264,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       debug $ TLB.fromString $ displayString $ _argsVariables rb
       debug (bformat
         ("Printing room description heading with visibility ceiling " %! stext %! " and visibility count " %! int)
-        ( "") --todo: replace the vis ceiling log here
+        "" --todo: replace the vis ceiling log here
         cnt)
       if
         | cnt == 0 -> do

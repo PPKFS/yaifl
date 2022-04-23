@@ -31,6 +31,7 @@ common common-options
     , enummapset
     , formatting
     , haskell-src-meta
+    , haskell-src-exts
     , hspec
     , katip
     , mtl
@@ -70,6 +71,7 @@ library
     Yaifl
 
     Yaifl.Actions.Action
+    Yaifl.Actions.Going
     Yaifl.Actions.Looking
 
     Yaifl.Activities.Activity

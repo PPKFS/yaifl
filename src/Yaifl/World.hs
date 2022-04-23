@@ -18,6 +18,7 @@ module Yaifl.World
   , setTitle
   , getGlobalTime
   , tickGlobalTime
+  , whenConstructingM
     -- * Lenses
   , title
   , darknessWitnessed
@@ -32,6 +33,7 @@ module Yaifl.World
   , addBaseActions
   , activities
   , currentPlayer
+  , currentStage
   ) where
 
 import Solitude
@@ -43,11 +45,11 @@ import Yaifl.Activities.Activity
 import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
 import Yaifl.Actions.Looking
-
-
+import Yaifl.Actions.Going
 
 -- | A convenient type synonym for a read-write World monad + logging
 type MonadWorld wm m = (MonadReader (World wm) m, MonadState (World wm) m, Logger m)
+
 
 -- | The big one, a `World` is the monolithic record of all state in the game.
 -- this includes creation information for the DSL, game specific information, actions
@@ -61,7 +63,6 @@ data World (wm :: WorldModel) = World
   , _roomDescriptions :: !RoomDescriptions
   , _things :: !(Store (AbstractThing wm))
   , _rooms :: !(Store (AbstractRoom wm))
-  --, _directions :: !
   , _values :: !(Map Text (WMValues wm))
   , _previousRoom :: !Entity
   , _currentPlayer :: !Entity
@@ -72,6 +73,7 @@ data World (wm :: WorldModel) = World
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
   , _messageBuffers :: !(MessageBuffer, MessageBuffer)
   , _actionProcessing :: ActionProcessing wm
+  , _currentStage :: WorldStage
   }
 
 makeLenses ''World
@@ -120,4 +122,15 @@ addBaseActions ::
   -> World wm
 addBaseActions = foldr (.) id [
     addAction lookingActionImpl
+  , addAction goingActionImpl
   ]
+
+whenConstructingM :: 
+  MonadWorld wm m 
+  => m Bool 
+  -> m () 
+  -> m ()
+whenConstructingM cond = 
+  whenM (andM [do
+    cs <- use currentStage
+    return $ cs == Construction, cond])

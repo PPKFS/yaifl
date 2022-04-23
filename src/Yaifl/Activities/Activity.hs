@@ -91,7 +91,7 @@ doActivity' ac c = withoutMissingObjects (do
   x <- runRulebookAndReturnVariables (_activityBeforeRules ac) c
   mr <- runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
   _ <- runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
-  return $ snd =<< mr) (handleMissingObject "" Nothing)
+  return $ snd =<< mr) (handleMissingObject "" $ return Nothing)
 
 makeLenses ''LocaleVariables
 makeLenses ''LocaleInfo

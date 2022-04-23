@@ -9,6 +9,7 @@ Stability   : No
 
 module Yaifl.Actions.Action 
   ( Action(..)
+  , parseAction
   , ActionParseArguments
   , ActionRulebook
   , ActionProcessing(..)
@@ -23,6 +24,11 @@ import Yaifl.Rulebooks.Rulebook
 import Yaifl.WorldInfo
 import Yaifl.Common
 import Yaifl.Logger
+import Display
+import qualified Data.Text as T
+import qualified Data.Map as Map
+import Yaifl.Rulebooks.Args
+import Yaifl.Objects.Missing
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
@@ -39,6 +45,7 @@ data Action (wm :: WorldModel) where
   Action ::
     { _actionName :: !Text
     , _actionUnderstandAs :: ![Text]
+    , _actionMatching :: ![Text]
     , _actionParseArguments :: !(ActionParseArguments wm v)
     , _actionBeforeRules :: !(ActionRulebook wm v)
     , _actionCheckRules :: !(ActionRulebook wm v)
@@ -67,21 +74,48 @@ addAction ::
 addAction ac =
   actions % at (_actionName ac) ?~ ac
 
+parseAction ::
+  MonadWorld wm m 
+  => Text
+  -> m (Either Text Bool)
+parseAction t = failHorriblyIfMissing $ do
+  --find the verb, which will be the first N words
+  possVerbs <- findVerb t
+  case possVerbs of
+    [] -> return $ Left "I have no idea what you meant."
+    [(r, x)] -> findSubjects (T.strip r) x
+    xs -> return $ Left $ "Did you mean " <> prettyPrintList (map (displayText . fst) xs) 
+
+findVerb :: MonadWorld wm m => Text -> m [(Text, Action wm)]
+findVerb cmd = do
+  --we remove excess whitespace, then add 1 extra one
+  let fixedCmd = T.strip cmd <> " "
+  ac <- use actions
+  return $ mapMaybe (\(t, v) -> T.stripPrefix t fixedCmd >>= (\r -> Just (r, v))) $ Map.toList ac
+
+findSubjects :: 
+  NoMissingObjects m
+  => MonadWorld wm m 
+  => Text 
+  -> Action wm 
+  -> m (Either Text Bool)
+findSubjects "" a = do
+  ua <- playerNoArgs
+  Right <$> tryAction a ua
+findSubjects _ _ = return $ Left "not implemented"
+
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction :: 
   MonadWorld wm m
-  => Text -- ^ text of command
+  => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> m Bool
 tryAction an f = do
   ta <- getGlobalTime
-  debug (bformat ("Trying to do the action '" %! stext %! "'" ) an)
+  debug (bformat ("Trying to do the action '" %! stext %! "'" ) (_actionName an))
   let uva = f ta
-  ac <- getAction an uva
-  case ac of
-    Nothing -> err (bformat ("Couldn't find a matching action for '" %! stext %! "'") an) >> return False
-    Just a -> fromMaybe False <$> runAction uva a
+  fromMaybe False <$> runAction uva an
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction :: 

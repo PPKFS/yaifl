@@ -8,9 +8,7 @@ import Yaifl.Test.Chapter3.Verbosity
 
 spec :: Spec
 spec = describe "Chapter 3: " $ do
-  pass
-
   it "runs chapter 3.1.2" $ 
     testHarness "Bic - 3.1.2" ex2World [] ex2Test
   it "runs chapter 3.1.3" $ 
-    testHarness "Verbosity - 3.1.3" ex3World [] ex3Test
+    testHarness "Verbosity - 3.1.3" ex3World ex3TestMeWith ex3Test

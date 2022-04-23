@@ -15,6 +15,7 @@ module Yaifl
     newWorld
   , blankWorld
   , HasStandardProperties
+  , PlainWorldModel
   ) where
 
 import Yaifl.World
@@ -31,12 +32,15 @@ import Yaifl.Game
 import Yaifl.Objects.Create
 import Yaifl.Rulebooks.WhenPlayBegins
 import Yaifl.ActivityCollection
+import Yaifl.Directions
 
 newWorld :: 
   HasStandardProperties s
   => Game s v
   -> Game s (World s)
 newWorld g = modify addBaseActions >> addBaseObjects >> g >> get
+
+type PlainWorldModel = 'WorldModel () Direction () ()
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
@@ -65,4 +69,5 @@ blankWorld = World
   , _actionProcessing = defaultActionProcessingRules
   , _previousRoom = defaultVoidID
   , _dirtyTime = False
+  , _currentStage = Construction
   }

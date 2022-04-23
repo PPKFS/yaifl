@@ -3,17 +3,14 @@
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
---import Yaifl.Prelude
---import Yaifl.Activities
 import Yaifl.Test.Common
-import NeatInterpolation
 import Solitude
 import Yaifl.Game
 import Yaifl.World
 import Yaifl.Objects.Create
-import Yaifl.Common
+import Yaifl.Objects.Room
 
-ex3World :: Game ('WorldModel () () () ()) (World ('WorldModel () () () ()))
+ex3World :: Game PlainWorldModel (World PlainWorldModel)
 ex3World = newWorld $ do
     setTitle "Verbosity"
     -- inform7 uses superbrief, brief, and verbose as the command words
@@ -35,8 +32,9 @@ ex3World = newWorld $ do
       Well, yes, you really shouldn't be in here.  But the nearest women's room is on the other side of the building, 
       and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things 
       scrawled over the urinals which might have been intended in confidence.|] pass `isWestOf` w
-    pass
-    --testMe ["west", "east", "verbose", "west"]
+
+ex3TestMeWith :: [Text]
+ex3TestMeWith = ["west", "east", "verbose", "west"]
 
 ex3Test :: [Text]
 ex3Test = ["aaa"]

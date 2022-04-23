@@ -7,6 +7,7 @@ module Yaifl.WorldInfo
    -- * Modifying the world
   , getGlobalTime
   , tickGlobalTime
+  , whenConstructingM
     -- * Lenses
   --, title
   , darknessWitnessed
@@ -18,7 +19,7 @@ module Yaifl.WorldInfo
   , previousRoom
   , firstRoom
   , whenPlayBegins
-  --, addBaseActions
+  , currentStage
   , activities
   , currentPlayer
   ) where
