@@ -5,5 +5,13 @@ multilingual = false
 src = "lit"
 title = "Yaifl Docs"
 
+[build]
+create-missing = true
 [output.html]
 mathjax-support = true
+additional-css = ["assets/mdbook-admonish.css"]
+
+[preprocessor]
+
+[preprocessor.admonish]
+command = "mdbook-admonish"

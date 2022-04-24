@@ -1,6 +1,15 @@
+# Cabal, Extensions, Dependencies
+
+This is probably a pretty dull page, so if you only care about the interesting stuff
+you can skip it. But I wanted to do this literate programming thing properly, and also
+it ensures I know what's going on in my `.cabal` files.
+
+## Metadata
+
+Everything here is fairly standard project information.
+
+```cabal file=yaifl.cabal header="1"
 cabal-version:   3.0
--- ~\~ language=Cabal filename=yaifl.cabal
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[0]
 name:            yaifl
 version:         0.0.0.1
 synopsis:        Yet another interactive fiction library.
@@ -18,8 +27,19 @@ tested-with: GHC == 9.2.1
 source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1]
+```
+```admonish question "Why does the project use GHC 9.2.1?"
+
+- Using `GHC2021` as a `default-language` only works in 9.2, and it saves writing a huge number of extensions.
+- `9.2.2` doesn't (yet) support HLS. Even with `entangled`, I like HLS because I like keeping my sanity.
+- It could probably work just fine with GHC as low as 8.8.x, but this is untested.
+```
+
+## Dependencies
+
+This is a pretty standard dependency list.
+
+```cabal file=yaifl.cabal
 common common-options
   build-depends:
       base
@@ -32,16 +52,32 @@ common common-options
     -- to remove
     , hspec 
     -- to remove
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2]
+```
+
+I still have no idea why the first 3 of these aren't in `base`. `solitude` is my personal prelude, which is
+mostly re-exports of the excellent [relude](https://hackage.haskell.org/package/relude) alternative prelude and
+also some `optics`-lens things. 
+
+```admonish question "Why optics over lens?"
+
+- No idea, I just wanted to.
+- The error messages and the explicit `AffineTraversal` you get from combining a `Lens` and a `Prism` are cool though.
+
+```
+
+```cabal file=yaifl.cabal
     , display
     , chapelure
     , formatting
     , pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3]
+```
+
+`display` and `chapelure` are for being *technically* lawful with `Show` instances when it comes to logging and
+for making pretty error messages. The other libraries are various pretty printing for pretty logging and output.
+
+```cabal file=yaifl.cabal
     , aeson
     , katip
     , enummapset
@@ -49,8 +85,20 @@ common common-options
     , haskell-src-exts
     , neat-interpolation
     , sandwich
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4]
+```
+
+- `enummapset` is a nice set of wrappers for using `Enum` keys in `IntMap`s for better performance (i.e. `Entity`).
+- `haskell-src-*` I use because writing well-formed TH is hard, and I wanted to just write Haskell strings with
+text substitutions in. 
+- `neat-interpolation` makes wrapped raw string quasi-quotes better, which is important given
+how many room descriptions are very long lines of text. 
+- `sandwich` is a really sweet looking testing library so I
+wanted to try it.
+- `katip` for logging and `aeson` for writing some wrappers to customise the logging format.
+
+## GHC extensions
+
+```cabal file=yaifl.cabal
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -68,8 +116,14 @@ common common-options
     MultiWayIf
     OverloadedStrings
     TypeFamilies
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5]
+```
+
+We enable a whole bunch of options and extensions. Notably `NoImplicitPrelude` makes it easier than fiddling with
+mixins for using `solitude` over `Prelude`, `BlockArguments` for my love of using inline `do` blocks, and `TypeFamilies`
+because I like to try and be smarter than I am.
+
+## Library stanza
+```cabal file=yaifl.cabal
 library
   import:          common-options
   hs-source-dirs:  src
@@ -120,8 +174,11 @@ library
     Yaifl.Say
     Yaifl.World
     Yaifl.WorldInfo
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6]
+```
+
+## Test stanza
+
+```cabal file=yaifl.cabal
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0
@@ -141,4 +198,4 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common
--- ~\~ end
+```

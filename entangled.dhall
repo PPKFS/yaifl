@@ -61,6 +61,7 @@ let intercalComment = entangled.Comment.Line "PLEASE NOTE: "
 let languages = entangled.languages #
     [ { name = "Unlambda", identifiers = ["unlambda"], comment = entangled.comments.hash }
     , { name = "Intercal", identifiers = ["intercal"], comment = intercalComment }
+    , { name = "Cabal", identifiers = [ "cabal" ], comment = entangled.comments.haskellStyle }
     ]
 
 {- Syntax
@@ -77,8 +78,8 @@ let syntax : entangled.Syntax =
     { matchCodeStart       = "^[ ]*```[[:alpha:]]+"
     , matchCodeEnd         = "^[ ]*```"
     , extractLanguage      = "```([[:alpha:]]+)"
-    , extractReferenceName = "```[[:alpha:]]+[ ]+.*id=\"([^\"]*)\".*"
-    , extractFileName      = "```[[:alpha:]]+[ ]+.*file=\"([^\"]*)\".*" 
+    , extractReferenceName = "```[[:alpha:]]+[ ]+.*id=([^\" ]*).*"
+    , extractFileName      = "```[[:alpha:]]+[ ]+.*file=([^\" ]*).*" 
     , extractProperty      = \(name : Text) -> "```[[:alpha:]]+[ ]+.*${name}=\"([^\"]*)\".*"
     }
 
@@ -103,7 +104,7 @@ let database = Some ".entangled/db.sqlite"
    the files are listed here. In the case of a glob pattern, this is
    alpha-numerical order (same as `ls`).
   -}
-let watchList = [ "lit/*.md" ]
+let watchList = [ "lit/*.md", "lit/foundations/*.md", "lit/intro/*.md", "lit/rulebooks/*.md", "lit/tests/*.md" ]
 
 in { entangled = entangled.Config :: { database = database
                                      , watchList = watchList

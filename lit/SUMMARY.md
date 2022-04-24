@@ -8,24 +8,36 @@
 
 # The Yaifl Library
 
-- [The World Model]()
-  - [Entities and Stores and Objects]()
-  - [Things and Rooms]()
-  - [Reification]()
-  - [Properties]()
-  - [The World State]()
-
-- [Rulebooks, Actions, and Activities]()
-  - [Running a Rulebook]()
-  - [Action Processing]()
-  - [Activities]()
-
-- [Overriding the Defaults]()
+- [Foundations](foundations/foundations.md)
+  - [Cabal, Extensions, Dependencies](foundations/cabal.md)
+  - [Project Architecture](foundations/architecture.md)
+  - [Entities, Stores and Objects](world/entities.md)
+  - [Effects](foundations/effects.md)
+    - [Logging](foundations/logging.md)
+  - [The World State](world/state.md)
+  - [Construction and Execution](foundations/construction.md)
+- [The World Model](world/worldmodel.md)
+  - [Things and Rooms](world/things.md)
+  - [Reification](world/reification.md)
+  - [Properties](world/properties.md)
+    - [Get, Set, Modify](world/getsetmodify.md)
+  
+- [Rulebooks, Actions, and Activities](rulebooks/rulebooks.md)
+  - [Running a Rulebook](rulebooks/running.md)
+  - [Action Processing](rulebooks/ap.md)
+  - [Activities](rulebooks/activities.md)
 
 # Reference
 
-## Properties
+- [Properties]()
 
-## Actions
+- [Actions]()
+- [Activities]()
 
-## Activities
+# Examples
+
+- [Testing Framework](tests/framework.md)
+
+- [Chapter 3 - Kinds](tests/chapter3.md)
+  - [Bic](tests/bic.md)
+  - [Verbosity](tests/verbosity.md)
