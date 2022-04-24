@@ -217,11 +217,18 @@ source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
 </code></pre>
-<pre><code class="language-admonish question &quot;Why does the project use GHC 9.2.1?&quot;">
-- Using `GHC2021` as a `default-language` only works in 9.2, and it saves writing a huge number of extensions.
-- `9.2.2` doesn't (yet) support HLS. Even with `entangled`, I like HLS because I like keeping my sanity.
-- It could probably work just fine with GHC as low as 8.8.x, but this is untested.
-</code></pre>
+<div class="admonition question">
+<div class="admonition-title">
+<p>Why does the project use GHC 9.2.1?</p>
+</div>
+<div>
+<ul>
+<li>Using <code>GHC2021</code> as a <code>default-language</code> only works in 9.2, and it saves writing a huge number of extensions.</li>
+<li><code>9.2.2</code> doesn't (yet) support HLS. Even with <code>entangled</code>, I like HLS because I like keeping my sanity.</li>
+<li>It could probably work just fine with GHC as low as 8.8.x, but this is untested.</li>
+</ul>
+</div>
+</div>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>This is a pretty standard dependency list.</p>
 <pre><code class="language-cabal file=yaifl.cabal">common common-options
@@ -240,11 +247,17 @@ source-repository head
 <p>I still have no idea why the first 3 of these aren't in <code>base</code>. <code>solitude</code> is my personal prelude, which is
 mostly re-exports of the excellent <a href="https://hackage.haskell.org/package/relude">relude</a> alternative prelude and
 also some <code>optics</code>-lens things. </p>
-<pre><code class="language-admonish question &quot;Why optics over lens?&quot;">
-- No idea, I just wanted to.
-- The error messages and the explicit `AffineTraversal` you get from combining a `Lens` and a `Prism` are cool though.
-
-</code></pre>
+<div class="admonition question">
+<div class="admonition-title">
+<p>Why optics over lens?</p>
+</div>
+<div>
+<ul>
+<li>No idea, I just wanted to.</li>
+<li>The error messages and the explicit <code>AffineTraversal</code> you get from combining a <code>Lens</code> and a <code>Prism</code> are cool though.</li>
+</ul>
+</div>
+</div>
 <pre><code class="language-cabal file=yaifl.cabal">    , display
     , chapelure
     , formatting
