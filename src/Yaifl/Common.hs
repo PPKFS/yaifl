@@ -1,13 +1,5 @@
-{-|
-Module      : Yaifl.Common
-Description : Entities (IDs) and Stores (maps of entities to objects). Otherwise basic stuff.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
--- for Display a (sorry not sorry, Hécate)
+-- ~\~ language=Haskell filename=src/Yaifl/Common.hs
+-- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Common.hs>>[0]
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Yaifl.Common
@@ -19,6 +11,7 @@ module Yaifl.Common
   , WorldModel(..)
   , RoomDescriptions(..)
   , WorldStage(..)
+  
   , defaultVoidID
   , emptyStore
   -- * Object querying
@@ -43,33 +36,14 @@ import Display
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
-  
--- | Again lifted directly from Inform; this sets whether to always print room
--- descriptions (No..) even if the room is visited, to only print them on the first
--- entry (Sometimes..) or never.
-data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
-  | AbbreviatedRoomDescriptions
-  | NoAbbreviatedRoomDescriptions 
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
-data WorldStage = Construction | Playing deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
--- | An 'Entity' is an integer ID that is used to reference between objects.
+-- ~\~ begin <<lit/foundations/entities.md|entity-def>>[0]
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
     deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
-
--- | A way to extract an `Entity` from something.
-class HasID n where
-  getID :: n -> Entity
-
-instance HasID Entity where
-  getID = id
-
-defaultVoidID :: Entity
-defaultVoidID = Entity (-1)
--- | This is kind of hacky, but it works: a `Thing` has ID above 0, and a `Room` has a negative ID.
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|thing-or-room>>[0]
 isThing ::
   (HasID a)
   => a
@@ -81,8 +55,26 @@ isRoom ::
   => a
   -> Bool
 isRoom = not . isThing
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|has-id>>[0]
+class HasID n where
+  getID :: n -> Entity
 
--- | A 'Store' is a map from 'Entity's to @a@s.
+instance HasID Entity where
+  getID = id
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|base-ids>>[0]
+defaultVoidID :: Entity
+defaultVoidID = Entity (-1)
+
+defaultNothingID :: Entity
+defaultNothingID = Entity 0
+
+defaultPlayerID :: Entity
+defaultPlayerID = Entity 1
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|store-def>>[0]
+-- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   } deriving stock   (Show, Generic)
@@ -90,31 +82,18 @@ newtype Store a = Store
 
 emptyStore :: Store a
 emptyStore = Store EM.empty
-
--- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
--- modification is made to the 'World'; therefore it does not directly correspond to
--- some sort of in-game turn counter. For example, throwing an object would result in
--- multiple timestamp jumps (an object moving, potential interactions on it hitting
--- something) whereas a sequence of 10 look actions will not (as the world does not
--- change). This is primarily used to ensure we can cache updates of objects that
--- change properties (e.g. strings).
-newtype Timestamp = Timestamp
-  { unTimestamp :: Int
-  } deriving stock   (Show, Read, Generic)
-    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
-
--- first let's define our own alterF for EnumMap...
-alterEMF
-  :: (Functor f, Enum k)
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|alter-store>>[0]
+alterEMF :: 
+  (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
   -> k
-  -> EM.EnumMap k a -> f (EM.EnumMap k a)
+  -> EM.EnumMap k a 
+  -> f (EM.EnumMap k a)
 alterEMF upd k m = EM.intMapToEnumMap <$> IM.alterF upd (fromEnum k) (EM.enumMapToIntMap m)
 
--- | alterF wrapper for Store, since it's a wrapper around a wrapper...
-alterNewtypeEMF
-  :: Functor f
-  => Enum k
+alterNewtypeEMF :: 
+  (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
   -> k
   -> (nt -> EM.EnumMap k a)
@@ -122,29 +101,35 @@ alterNewtypeEMF
   -> nt
   -> f nt
 alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
-
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|store-at>>[0]
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
-
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|store-instances>>[0]
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
+-- ~\~ end
 
--- | A WorldModel is the canonical implementation of the `wm` world model parameter.
--- the reason for its existence is primarily so we can avoid having massive type
--- sigs everywhere for `World`.
+-- ~\~ begin <<lit/foundations/worldmodel.md|world-model>>[0]
 data WorldModel = WorldModel Type Type Type Type
-
-
-type family WMObjSpecifics (r :: WorldModel) :: Type where
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/worldmodel.md|world-model-families>>[0]
+type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
-type family WMValues (r :: WorldModel) :: Type where
-  WMValues ('WorldModel objSpec dir o v) = o
-type family WMDirections (r :: WorldModel) :: Type where
+
+type family WMDirections (wm :: WorldModel) :: Type where
   WMDirections ('WorldModel objSpec dir o v) = dir 
 
+type family WMValues (wm :: WorldModel) :: Type where
+  WMValues ('WorldModel objSpec dir o v) = o
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/worldmodel.md|world-model-constraints>>[0]
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirections wm))
 type WMShow wm = WMConstr Show wm
 type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 type WMEq wm = WMConstr Eq wm
+-- ~\~ end
+-- ~\~ end

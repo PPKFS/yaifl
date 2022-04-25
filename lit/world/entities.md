@@ -1,1 +1,0 @@
-# Entities, Stores and Objects

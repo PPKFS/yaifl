@@ -11,7 +11,8 @@
 - [Foundations](foundations/foundations.md)
   - [Cabal, Extensions, Dependencies](foundations/cabal.md)
   - [Project Architecture](foundations/architecture.md)
-  - [Entities, Stores and Objects](world/entities.md)
+  - [wm :: WorldModel](foundations/worldmodel.md)
+  - [Entities, Stores and Objects](foundations/entities.md)
   - [Effects](foundations/effects.md)
     - [Logging](foundations/logging.md)
   - [The World State](world/state.md)
@@ -27,12 +28,16 @@
   - [Action Processing](rulebooks/ap.md)
   - [Activities](rulebooks/activities.md)
 
+---
+
 # Reference
 
 - [Properties]()
 
 - [Actions]()
 - [Activities]()
+
+--- 
 
 # Examples
 
@@ -41,3 +46,10 @@
 - [Chapter 3 - Kinds](tests/chapter3.md)
   - [Bic](tests/bic.md)
   - [Verbosity](tests/verbosity.md)
+
+- [New Examples](tests/new.md)
+
+- [Missing Examples](tests/missing.md)
+---
+
+[Module Headers and Other Miscellania](other_miscellania.md)
