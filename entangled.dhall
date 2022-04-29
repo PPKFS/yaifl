@@ -104,7 +104,8 @@ let database = Some ".entangled/db.sqlite"
    the files are listed here. In the case of a glob pattern, this is
    alpha-numerical order (same as `ls`).
   -}
-let watchList = [ "lit/*.md", "lit/foundations/*.md", "lit/intro/*.md", "lit/rulebooks/*.md", "lit/tests/*.md" ]
+let watchList = [ "lit/*.md", "lit/foundations/*.md", "lit/properties/*.md", 
+   "lit/rulebooks/*.md", "lit/tests/*.md", "lit/worldmodel/*.md", "lit/worldmodel/objects/*.md" ]
 
 in { entangled = entangled.Config :: { database = database
                                      , watchList = watchList

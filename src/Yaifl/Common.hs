@@ -10,8 +10,7 @@ module Yaifl.Common
   , Timestamp(..)
   , WorldModel(..)
   , RoomDescriptions(..)
-  , WorldStage(..)
-  
+
   , defaultVoidID
   , emptyStore
   -- * Object querying
@@ -37,13 +36,13 @@ import Display
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
 
--- ~\~ begin <<lit/foundations/entities.md|entity-def>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0]
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
     deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|thing-or-room>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|thing-or-room>>[0]
 isThing ::
   (HasID a)
   => a
@@ -56,14 +55,14 @@ isRoom ::
   -> Bool
 isRoom = not . isThing
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|has-id>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|has-id>>[0]
 class HasID n where
   getID :: n -> Entity
 
 instance HasID Entity where
   getID = id
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|base-ids>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0]
 defaultVoidID :: Entity
 defaultVoidID = Entity (-1)
 
@@ -73,7 +72,7 @@ defaultNothingID = Entity 0
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|store-def>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0]
 -- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
@@ -83,7 +82,7 @@ newtype Store a = Store
 emptyStore :: Store a
 emptyStore = Store EM.empty
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|alter-store>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0]
 alterEMF :: 
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
@@ -102,45 +101,34 @@ alterNewtypeEMF ::
   -> f nt
 alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|store-at>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0]
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|store-instances>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0]
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/other_miscellania.md|other-stuff1>>[0]
--- | Again lifted directly from Inform; this sets whether to always print room
--- descriptions (No..) even if the room is visited, to only print them on the first
--- entry (Sometimes..) or never.
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0]
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0]
 
-data WorldStage = Construction | Playing 
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
--- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
--- modification is made to the 'World'; therefore it does not directly correspond to
--- some sort of in-game turn counter. For example, throwing an object would result in
--- multiple timestamp jumps (an object moving, potential interactions on it hitting
--- something) whereas a sequence of 10 look actions will not (as the world does not
--- change). This is primarily used to ensure we can cache updates of objects that
--- change properties (e.g. strings).
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
   } deriving stock   (Show, Read, Generic)
     deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
--- ~\~ end
 
--- ~\~ begin <<lit/foundations/worldmodel.md|world-model>>[0]
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model>>[0]
 data WorldModel = WorldModel Type Type Type Type
 -- ~\~ end
--- ~\~ begin <<lit/foundations/worldmodel.md|world-model-families>>[0]
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-families>>[0]
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
 
@@ -150,7 +138,7 @@ type family WMDirections (wm :: WorldModel) :: Type where
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v) = o
 -- ~\~ end
--- ~\~ begin <<lit/foundations/worldmodel.md|world-model-constraints>>[0]
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-constraints>>[0]
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirections wm))
 type WMShow wm = WMConstr Show wm
 type WMRead wm = WMConstr Read wm

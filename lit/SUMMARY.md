@@ -1,33 +1,36 @@
 # Introduction
 
 [Introduction](./README.md)
-[The Tech](intro/tech.md)
-[Structure of the book](intro/structure.md)
+[The Tech](foundations/tech.md)
+[Structure of the book](foundations/structure.md)
+[Cabal, Extensions, Dependencies](foundations/cabal.md)
 
 ---
 
 # The Yaifl Library
 
-- [Foundations](foundations/foundations.md)
-  - [Cabal, Extensions, Dependencies](foundations/cabal.md)
-  - [Project Architecture](foundations/architecture.md)
-  - [wm :: WorldModel](foundations/worldmodel.md)
-  - [Entities, Stores and Objects](foundations/entities.md)
+- [Project Architecture](architecture.md)
   - [Effects](foundations/effects.md)
     - [Logging](foundations/logging.md)
-  - [The World State](world/state.md)
-  - [Construction and Execution](foundations/construction.md)
-- [The World Model](world/worldmodel.md)
-  - [Things and Rooms](world/things.md)
-  - [Reification](world/reification.md)
-  - [Properties](world/properties.md)
-    - [Get, Set, Modify](world/getsetmodify.md)
-  
-- [Rulebooks, Actions, and Activities](rulebooks/rulebooks.md)
-
+- [The World Model](worldmodel.md)
+  - [WorldModel and WMx Type Families](worldmodel/typefamilies.md)
+  - [The World State](worldmodel/state.md)
+  - [Objects](worldmodel/objects.md)
+    - [Entities and Stores](worldmodel/objects/entities-stores.md)
+    - [Objects, Things and Rooms](worldmodel/objects/things.md)
+    - [ObjectLike](worldmodel/objects/objectlike.md)
+    - [Object Specifics and Object Data](worldmodel/objects/specifics-data.md)
+    - [Reification](worldmodel/objects/reification.md)
+  - [Properties](properties.md)
+    - [Get, Set, Modify](properties/getsetmodify.md)
+- [Rulebooks, Actions, and Activities](rulebooks.md)
   - [Running a Rulebook](rulebooks/running.md)
   - [Action Processing](rulebooks/ap.md)
   - [Activities](rulebooks/activities.md)
+- [Construction and Execution](construction.md)
+- [Testing Framework](test-framework.md)
+  - [Test Coverage](tests/coverage.md)
+- [Miscellenia](other_miscellania.md)
 
 ---
 
@@ -42,15 +45,6 @@
 
 # Examples
 
-- [Testing Framework](tests/framework.md)
-
-- [Chapter 3 - Kinds](tests/chapter3.md)
-  - [Bic](tests/bic.md)
-  - [Verbosity](tests/verbosity.md)
-
-- [New Examples](tests/new.md)
-
-- [Missing Examples](tests/missing.md)
 ---
 
 [Module Headers and Other Miscellania](other_miscellania.md)

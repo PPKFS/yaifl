@@ -1,22 +1,16 @@
-# `wm :: WorldModel`
+# WorldModel and WMx Type Families
 
 ## The problem
 
-One thing that has repeatedly annoyed me when trying to hack around on `yaifl` is the desire to be as general as possible,
-but whilst doing my best to avoid writing imperative code but in Haskell. One of these major headscratching problems was how
-to have something akin to extensible records but in a more Haskell-y way. For instance, take object types. We can provide a 
-standard library of `Thing`, `Room`, `Door`, `Person`, `Vehicle`, etc. just fine; but what if we want to have a `Gate`? In
-an imperative language this is fine - just inherit from `Door`. In Haskell we could approximate this in the same way `Parsec`
-deals with its error types:
+One thing that has repeatedly annoyed me when trying to hack around on `yaifl` is the desire to be as general as possible, but whilst doing my best to avoid writing imperative code but in Haskell. One of these major headscratching problems was how to have something akin to extensible records but in a more Haskell-y way. For instance, take object types. We can provide a standard library of `Thing`, `Room`, `Door`, `Person`, `Vehicle`, etc. just fine; but what if we want to have a `Gate`? In an OO- language this is fine - just inherit from `Door`. In Haskell we can approximate this in the same way `Parsec` deals with its error types:
 
 ```haskell
 
 data ObjectType a = ThingType Thing | DoorType Door | RoomType Room ... | Other a
 ```
 
-And we are then open (as long as the user supplied `a` satisfies some conditions) to extensionality but closed at compile time.
-But this has the drawback that if you want this open-closed hierarchy on *many* types of data, you have a monolithic state that
-looks something like `MonolithicState a b c d e f g`. 
+And we are then open (as long as the user supplied `a` satisfies constraints that we impose, such as `Show` or `Eq`) to extensionality but closed at compile time. This has the drawback that if you want this open-closed hierarchy on *many* types of data, you have a monolithic state that
+looks something like `MonolithicState a b c d e f g`:
 
 - We want horizontally extendable object types, so we can start with `MonolithicWorld objType`. All cool.
 - Now we want directions; whilst the compass points are probably fine for nearly every game, sometimes you might want to have turnwise or widdershins. Now you have `MonolithicWorld objType directionType`. 
@@ -25,7 +19,7 @@ looks something like `MonolithicState a b c d e f g`.
 
 Chances are that most of those are going to be `()` - you don't want extra directions, or you don't define a special kind of door - but it's a huge pain to write out multiple times for each function signature.
 
-I tried to extract out the parametric types into their own cluster, and then work in an `mtl`-style way of component instances and typeclasses:
+We could work in an `mtl`-style way of component instances and typeclasses:
 
 ```haskell
 data MonolithicWorld s = MonolithicWorld
@@ -47,7 +41,7 @@ class HasDirections s b where
   directions :: Lens' (MonolithicWorld s) (Store (Direction b))
 ```
 
-But this quickly ran into problems that each of these different parameterised data types needed an `a` or a `b` and these constraints bubbled up to the top...and even then, I'd often get `ambiguous type variable a1` issues.
+But this quickly ran into the same problem; a function that dealt with both `Direction`s and `Object`s still needs both `a` and `b` to be parametric, and these constraints bubbled up to the top...plus, I'd often get `ambiguous type variable a1` issues.
 
 What if there was a way to do this with some type-level nonsense?
 
@@ -97,4 +91,3 @@ type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 type WMEq wm = WMConstr Eq wm
 ```
-

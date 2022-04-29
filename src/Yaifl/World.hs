@@ -1,3 +1,5 @@
+-- ~\~ language=Haskell filename=src/Yaifl/World.hs
+-- ~\~ begin <<lit/worldmodel/state.md|src/Yaifl/World.hs>>[0]
 {-|
 Module      : Yaifl.World
 Description : The monolithic record state that runs everything.
@@ -11,29 +13,13 @@ Stability   : No
 
 module Yaifl.World
   ( -- * Types
-    World(..)
-  , MonadWorld
+    World(..), MonadWorld
    -- * Modifying the world
-  , newEntityID
-  , setTitle
-  , getGlobalTime
-  , tickGlobalTime
-  , whenConstructingM
+  , newEntityID, setTitle, getGlobalTime, tickGlobalTime, whenConstructingM
     -- * Lenses
-  , title
-  , darknessWitnessed
-  , roomDescriptions
-  , actionProcessing
-  , actions
-  , things
-  , rooms
-  , previousRoom
-  , firstRoom
-  , whenPlayBegins
-  , addBaseActions
-  , activities
-  , currentPlayer
-  , currentStage
+  , title, darknessWitnessed, roomDescriptions, actionProcessing, actions, things
+  , rooms, previousRoom, firstRoom, whenPlayBegins, addBaseActions, activities
+  , currentPlayer, currentStage
   ) where
 
 import Solitude
@@ -47,37 +33,67 @@ import Yaifl.Objects.Dynamic
 import Yaifl.Actions.Looking
 import Yaifl.Actions.Going
 
--- | A convenient type synonym for a read-write World monad + logging
-type MonadWorld wm m = (MonadReader (World wm) m, MonadState (World wm) m, Logger m)
-
-
--- | The big one, a `World` is the monolithic record of all state in the game.
--- this includes creation information for the DSL, game specific information, actions
--- and processing rulebooks, as well as the world model (that deals with things and rooms).
 data World (wm :: WorldModel) = World
-  { _title :: !Text
-  , _entityCounter :: !(Entity, Entity)
-  , _dirtyTime :: !Bool
-  , _globalTime :: !Timestamp
-  , _darknessWitnessed :: !Bool
-  , _roomDescriptions :: !RoomDescriptions
-  , _things :: !(Store (AbstractThing wm))
-  , _rooms :: !(Store (AbstractRoom wm))
-  , _values :: !(Map Text (WMValues wm))
-  , _previousRoom :: !Entity
-  , _currentPlayer :: !Entity
-  , _firstRoom :: !(Maybe Entity)
+  { _worldMetadata :: Metadata wm
+  , _worldStaging :: WorldStaging wm
+  , _worldStores :: WorldStores wm
+  , _worldGameState :: WorldGameState wm
+  , _worldActions :: WorldActions wm
+  , _messageBuffers :: (MessageBuffer, MessageBuffer)
+  }
+
+-- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0]
+
+data Metadata wm = Metadata
+  { _title :: Text
+  , _roomDescriptions :: RoomDescriptions
+  -- more to come I guess
+  }
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|world-staging>>[0]
+data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+data WorldStaging (wm :: WorldModel) = WorldStaging
+  { _currentStage :: CurrentStage
+  , _previousRoom :: Entity
+  , _firstRoom :: Entity
+  }
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0]
+
+data WorldStores (wm :: WorldModel) = WorldStores
+  { _entityCounter :: (Entity, Entity)
+  , _things :: Store (AbstractThing wm)
+  , _rooms :: Store (AbstractRoom wm)
+  , _values :: Map Text (WMValues wm)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
-  , _actions :: !(Map Text (Action wm))
+  }
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0]
+
+data WorldActions (wm :: WorldModel) = WorldActions
+  { _actions :: !(Map Text (Action wm))
   , _activities :: !(ActivityCollection wm)
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
-  , _messageBuffers :: !(MessageBuffer, MessageBuffer)
   , _actionProcessing :: ActionProcessing wm
-  , _currentStage :: WorldStage
   }
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|world-game-state>>[0]
+
+data WorldGameState (wm :: WorldModel) = WorldGameState
+  { _dirtyTime :: Bool
+  , _globalTime :: Timestamp
+  , _darknessWitnessed :: Bool
+  , _currentPlayer :: Entity
+  }
+-- ~\~ end
 
 makeLenses ''World
 makeLenses ''WorldModel
+
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0]
+
 
 -- | Generate a new entity ID.
 newEntityID :: 
@@ -134,3 +150,5 @@ whenConstructingM cond =
   whenM (andM [do
     cs <- use currentStage
     return $ cs == Construction, cond])
+-- ~\~ end
+-- ~\~ end

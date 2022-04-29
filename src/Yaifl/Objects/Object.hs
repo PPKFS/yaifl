@@ -50,17 +50,22 @@ import Yaifl.Objects.Missing
 import {-# SOURCE #-} Yaifl.World
 import Control.Monad.Except (liftEither, throwError)
 
--- ~\~ begin <<lit/foundations/entities.md|obj-type>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-type>>[0]
 newtype ObjType = ObjType
   { unObjType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
 -- ~\~ end
-<thing-room-anyobject>
+-- ~\~ begin <<lit/worldmodel/objects/things.md|thing-room-anyobject>>[0]
+-- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
+type Thing wm = Object wm ThingData
+type Room wm = Object wm (RoomData wm)
+type AnyObject wm = Object wm (Either ThingData (RoomData wm))
+-- ~\~ end
 -- | An 'Object' is any kind of game object, where @a@ should either be ThingData/RoomData
 -- or Either ThingData RoomData
 
--- ~\~ begin <<lit/foundations/entities.md|obj-definition>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-definition>>[0]
 data Object wm objData = Object
   { _objName :: !Text
   , _objDescription :: !Text
@@ -74,12 +79,12 @@ data Object wm objData = Object
 deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
 deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
 -- ~\~ end
--- ~\~ begin <<lit/foundations/entities.md|obj-hasid>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-hasid>>[0]
 instance HasID (Object wm d) where
   getID = _objID
 -- ~\~ end
 
--- ~\~ begin <<lit/foundations/entities.md|obj-eq>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-eq>>[0]
 objectEquals :: 
   Object wm d
   -> Object wm d'
@@ -96,7 +101,7 @@ instance Ord (Object wm d) where
 
 makeLenses ''Object
 
--- ~\~ begin <<lit/foundations/entities.md|obj-functor>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-functor>>[0]
 
 instance Functor (Object wm) where
   fmap :: 
@@ -149,7 +154,7 @@ isType _ _ = return False
 -- ~\~ end
 
 
--- ~\~ begin <<lit/foundations/entities.md|can-be-any>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|can-be-any>>[0]
 class CanBeAny wm o where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o
@@ -167,7 +172,7 @@ instance CanBeAny wm (AnyObject wm) where
   fromAny = Just
 -- ~\~ end
 
--- ~\~ begin <<lit/foundations/entities.md|objectlike>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/objectlike.md|objectlike>>[0]
   
 class HasID o => ObjectLike wm o where
   getRoom :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Room wm)

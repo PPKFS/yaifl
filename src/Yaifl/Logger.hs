@@ -1,3 +1,6 @@
+-- ~\~ language=Haskell filename=src/Yaifl/Logger.hs
+-- ~\~ begin <<lit/foundations/logging.md|src/Yaifl/Logger.hs>>[0]
+
 {-|
 Module      : Yaifl.Logger
 Description : A wrapper around `Katip.Logger` that means I can swap it out more easily if I want to.
@@ -51,6 +54,7 @@ instance Logger m => Logger (MaybeT m) where
   err = lift . err
   withContext b (MaybeT f) = MaybeT (withContext b f)
 
+-- ~\~ begin <<lit/foundations/logging.md|callstack-logging>>[0]
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
 toLoc :: 
@@ -64,7 +68,8 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_start = (srcLocStartLine loc, srcLocStartCol loc),
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
-
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/logging.md|log-item>>[0]
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving stock (Show, Eq)
@@ -78,7 +83,8 @@ instance A.ToJSON a => A.ToJSON (YaiflItem a) where
       , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
       , "loc" A..= fmap reshapeFilename _itemLoc
       ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
-
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/logging.md|log-json>>[0]
 -- | Convert an absolute filename into...something else? I'm not sure.
 reshapeFilename :: 
   Loc 
@@ -104,3 +110,5 @@ jsonFormatYaifl withColor verb i =
   B.fromText $
   colorBySeverity withColor (_itemSeverity i) $
   toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
+-- ~\~ end
+-- ~\~ end
