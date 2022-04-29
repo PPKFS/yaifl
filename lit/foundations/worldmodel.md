@@ -23,7 +23,7 @@ looks something like `MonolithicState a b c d e f g`.
 - What about arbitrary data variables you want to keep track of during the game? Now you've got `MonolithicWorld objType directionType variableRecord`. 
 - And so on.
 
-Chances are that most of those are going to be `()` - you don't want extra directions, or you don't define a special kind of door - but it's a huge pain to write out each time.
+Chances are that most of those are going to be `()` - you don't want extra directions, or you don't define a special kind of door - but it's a huge pain to write out multiple times for each function signature.
 
 I tried to extract out the parametric types into their own cluster, and then work in an `mtl`-style way of component instances and typeclasses:
 

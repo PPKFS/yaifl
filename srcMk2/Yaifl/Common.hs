@@ -112,31 +112,6 @@ type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/other_miscellania.md|other-stuff1>>[0]
--- | Again lifted directly from Inform; this sets whether to always print room
--- descriptions (No..) even if the room is visited, to only print them on the first
--- entry (Sometimes..) or never.
-data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
-  | AbbreviatedRoomDescriptions
-  | NoAbbreviatedRoomDescriptions 
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
-data WorldStage = Construction | Playing 
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
--- | For now, a timestamp is simply an integer. The timestamp is updated whenever some
--- modification is made to the 'World'; therefore it does not directly correspond to
--- some sort of in-game turn counter. For example, throwing an object would result in
--- multiple timestamp jumps (an object moving, potential interactions on it hitting
--- something) whereas a sequence of 10 look actions will not (as the world does not
--- change). This is primarily used to ensure we can cache updates of objects that
--- change properties (e.g. strings).
-newtype Timestamp = Timestamp
-  { unTimestamp :: Int
-  } deriving stock   (Show, Read, Generic)
-    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
--- ~\~ end
-
 -- ~\~ begin <<lit/foundations/worldmodel.md|world-model>>[0]
 data WorldModel = WorldModel Type Type Type Type
 -- ~\~ end

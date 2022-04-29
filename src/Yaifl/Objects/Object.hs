@@ -1,3 +1,6 @@
+-- ~\~ language=Haskell filename=src/Yaifl/Objects/Object.hs
+-- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Objects/Object.hs>>[0]
+
 {-|
 Module      : Yaifl.Objects.Object
 Description : A game entity.
@@ -47,16 +50,17 @@ import Yaifl.Objects.Missing
 import {-# SOURCE #-} Yaifl.World
 import Control.Monad.Except (liftEither, throwError)
 
--- | ObjTypes make a DAG that approximates inheritance; for instance, we may only care
--- that an object *is* a kind of food, but we don't necessarily know what the @a@ is
--- or looks like.
+-- ~\~ begin <<lit/foundations/entities.md|obj-type>>[0]
 newtype ObjType = ObjType
   { unObjType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
-
+-- ~\~ end
+<thing-room-anyobject>
 -- | An 'Object' is any kind of game object, where @a@ should either be ThingData/RoomData
 -- or Either ThingData RoomData
+
+-- ~\~ begin <<lit/foundations/entities.md|obj-definition>>[0]
 data Object wm objData = Object
   { _objName :: !Text
   , _objDescription :: !Text
@@ -69,14 +73,18 @@ data Object wm objData = Object
 
 deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
 deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
-
+-- ~\~ end
+-- ~\~ begin <<lit/foundations/entities.md|obj-hasid>>[0]
 instance HasID (Object wm d) where
   getID = _objID
-  
--- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
-type Thing wm = Object wm ThingData
-type Room wm = Object wm (RoomData wm)
-type AnyObject wm = Object wm (Either ThingData (RoomData wm))
+-- ~\~ end
+
+-- ~\~ begin <<lit/foundations/entities.md|obj-eq>>[0]
+objectEquals :: 
+  Object wm d
+  -> Object wm d'
+  -> Bool
+objectEquals = (. _objID) . (==) . _objID
 
 instance Eq (Object wm d) where
   (==) = objectEquals
@@ -84,15 +92,11 @@ instance Eq (Object wm d) where
 -- | Maybe I'll need this instance for something or other? 
 instance Ord (Object wm d) where
   compare = (. _objID) . compare . _objID
-
--- | A more generic version of `(==)` that allows the type parameters to vary.
-objectEquals :: 
-  Object wm d
-  -> Object wm d'
-  -> Bool
-objectEquals = (. _objID) . (==) . _objID
+-- ~\~ end
 
 makeLenses ''Object
+
+-- ~\~ begin <<lit/foundations/entities.md|obj-functor>>[0]
 
 instance Functor (Object wm) where
   fmap :: 
@@ -115,7 +119,11 @@ instance Traversable (Object wm) where
     -> Object wm a 
     -> f (Object wm b)
   traverse f o = (\v -> o {_objData = v}) <$> f (_objData o)
+-- ~\~ end
 
+
+
+-- ~\~ begin <<lit/other_miscellania.md|other-stuff2>>[0]
 {-
 instance Prettify Text where
   prettify = id
@@ -127,14 +135,21 @@ instance Prettify (Object s d) where
         ", Specifics = " <> prettify _objSpecifics <>
         ", Data = " <> prettify _objData
 -}
--- | A prism for rooms.
-_Room :: Prism' (AnyObject wm) (Room wm)
-_Room = prism' (fmap Right) (traverse rightToMaybe)
+containedBy :: forall wm. Lens' (Thing wm) Entity
+containedBy = coercedTo @(Object wm ThingData) % objData % thingContainedBy
 
--- | A prism for things.
-_Thing :: Prism' (AnyObject wm) (Thing wm)
-_Thing = prism' (fmap Left) (traverse leftToMaybe)
+-- | Calculate whether one object type is a subclass of another
+isType
+  :: MonadReader (World wm) m
+  -- => ObjectLike wm o
+  => o
+  -> ObjType
+  -> m Bool
+isType _ _ = return False
+-- ~\~ end
 
+
+-- ~\~ begin <<lit/foundations/entities.md|can-be-any>>[0]
 class CanBeAny wm o where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o
@@ -150,8 +165,10 @@ instance CanBeAny wm (Thing wm) where
 instance CanBeAny wm (AnyObject wm) where
   toAny = id
   fromAny = Just
+-- ~\~ end
+
+-- ~\~ begin <<lit/foundations/entities.md|objectlike>>[0]
   
--- | Something is `ObjectLike` if you can query (or update) the world to get an object out of it.
 class HasID o => ObjectLike wm o where
   getRoom :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Room wm)
   default getRoom :: (NoMissingObjects m) => o -> m (Room wm)
@@ -174,17 +191,5 @@ instance ObjectLike wm (AnyObject wm) where
   getRoom t = liftEither
     (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
       (preview _Room t))
-      
-containedBy :: forall wm. Lens' (Thing wm) Entity
-containedBy = coercedTo @(Object wm ThingData) % objData % thingContainedBy
-
--- | Calculate whether one object type is a subclass of another
-isType
-  :: MonadReader (World wm) m
-  -- => ObjectLike wm o
-  => o
-  -> ObjType
-  -> m Bool
-isType _ _ = return False
-
-
+-- ~\~ end
+-- ~\~ end
