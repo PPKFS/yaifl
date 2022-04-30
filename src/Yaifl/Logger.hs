@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Logger.hs
--- ~\~ begin <<lit/foundations/logging.md|src/Yaifl/Logger.hs>>[0]
+-- ~\~ begin <<lit/effects/logging.md|src/Yaifl/Logger.hs>>[0]
 
 {-|
 Module      : Yaifl.Logger
@@ -54,7 +54,7 @@ instance Logger m => Logger (MaybeT m) where
   err = lift . err
   withContext b (MaybeT f) = MaybeT (withContext b f)
 
--- ~\~ begin <<lit/foundations/logging.md|callstack-logging>>[0]
+-- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0]
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
 toLoc :: 
@@ -69,7 +69,7 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
 -- ~\~ end
--- ~\~ begin <<lit/foundations/logging.md|log-item>>[0]
+-- ~\~ begin <<lit/effects/logging.md|log-item>>[0]
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving stock (Show, Eq)
@@ -84,7 +84,7 @@ instance A.ToJSON a => A.ToJSON (YaiflItem a) where
       , "loc" A..= fmap reshapeFilename _itemLoc
       ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
 -- ~\~ end
--- ~\~ begin <<lit/foundations/logging.md|log-json>>[0]
+-- ~\~ begin <<lit/effects/logging.md|log-json>>[0]
 -- | Convert an absolute filename into...something else? I'm not sure.
 reshapeFilename :: 
   Loc 

@@ -16,7 +16,11 @@ Stability   : No
 -}
 
 {-# LANGUAGE TemplateHaskell #-}
+module Yaifl.World where
+import Solitude
+import Yaifl.Common
 
+{-
 module Yaifl.World
   ( -- * Types
     World(..), MonadWorld
@@ -47,14 +51,14 @@ data World (wm :: WorldModel) = World
   , _worldActions :: WorldActions wm
   , _messageBuffers :: (MessageBuffer, MessageBuffer)
   }
-
+-}
 <<world-metadata>>
 <<world-staging>>
 <<world-stores>>
 <<world-actions>>
 <<world-game-state>>
 
-makeLenses ''World
+-- makeLenses ''World
 makeLenses ''WorldModel
 
 <<world-other>>
@@ -104,7 +108,7 @@ data WorldStaging (wm :: WorldModel) = WorldStaging
 The lookup tables for various objects, values, etc in the game. This is probably the most important part of the `World` state.
 
 ```haskell id=world-stores
-
+{-
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -112,6 +116,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _values :: Map Text (WMValues wm)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
+-}
 ```
 
 ## World Actions
@@ -119,13 +124,14 @@ data WorldStores (wm :: WorldModel) = WorldStores
 These are the dynamic parts that run things. This is the in-world actions, the standard activities (because user-defined activities can be done separately and don't need a lookup), and the two standalone rulebooks. Again, user-defined rulebooks act the same as activities and don't need to be stored around in the state.
 
 ```haskell id=world-actions
-
+{-
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Action wm))
   , _activities :: !(ActivityCollection wm)
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
   , _actionProcessing :: ActionProcessing wm
   }
+-}
 ```
 
 ## Game State
@@ -161,7 +167,7 @@ newtype Timestamp = Timestamp
 
 ```haskell id=world-other
 
-
+{-
 -- | Generate a new entity ID.
 newEntityID :: 
   Bool
@@ -217,4 +223,5 @@ whenConstructingM cond =
   whenM (andM [do
     cs <- use currentStage
     return $ cs == Construction, cond])
+-}
 ```

@@ -28,6 +28,8 @@ common common-options
     , text
     , solitude
     , optics
+    , cleff
+    , cleff-plugin
     , mtl 
     -- to remove
     , hspec 
@@ -57,6 +59,7 @@ common common-options
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
+    -fplugin=Cleff.Plugin
   default-language:   GHC2021
   default-extensions:
     NoImplicitPrelude
@@ -76,50 +79,50 @@ library
   exposed-modules:
     Yaifl
 
-    Yaifl.Actions.Action
-    Yaifl.Actions.Going
-    Yaifl.Actions.Looking
+    --Yaifl.Actions.Action
+    --Yaifl.Actions.Going
+    --Yaifl.Actions.Looking
 
-    Yaifl.Activities.Activity
-    Yaifl.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Activities.DescribingLocale
-    Yaifl.Activities.PrintingADarkRoom
-    Yaifl.Activities.PrintingDescriptionOfADarkRoom
-    Yaifl.Activities.PrintingLocaleParagraphAbout
-    Yaifl.Activities.PrintingNameOfSomething
+    --Yaifl.Activities.Activity
+    --Yaifl.Activities.ChoosingNotableLocaleObjects
+    --Yaifl.Activities.DescribingLocale
+    --Yaifl.Activities.PrintingADarkRoom
+    --Yaifl.Activities.PrintingDescriptionOfADarkRoom
+    --Yaifl.Activities.PrintingLocaleParagraphAbout
+    --Yaifl.Activities.PrintingNameOfSomething
 
-    Yaifl.ActivityCollection
+    --Yaifl.ActivityCollection
     Yaifl.Common
-    Yaifl.Directions
-    Yaifl.Game
+    --Yaifl.Directions
+    --Yaifl.Game
     Yaifl.Logger
 
-    Yaifl.Objects.Create
-    Yaifl.Objects.Dynamic
-    Yaifl.Objects.Missing
-    Yaifl.Objects.Move
-    Yaifl.Objects.Object
-    Yaifl.Objects.ObjectData
-    Yaifl.Objects.Query
-    Yaifl.Objects.Room
+    --Yaifl.Objects.Create
+    --Yaifl.Objects.Dynamic
+    --Yaifl.Objects.Missing
+    --Yaifl.Objects.Move
+    --Yaifl.Objects.Object
+    --Yaifl.Objects.ObjectData
+    --Yaifl.Objects.Query
+    --Yaifl.Objects.Room
 
-    Yaifl.ObjectSpecifics
-    Yaifl.Properties.Container
-    Yaifl.Properties.Enclosing
-    Yaifl.Properties.Openable
-    Yaifl.Properties.Property
-    Yaifl.Properties.Query
-    Yaifl.Properties.Supporter
-    Yaifl.Properties.TH
+    --Yaifl.ObjectSpecifics
+    --Yaifl.Properties.Container
+    --Yaifl.Properties.Enclosing
+    --Yaifl.Properties.Openable
+    --Yaifl.Properties.Property
+    --Yaifl.Properties.Query
+    --Yaifl.Properties.Supporter
+    --Yaifl.Properties.TH
 
-    Yaifl.Rulebooks.ActionProcessing
-    Yaifl.Rulebooks.Args
-    Yaifl.Rulebooks.Rulebook
-    Yaifl.Rulebooks.WhenPlayBegins
+    --Yaifl.Rulebooks.ActionProcessing
+    --Yaifl.Rulebooks.Args
+    --Yaifl.Rulebooks.Rulebook
+    --Yaifl.Rulebooks.WhenPlayBegins
 
     Yaifl.Say
     Yaifl.World
-    Yaifl.WorldInfo
+    --Yaifl.WorldInfo
 -- ~\~ end
 -- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6]
 test-suite yaifl-test

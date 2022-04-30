@@ -1,3 +1,5 @@
+-- ~\~ language=Haskell filename=src/Yaifl.hs
+-- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0]
 {- |
 Copyright: (c) 2020 Avery
 SPDX-License-Identifier: MIT
@@ -14,10 +16,11 @@ module Yaifl
   --, module Yaifl.Activities
     newWorld
   , blankWorld
-  , HasStandardProperties
-  , PlainWorldModel
+  --, HasStandardProperties
+  --, PlainWorldModel
   ) where
-
+import Solitude
+{-
 import Yaifl.World
 import Solitude
 import qualified Data.Map as DM
@@ -71,3 +74,7 @@ blankWorld = World
   , _dirtyTime = False
   , _currentStage = Construction
   }
+-}
+blankWorld = undefined
+newWorld = undefined
+-- ~\~ end

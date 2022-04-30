@@ -10,7 +10,11 @@ Stability   : No
 -}
 
 {-# LANGUAGE TemplateHaskell #-}
+module Yaifl.World where
+import Solitude
+import Yaifl.Common
 
+{-
 module Yaifl.World
   ( -- * Types
     World(..), MonadWorld
@@ -41,7 +45,7 @@ data World (wm :: WorldModel) = World
   , _worldActions :: WorldActions wm
   , _messageBuffers :: (MessageBuffer, MessageBuffer)
   }
-
+-}
 -- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0]
 
 data Metadata wm = Metadata
@@ -61,7 +65,7 @@ data WorldStaging (wm :: WorldModel) = WorldStaging
   }
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0]
-
+{-
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -69,15 +73,17 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _values :: Map Text (WMValues wm)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
+-}
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0]
-
+{-
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Action wm))
   , _activities :: !(ActivityCollection wm)
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
   , _actionProcessing :: ActionProcessing wm
   }
+-}
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/state.md|world-game-state>>[0]
 
@@ -89,12 +95,12 @@ data WorldGameState (wm :: WorldModel) = WorldGameState
   }
 -- ~\~ end
 
-makeLenses ''World
+-- makeLenses ''World
 makeLenses ''WorldModel
 
 -- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0]
 
-
+{-
 -- | Generate a new entity ID.
 newEntityID :: 
   Bool
@@ -150,5 +156,6 @@ whenConstructingM cond =
   whenM (andM [do
     cs <- use currentStage
     return $ cs == Construction, cond])
+-}
 -- ~\~ end
 -- ~\~ end

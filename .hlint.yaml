@@ -11,6 +11,7 @@
     - "-XTupleSections"
     - "-XTypeApplications"
     - "-XViewPatterns"
+    - "-fplugin=Cleff.Plugin"
 - ignore:
     name: Use head
 - ignore:

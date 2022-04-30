@@ -11,7 +11,8 @@
 
 - [Project Architecture](architecture.md)
   - [Effects](foundations/effects.md)
-    - [Logging](foundations/logging.md)
+    - [Saying](effects/say.md)
+    - [Logging](effects/logging.md)
 - [The World Model](worldmodel.md)
   - [WorldModel and WMx Type Families](worldmodel/typefamilies.md)
   - [The World State](worldmodel/state.md)
