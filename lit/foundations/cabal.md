@@ -197,8 +197,8 @@ test-suite yaifl-test
     TemplateHaskell
 
   other-modules:
-    Yaifl.Test.Chapter3.Bic
-    Yaifl.Test.Chapter3.Common
-    Yaifl.Test.Chapter3.Verbosity
-    Yaifl.Test.Common
+    --Yaifl.Test.Chapter3.Bic
+    --Yaifl.Test.Chapter3.Common
+    --Yaifl.Test.Chapter3.Verbosity
+    --Yaifl.Test.Common
 ```

@@ -35,8 +35,6 @@ head1 :: [a] -> a
 head1 [] = error ""
 head1 (x:_) = x
 
-x = show $ head1 []
-
 data MessageBuffer = MessageBuffer
   { _msgBufBuffer :: [StyledDoc] -- ^ Current messages held before flushing.
   , _msgBufStyle :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.

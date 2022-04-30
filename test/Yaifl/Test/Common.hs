@@ -1,7 +1,7 @@
 module Yaifl.Test.Common where
 
 import Solitude
-
+{-
 import Yaifl
 import qualified Data.EnumMap as DEM
 import qualified Data.Text as T
@@ -112,3 +112,4 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
 
 expectLooking :: Text -> Text -> Text
 expectLooking t d = expectLine t <> expectLine d
+-}
