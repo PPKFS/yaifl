@@ -22,13 +22,14 @@ data Log m where
   LogMsg :: MsgSeverity -> Log m () 
   AddContext :: Text -> Log m ()
   PopContext :: Log m ()
+  
   debug :: HasCallStack => TLB.Builder -> m ()
   info :: HasCallStack => TLB.Builder -> m ()
   warn :: HasCallStack => TLB.Builder -> m ()
   err :: HasCallStack => TLB.Builder -> m ()
   withContext :: HasCallStack => TLB.Builder -> m a -> m a
 
--- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0] project://lit/effects/logging.md:40
+-- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0] project://lit/effects/logging.md:41
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
 toLoc :: 
@@ -43,7 +44,7 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
 -- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:56
+-- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:57
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving stock (Show, Eq)
@@ -58,7 +59,7 @@ instance A.ToJSON a => A.ToJSON (YaiflItem a) where
       , "loc" A..= fmap reshapeFilename _itemLoc
       ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
 -- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-json>>[0] project://lit/effects/logging.md:72
+-- ~\~ begin <<lit/effects/logging.md|log-json>>[0] project://lit/effects/logging.md:73
 -- | Convert an absolute filename into...something else? I'm not sure.
 reshapeFilename :: 
   Loc 

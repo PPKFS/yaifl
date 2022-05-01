@@ -25,6 +25,7 @@ data Log m where
   LogMsg :: MsgSeverity -> Log m () 
   AddContext :: Text -> Log m ()
   PopContext :: Log m ()
+  
   debug :: HasCallStack => TLB.Builder -> m ()
   info :: HasCallStack => TLB.Builder -> m ()
   warn :: HasCallStack => TLB.Builder -> m ()
