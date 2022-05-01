@@ -1,6 +1,6 @@
 cabal-version:   3.0
 -- ~\~ language=Cabal filename=yaifl.cabal
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[0]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[0] project://lit/foundations/cabal.md:12
 name:            yaifl
 version:         0.0.0.1
 synopsis:        Yet another interactive fiction library.
@@ -13,13 +13,13 @@ maintainer:      Avery <thecommunistduck@hotmail.co.uk>
 copyright:       2022 Avery
 category:        Game Development
 build-type:      Simple
-tested-with: GHC == 9.2.1
+tested-with: GHC == 9.0.2
 
 source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1] project://lit/foundations/cabal.md:43
 common common-options
   build-depends:
       base
@@ -30,12 +30,13 @@ common common-options
     , optics
     , cleff
     , cleff-plugin
+    , cleff-optics
     , mtl 
     -- to remove
     , hspec 
     -- to remove
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:71
     , display
     , chapelure
     , formatting
@@ -43,7 +44,7 @@ common common-options
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:83
     , aeson
     , katip
     , enummapset
@@ -52,7 +53,7 @@ common common-options
     , neat-interpolation
     , sandwich
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:104
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -60,7 +61,7 @@ common common-options
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
     -fplugin=Cleff.Plugin
-  default-language:   GHC2021
+  default-language:   Haskell2010
   default-extensions:
     NoImplicitPrelude
     BlockArguments
@@ -71,8 +72,21 @@ common common-options
     MultiWayIf
     OverloadedStrings
     TypeFamilies
+    TypeApplications
+    ConstraintKinds
+    FlexibleInstances
+    FlexibleContexts
+    GeneralisedNewtypeDeriving
+    DeriveGeneric
+    DeriveTraversable
+    StandaloneDeriving
+    RankNTypes
+    ScopedTypeVariables
+    BangPatterns
+    GADTs
+    TypeOperators
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:143
 library
   import:          common-options
   hs-source-dirs:  src
@@ -124,7 +138,7 @@ library
     Yaifl.World
     --Yaifl.WorldInfo
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6]
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:198
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0

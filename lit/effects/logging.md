@@ -1,20 +1,9 @@
 # Logging
 
-The logging is currently a thin wrapper around `katip`, which does some lovely and customisable logging.
+The logging is currently a thin wrapper around `katip`, which does some lovely and customisable logging. Mostly we use an effect here to 
 
 ```haskell file=src/Yaifl/Logger.hs
-
-{-|
-Module      : Yaifl.Logger
-Description : A wrapper around `Katip.Logger` that means I can swap it out more easily if I want to.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Logger 
   ( -- * Logging functions
@@ -25,37 +14,22 @@ module Yaifl.Logger
   ) where
 
 import Solitude
-import Katip
 import Language.Haskell.TH ( Loc(..) )
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Data.Text.Lazy.Builder as B
 import qualified Data.Aeson as A
 import qualified Data.Text as T
-import Katip.Format.Time (formatAsLogTime)
-import Katip.Scribes.Handle (colorBySeverity)
 import GHC.Stack.Types
 
--- | An abstract interface for logging functions which are capable of reporting source locations.
-class Monad m => Logger m where
+data Log m where
+  LogMsg :: MsgSeverity -> Log m () 
+  AddContext :: Text -> Log m ()
+  PopContext :: Log m ()
   debug :: HasCallStack => TLB.Builder -> m ()
   info :: HasCallStack => TLB.Builder -> m ()
   warn :: HasCallStack => TLB.Builder -> m ()
   err :: HasCallStack => TLB.Builder -> m ()
   withContext :: HasCallStack => TLB.Builder -> m a -> m a
-
-instance Logger m => Logger (ExceptT e m) where
-  debug = lift . debug
-  info = lift . info
-  warn = lift . warn
-  err = lift . err
-  withContext b (ExceptT f) = ExceptT (withContext b f)
-
-instance Logger m => Logger (MaybeT m) where
-  debug = lift . debug
-  info = lift . info
-  warn = lift . warn
-  err = lift . err
-  withContext b (MaybeT f) = MaybeT (withContext b f)
 
 <<callstack-logging>>
 <<log-item>>
@@ -82,7 +56,7 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving stock (Show, Eq)
-    deriving newtype (Generic, Functor)
+    deriving newtype (Functor)
 
 instance A.ToJSON a => A.ToJSON (YaiflItem a) where
     toJSON (YaiflItem Item{..}) = A.object $

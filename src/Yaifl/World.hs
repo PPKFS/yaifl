@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/World.hs
--- ~\~ begin <<lit/worldmodel/state.md|src/Yaifl/World.hs>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|src/Yaifl/World.hs>>[0] project://lit/worldmodel/state.md:9
 {-|
 Module      : Yaifl.World
 Description : The monolithic record state that runs everything.
@@ -46,7 +46,7 @@ data World (wm :: WorldModel) = World
   , _messageBuffers :: (MessageBuffer, MessageBuffer)
   }
 -}
--- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:72
 
 data Metadata wm = Metadata
   { _title :: Text
@@ -54,7 +54,7 @@ data Metadata wm = Metadata
   -- more to come I guess
   }
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-staging>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-staging>>[0] project://lit/worldmodel/state.md:96
 data CurrentStage = Construction | Verification | Runtime
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
@@ -64,7 +64,7 @@ data WorldStaging (wm :: WorldModel) = WorldStaging
   , _firstRoom :: Entity
   }
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:111
 {-
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
@@ -75,7 +75,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   }
 -}
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:127
 {-
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Action wm))
@@ -85,7 +85,7 @@ data WorldActions (wm :: WorldModel) = WorldActions
   }
 -}
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-game-state>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-game-state>>[0] project://lit/worldmodel/state.md:142
 
 data WorldGameState (wm :: WorldModel) = WorldGameState
   { _dirtyTime :: Bool
@@ -98,7 +98,7 @@ data WorldGameState (wm :: WorldModel) = WorldGameState
 -- makeLenses ''World
 makeLenses ''WorldModel
 
--- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:169
 
 {-
 -- | Generate a new entity ID.

@@ -1,7 +1,6 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Say.hs
--- ~\~ begin <<lit/effects/say.md|src/Yaifl/Say.hs>>[0]
+-- ~\~ begin <<lit/effects/say.md|src/Yaifl/Say.hs>>[0] project://lit/effects/say.md:6
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fplugin=Cleff.Plugin #-}
 
 module Yaifl.Say
   ( -- * Types
@@ -28,17 +27,13 @@ type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data Saying :: Effect where
   SayDoc :: StyledDoc -> Saying m ()
 
-head1 :: [a] -> a
-head1 [] = error ""
-head1 (x:_) = x
-
 data MessageBuffer = MessageBuffer
   { _msgBufBuffer :: [StyledDoc] -- ^ Current messages held before flushing.
   , _msgBufStyle :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
   , _msgBufContext :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   }
 
--- ~\~ begin <<lit/effects/say.md|say-helpers>>[0]
+-- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:48
 -- | Message buffer with nothing in it and no formatting.
 emptyMessageBuffer :: MessageBuffer
 emptyMessageBuffer = MessageBuffer [] Nothing []
@@ -46,7 +41,7 @@ emptyMessageBuffer = MessageBuffer [] Nothing []
 makeEffect ''Saying
 makeLenses ''MessageBuffer
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say>>[0]
+-- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:61
 processDoc ::
   State MessageBuffer :> es
   => StyledDoc
@@ -59,33 +54,25 @@ processDoc msg = do
         _ -> (PP.<+>)
   return $ PP.hcat cxt `joinOp` maybe id PP.annotate style msg
 
--- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0]
+-- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:80
 
 class Has s t where
   buf :: Lens' s t
 
 type PartialState s t es = (Has s t, State s :> es)
 
-zoom :: State t :> es => Lens' t s -> Eff (State s : es) ~> Eff es
-zoom field = interpret \case
-  Get     -> gets (^. field)
-  Put s   -> modify (& field .~ s)
-  State f -> state \t -> let (a, !s) = f (t ^. field) in (a, t & field .~ s)
-{-# INLINE zoom #-}
-
 runSayPure ::
   forall s es. 
   PartialState s MessageBuffer es
-  => Proxy s -- ^ we need this to avoid ambiguous types as `s` vanishes
-  -> Eff (Saying : es)
+  => Eff (Saying : es)
   ~> Eff es
-runSayPure _ = zoom @s @_ @MessageBuffer buf . reinterpret \case
+runSayPure = zoom buf . reinterpret \case
   SayDoc doc -> do
     r <- processDoc doc
     modify (\s -> s & msgBufBuffer %~ (r:))
 
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0]
+-- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:109
 runSayIO ::
   IOE :> es
   => Eff (Saying : es)
@@ -95,8 +82,7 @@ runSayIO = interpretIO \case
 -- ~\~ end
 -- ~\~ end
 
--- ~\~ begin <<lit/effects/say.md|say-functions>>[0]
-
+-- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:122
 -- | Say a string (well, Text).
 say :: 
   Saying :> es 
@@ -129,8 +115,6 @@ setStyle ::
   -> Eff es ()
 setStyle s = buf @s @MessageBuffer % msgBufStyle .= s
 
-(.=) :: State s :> es => Lens' s a -> a -> Eff es ()
-(.=) = undefined
 {-
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.

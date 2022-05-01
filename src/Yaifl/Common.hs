@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Common.hs
--- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Common.hs>>[0]
+-- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Common.hs>>[0] project://lit/other_miscellania.md:10
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Yaifl.Common
@@ -36,13 +36,13 @@ import Display
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
 
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0] project://lit/worldmodel/objects/entities-stores.md:10
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
     deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|thing-or-room>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|thing-or-room>>[0] project://lit/worldmodel/objects/entities-stores.md:21
 isThing ::
   (HasID a)
   => a
@@ -55,14 +55,14 @@ isRoom ::
   -> Bool
 isRoom = not . isThing
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|has-id>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|has-id>>[0] project://lit/worldmodel/objects/entities-stores.md:37
 class HasID n where
   getID :: n -> Entity
 
 instance HasID Entity where
   getID = id
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:47
 defaultVoidID :: Entity
 defaultVoidID = Entity (-1)
 
@@ -72,7 +72,7 @@ defaultNothingID = Entity 0
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:63
 -- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
@@ -82,7 +82,7 @@ newtype Store a = Store
 emptyStore :: Store a
 emptyStore = Store EM.empty
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:80
 alterEMF :: 
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
@@ -101,23 +101,23 @@ alterNewtypeEMF ::
   -> f nt
 alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0] project://lit/worldmodel/objects/entities-stores.md:102
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0] project://lit/worldmodel/objects/entities-stores.md:109
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:85
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0]
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:156
 
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
@@ -125,10 +125,10 @@ newtype Timestamp = Timestamp
     deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
 
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model>>[0]
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model>>[0] project://lit/worldmodel/typefamilies.md:53
 data WorldModel = WorldModel Type Type Type Type
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-families>>[0]
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-families>>[0] project://lit/worldmodel/typefamilies.md:67
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
 
@@ -138,7 +138,7 @@ type family WMDirections (wm :: WorldModel) :: Type where
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v) = o
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-constraints>>[0]
+-- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-constraints>>[0] project://lit/worldmodel/typefamilies.md:88
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirections wm))
 type WMShow wm = WMConstr Show wm
 type WMRead wm = WMConstr Read wm

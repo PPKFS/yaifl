@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl.hs
--- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0]
+-- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0] project://lit/construction.md:8
 {- |
 Copyright: (c) 2020 Avery
 SPDX-License-Identifier: MIT

@@ -22,7 +22,7 @@ maintainer:      Avery <thecommunistduck@hotmail.co.uk>
 copyright:       2022 Avery
 category:        Game Development
 build-type:      Simple
-tested-with: GHC == 9.2.1
+tested-with: GHC == 9.0.2
 
 source-repository head
   type:     git
@@ -50,6 +50,7 @@ common common-options
     , optics
     , cleff
     , cleff-plugin
+    , cleff-optics
     , mtl 
     -- to remove
     , hspec 
@@ -108,7 +109,7 @@ wanted to try it.
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
     -fplugin=Cleff.Plugin
-  default-language:   GHC2021
+  default-language:   Haskell2010
   default-extensions:
     NoImplicitPrelude
     BlockArguments
@@ -119,6 +120,19 @@ wanted to try it.
     MultiWayIf
     OverloadedStrings
     TypeFamilies
+    TypeApplications
+    ConstraintKinds
+    FlexibleInstances
+    FlexibleContexts
+    GeneralisedNewtypeDeriving
+    DeriveGeneric
+    DeriveTraversable
+    StandaloneDeriving
+    RankNTypes
+    ScopedTypeVariables
+    BangPatterns
+    GADTs
+    TypeOperators
 ```
 
 We enable a whole bunch of options and extensions. Notably `NoImplicitPrelude` makes it easier than fiddling with

@@ -1,17 +1,6 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Logger.hs
--- ~\~ begin <<lit/effects/logging.md|src/Yaifl/Logger.hs>>[0]
-
-{-|
-Module      : Yaifl.Logger
-Description : A wrapper around `Katip.Logger` that means I can swap it out more easily if I want to.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
+-- ~\~ begin <<lit/effects/logging.md|src/Yaifl/Logger.hs>>[0] project://lit/effects/logging.md:6
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Logger 
   ( -- * Logging functions
@@ -22,39 +11,24 @@ module Yaifl.Logger
   ) where
 
 import Solitude
-import Katip
 import Language.Haskell.TH ( Loc(..) )
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Data.Text.Lazy.Builder as B
 import qualified Data.Aeson as A
 import qualified Data.Text as T
-import Katip.Format.Time (formatAsLogTime)
-import Katip.Scribes.Handle (colorBySeverity)
 import GHC.Stack.Types
 
--- | An abstract interface for logging functions which are capable of reporting source locations.
-class Monad m => Logger m where
+data Log m where
+  LogMsg :: MsgSeverity -> Log m () 
+  AddContext :: Text -> Log m ()
+  PopContext :: Log m ()
   debug :: HasCallStack => TLB.Builder -> m ()
   info :: HasCallStack => TLB.Builder -> m ()
   warn :: HasCallStack => TLB.Builder -> m ()
   err :: HasCallStack => TLB.Builder -> m ()
   withContext :: HasCallStack => TLB.Builder -> m a -> m a
 
-instance Logger m => Logger (ExceptT e m) where
-  debug = lift . debug
-  info = lift . info
-  warn = lift . warn
-  err = lift . err
-  withContext b (ExceptT f) = ExceptT (withContext b f)
-
-instance Logger m => Logger (MaybeT m) where
-  debug = lift . debug
-  info = lift . info
-  warn = lift . warn
-  err = lift . err
-  withContext b (MaybeT f) = MaybeT (withContext b f)
-
--- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0]
+-- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0] project://lit/effects/logging.md:40
 -- | Try to extract the last callsite from some GHC 'CallStack' and convert it
 -- to a 'Loc' so that it can be logged with 'logItemM'.
 toLoc :: 
@@ -69,11 +43,11 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
 -- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-item>>[0]
+-- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:56
 newtype YaiflItem a = YaiflItem
   { toKatipItem :: Item a
   } deriving stock (Show, Eq)
-    deriving newtype (Generic, Functor)
+    deriving newtype (Functor)
 
 instance A.ToJSON a => A.ToJSON (YaiflItem a) where
     toJSON (YaiflItem Item{..}) = A.object $
@@ -84,7 +58,7 @@ instance A.ToJSON a => A.ToJSON (YaiflItem a) where
       , "loc" A..= fmap reshapeFilename _itemLoc
       ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
 -- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-json>>[0]
+-- ~\~ begin <<lit/effects/logging.md|log-json>>[0] project://lit/effects/logging.md:72
 -- | Convert an absolute filename into...something else? I'm not sure.
 reshapeFilename :: 
   Loc 

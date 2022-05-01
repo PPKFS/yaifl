@@ -2,4 +2,6 @@ cradle:
   cabal:
     - path: "src"
       component: "lib:yaifl"
-    
+
+    - path: "test"
+      component: "yaifl:test:yaifl-test"

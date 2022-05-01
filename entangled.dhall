@@ -110,7 +110,8 @@ let watchList = [ "lit/*.md", "lit/foundations/*.md", "lit/properties/*.md",
 in { entangled = entangled.Config :: { database = database
                                      , watchList = watchList
                                      , languages = languages
-                                     , syntax = syntax }
+                                     , syntax = syntax
+                                     , annotate = entangled.Annotate.Project }
 
 {- Extra options
    -------------

@@ -1,10 +1,9 @@
-# Say
+# Yaifl.Say
 
 As mentioned in [the World state](../../worldmodel.md), we want to be able to store the game output to make it easier to test (as opposed to trying to intercept `stdout`). Fortunately, with effects this is just a riff on every `Teletype` example that seems to be standard with effect frameworks.
 
 ```haskell file=src/Yaifl/Say.hs
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fplugin=Cleff.Plugin #-}
 
 module Yaifl.Say
   ( -- * Types
@@ -31,10 +30,6 @@ type StyledDoc = PP.Doc PPTTY.AnsiStyle
 data Saying :: Effect where
   SayDoc :: StyledDoc -> Saying m ()
 
-head1 :: [a] -> a
-head1 [] = error ""
-head1 (x:_) = x
-
 data MessageBuffer = MessageBuffer
   { _msgBufBuffer :: [StyledDoc] -- ^ Current messages held before flushing.
   , _msgBufStyle :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
@@ -60,7 +55,7 @@ makeLenses ''MessageBuffer
 
 ## Interpreting SayDoc
 
-Both interpreters do very similar things, with the difference being where the output ends up. We need a `MessageBuffer` to be present in the effect stack regardless to pre-process the doc.
+Both interpreters do very similar things, with the difference being where the output ends up. We need a `MessageBuffer` to be present in the effect stack regardless to pre-process the doc by setting the style and amending any context.
 
 ```haskell id=interpret-say
 processDoc ::
@@ -88,20 +83,12 @@ class Has s t where
 
 type PartialState s t es = (Has s t, State s :> es)
 
-zoom :: State t :> es => Lens' t s -> Eff (State s : es) ~> Eff es
-zoom field = interpret \case
-  Get     -> gets (^. field)
-  Put s   -> modify (& field .~ s)
-  State f -> state \t -> let (a, !s) = f (t ^. field) in (a, t & field .~ s)
-{-# INLINE zoom #-}
-
 runSayPure ::
   forall s es. 
   PartialState s MessageBuffer es
-  => Proxy s -- ^ we need this to avoid ambiguous types as `s` vanishes
-  -> Eff (Saying : es)
+  => Eff (Saying : es)
   ~> Eff es
-runSayPure _ = zoom @s @_ @MessageBuffer buf . reinterpret \case
+runSayPure = zoom buf . reinterpret \case
   SayDoc doc -> do
     r <- processDoc doc
     modify (\s -> s & msgBufBuffer %~ (r:))
@@ -124,7 +111,6 @@ runSayIO = interpretIO \case
 And now we can write our `say` functions independent of whether we're in a pure or IO context. There's a handful of variations just because it's easier to do it all here.
 
 ```haskell id=say-functions
-
 -- | Say a string (well, Text).
 say :: 
   Saying :> es 
@@ -157,8 +143,6 @@ setStyle ::
   -> Eff es ()
 setStyle s = buf @s @MessageBuffer % msgBufStyle .= s
 
-(.=) :: State s :> es => Lens' s a -> a -> Eff es ()
-(.=) = undefined
 {-
 -- | Clear a message buffer and return the container (with a clean buffer) and the string
 -- with all formatting (e.g. ANSI colour codes) removed.

@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Objects/Object.hs
--- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Objects/Object.hs>>[0]
+-- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Objects/Object.hs>>[0] project://lit/other_miscellania.md:88
 
 {-|
 Module      : Yaifl.Objects.Object
@@ -50,13 +50,13 @@ import Yaifl.Objects.Missing
 import {-# SOURCE #-} Yaifl.World
 import Control.Monad.Except (liftEither, throwError)
 
--- ~\~ begin <<lit/worldmodel/objects/things.md|obj-type>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-type>>[0] project://lit/worldmodel/objects/things.md:93
 newtype ObjType = ObjType
   { unObjType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/things.md|thing-room-anyobject>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|thing-room-anyobject>>[0] project://lit/worldmodel/objects/things.md:107
 -- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
 type Thing wm = Object wm ThingData
 type Room wm = Object wm (RoomData wm)
@@ -65,7 +65,7 @@ type AnyObject wm = Object wm (Either ThingData (RoomData wm))
 -- | An 'Object' is any kind of game object, where @a@ should either be ThingData/RoomData
 -- or Either ThingData RoomData
 
--- ~\~ begin <<lit/worldmodel/objects/things.md|obj-definition>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-definition>>[0] project://lit/worldmodel/objects/things.md:10
 data Object wm objData = Object
   { _objName :: !Text
   , _objDescription :: !Text
@@ -79,12 +79,12 @@ data Object wm objData = Object
 deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
 deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/things.md|obj-hasid>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-hasid>>[0] project://lit/worldmodel/objects/things.md:38
 instance HasID (Object wm d) where
   getID = _objID
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/objects/things.md|obj-eq>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-eq>>[0] project://lit/worldmodel/objects/things.md:47
 objectEquals :: 
   Object wm d
   -> Object wm d'
@@ -101,7 +101,7 @@ instance Ord (Object wm d) where
 
 makeLenses ''Object
 
--- ~\~ begin <<lit/worldmodel/objects/things.md|obj-functor>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|obj-functor>>[0] project://lit/worldmodel/objects/things.md:64
 
 instance Functor (Object wm) where
   fmap :: 
@@ -128,7 +128,7 @@ instance Traversable (Object wm) where
 
 
 
--- ~\~ begin <<lit/other_miscellania.md|other-stuff2>>[0]
+-- ~\~ begin <<lit/other_miscellania.md|other-stuff2>>[0] project://lit/other_miscellania.md:63
 {-
 instance Prettify Text where
   prettify = id
@@ -154,7 +154,7 @@ isType _ _ = return False
 -- ~\~ end
 
 
--- ~\~ begin <<lit/worldmodel/objects/things.md|can-be-any>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/things.md|can-be-any>>[0] project://lit/worldmodel/objects/things.md:135
 class CanBeAny wm o where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o
@@ -172,7 +172,7 @@ instance CanBeAny wm (AnyObject wm) where
   fromAny = Just
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/objects/objectlike.md|objectlike>>[0]
+-- ~\~ begin <<lit/worldmodel/objects/objectlike.md|objectlike>>[0] project://lit/worldmodel/objects/objectlike.md:9
   
 class HasID o => ObjectLike wm o where
   getRoom :: (NoMissingObjects m, MonadWorld wm m) => o -> m (Room wm)

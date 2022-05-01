@@ -1,0 +1,57 @@
+cabal-version:       2.4
+name:                cleff-optics
+version:             0.1.0.0
+synopsis:            See README for more info
+description:
+homepage:            
+bug-reports:         
+license:             MIT
+license-file:        LICENSE
+author:              Avery
+maintainer:          Avery <thecommunistduck@hotmail.co.uk>
+copyright:           2022 Avery
+category:            
+build-type:          Simple
+extra-doc-files:     README.md
+                     CHANGELOG.md
+
+common common-options
+  build-depends:       base
+                     , optics-core
+                     , cleff
+                     
+  ghc-options:         -Wall
+                       -Wcompat
+                       -Widentities
+                       -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates
+                       -Wredundant-constraints
+                       -Wnoncanonical-monad-instances
+  if impl(ghc >= 8.2)
+    ghc-options:       -fhide-source-paths
+  if impl(ghc >= 8.4)
+    ghc-options:       -Wmissing-export-lists
+                       -Wpartial-fields
+  if impl(ghc >= 8.8)
+    ghc-options:       -Wmissing-deriving-strategies
+                       -fwrite-ide-info
+                       -hiedir=.hie
+  if impl(ghc >= 8.10)
+    ghc-options:       -Wunused-packages
+  default-language:    Haskell2010
+  default-extensions:  TypeApplications
+                       ConstraintKinds
+                       FlexibleContexts
+                       TypeOperators
+                       LambdaCase
+                       BlockArguments
+                       TypeFamilies
+                       FlexibleInstances
+                       FunctionalDependencies
+                       DataKinds
+                       BangPatterns
+
+library
+  import:              common-options
+  hs-source-dirs:      src
+  exposed-modules:     Optics.Cleff
