@@ -36,13 +36,13 @@ import Display
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
 
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0] project://lit/worldmodel/objects/entities-stores.md:10
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0] project://lit/worldmodel/objects/entities-stores.md:7
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
     deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|thing-or-room>>[0] project://lit/worldmodel/objects/entities-stores.md:21
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|thing-or-room>>[0] project://lit/worldmodel/objects/entities-stores.md:18
 isThing ::
   (HasID a)
   => a
@@ -55,14 +55,14 @@ isRoom ::
   -> Bool
 isRoom = not . isThing
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|has-id>>[0] project://lit/worldmodel/objects/entities-stores.md:37
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|has-id>>[0] project://lit/worldmodel/objects/entities-stores.md:34
 class HasID n where
   getID :: n -> Entity
 
 instance HasID Entity where
   getID = id
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:47
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:44
 defaultVoidID :: Entity
 defaultVoidID = Entity (-1)
 
@@ -72,7 +72,7 @@ defaultNothingID = Entity 0
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:63
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:59
 -- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
@@ -82,7 +82,7 @@ newtype Store a = Store
 emptyStore :: Store a
 emptyStore = Store EM.empty
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:80
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:76
 alterEMF :: 
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
@@ -101,11 +101,11 @@ alterNewtypeEMF ::
   -> f nt
 alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0] project://lit/worldmodel/objects/entities-stores.md:102
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0] project://lit/worldmodel/objects/entities-stores.md:98
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0] project://lit/worldmodel/objects/entities-stores.md:109
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0] project://lit/worldmodel/objects/entities-stores.md:105
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)

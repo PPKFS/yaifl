@@ -1,39 +1,101 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Logger.hs
 -- ~\~ begin <<lit/effects/logging.md|src/Yaifl/Logger.hs>>[0] project://lit/effects/logging.md:6
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Logger 
-  ( -- * Logging functions
-    Logger(..)
-  , YaiflItem(..)
-  , toLoc
-  , jsonFormatYaifl
-  ) where
+module Yaifl.Logger where
 
-import Solitude
+import Solitude hiding ( trace, local, asks, Reader, runReader )
 import Language.Haskell.TH ( Loc(..) )
 import qualified Data.Text.Lazy.Builder as TLB
-import qualified Data.Text.Lazy.Builder as B
+import Cleff.Trace ( trace, Trace )
+import Cleff.Reader ( Reader, asks, local )
+import Data.Text.Display ( display, Display, ShowInstance(..) )
+import GHC.Stack
+import Data.Time ( getCurrentTime, UTCTime )
 import qualified Data.Aeson as A
 import qualified Data.Text as T
-import GHC.Stack.Types
+import Katip.Format.Time ( formatAsLogTime )
 
-data Log m where
-  LogMsg :: MsgSeverity -> Log m () 
-  AddContext :: Text -> Log m ()
-  PopContext :: Log m ()
-  
-  debug :: HasCallStack => TLB.Builder -> m ()
-  info :: HasCallStack => TLB.Builder -> m ()
-  warn :: HasCallStack => TLB.Builder -> m ()
-  err :: HasCallStack => TLB.Builder -> m ()
-  withContext :: HasCallStack => TLB.Builder -> m a -> m a
+-- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:30
+data MsgSeverity = Debug | Info | Warning | Error
+  deriving stock (Eq, Ord, Enum, Bounded, Show)
+  deriving (Display) via (ShowInstance MsgSeverity)
 
--- ~\~ begin <<lit/effects/logging.md|callstack-logging>>[0] project://lit/effects/logging.md:41
--- | Try to extract the last callsite from some GHC 'CallStack' and convert it
--- to a 'Loc' so that it can be logged with 'logItemM'.
+data Log :: Effect where
+  LogMsg :: Maybe Loc -> MsgSeverity -> Text -> Log m () 
+  WithContext :: Text -> m a -> Log m ()
+
+makeEffect ''Log
+-- ~\~ begin <<lit/effects/logging.md|log-interpreters>>[0] project://lit/effects/logging.md:50
+runAndIgnoreLogging :: 
+  Eff (Log : es) 
+  ~> Eff es
+runAndIgnoreLogging = interpret \case
+  LogMsg _ _ _ -> pass
+  WithContext _ m -> toEff $ void m
+
+runLoggingAsTrace :: 
+  [Reader [Text], IOE] :>> es 
+  => Eff (Log : es) 
+  ~> Eff (Trace : es)
+runLoggingAsTrace = reinterpret \case
+  LogMsg mbLoc sev msg -> do
+    now <- liftIO getCurrentTime
+    cxt <- asks reverse
+    trace $ makeJSONObject now cxt sev mbLoc msg
+  WithContext cxt m -> void $ local (cxt:) (toEff m)
+
+makeJSONObject :: UTCTime -> [Text] -> MsgSeverity -> Maybe Loc -> Text -> String
+makeJSONObject now cxt sev mbLoc pl = (decodeUtf8 $ A.encode $
+  YaiflItem
+  { itemSeverity = display sev
+  , itemLoc = mbLoc
+  , itemMessage = pl
+  , itemTime = now
+  , itemContext = cxt
+  })
+-- ~\~ end
+-- ~\~ begin <<lit/effects/logging.md|log-functions>>[0] project://lit/effects/logging.md:102
+logInternal ::
+  HasCallStack
+  => Log :> es
+  => MsgSeverity
+  -> TLB.Builder
+  -> Eff es ()
+logInternal sev msg = logMsg (toLoc callStack) sev (toText $ TLB.toLazyText msg)
+
+debug :: 
+  HasCallStack
+  => Log :> es
+  => TLB.Builder
+  -> Eff es ()
+debug = logInternal Debug
+
+info :: 
+  HasCallStack 
+  => Log :> es
+  => TLB.Builder
+  -> Eff es ()
+info = logInternal Info
+
+warn :: 
+  HasCallStack 
+  => Log :> es
+  => TLB.Builder
+  -> Eff es ()
+warn = logInternal Warning
+
+err :: 
+  HasCallStack 
+  => Log :> es
+  => TLB.Builder
+  -> Eff es ()
+err = logInternal Error
+-- ~\~ end
+-- ~\~ begin <<lit/effects/logging.md|callstack-log>>[0] project://lit/effects/logging.md:84
 toLoc :: 
-  CallStack 
+  CallStack
   -> Maybe Loc
 toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) -> 
   Loc
@@ -44,46 +106,29 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
 -- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:57
-newtype YaiflItem a = YaiflItem
-  { toKatipItem :: Item a
-  } deriving stock (Show, Eq)
-    deriving newtype (Functor)
+-- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:146
 
-instance A.ToJSON a => A.ToJSON (YaiflItem a) where
-    toJSON (YaiflItem Item{..}) = A.object $
-      [ "level" A..= _itemSeverity
-      , "message" A..= B.toLazyText (unLogStr _itemMessage)
-      , "timestamp" A..= formatAsLogTime _itemTime
-      , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ unNamespace _itemNamespace) in if T.empty == f then "" else "❬"<>f<>"❭"
-      , "loc" A..= fmap reshapeFilename _itemLoc
-      ] ++ ["data" A..=  _itemPayload | A.encode _itemPayload /= "{}"]
--- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-json>>[0] project://lit/effects/logging.md:73
--- | Convert an absolute filename into...something else? I'm not sure.
 reshapeFilename :: 
   Loc 
   -> String
 reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) <> ":" <> show (fst loc_start) <> ":" <> show (snd loc_start)
 
--- | Convert log item to its JSON representation while trimming its
--- payload based on the desired verbosity. Backends that push JSON
--- messages should use this to obtain their payload.
-itemJsonYaifl :: 
-  LogItem a
-  => Verbosity
-  -> YaiflItem a
-  -> A.Value
-itemJsonYaifl verb (YaiflItem a) = A.toJSON
-  $ YaiflItem $ a { _itemPayload = payloadObject verb (_itemPayload a) }
+data YaiflItem = YaiflItem
+  { itemSeverity :: Text
+  , itemMessage :: Text
+  , itemTime :: UTCTime
+  , itemContext :: [Text]
+  , itemLoc :: Maybe Loc
+  } deriving stock (Show, Eq)
 
--- | A formatter for making Items.
-jsonFormatYaifl :: 
-  LogItem a 
-  => ItemFormatter a
-jsonFormatYaifl withColor verb i =
-  B.fromText $
-  colorBySeverity withColor (_itemSeverity i) $
-  toStrict $ decodeUtf8 $ A.encode $ itemJsonYaifl verb (YaiflItem i)
+instance A.ToJSON YaiflItem where
+    toJSON (YaiflItem{..}) = A.object $
+      [ "level" A..= itemSeverity
+      , "message" A..= itemMessage
+      , "timestamp" A..= formatAsLogTime itemTime
+      , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ itemContext) in if T.empty == f then "" else "❬"<>f<>"❭"
+      , "loc" A..= fmap reshapeFilename itemLoc
+      ]
+-- ~\~ end
 -- ~\~ end
 -- ~\~ end

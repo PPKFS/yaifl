@@ -26,17 +26,19 @@ common common-options
     , containers
     , template-haskell
     , text
+    , text-display
     , solitude
     , optics
     , cleff
     , cleff-plugin
     , cleff-optics
     , mtl 
+    , time
     -- to remove
     , hspec 
     -- to remove
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:71
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:74
     , display
     , chapelure
     , formatting
@@ -44,7 +46,7 @@ common common-options
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:83
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:86
     , aeson
     , katip
     , enummapset
@@ -53,7 +55,7 @@ common common-options
     , neat-interpolation
     , sandwich
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:104
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:107
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -85,8 +87,9 @@ common common-options
     BangPatterns
     GADTs
     TypeOperators
+    DerivingVia
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:143
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:147
 library
   import:          common-options
   hs-source-dirs:  src
@@ -138,7 +141,7 @@ library
     Yaifl.World
     --Yaifl.WorldInfo
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:198
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:202
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0

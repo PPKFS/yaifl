@@ -66,23 +66,26 @@ runSayPure ::
   PartialState s MessageBuffer es
   => Eff (Saying : es)
   ~> Eff es
-runSayPure = zoom buf . reinterpret \case
+runSayPure = zoom (buf @s @MessageBuffer) . reinterpret \case
   SayDoc doc -> do
     r <- processDoc doc
     modify (\s -> s & msgBufBuffer %~ (r:))
 
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:109
+-- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:101
 runSayIO ::
   IOE :> es
+  => PartialState s MessageBuffer es
   => Eff (Saying : es)
   ~> Eff es
-runSayIO = interpretIO \case
-  SayDoc doc -> print doc
+runSayIO = zoom (buf @_ @MessageBuffer) . reinterpret \case
+  SayDoc doc -> do
+    r <- processDoc doc
+    print r
 -- ~\~ end
 -- ~\~ end
 
--- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:122
+-- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:117
 -- | Say a string (well, Text).
 say :: 
   Saying :> es 

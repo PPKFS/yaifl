@@ -46,12 +46,14 @@ common common-options
     , containers
     , template-haskell
     , text
+    , text-display
     , solitude
     , optics
     , cleff
     , cleff-plugin
     , cleff-optics
     , mtl 
+    , time
     -- to remove
     , hspec 
     -- to remove
@@ -133,6 +135,7 @@ wanted to try it.
     BangPatterns
     GADTs
     TypeOperators
+    DerivingVia
 ```
 
 We enable a whole bunch of options and extensions. Notably `NoImplicitPrelude` makes it easier than fiddling with

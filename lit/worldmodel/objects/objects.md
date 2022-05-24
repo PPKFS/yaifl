@@ -1,10 +1,47 @@
-# Things and Rooms
-
-
-## Objects
+# Objects
 
 And now we turn to the final of the foundational parts of the world model, the `Object`. Whilst we don't go quite as far as
 Inform does, where *everything* is an object of some kind (including directions, or if you wanted to extend the system with ideas such as people having knowledge of something), we still consider most things in a game to be an `Object` of some kind. These can be split into two categories; `Thing`s (physical, interactable, objects) and `Room`s (spaces to be moved between). Each of these can be further divided into more specific instances, but it is significantly simpler to deal with everything being either a realisable object or a space, and treat the very few intangible objects as their own specific thing (for example, directions). The obvious downside of this is that we have to treat directions specially -- but since when has anyone written a piece of IF where they need to invent new directions *at runtime*? 
+
+First we have a whole bunch of file header stuff:
+
+```haskell file=src/Yaifl/Objects/Object.hs
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE RecordWildCards #-}
+
+module Yaifl.Objects.Object ( 
+  -- * Types
+    ObjType(..), Object(..), ObjectLike(..), CanBeAny(..), Thing, Room, AnyObject
+  -- * Object Helpers
+  , objectEquals, isType
+  -- * Lenses
+  , objName, objDescription, objID, objType, objCreationTime, objSpecifics, objData, containedBy
+  , _Room, _Thing ) where
+
+import Solitude
+import Yaifl.Common
+import Yaifl.ObjectSpecifics (ObjectSpecifics)
+import Yaifl.Objects.ObjectData
+import Yaifl.Objects.Missing
+import Control.Monad.Except (liftEither, throwError)
+
+<<obj-type>>
+<<thing-room-anyobject>>
+<<obj-definition>>
+<<obj-hasid>>
+<<obj-eq>>
+makeLenses ''Object
+<<obj-functor>>
+
+<<other-stuff2>>
+
+<<can-be-any>>
+<<objectlike>>
+```
+
+And the object type itself:
 
 ```haskell id=obj-definition
 data Object wm objData = Object
@@ -39,8 +76,6 @@ instance HasID (Object wm d) where
   getID = _objID
 ```
 
-
-
 The other obvious missing one is `Eq`; if we automatically derive `Eq`, we can only compare objects with the same `objData` type -- so no comparison at all of `Room`s and `Thing`s (even if that's always `False`) or even `Thing`s and `AnyObject`s (which may be true). So we write our own that is slightly more lenient on the types, and `Ord` too even though it makes no sense.
 
 ```haskell id=obj-eq
@@ -61,7 +96,6 @@ instance Ord (Object wm d) where
 Another fairly useful set of instances that don't make a huge amount of sense for anything other than ease of use: `Functor`, `Foldable`, and `Traversable`. All 3 work over `objData`, so the primary use is to go back-and-forth from `AnyObject`.
 
 ```haskell id=obj-functor
-
 instance Functor (Object wm) where
   fmap :: 
     (a -> b)
@@ -104,10 +138,11 @@ newtype ObjType = ObjType
 And at last, we can talk about `Thing`, `Room`, and `AnyObject`:
 
 ```haskell id=thing-room-anyobject
--- | Some of the (very rare) type aliases, just to make it easier to describe `Thing`s and `Room`s.
+
 type Thing wm = Object wm ThingData
 type Room wm = Object wm (RoomData wm)
 type AnyObject wm = Object wm (Either ThingData (RoomData wm))
+
 ```
 
 ### Lenses and Prisms

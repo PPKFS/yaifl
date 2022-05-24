@@ -18,7 +18,7 @@
   - [The World State](worldmodel/state.md)
   - [Objects](worldmodel/objects.md)
     - [Entities and Stores](worldmodel/objects/entities-stores.md)
-    - [Objects, Things and Rooms](worldmodel/objects/things.md)
+    - [Objects, At Last](worldmodel/objects/objects.md)
     - [ObjectLike](worldmodel/objects/objectlike.md)
     - [Object Specifics and Object Data](worldmodel/objects/specifics-data.md)
     - [Reification](worldmodel/objects/reification.md)

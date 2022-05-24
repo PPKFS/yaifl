@@ -88,7 +88,7 @@ runSayPure ::
   PartialState s MessageBuffer es
   => Eff (Saying : es)
   ~> Eff es
-runSayPure = zoom buf . reinterpret \case
+runSayPure = zoom (buf @s @MessageBuffer) . reinterpret \case
   SayDoc doc -> do
     r <- processDoc doc
     modify (\s -> s & msgBufBuffer %~ (r:))
@@ -100,10 +100,13 @@ or by dumping straight to `stdout`:
 ```haskell id=interpret-say-io
 runSayIO ::
   IOE :> es
+  => PartialState s MessageBuffer es
   => Eff (Saying : es)
   ~> Eff es
-runSayIO = interpretIO \case
-  SayDoc doc -> print doc
+runSayIO = zoom (buf @_ @MessageBuffer) . reinterpret \case
+  SayDoc doc -> do
+    r <- processDoc doc
+    print r
 ```
 
 ## Actually saying things

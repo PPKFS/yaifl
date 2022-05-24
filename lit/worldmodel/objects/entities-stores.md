@@ -1,12 +1,9 @@
 # Entities and Stores
 
 By decentralising references between objects and instead storing some kind of ID and some kind of `Map ID Object`, we can avoid mutable state. Hooray!
-
 ## Entities
 
-And the big reveal of the lynchpin of the entire library is...
-
-```haskell id=entity-def  
+```haskell id=entity-def
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
@@ -53,7 +50,6 @@ defaultNothingID = Entity 0
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
 ```
-
 ## Stores
 
 A `Store` is a map from `Entity`s to `a`s. Usually this is some flavour of `Object wm d`, but we can also use

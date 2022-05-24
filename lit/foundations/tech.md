@@ -4,6 +4,11 @@
 
 ## Haskell
 
+Ye
 ## Literate Programming
 
+`entangled`
+
 ## The Book
+
+`mdBook`
