@@ -1,11 +1,5 @@
-{-|
-Module      : Yaifl.Properties.Container
-Description : A component for things that act as containers (this assumes containment rather than just enclosing.)
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+-- ~\~ language=Haskell filename=src/Yaifl/Properties/Container.hs
+-- ~\~ begin <<lit/properties/std/container.md|src/Yaifl/Properties/Container.hs>>[0] project://lit/properties/std/container.md:4
 
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -50,7 +44,4 @@ isOpaqueClosedContainer ::
   Container
   -> Bool
 isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == Closed)
-
-{- TODO: extract to `Supporter`
-
--}
+-- ~\~ end

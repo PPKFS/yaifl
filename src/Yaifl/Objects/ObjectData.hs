@@ -1,12 +1,5 @@
-{-|
-Module      : Yaifl.Objects.ObjectData
-Description : Properties specific to either `Thing`s or `Room`s.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
+-- ~\~ language=Haskell filename=src/Yaifl/Objects/ObjectData.hs
+-- ~\~ begin <<lit/worldmodel/objects/data.md|src/Yaifl/Objects/ObjectData.hs>>[0] project://lit/worldmodel/objects/data.md:4
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -27,7 +20,7 @@ module Yaifl.Objects.ObjectData
   , Explicitness(..)
   , Connection(..)
   , blankRoomData
-  
+
   -- * Lenses
   , thingContainedBy
   , thingLit
@@ -37,7 +30,7 @@ module Yaifl.Objects.ObjectData
   , roomDarkness
   , roomMapConnections
   , roomContainingRegion
-  , roomEnclosing
+  --, roomEnclosing
   , _Wearable
 
   , connectionExplicitness
@@ -46,7 +39,7 @@ module Yaifl.Objects.ObjectData
 
 import Solitude 
 import Yaifl.Common
-import Yaifl.Properties.Enclosing
+--import Yaifl.Properties.Enclosing
 import qualified Data.Map as Map
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
@@ -114,7 +107,7 @@ data RoomData wm = RoomData
   , _roomDarkness :: Darkness
   , _roomMapConnections :: MapConnections wm
   , _roomContainingRegion :: ContainingRegion
-  , _roomEnclosing :: Enclosing
+  --, _roomEnclosing :: Enclosing
   } deriving stock (Generic)
 
 deriving stock instance (Ord (WMDirections wm)) => Ord (RoomData wm)
@@ -123,10 +116,11 @@ deriving stock instance (Show (WMDirections wm)) => Show (RoomData wm)
 deriving stock instance (Eq (WMDirections wm)) => Eq (RoomData wm)
 
 blankRoomData :: RoomData wm
-blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
+blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) -- blankEnclosing
 
 makeLenses ''ThingData
 makeLenses ''RoomData
 makeLenses ''Connection
 
 makePrisms ''ThingWearability
+-- ~\~ end

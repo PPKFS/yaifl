@@ -1,15 +1,9 @@
-{-|
-Module      : Yaifl.ObjectSpecifics
-Description : The 'standard' array of object specifics.
-Copyright   : (c) Avery, 2021
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+# Object Specifics
 
+```haskell file=src/Yaifl/Objects/Specifics.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.ObjectSpecifics
+module Yaifl.Objects.Specifics
   ( -- * Specifics
   ObjectSpecifics(..)
   ) where
@@ -40,3 +34,4 @@ instance HasProperty ObjectSpecifics Enterable where
 
 instance HasProperty ObjectSpecifics Openable where
   propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
+```

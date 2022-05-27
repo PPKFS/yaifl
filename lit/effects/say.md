@@ -1,6 +1,6 @@
 # Yaifl.Say
 
-As mentioned in [the World state](../../worldmodel.md), we want to be able to store the game output to make it easier to test (as opposed to trying to intercept `stdout`). Fortunately, with effects this is just a riff on every `Teletype` example that seems to be standard with effect frameworks.
+This is just a riff on every `Teletype` example that seems to be standard with effect frameworks. It's slightly more involved than the logging effect because we have conditional saying as well as formatting to keep track of.
 
 ```haskell file=src/Yaifl/Say.hs
 {-# LANGUAGE TemplateHaskell #-}

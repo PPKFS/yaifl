@@ -1,11 +1,5 @@
-{-|
-Module      : Yaifl.Objects.Dynamic
-Description : Objects which are dynamic (contain some logic to update themselves). They are cached on a global timestamp.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+-- ~\~ language=Haskell filename=src/Yaifl/Objects/Dynamic.hs
+-- ~\~ begin <<lit/worldmodel/objects/reification.md|src/Yaifl/Objects/Dynamic.hs>>[0] project://lit/worldmodel/objects/reification.md:4
 
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -19,21 +13,20 @@ module Yaifl.Objects.Dynamic
   , AnyAbstractObject
     -- * Updates
   , updateCachedObject
-  , reifyObject
+  --, reifyObject
     -- * Lenses
-  , StoreLens'
+  --, StoreLens'
   , tsCachedObject
   , tsCacheStamp
   , tsUpdateFunc
-  , _AbstractThing
-  , _AbstractRoom
+  --, _AbstractThing
+  --, _AbstractRoom
   , objectL
   ) where
 
 import Solitude
 import Yaifl.Common
 import Yaifl.Objects.Object
-import {-# SOURCE #-} Yaifl.World
 import Yaifl.Objects.ObjectData
 
 -- | A 'TimestampedObject' is an object which has been cached at time '_tsCacheStamp'
@@ -50,7 +43,7 @@ instance HasID (TimestampedObject wm d) where
 
 -- | Function to update an object. It is read-only on the world; i.e. it can only modify itself
 newtype ObjectUpdate (wm :: WorldModel) d = ObjectUpdate
-  { updateObject :: forall m. (MonadReader (World wm) m) => Object wm d -> m (Object wm d)
+  { updateObject :: ()-- forall m. (MonadReader (World wm) m) => Object wm d -> m (Object wm d)
   } 
 
 -- | An abstract object is either a static object (which does not need to update itself)
@@ -68,10 +61,10 @@ type AbstractThing wm = AbstractObject wm ThingData
 type AbstractRoom wm = AbstractObject wm (RoomData wm)
 type AnyAbstractObject wm = AbstractObject wm (Either ThingData (RoomData wm))
 
-type StoreLens' wm d = (Lens' (World wm) (Store (AbstractObject wm d)))
-  
-makeLenses ''TimestampedObject
+-- type StoreLens' wm d = (Lens' (World wm) (Store (AbstractObject wm d)))
 
+makeLenses ''TimestampedObject
+{-
 instance ObjectLike wm (AbstractThing wm) where
   getThing = reifyObject things
 
@@ -102,14 +95,14 @@ _AbstractBase p = prism'
         r' <- tsf $ review p v
         return $ fromMaybe v $ preview p r') )) (tsobj ^? p))
 
-  
+
 -- | A prism for abstract rooms. 
 _AbstractRoom :: Prism' (AnyAbstractObject wm) (AbstractRoom wm) 
 _AbstractRoom = _AbstractBase _Room
 
 _AbstractThing :: Prism' (AnyAbstractObject wm) (AbstractThing wm) 
 _AbstractThing = _AbstractBase _Thing
-
+-}
 -- | A lens to reify (and therefore also set) an object, but without updating on get.
 objectL ::
   Timestamp
@@ -122,7 +115,7 @@ objectL t = lens
     StaticObject _ -> StaticObject n
     DynamicObject ts -> DynamicObject (updateCachedObject ts n t)
   )
-  
+
 -- | Update a cached object at a specified time
 updateCachedObject ::
   TimestampedObject wm d
@@ -131,7 +124,7 @@ updateCachedObject ::
   -> TimestampedObject wm d
 updateCachedObject ts n t = ts & tsCachedObject .~ n
                                & tsCacheStamp .~ t
- 
+{-
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
   MonadWorld wm m
@@ -154,3 +147,5 @@ reifyObject l (DynamicObject ts) = do
       t <- gets getGlobalTime
       l % at (getID co) ?= DynamicObject (updateCachedObject ts updatedObj t)
       return updatedObj
+-}
+-- ~\~ end

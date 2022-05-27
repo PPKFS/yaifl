@@ -169,19 +169,19 @@ library
     Yaifl.Logger
 
     --Yaifl.Objects.Create
-    --Yaifl.Objects.Dynamic
+    Yaifl.Objects.Dynamic
     --Yaifl.Objects.Missing
     --Yaifl.Objects.Move
-    --Yaifl.Objects.Object
-    --Yaifl.Objects.ObjectData
-    --Yaifl.Objects.Query
+    Yaifl.Objects.Object
+    Yaifl.Objects.ObjectData
+    Yaifl.Objects.Query
     --Yaifl.Objects.Room
+    Yaifl.Objects.Specifics
 
-    --Yaifl.ObjectSpecifics
-    --Yaifl.Properties.Container
-    --Yaifl.Properties.Enclosing
-    --Yaifl.Properties.Openable
-    --Yaifl.Properties.Property
+    Yaifl.Properties.Container
+    Yaifl.Properties.Enclosing
+    Yaifl.Properties.Openable
+    Yaifl.Properties.Property
     --Yaifl.Properties.Query
     --Yaifl.Properties.Supporter
     --Yaifl.Properties.TH

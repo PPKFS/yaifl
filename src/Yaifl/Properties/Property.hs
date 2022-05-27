@@ -1,21 +1,14 @@
-{-|
-Module      : Yaifl.Properties.Property
-Description : The basics of the property system.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
+-- ~\~ language=Haskell filename=src/Yaifl/Properties/Property.hs
+-- ~\~ begin <<lit/properties.md|src/Yaifl/Properties/Property.hs>>[0] project://lit/properties.md:6
 {-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Properties.Property 
   ( HasProperty(..)
   , WMHasProperty
   ) where
-    
-import Solitude
-import Yaifl.Common
+
+import Solitude ( Either(..), const, atraversal, eitherJoin, AffineTraversal' )
+import Yaifl.Common ( WMObjSpecifics )
 
 -- | A helper to define that a world model `wm` has a Property.
 type WMHasProperty wm v = HasProperty (WMObjSpecifics wm) v
@@ -29,3 +22,4 @@ instance (HasProperty a v, HasProperty b v) => HasProperty (Either a b) v where
   propertyL = propertyL `eitherJoin` propertyL
 
 instance HasProperty () a
+-- ~\~ end

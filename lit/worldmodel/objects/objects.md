@@ -10,22 +10,22 @@ First we have a whole bunch of file header stuff:
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Yaifl.Objects.Object ( 
   -- * Types
-    ObjType(..), Object(..), ObjectLike(..), CanBeAny(..), Thing, Room, AnyObject
+    ObjType(..), Object(..), {-ObjectLike(..), CanBeAny(..),-} Thing, Room, AnyObject
   -- * Object Helpers
-  , objectEquals, isType
+  , objectEquals --isType
   -- * Lenses
-  , objName, objDescription, objID, objType, objCreationTime, objSpecifics, objData, containedBy
+  , objName, objDescription, objID, objType, objCreationTime, objSpecifics, objData --, containedBy
   , _Room, _Thing ) where
 
 import Solitude
 import Yaifl.Common
-import Yaifl.ObjectSpecifics (ObjectSpecifics)
+import Yaifl.Objects.Specifics (ObjectSpecifics)
 import Yaifl.Objects.ObjectData
-import Yaifl.Objects.Missing
-import Control.Monad.Except (liftEither, throwError)
+--import Yaifl.Objects.Missing
 
 <<obj-type>>
 <<thing-room-anyobject>>
@@ -35,8 +35,8 @@ import Control.Monad.Except (liftEither, throwError)
 makeLenses ''Object
 <<obj-functor>>
 
-<<other-stuff2>>
 
+<<obj-prisms>>
 <<can-be-any>>
 <<objectlike>>
 ```
@@ -156,7 +156,7 @@ fromAny :: b -> Maybe a
 
 but then I realised these were just `preview` and `review` respectively. 
 
-```haskell obj-prisms
+```haskell id=obj-prisms
 _Room :: Prism' (AnyObject wm) (Room wm)
 _Room = prism' (fmap Right) (traverse rightToMaybe)
 

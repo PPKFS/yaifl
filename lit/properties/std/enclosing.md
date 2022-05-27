@@ -1,12 +1,6 @@
-{-|
-Module      : Yaifl.Properties.Enclosing
-Description : A component for objects that contain other things (though not necessarily a container; e.g. a supporter or a room has an enclosing part.)
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+# Enclosing
 
+```haskell file=src/Yaifl/Properties/Enclosing.hs
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -34,3 +28,4 @@ blankEnclosing :: Enclosing
 blankEnclosing = Enclosing empty Nothing
 
 makeLenses ''Enclosing
+```

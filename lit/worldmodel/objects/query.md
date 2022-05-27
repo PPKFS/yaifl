@@ -1,18 +1,16 @@
-{-|
-Module      : Yaifl.Objects.Query
-Description : Getting (and modifying) objects from the world.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+# Object Querying Effects
 
+We have an effect specifically for querying (get, set, modify) `Object`s because it's easier than having a big monolithic `State World` and also avoids the mutual recursion of any module structure with this monolith.
+
+```haskell file=src/Yaifl/Objects/Query.hs
 -- for ObjectLike wm Entity
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Objects.Query
-  ( -- * Get
-    getAbstractThing
+   {- ( -- * Get
+  getAbstractThing
   , getAbstractRoom
   , getThing
   , getRoom
@@ -35,22 +33,92 @@ module Yaifl.Objects.Query
   , modifyObject
   , modifyThing
   , modifyRoom
-  ) where
-    
+  ) -} where
+
 import Yaifl.Common
 import Yaifl.Objects.Dynamic
-import Yaifl.WorldInfo
-import Yaifl.Objects.Missing
+--import Yaifl.WorldInfo
+--import Yaifl.Objects.Missing
 import Yaifl.Objects.Object
 import Solitude
 import Control.Monad.Except (liftEither)
-  
--- * Get from a specific store
+import Solitude
+import Yaifl.Common (Entity)
+import Yaifl.Logger hiding ( Error )
+import qualified Data.Text.Lazy.Builder as TLB
+import Cleff.Error
 
-instance ObjectLike wm Entity where
-  getThing = getObjectFrom things
-  getRoom = getObjectFrom rooms
+-- | A missing object is a textual representation of what the object was intended to be and the entity that was queried.
+data MissingObject = MissingObject 
+  { _moExpected :: Text
+  , _moEntity :: Entity
+  } deriving stock (Eq, Show, Read, Ord, Generic)
 
+makeLenses ''MissingObject
+
+withoutMissingObjects :: 
+  (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
+  -> (HasCallStack => MissingObject -> Eff es a)  -- ^ the handler
+  -> Eff es a
+withoutMissingObjects f def = do
+  r <- runError f
+  case r of
+    Left err' -> def err'
+    Right x -> return x
+
+handleMissingObject :: 
+  HasCallStack
+  => Log :> es
+  => TLB.Builder 
+  -> Eff es a 
+  -> MissingObject
+  -> Eff es a
+handleMissingObject msg def (MissingObject t o) = do
+  err (msg <> bformat (stext %! "; Object ID: " %! stext) t (show o))
+  def
+
+failHorriblyIfMissing ::
+  Log :> es
+  => (HasCallStack => Eff (Error MissingObject ': es) a)
+  -> Eff es a
+failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
+  let msg = "Failing horribly and erroring out because we can't recover"
+      emsg = msg <> bformat (stext %! "; Object ID: " %! stext) t (show o)
+  err emsg
+  error $ show emsg)
+
+data ObjectQuery (wm :: WorldModel) :: Effect where
+  GetAbstractThing :: HasID o => o -> ObjectQuery wm m (Either Text (AbstractThing wm))
+  GetAbstractRoom :: HasID o => o -> ObjectQuery wm m (Either Text (AbstractRoom wm))
+
+makeEffect ''ObjectQuery
+
+type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es) 
+
+class HasID o => ObjectLike wm o where
+  getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
+  default getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
+  getRoom o = throwError $ MissingObject "Called getRoom on an object with no instance."  (getID o)
+
+  getThing :: NoMissingObjects wm es => o -> Eff es (Thing wm)
+  default getThing :: (NoMissingObjects wm es) => o -> Eff es (Thing wm)
+  getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
+
+instance ObjectLike wm (Thing wm) where
+  getThing = pure
+
+instance ObjectLike wm (Room wm) where
+  getRoom = pure
+
+instance ObjectLike wm (AnyObject wm) where
+  getThing t = fromEither
+    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (_objID t) <> " but it was a room.") (getID t))
+      (preview _Thing t))
+  getRoom t = fromEither
+    (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
+      (preview _Room t))
+
+{-
 getAbstractObjectFrom :: 
   NoMissingObjects m
   => MonadReader (World wm) m
@@ -63,7 +131,12 @@ getAbstractObjectFrom l e = do
   let i = getID e
   liftEither (maybeToRight
     (MissingObject ("Cannot find object with id " <> show i) i) (preview (l % ix i) w) )
-    
+
+
+instance ObjectLike wm Entity where
+  getThing = getObjectFrom things
+  getRoom = getObjectFrom rooms
+
 getObjectFrom ::
   NoMissingObjects m
   => MonadWorld wm m
@@ -245,3 +318,5 @@ asThingOrRoom o tf rf =
   if isThing o
   then tf <$> getThing o
   else rf <$> getRoom o
+  -}
+```
