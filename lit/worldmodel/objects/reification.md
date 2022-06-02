@@ -44,7 +44,7 @@ instance HasID (TimestampedObject wm d) where
 
 -- | Function to update an object. It is read-only on the world; i.e. it can only modify itself
 newtype ObjectUpdate (wm :: WorldModel) d = ObjectUpdate
-  { updateObject :: ()-- forall m. (MonadReader (World wm) m) => Object wm d -> m (Object wm d)
+  { runObjectUpdate :: forall es. Object wm d -> Eff es (Object wm d)
   } 
 
 -- | An abstract object is either a static object (which does not need to update itself)
@@ -125,28 +125,4 @@ updateCachedObject ::
   -> TimestampedObject wm d
 updateCachedObject ts n t = ts & tsCachedObject .~ n
                                & tsCacheStamp .~ t
-{-
--- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
-reifyObject ::
-  MonadWorld wm m
-  => StoreLens' wm d
-  -> AbstractObject wm d
-  -> m (Object wm d)
-reifyObject _ (StaticObject v) = return v
-reifyObject l (DynamicObject ts) = do
-  let co = _tsCachedObject ts
-  now <- getGlobalTime
-  if
-    _tsCacheStamp ts == now
-  then
-    return co
-  else
-    do
-      -- update the object
-      updatedObj <- updateObject (_tsUpdateFunc ts) co
-      -- update the world
-      t <- gets getGlobalTime
-      l % at (getID co) ?= DynamicObject (updateCachedObject ts updatedObj t)
-      return updatedObj
--}
 ```

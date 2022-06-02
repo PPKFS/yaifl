@@ -38,14 +38,11 @@ import Yaifl.Objects.Dynamic
 --import Yaifl.Objects.Missing
 import Yaifl.Objects.Object
 import Solitude
-import Control.Monad.Except (liftEither)
-import Solitude
-import Yaifl.Common (Entity)
-import Yaifl.Logger hiding ( Error )
+import Yaifl.Logger ( Log, err )
 import qualified Data.Text.Lazy.Builder as TLB
-import Cleff.Error
+import Cleff.Error ( Error, fromEither, runError, throwError )
+import Cleff.State
 
--- | A missing object is a textual representation of what the object was intended to be and the entity that was queried.
 data MissingObject = MissingObject 
   { _moExpected :: Text
   , _moEntity :: Entity
@@ -85,12 +82,14 @@ failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   error $ show emsg)
 
 data ObjectQuery (wm :: WorldModel) :: Effect where
-  GetAbstractThing :: HasID o => o -> ObjectQuery wm m (Either Text (AbstractThing wm))
-  GetAbstractRoom :: HasID o => o -> ObjectQuery wm m (Either Text (AbstractRoom wm))
+  LookupThing :: HasID o => o -> ObjectQuery wm m (Either Text (Thing wm))
+  LookupRoom :: HasID o => o -> ObjectQuery wm m (Either Text (Room wm))
+  SetRoom :: Room wm -> ObjectQuery wm m ()
+  SetThing :: Thing wm -> ObjectQuery wm m ()
 
 makeEffect ''ObjectQuery
 
-type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es) 
+type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es, State (Metadata wm) :> es) 
 
 class HasID o => ObjectLike wm o where
   getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
@@ -115,60 +114,48 @@ instance ObjectLike wm (AnyObject wm) where
     (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
       (preview _Room t))
 
-{-
-getAbstractObjectFrom :: 
-  NoMissingObjects m
-  => MonadReader (World wm) m
-  => HasID o
-  => StoreLens' wm d
-  -> o
-  -> m (AbstractObject wm d)
-getAbstractObjectFrom l e = do
-  w <- ask
-  let i = getID e
-  liftEither (maybeToRight
-    (MissingObject ("Cannot find object with id " <> show i) i) (preview (l % ix i) w) )
-
-
 instance ObjectLike wm Entity where
-  getThing = getObjectFrom things
-  getRoom = getObjectFrom rooms
+  getRoom e = lookupRoom e >>= either (throwError . flip MissingObject e) return
+  getThing e = lookupThing e  >>= either (throwError . flip MissingObject e) return
 
-getObjectFrom ::
-  NoMissingObjects m
-  => MonadWorld wm m
-  => HasID o
-  => StoreLens' wm d
-  -> o
-  -> m (Object wm d)
-getObjectFrom l e = getAbstractObjectFrom l e >>= reifyObject l
+-- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
+reifyObject ::
+  State (Metadata wm) :> es
+  => (Object wm d -> Eff es ())
+  -> AbstractObject wm d
+  -> Eff es (Object wm d)
+reifyObject _ (StaticObject v) = return v
+reifyObject setFunc (DynamicObject ts) = do
+  let co = _tsCachedObject ts
+  now <- getGlobalTime
+  if
+    _tsCacheStamp ts == now
+  then
+    return co
+  else
+    do
+      -- update the object
+      updatedObj <- runObjectUpdate (_tsUpdateFunc ts) co
+      setFunc updatedObj
+      return updatedObj
 
--- * Get abstract
+reifyRoom :: 
+  NoMissingObjects wm es
+  => AbstractRoom wm
+  -> Eff es (Room wm)
+reifyRoom = reifyObject setRoom
 
-getAbstractThing :: 
-  NoMissingObjects m
-  => MonadReader (World wm) m
-  => HasID o
-  => o
-  -> m (AbstractThing wm)
-getAbstractThing = getAbstractObjectFrom things
-
-getAbstractRoom ::
-  NoMissingObjects m
-  => MonadReader (World wm) m
-  => HasID o
-  => o
-  -> m (AbstractRoom wm)
-getAbstractRoom = getAbstractObjectFrom rooms
-
--- * Get any
+reifyThing :: 
+  NoMissingObjects wm es
+  => AbstractThing wm
+  -> Eff es (Thing wm)
+reifyThing = reifyObject setThing
 
 getObject ::
-  NoMissingObjects m
-  => MonadWorld wm m
+  NoMissingObjects wm es
   => ObjectLike wm o
   => o
-  -> m (AnyObject wm)
+  -> Eff es (AnyObject wm)
 getObject e = if isThing e
   then (do
       o <- getThing e
@@ -177,70 +164,57 @@ getObject e = if isThing e
       o <- getRoom e
       return $ review _Room o)
 
-getAbstractObject :: 
-  NoMissingObjects m
-  => MonadWorld wm m
-  => HasID o
-  => o
-  -> m (AnyAbstractObject wm)
-getAbstractObject e = 
-  if isThing e
-  then review _AbstractThing <$> getAbstractObjectFrom things e
-  else review _AbstractRoom <$> getAbstractObjectFrom rooms e
-
--- * without a `NoMissingObjects` clause
 getThingMaybe :: 
-  ObjectLike wm o
-  => MonadWorld wm m
+  NoMissingObjects wm es
+  => ObjectLike wm o
   => o
-  -> m (Maybe (Thing wm))
+  -> Eff es (Maybe (Thing wm))
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
 
 getRoomMaybe ::
-  ObjectLike wm o
-  => MonadWorld wm m
+  NoMissingObjects wm es
+  => ObjectLike wm o
   => o
-  -> m (Maybe (Room wm))
+  -> Eff es (Maybe (Room wm))
 getRoomMaybe o = withoutMissingObjects (getRoom o <&> Just) (const (return Nothing))
 
--- * Setting and modifying
-
-modifyObjectFrom ::
-  MonadWorld wm m
-  => HasID o
-  => StoreLens' wm d
+modifyObjectFrom :: 
+  (o -> Eff es (Object wm any))
+  -> (Object wm any -> Eff es ())
   -> o
-  -> (Object wm d -> Object wm d)
-  -> m ()
-modifyObjectFrom l o s = do
-  ts <- gets getGlobalTime
-  l % ix (getID o) % objectL ts %= s
-  tickGlobalTime False
+  -> (Object wm any -> Object wm any)
+  -> Eff es ()
+modifyObjectFrom g s o u = do
+  obj <- g o
+  s (u obj)
   pass
 
-setObjectFrom :: 
-  MonadWorld wm m
-  => StoreLens' wm d
-  -> Object wm d
-  -> m ()
-setObjectFrom l o = modifyObjectFrom l o id
+modifyThing :: 
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> (Thing wm -> Thing wm)
+  -> Eff es ()
+modifyThing = modifyObjectFrom getThing setThing 
 
-setObject
-  :: MonadWorld wm m
-  => AnyObject wm
-  -> m ()
-setObject o = modifyObject o id
+modifyRoom ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> (Room wm -> Room wm)
+  -> Eff es ()
+modifyRoom = modifyObjectFrom getRoom setRoom
 
 modifyObject ::
-  MonadWorld wm m
-  => HasID o
+  NoMissingObjects wm es
+  => ObjectLike wm o
   => o
   -> (AnyObject wm -> AnyObject wm)
-  -> m ()
+  -> Eff es ()
 modifyObject e s = 
   if isThing e
-  then modifyObjectFrom things e (anyModifyToThing s)
-  else modifyObjectFrom rooms e (anyModifyToRoom s)
+  then modifyThing e (anyModifyToThing s)
+  else modifyRoom e (anyModifyToRoom s)
 
 anyModifyToThing :: 
   (AnyObject s -> AnyObject s)
@@ -251,69 +225,15 @@ anyModifyToRoom ::
   (AnyObject s -> AnyObject s)
   -> (Room s -> Room s)
 anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
-
--- * Setting and modifying rooms/things
-
-modifyThing :: 
-  MonadWorld wm m
-  => HasID o
-  => o
-  -> (Thing wm -> Thing wm)
-  -> m ()
-modifyThing = modifyObjectFrom things
-
-modifyRoom ::
-  MonadWorld wm m
-  => HasID o
-  => o
-  -> (Room wm -> Room wm)
-  -> m ()
-modifyRoom = modifyObjectFrom rooms
-
-setThing :: 
-  MonadWorld wm m
-  => Thing wm
-  -> m ()
-setThing = setObjectFrom things
-
-setRoom ::
-  MonadWorld wm m
-  => Room wm
-  -> m ()
-setRoom = setObjectFrom rooms
-
-setAbstractObjectFrom :: 
-  MonadWorld wm m
-  => StoreLens' wm d
-  -> AbstractObject wm d
-  -> m ()
-setAbstractObjectFrom l o = do
-    l % at (getID o) ?= o
-    tickGlobalTime False
-
-setAbstractThing :: 
-  MonadWorld wm m
-  => AbstractThing wm
-  -> m ()
-setAbstractThing = setAbstractObjectFrom things
-
-setAbstractRoom :: 
-  MonadWorld wm m
-  => AbstractRoom wm
-  -> m ()
-setAbstractRoom = setAbstractObjectFrom rooms
-
 asThingOrRoom :: 
-  NoMissingObjects m
-  => MonadWorld wm m
+  NoMissingObjects wm es
   => ObjectLike wm o
   => o
   -> (Thing wm -> a)
   -> (Room wm -> a)
-  -> m a
+  -> Eff es a
 asThingOrRoom o tf rf =
   if isThing o
   then tf <$> getThing o
   else rf <$> getRoom o
-  -}
 -- ~\~ end

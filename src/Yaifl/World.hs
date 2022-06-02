@@ -14,58 +14,22 @@ module Yaifl.World where
 import Solitude
 import Yaifl.Common
 
-{-
-module Yaifl.World
-  ( -- * Types
-    World(..), MonadWorld
-   -- * Modifying the world
-  , newEntityID, setTitle, getGlobalTime, tickGlobalTime, whenConstructingM
-    -- * Lenses
-  , title, darknessWitnessed, roomDescriptions, actionProcessing, actions, things
-  , rooms, previousRoom, firstRoom, whenPlayBegins, addBaseActions, activities
-  , currentPlayer, currentStage
-  ) where
-
-import Solitude
-import Yaifl.Common
 import Yaifl.Say
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Logger
-import Yaifl.Activities.Activity
-import Yaifl.Actions.Action
+--import Yaifl.Rulebooks.Rulebook
+--import Yaifl.Activities.Activity
+--import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
-import Yaifl.Actions.Looking
-import Yaifl.Actions.Going
+--import Yaifl.Actions.Looking
+--import Yaifl.Actions.Going
 
 data World (wm :: WorldModel) = World
   { _worldMetadata :: Metadata wm
-  , _worldStaging :: WorldStaging wm
   , _worldStores :: WorldStores wm
-  , _worldGameState :: WorldGameState wm
   , _worldActions :: WorldActions wm
-  , _messageBuffers :: (MessageBuffer, MessageBuffer)
+  , _messageBuffer :: MessageBuffer
   }
--}
--- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:72
 
-data Metadata wm = Metadata
-  { _title :: Text
-  , _roomDescriptions :: RoomDescriptions
-  -- more to come I guess
-  }
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-staging>>[0] project://lit/worldmodel/state.md:96
-data CurrentStage = Construction | Verification | Runtime
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
-data WorldStaging (wm :: WorldModel) = WorldStaging
-  { _currentStage :: CurrentStage
-  , _previousRoom :: Entity
-  , _firstRoom :: Entity
-  }
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:111
-{-
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:98
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -73,32 +37,22 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _values :: Map Text (WMValues wm)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
--}
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:127
-{-
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:112
+
 data WorldActions (wm :: WorldModel) = WorldActions
-  { _actions :: !(Map Text (Action wm))
-  , _activities :: !(ActivityCollection wm)
-  , _whenPlayBegins :: !(Rulebook wm () () Bool)
-  , _actionProcessing :: ActionProcessing wm
+  { _actions :: () -- !(Map Text (Action wm))
+  , _activities :: () -- !(ActivityCollection wm)
+  , _whenPlayBegins :: () -- !(Rulebook wm () () Bool)
+  , _actionProcessing :: ()-- ActionProcessing wm
   }
--}
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-game-state>>[0] project://lit/worldmodel/state.md:142
 
-data WorldGameState (wm :: WorldModel) = WorldGameState
-  { _dirtyTime :: Bool
-  , _globalTime :: Timestamp
-  , _darknessWitnessed :: Bool
-  , _currentPlayer :: Entity
-  }
 -- ~\~ end
 
--- makeLenses ''World
+makeLenses ''World
 makeLenses ''WorldModel
 
--- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:169
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:140
 
 {-
 -- | Generate a new entity ID.

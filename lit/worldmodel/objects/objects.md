@@ -154,7 +154,7 @@ toAny :: a -> b
 fromAny :: b -> Maybe a
 ```
 
-but then I realised these were just `preview` and `review` respectively. 
+but then I realised these were just `preview` and `review` respectively. There is an equivalent for `AbstractObject` as well, though whether it's useful isn't yet decided.
 
 ```haskell id=obj-prisms
 _Room :: Prism' (AnyObject wm) (Room wm)
@@ -162,6 +162,9 @@ _Room = prism' (fmap Right) (traverse rightToMaybe)
 
 _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (fmap Left) (traverse leftToMaybe)
+
+--_AbstractThing :: Prism' (AnyAbstractObject wm) (AbstractThing wm)
+--_AbstractThing = prism' (fmap Left) (traverse leftToMaybe)
 ```
 
 Though I keep the class around regardless, because `toAny o` makes more semantic sense than `review _Thing`.

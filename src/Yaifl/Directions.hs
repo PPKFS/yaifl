@@ -1,3 +1,5 @@
+-- ~\~ language=Haskell filename=src/Yaifl/Directions.hs
+-- ~\~ begin <<lit/worldmodel/directions.md|src/Yaifl/Directions.hs>>[0] project://lit/worldmodel/directions.md:5
 module Yaifl.Directions where
 
 import Solitude hiding (Down)
@@ -45,3 +47,4 @@ instance HasOpposite Direction where
     Out -> In
     Up -> Down
     Down -> Up
+-- ~\~ end

@@ -1,11 +1,5 @@
-{-|
-Module      : Yaifl.Actions.Action
-Description : An action is a verb that is carried out by the player (or an NPC).
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
+-- ~\~ language=Haskell filename=src/Yaifl/Properties/TH.hs
+-- ~\~ begin <<lit/properties.md|src/Yaifl/Properties/TH.hs>>[0] project://lit/properties.md:32
 {-# LANGUAGE DataKinds #-}
 
 module Yaifl.Properties.TH
@@ -72,3 +66,4 @@ makeDirections std dirs = do
     return $ r1 <> r2
     ) dirs
   return $ join v
+-- ~\~ end

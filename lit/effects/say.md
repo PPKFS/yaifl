@@ -9,12 +9,14 @@ module Yaifl.Say
   ( -- * Types
     MessageBuffer (..)
   -- * Smart constructors
-  , emptyMessageBuffer
+  , blankMessageBuffer
   -- * Buffer modification
   , setStyle
   , say
   , sayLn
   , sayIf
+
+  , msgBufBuffer
   )
 where
 
@@ -45,9 +47,8 @@ data MessageBuffer = MessageBuffer
 We define our `Effect` to take a pretty-printed document. This does mean we almost never use the effect directly, but still. We also hold onto some message context - a style and some additional "preface every entry with this" text. If we're using the `IO` interpretation, then we just leave the buffer blank.
 
 ```haskell id=say-helpers
--- | Message buffer with nothing in it and no formatting.
-emptyMessageBuffer :: MessageBuffer
-emptyMessageBuffer = MessageBuffer [] Nothing []
+blankMessageBuffer :: MessageBuffer
+blankMessageBuffer = MessageBuffer [] Nothing []
 
 makeEffect ''Saying
 makeLenses ''MessageBuffer
@@ -147,19 +148,6 @@ setStyle ::
 setStyle s = buf @s @MessageBuffer % msgBufStyle .= s
 
 {-
--- | Clear a message buffer and return the container (with a clean buffer) and the string
--- with all formatting (e.g. ANSI colour codes) removed.
-flushBufferToText :: 
-  Saying :> es
-  => Proxy p
-  -> w
-  -> (Text, w)
-flushBufferToText prox = runState $ do
-  -- take it down and flip it around
-  msgList <- use $ bufferL prox % msgBufBuffer % reversed
-  bufferL prox % msgBufBuffer .= []
-  return $ (mconcat . map show) msgList
-
 -- | Clear a message buffer and return the container (with a clean buffer)
 -- with all formatting (e.g. ANSI colour codes) *included*.
 flushBufferToStdOut :: 

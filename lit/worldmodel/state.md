@@ -20,45 +20,25 @@ module Yaifl.World where
 import Solitude
 import Yaifl.Common
 
-{-
-module Yaifl.World
-  ( -- * Types
-    World(..), MonadWorld
-   -- * Modifying the world
-  , newEntityID, setTitle, getGlobalTime, tickGlobalTime, whenConstructingM
-    -- * Lenses
-  , title, darknessWitnessed, roomDescriptions, actionProcessing, actions, things
-  , rooms, previousRoom, firstRoom, whenPlayBegins, addBaseActions, activities
-  , currentPlayer, currentStage
-  ) where
-
-import Solitude
-import Yaifl.Common
 import Yaifl.Say
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Logger
-import Yaifl.Activities.Activity
-import Yaifl.Actions.Action
+--import Yaifl.Rulebooks.Rulebook
+--import Yaifl.Activities.Activity
+--import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
-import Yaifl.Actions.Looking
-import Yaifl.Actions.Going
+--import Yaifl.Actions.Looking
+--import Yaifl.Actions.Going
 
 data World (wm :: WorldModel) = World
   { _worldMetadata :: Metadata wm
-  , _worldStaging :: WorldStaging wm
   , _worldStores :: WorldStores wm
-  , _worldGameState :: WorldGameState wm
   , _worldActions :: WorldActions wm
-  , _messageBuffers :: (MessageBuffer, MessageBuffer)
+  , _messageBuffer :: MessageBuffer
   }
--}
-<<world-metadata>>
-<<world-staging>>
+
 <<world-stores>>
 <<world-actions>>
-<<world-game-state>>
 
--- makeLenses ''World
+makeLenses ''World
 makeLenses ''WorldModel
 
 <<world-other>>
@@ -66,17 +46,45 @@ makeLenses ''WorldModel
 ---
 ## Metadata
 
-Things that exist outside of any semantic game world we can think of - user settings, the title, and 'special' actions which exist outside of the world (what Inform calls "out-of-game actions", I think). These are read-only for in-game actions, and read-write for special actions.
+These fields are for information we need to keep around but don't have complex dependencies -- so we can define the metadata in `Yaifl.Common` and therefore break the import cycle of individual modules <-> `Yaifl.World` we have with a monolithic state record, but without having to write the boilerplate of an effect that exposes each of these fields individually.
 
 ```haskell id=world-metadata
 
-data Metadata wm = Metadata
+data Metadata (wm :: WorldModel) = Metadata
   { _title :: Text
   , _roomDescriptions :: RoomDescriptions
+  , _dirtyTime :: Bool
+  , _globalTime :: Timestamp
+  , _darknessWitnessed :: Bool
+  , _currentPlayer :: Entity
+  , _currentStage :: CurrentStage
+  , _previousRoom :: Entity
+  , _firstRoom :: Entity
   -- more to come I guess
   }
+
+data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+makeLenses ''Metadata
+
+getGlobalTime :: 
+  State (Metadata wm) :> es 
+  => Eff es Timestamp
+getGlobalTime = use globalTime
+
+tickGlobalTime ::
+  State (Metadata wm) :> es 
+  => Bool
+  -> Eff es ()
+tickGlobalTime _ = pass
 ```
 
+```haskell id=world-staging
+data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+```
 ### Room Descriptions
 
 Lifted directly from Inform; this sets whether to always print room descriptions (No..) even if the room is visited, to only print them on the first entry (Sometimes..), or never.
@@ -88,27 +96,11 @@ data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 ```
 
-## World Staging
-
-Fields that make it easier to build a world; for instance, by saving the last modified room (to implicitly place items). 
-
-```haskell id=world-staging
-data CurrentStage = Construction | Verification | Runtime
-  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
-
-data WorldStaging (wm :: WorldModel) = WorldStaging
-  { _currentStage :: CurrentStage
-  , _previousRoom :: Entity
-  , _firstRoom :: Entity
-  }
-```
-
 ## World Stores
 
 The lookup tables for various objects, values, etc in the game. This is probably the most important part of the `World` state.
 
 ```haskell id=world-stores
-{-
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -116,7 +108,6 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _values :: Map Text (WMValues wm)
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
--}
 ```
 
 ## World Actions
@@ -124,28 +115,14 @@ data WorldStores (wm :: WorldModel) = WorldStores
 These are the dynamic parts that run things. This is the in-world actions, the standard activities (because user-defined activities can be done separately and don't need a lookup), and the two standalone rulebooks. Again, user-defined rulebooks act the same as activities and don't need to be stored around in the state.
 
 ```haskell id=world-actions
-{-
+
 data WorldActions (wm :: WorldModel) = WorldActions
-  { _actions :: !(Map Text (Action wm))
-  , _activities :: !(ActivityCollection wm)
-  , _whenPlayBegins :: !(Rulebook wm () () Bool)
-  , _actionProcessing :: ActionProcessing wm
+  { _actions :: () -- !(Map Text (Action wm))
+  , _activities :: () -- !(ActivityCollection wm)
+  , _whenPlayBegins :: () -- !(Rulebook wm () () Bool)
+  , _actionProcessing :: ()-- ActionProcessing wm
   }
--}
-```
 
-## Game State
-
-Finally, we have the pieces of the game that are sort of metadata but are likely to change around at runtime; for example, who the current player is, or whether the dark room description text has been displayed. The `globalTime` is *separate* from the current turn counter. The turn counter is based on how many actions the player has taken. The `Timestamp` is a way to allow us to cache objects when nothing has changed since their last caching. 
-
-```haskell id=world-game-state
-
-data WorldGameState (wm :: WorldModel) = WorldGameState
-  { _dirtyTime :: Bool
-  , _globalTime :: Timestamp
-  , _darknessWitnessed :: Bool
-  , _currentPlayer :: Entity
-  }
 ```
 
 ### Timestamp Caching

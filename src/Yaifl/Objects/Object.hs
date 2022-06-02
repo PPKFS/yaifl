@@ -98,8 +98,11 @@ _Room = prism' (fmap Right) (traverse rightToMaybe)
 
 _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (fmap Left) (traverse leftToMaybe)
+
+--_AbstractThing :: Prism' (AnyAbstractObject wm) (AbstractThing wm)
+--_AbstractThing = prism' (fmap Left) (traverse leftToMaybe)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|can-be-any>>[0] project://lit/worldmodel/objects/objects.md:170
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|can-be-any>>[0] project://lit/worldmodel/objects/objects.md:173
 class CanBeAny wm o where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o

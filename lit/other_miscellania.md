@@ -8,6 +8,7 @@ As this just includes some basic types, it doesn't really have a section specifi
 
 ```haskell file=src/Yaifl/Common.hs
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Common
   (-- * Datatypes
@@ -28,6 +29,13 @@ module Yaifl.Common
   , WMValues
   , WMDirections
 
+  -- * Metadata
+  , Metadata(..)
+  , CurrentStage(..)
+  , getGlobalTime
+  , tickGlobalTime
+  , previousRoom
+
   , WMShow
   , WMRead
   , WMOrd
@@ -39,6 +47,7 @@ import Solitude
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import Display
+import Cleff.State (State)
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
@@ -57,4 +66,7 @@ instance {-# OVERLAPPABLE #-} Display a where
 <<world-model>>
 <<world-model-families>>
 <<world-model-constraints>>
+<<world-metadata>>
+
+
 ```

@@ -6,12 +6,14 @@ module Yaifl.Say
   ( -- * Types
     MessageBuffer (..)
   -- * Smart constructors
-  , emptyMessageBuffer
+  , blankMessageBuffer
   -- * Buffer modification
   , setStyle
   , say
   , sayLn
   , sayIf
+
+  , msgBufBuffer
   )
 where
 
@@ -33,15 +35,14 @@ data MessageBuffer = MessageBuffer
   , _msgBufContext :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   }
 
--- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:48
--- | Message buffer with nothing in it and no formatting.
-emptyMessageBuffer :: MessageBuffer
-emptyMessageBuffer = MessageBuffer [] Nothing []
+-- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:50
+blankMessageBuffer :: MessageBuffer
+blankMessageBuffer = MessageBuffer [] Nothing []
 
 makeEffect ''Saying
 makeLenses ''MessageBuffer
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:61
+-- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:62
 processDoc ::
   State MessageBuffer :> es
   => StyledDoc
@@ -54,7 +55,7 @@ processDoc msg = do
         _ -> (PP.<+>)
   return $ PP.hcat cxt `joinOp` maybe id PP.annotate style msg
 
--- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:80
+-- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:81
 
 class Has s t where
   buf :: Lens' s t
@@ -72,7 +73,7 @@ runSayPure = zoom (buf @s @MessageBuffer) . reinterpret \case
     modify (\s -> s & msgBufBuffer %~ (r:))
 
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:101
+-- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:102
 runSayIO ::
   IOE :> es
   => PartialState s MessageBuffer es
@@ -85,7 +86,7 @@ runSayIO = zoom (buf @_ @MessageBuffer) . reinterpret \case
 -- ~\~ end
 -- ~\~ end
 
--- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:117
+-- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:118
 -- | Say a string (well, Text).
 say :: 
   Saying :> es 
@@ -119,19 +120,6 @@ setStyle ::
 setStyle s = buf @s @MessageBuffer % msgBufStyle .= s
 
 {-
--- | Clear a message buffer and return the container (with a clean buffer) and the string
--- with all formatting (e.g. ANSI colour codes) removed.
-flushBufferToText :: 
-  Saying :> es
-  => Proxy p
-  -> w
-  -> (Text, w)
-flushBufferToText prox = runState $ do
-  -- take it down and flip it around
-  msgList <- use $ bufferL prox % msgBufBuffer % reversed
-  bufferL prox % msgBufBuffer .= []
-  return $ (mconcat . map show) msgList
-
 -- | Clear a message buffer and return the container (with a clean buffer)
 -- with all formatting (e.g. ANSI colour codes) *included*.
 flushBufferToStdOut :: 

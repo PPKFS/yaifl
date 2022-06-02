@@ -1,7 +1,7 @@
 module Yaifl.Test.Common where
 
 import Solitude
-{-
+
 import Yaifl
 import qualified Data.EnumMap as DEM
 import qualified Data.Text as T
@@ -14,13 +14,14 @@ import Yaifl.World
 import Yaifl.Say
 import Yaifl.Objects.Dynamic
 import Yaifl.Objects.Object
-import Yaifl.Objects.Missing
-import Yaifl.Rulebooks.Rulebook
+--import Yaifl.Objects.Missing
+--import Yaifl.Rulebooks.Rulebook
 import Yaifl.Logger
 import Yaifl.Objects.Query
 import Yaifl.Common
-import Yaifl.Rulebooks.WhenPlayBegins
-import Yaifl.Actions.Action
+import Cleff.State (get, runState)
+--import Yaifl.Rulebooks.WhenPlayBegins
+--import Yaifl.Actions.Action
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -59,30 +60,34 @@ newlinesToWrap = foldl' (\acc -> \case
   x -> acc <> x) "" . lines
 
 testHarness ::
-  HasStandardProperties o
+  HasStandardProperties wm
   => Text
-  -> Game o (World o)
+  -> Eff (EffStack wm) (World wm)
   -> [Text]
   -> [Text]
   -> Expectation
 testHarness fullTitle initWorld actionsToDo expected = do
   let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
-  w2 <- runGame shortName (do
+  (w2 :: World wm) <- runGame shortName (do
     info $ bformat ("Building world " %! stext %! "...") shortName
-    w' <- initWorld
+    w' <- inject initWorld
     info $ bformat "World construction finished, beginning game..."
     --when I write a proper game loop, this is where it needs to go
-    withoutMissingObjects
-      (runRulebook (_whenPlayBegins w') ())
-      (handleMissingObject "Failed when beginning" (return $ Just False))
+   -- withoutMissingObjects
+   --  (runRulebook (_whenPlayBegins w') ())
+    --  (handleMissingObject "Failed when beginning" (return $ Just False))
     --do the commands...
-    rs <- mapM parseAction actionsToDo
-    print rs
+   -- rs <- mapM parseAction actionsToDo
+  --  print rs
     get) blankWorld
-  let (x, _) = flushBufferToText (Proxy @'SayBuffer) w2
+  let flushBufferToText w = runPure $ runState w $ do
+        -- take it down and flip it around
+        msgList <- use (messageBuffer % msgBufBuffer % reversed)
+        return $ (mconcat . map show) msgList
+  let (x, _) = flushBufferToText w2
       buildExpected = mconcat (expectTitle t : expected )
   x `shouldBe` buildExpected
-
+{-
 foreachObject ::
   MonadWorld s m
   => StoreLens' s d
@@ -96,12 +101,12 @@ foreachObject sl f = do
     whenJust updObj (setObjectFrom sl)
     ) (unStore store)
   pass
-
+-}
 expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"
 
 expectTitle :: Text -> Text
-expectTitle = introText
+expectTitle = id -- introText
 
 expectYouCanSee :: [Text] -> Text
 expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")
@@ -112,4 +117,3 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
 
 expectLooking :: Text -> Text -> Text
 expectLooking t d = expectLine t <> expectLine d
--}

@@ -33,4 +33,5 @@ instance HasProperty ObjectSpecifics Enterable where
 
 instance HasProperty ObjectSpecifics Openable where
   propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
+
 -- ~\~ end

@@ -110,27 +110,26 @@ library
 
     --Yaifl.ActivityCollection
     Yaifl.Common
-    --Yaifl.Directions
-    --Yaifl.Game
+    Yaifl.Directions
+    Yaifl.Game
     Yaifl.Logger
 
-    --Yaifl.Objects.Create
+    Yaifl.Objects.Create
     Yaifl.Objects.Dynamic
-    --Yaifl.Objects.Missing
-    --Yaifl.Objects.Move
+    Yaifl.Objects.Move
     Yaifl.Objects.Object
     Yaifl.Objects.ObjectData
     Yaifl.Objects.Query
-    --Yaifl.Objects.Room
+    Yaifl.Objects.Room
     Yaifl.Objects.Specifics
 
     Yaifl.Properties.Container
     Yaifl.Properties.Enclosing
     Yaifl.Properties.Openable
     Yaifl.Properties.Property
-    --Yaifl.Properties.Query
+    Yaifl.Properties.Query
     --Yaifl.Properties.Supporter
-    --Yaifl.Properties.TH
+    Yaifl.Properties.TH
 
     --Yaifl.Rulebooks.ActionProcessing
     --Yaifl.Rulebooks.Args
@@ -157,8 +156,8 @@ test-suite yaifl-test
     TemplateHaskell
 
   other-modules:
-    --Yaifl.Test.Chapter3.Bic
-    --Yaifl.Test.Chapter3.Common
-    --Yaifl.Test.Chapter3.Verbosity
-    --Yaifl.Test.Common
+    Yaifl.Test.Chapter3.Bic
+    Yaifl.Test.Chapter3.Common
+    Yaifl.Test.Chapter3.Verbosity
+    Yaifl.Test.Common
 -- ~\~ end

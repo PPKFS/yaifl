@@ -1,6 +1,7 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Common.hs
 -- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Common.hs>>[0] project://lit/other_miscellania.md:10
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Common
   (-- * Datatypes
@@ -21,6 +22,13 @@ module Yaifl.Common
   , WMValues
   , WMDirections
 
+  -- * Metadata
+  , Metadata(..)
+  , CurrentStage(..)
+  , getGlobalTime
+  , tickGlobalTime
+  , previousRoom
+
   , WMShow
   , WMRead
   , WMOrd
@@ -32,6 +40,7 @@ import Solitude
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import Display
+import Cleff.State (State)
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
@@ -111,13 +120,13 @@ type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:85
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:87
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:156
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:127
 
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
@@ -145,4 +154,37 @@ type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 type WMEq wm = WMConstr Eq wm
 -- ~\~ end
+-- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:52
+
+data Metadata (wm :: WorldModel) = Metadata
+  { _title :: Text
+  , _roomDescriptions :: RoomDescriptions
+  , _dirtyTime :: Bool
+  , _globalTime :: Timestamp
+  , _darknessWitnessed :: Bool
+  , _currentPlayer :: Entity
+  , _currentStage :: CurrentStage
+  , _previousRoom :: Entity
+  , _firstRoom :: Entity
+  -- more to come I guess
+  }
+
+data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+makeLenses ''Metadata
+
+getGlobalTime :: 
+  State (Metadata wm) :> es 
+  => Eff es Timestamp
+getGlobalTime = use globalTime
+
+tickGlobalTime ::
+  State (Metadata wm) :> es 
+  => Bool
+  -> Eff es ()
+tickGlobalTime _ = pass
+-- ~\~ end
+
+
 -- ~\~ end

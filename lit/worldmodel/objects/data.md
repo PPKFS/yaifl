@@ -31,7 +31,7 @@ module Yaifl.Objects.ObjectData
   , roomDarkness
   , roomMapConnections
   , roomContainingRegion
-  --, roomEnclosing
+  , roomEnclosing
   , _Wearable
 
   , connectionExplicitness
@@ -39,8 +39,8 @@ module Yaifl.Objects.ObjectData
   ) where
 
 import Solitude 
-import Yaifl.Common
---import Yaifl.Properties.Enclosing
+import Yaifl.Common ( WMDirections, Entity, defaultVoidID )
+import Yaifl.Properties.Enclosing ( Enclosing, blankEnclosing )
 import qualified Data.Map as Map
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
@@ -108,7 +108,7 @@ data RoomData wm = RoomData
   , _roomDarkness :: Darkness
   , _roomMapConnections :: MapConnections wm
   , _roomContainingRegion :: ContainingRegion
-  --, _roomEnclosing :: Enclosing
+  , _roomEnclosing :: Enclosing
   } deriving stock (Generic)
 
 deriving stock instance (Ord (WMDirections wm)) => Ord (RoomData wm)
@@ -117,7 +117,7 @@ deriving stock instance (Show (WMDirections wm)) => Show (RoomData wm)
 deriving stock instance (Eq (WMDirections wm)) => Eq (RoomData wm)
 
 blankRoomData :: RoomData wm
-blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) -- blankEnclosing
+blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
 
 makeLenses ''ThingData
 makeLenses ''RoomData

@@ -1,17 +1,18 @@
+-- ~\~ language=Haskell filename=src/Yaifl/Objects/Room.hs
+-- ~\~ begin <<lit/worldmodel/rooms.md|src/Yaifl/Objects/Room.hs>>[0] project://lit/worldmodel/rooms.md:3
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Objects.Room
-  ( isWestOf
-  , getMapConnection
-    
-  ) where
+  --( isWestOf
+  --, getMapConnection
+where
+ -- ) where
 
 import Yaifl.Directions
 import Yaifl.Common
 import Solitude
 import Yaifl.Objects.ObjectData
-import Yaifl.Objects.Missing
-import Yaifl.WorldInfo
+--import Yaifl.WorldInfo
 import Yaifl.Objects.Query
 import Display
 import Yaifl.Logger
@@ -19,8 +20,7 @@ import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Objects.Object
 import qualified Data.Map as Map
 import Yaifl.Properties.TH
-
-
+{-
 hasSpecificConnectionTo ::
   MonadWorld wm m
   => ObjectLike wm o
@@ -114,3 +114,5 @@ isDirectionFromInternal mkRev dir constrObj e = withoutMissingObjects (do
   return mkObj) (handleMissingObject "failed to make direction" constrObj)
 
 makeDirections True ["West"]
+-}
+-- ~\~ end
