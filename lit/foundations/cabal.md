@@ -48,11 +48,8 @@ common common-options
     , text
     , text-display
     , solitude
-    , optics
     , cleff
     , cleff-plugin
-    , cleff-optics
-    , mtl 
     , time
     -- to remove
     , hspec 
@@ -72,9 +69,9 @@ also some `optics`-lens things.
 
 ```cabal file=yaifl.cabal
     , display
-    , chapelure
-    , formatting
-    , pretty-simple
+    --, chapelure
+    --, formatting
+    --, pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
 ```
@@ -88,8 +85,8 @@ for making pretty error messages. The other libraries are various pretty printin
     , enummapset
     , haskell-src-meta
     , haskell-src-exts
-    , neat-interpolation
-    , sandwich
+    --, neat-interpolation
+    --, sandwich
 ```
 
 - `enummapset` is a nice set of wrappers for using `Enum` keys in `IntMap`s for better performance (i.e. `Entity`).
@@ -165,7 +162,6 @@ library
     --Yaifl.ActivityCollection
     Yaifl.Common
     Yaifl.Directions
-    Yaifl.Game
     Yaifl.Logger
 
     Yaifl.Objects.Create
@@ -192,7 +188,6 @@ library
 
     Yaifl.Say
     Yaifl.World
-    --Yaifl.WorldInfo
 ```
 
 ## Test stanza
@@ -204,9 +199,9 @@ test-suite yaifl-test
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , hspec
+    , sandwich
+    , conduit
     , yaifl
-
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:
     QuasiQuotes
@@ -215,6 +210,6 @@ test-suite yaifl-test
   other-modules:
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
-    Yaifl.Test.Chapter3.Verbosity
+    --Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common
 ```

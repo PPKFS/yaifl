@@ -17,15 +17,19 @@ import Yaifl.Objects.ObjectData
 import Cleff.State
 import Yaifl.Objects.Move
 
-data ObjectCreation :: Effect where
-  GenerateEntity :: Bool -> ObjectCreation m Entity
+data ObjectCreation wm :: Effect where
+  GenerateEntity :: Bool -> ObjectCreation wm m Entity 
+  AddAbstractThing :: AbstractThing wm -> ObjectCreation wm m ()
+  AddAbstractRoom :: AbstractRoom wm -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 
--- | Create a new object and assign it an entity ID, but do **not** add it to any
--- stores. See also 'addObject' for a version that adds it to a store.
+type AddObjects wm es = '[ObjectCreation wm, State (Metadata wm), Log, ObjectQuery wm] :>> es
+
 makeObject :: 
-  Text -- ^ Name.
+  ObjectCreation wm :> es
+  => State (Metadata wm) :> es
+  => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType
   -> Bool
@@ -40,10 +44,9 @@ makeObject n d ty isT specifics details upd = do
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 addObject :: 
-  Subset es1 es
-  => WMHasProperty wm Enclosing
-  => (ObjectLike wm (AbstractObject wm d))
-  => (AbstractObject wm d -> Eff es1 ())
+  WMHasProperty wm Enclosing
+  => AddObjects wm es
+  => (AbstractObject wm d -> Eff es ())
   -> Text
   -> Text
   -> ObjType
@@ -58,17 +61,20 @@ addObject updWorld n d ty isT specifics details updateFunc = do
   (e, obj) <- makeObject n d ty isT specifics details updateFunc
   debug $ bformat ("Made a new " %! stext %! " called " %! stext %! " with ID " %! int)
     (if isThing obj then "thing" else "room") n e
-  inject $ updWorld obj
-  asThing <- getThingMaybe e
+  updWorld obj
   lastRoom <- use previousRoom
-  case asThing of
-    Nothing -> previousRoom .= e
-    Just t -> move t lastRoom >> pass -- move it if we're still 
+  if
+     isThing e 
+  then
+    previousRoom .= e
+  else
+    move e lastRoom >> pass -- move it if we're still 
   return e
 
 -- | Create a new 'Thing' and add it to the relevant stores.
 addThing ::
   WMHasProperty wm Enclosing
+  => AddObjects wm es
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
@@ -76,7 +82,7 @@ addThing ::
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdate wm ThingData) -- ^ Static/Dynamic.
   -> Eff es Entity
-addThing name desc objtype specifics details = addObject setAbstractThing name desc objtype
+addThing name desc objtype specifics details = addObject addAbstractThing name desc objtype
   True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankThingData details)
 
 -- | A version of 'addThing' that uses a state monad to provide imperative-like
@@ -87,30 +93,35 @@ addThing name desc objtype specifics details = addObject setAbstractThing name d
 -- addThing' n d o (someLensField .= 5)
 -- @
 addThing' :: 
-  --WMHasProperty wm Enclosing
-  Text -- ^ Name.
+  WMHasProperty wm Enclosing
+  => AddObjects wm es
+  => Text -- ^ Name.
   -> Text -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es Entity
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
-    Nothing (Just $ execState stateUpdate blankThingData) Nothing
+    Nothing (Just $ snd $ runPure $ runState blankThingData stateUpdate) Nothing
 
 -- | Create a new 'Room' and add it to the relevant stores.
 addRoom :: 
   WMHasProperty wm Enclosing
+  => AddObjects wm es
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
   -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
   -> Maybe (RoomData wm) -- ^
   -> Maybe (ObjectUpdate wm (RoomData wm))  -- ^
-  -> m Entity
+  -> Eff es Entity
 addRoom name desc objtype specifics details upd = do
-  e <- addObject setAbstractRoom name desc objtype False
+  e <- addObject addAbstractRoom name desc objtype False
         (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankRoomData details) upd
-  w <- get
-  when (isNothing $ w ^. firstRoom) (firstRoom ?= e)
+  md <- get
+  when (isVoid $ md ^. firstRoom) (firstRoom .= e)
   return e
+
+isVoid :: Entity -> Bool
+isVoid = (defaultVoidID ==)
 
 -- | A version of 'addRoom' that uses a state monad to provide imperative-like
 -- descriptions of the internals of the object. Compare
@@ -120,20 +131,21 @@ addRoom name desc objtype specifics details upd = do
 -- addThing' n d o (someLensField .= 5)
 -- @
 addRoom' :: 
-  WMHasProperty wm Enclosing
+ WMHasProperty wm Enclosing
+  => AddObjects wm es
   => Text
   -> Text
   -> Eff '[State (RoomData wm)] v
-  -> m Entity
+  -> Eff es Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
-  Nothing (Just (execState rd blankRoomData)) Nothing
+  Nothing (Just $ snd $ runPure $ runState blankRoomData rd) Nothing
 
 addBaseObjects ::
-   WMHasProperty wm Enclosing
-  => m ()
+  WMHasProperty wm Enclosing
+  => AddObjects wm es
+  => Eff es ()
 addBaseObjects = do
   addRoom' "The Void" "If you're seeing this, you did something wrong." pass
-  addThing' "player" "It's you, looking handsome as always" (
-    thingDescribed .= Undescribed)
-  firstRoom .= Nothing
+  addThing' "player" "It's you, looking handsome as always" (thingDescribed .= Undescribed)
+  firstRoom .= defaultVoidID
 ```

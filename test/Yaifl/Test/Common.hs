@@ -3,23 +3,19 @@ module Yaifl.Test.Common where
 import Solitude
 
 import Yaifl
-import qualified Data.EnumMap as DEM
 import qualified Data.Text as T
-import Test.Hspec
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Language.Haskell.TH
 import Data.Char (isSpace)
-import Yaifl.Game
 import Yaifl.World
 import Yaifl.Say
-import Yaifl.Objects.Dynamic
-import Yaifl.Objects.Object
 --import Yaifl.Objects.Missing
 --import Yaifl.Rulebooks.Rulebook
 import Yaifl.Logger
-import Yaifl.Objects.Query
-import Yaifl.Common
-import Cleff.State (get, runState)
+import Cleff.State (runState)
+import qualified Test.Sandwich as Sandwich hiding (info)
+import Test.Sandwich hiding (info)
+import Conduit
 --import Yaifl.Rulebooks.WhenPlayBegins
 --import Yaifl.Actions.Action
 
@@ -61,17 +57,20 @@ newlinesToWrap = foldl' (\acc -> \case
 
 testHarness ::
   HasStandardProperties wm
+  => MonadIO m
+  => MonadThrow m
   => Text
-  -> Eff (EffStack wm) (World wm)
+  -> Game wm a
   -> [Text]
   -> [Text]
-  -> Expectation
+  -> ExampleT context m ()
 testHarness fullTitle initWorld actionsToDo expected = do
   let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
-  (w2 :: World wm) <- runGame shortName (do
+  (w2 :: World wm) <- liftIO $ runGame shortName (do
+    newWorld
     info $ bformat ("Building world " %! stext %! "...") shortName
-    w' <- inject initWorld
-    info $ bformat "World construction finished, beginning game..."
+    initWorld
+    info $ bformat "World construction finished, beginning game...")
     --when I write a proper game loop, this is where it needs to go
    -- withoutMissingObjects
    --  (runRulebook (_whenPlayBegins w') ())
@@ -79,14 +78,13 @@ testHarness fullTitle initWorld actionsToDo expected = do
     --do the commands...
    -- rs <- mapM parseAction actionsToDo
   --  print rs
-    get) blankWorld
   let flushBufferToText w = runPure $ runState w $ do
         -- take it down and flip it around
         msgList <- use (messageBuffer % msgBufBuffer % reversed)
         return $ (mconcat . map show) msgList
   let (x, _) = flushBufferToText w2
       buildExpected = mconcat (expectTitle t : expected )
-  x `shouldBe` buildExpected
+  x `Sandwich.shouldBe` buildExpected
 {-
 foreachObject ::
   MonadWorld s m

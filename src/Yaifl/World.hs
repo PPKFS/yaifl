@@ -19,6 +19,11 @@ import Yaifl.Say
 --import Yaifl.Activities.Activity
 --import Yaifl.Actions.Action
 import Yaifl.Objects.Dynamic
+import Yaifl.Objects.Query
+import Cleff.State
+import Yaifl.Objects.Object
+import Yaifl.Objects.Create
+import Display
 --import Yaifl.Actions.Looking
 --import Yaifl.Actions.Going
 
@@ -29,7 +34,7 @@ data World (wm :: WorldModel) = World
   , _messageBuffer :: MessageBuffer
   }
 
--- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:98
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:111
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -38,7 +43,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:112
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:125
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: () -- !(Map Text (Action wm))
@@ -51,31 +56,79 @@ data WorldActions (wm :: WorldModel) = WorldActions
 
 makeLenses ''World
 makeLenses ''WorldModel
+makeLenses ''WorldStores
 
--- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:140
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:153
+-- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
+reifyObject ::
+  State (Metadata wm) :> es
+  => (AbstractObject wm d -> Eff es ())
+  -> AbstractObject wm d
+  -> Eff es (Object wm d)
+reifyObject _ (StaticObject v) = return v
+reifyObject setFunc (DynamicObject ts) = do
+  let co = _tsCachedObject ts
+  now <- getGlobalTime
+  if
+    _tsCacheStamp ts == now
+  then
+    return co
+  else
+    do
+      -- update the object
+      updatedObj <- runObjectUpdate (_tsUpdateFunc ts) co
+      t <- getGlobalTime
+      setFunc (DynamicObject $ TimestampedObject updatedObj t (_tsUpdateFunc ts))
+      return updatedObj
+
+reifyRoom :: 
+  State (Metadata wm) :> es
+  => (ObjectCreation wm :> es)
+  => AbstractRoom wm
+  -> Eff es (Room wm)
+reifyRoom = reifyObject addAbstractRoom
+
+reifyThing :: 
+  State (Metadata wm) :> es
+  => (ObjectCreation wm :> es)
+  => AbstractThing wm
+  -> Eff es (Thing wm)
+reifyThing = reifyObject addAbstractThing
+
+runCreationAsLookup :: 
+  State (World wm) :> es
+  => Eff (ObjectCreation wm : es) 
+  ~> Eff es
+runCreationAsLookup = interpret \case
+  GenerateEntity bThing -> if bThing then 
+    ((worldStores % entityCounter % _1) <<%= (+1)) else ((worldStores % entityCounter % _2) <<%= (+1))
+  AddAbstractRoom aRoom -> worldStores % rooms % at (getID aRoom) ?= aRoom
+  AddAbstractThing aThing -> worldStores % things % at (getID aThing) ?= aThing
+
+runQueryAsLookup :: 
+  State (World wm) :> es
+  => (ObjectCreation wm :> es)
+  => (State (Metadata wm) :> es)
+  => Eff (ObjectQuery wm : es) 
+  ~> Eff es
+runQueryAsLookup = interpret \case
+  LookupThing e -> do
+    mbObj <- use $ worldStores % things % at (getID e)
+    case mbObj of
+      Nothing -> return 
+        if isThing e 
+          then 
+            Left $ "Tried to lookup a room as a thing " <> displayText (getID e) 
+          else 
+            Left $ "Could not find" <> displayText (getID e)
+      Just ao -> withoutMissingObjects (Right <$> reifyThing ao) (\mo -> return $ Left $ "Failed to reify " <> displayText mo)
+  LookupRoom e -> error ""
+  SetRoom r -> error ""
+  SetThing t -> error ""
+
 
 {-
--- | Generate a new entity ID.
-newEntityID :: 
-  Bool
-  -> World o
-  -> (Entity, World o)
-newEntityID True = entityCounter % _1 <<+~ 1
-newEntityID False = entityCounter % _2 <<-~ 1
 
--- | Update the game title.
-setTitle :: 
-  MonadWorld s m
-  => Text -- ^ New title.
-  -> m ()
-setTitle = (title .=)
-
--- | Obtain the current timestamp. This is a function in case I want to change the
--- implementation in the future.
-getGlobalTime ::
-  MonadReader (World wm) m
-  => m Timestamp
-getGlobalTime = asks _globalTime
 
 tickGlobalTime :: 
   MonadWorld wm m
@@ -88,9 +141,6 @@ tickGlobalTime True = do
   _ <- globalTime <%= (+1)
   pass
   -- debug (bformat ("Dong. The time is now " %! int %! ".") r)
-
-instance HasBuffer (World wm) 'SayBuffer where
-  bufferL _ = messageBuffers % _1
 
 addBaseActions :: 
   HasLookingProperties wm

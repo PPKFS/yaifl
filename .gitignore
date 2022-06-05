@@ -24,7 +24,6 @@ cabal.project.local
 # Stack
 .stack-work/
 stack.yaml.lock
-
 ### IDE/support
 # Vim
 [._]*.s[a-v][a-z]
@@ -55,3 +54,5 @@ TAGS
 log.json
 *.save0
 book
+
+test_runs

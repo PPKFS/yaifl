@@ -119,40 +119,7 @@ instance ObjectLike wm (AnyObject wm) where
 
 instance ObjectLike wm Entity where
   getRoom e = lookupRoom e >>= either (throwError . flip MissingObject e) return
-  getThing e = lookupThing e  >>= either (throwError . flip MissingObject e) return
-
--- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
-reifyObject ::
-  State (Metadata wm) :> es
-  => (Object wm d -> Eff es ())
-  -> AbstractObject wm d
-  -> Eff es (Object wm d)
-reifyObject _ (StaticObject v) = return v
-reifyObject setFunc (DynamicObject ts) = do
-  let co = _tsCachedObject ts
-  now <- getGlobalTime
-  if
-    _tsCacheStamp ts == now
-  then
-    return co
-  else
-    do
-      -- update the object
-      updatedObj <- runObjectUpdate (_tsUpdateFunc ts) co
-      setFunc updatedObj
-      return updatedObj
-
-reifyRoom :: 
-  NoMissingObjects wm es
-  => AbstractRoom wm
-  -> Eff es (Room wm)
-reifyRoom = reifyObject setRoom
-
-reifyThing :: 
-  NoMissingObjects wm es
-  => AbstractThing wm
-  -> Eff es (Thing wm)
-reifyThing = reifyObject setThing
+  getThing e = lookupThing e >>= either (throwError . flip MissingObject e) return
 
 getObject ::
   NoMissingObjects wm es

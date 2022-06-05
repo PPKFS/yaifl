@@ -9,19 +9,12 @@ import qualified Data.EnumMap as DEM
 import Yaifl.ObjectLookup
 -}
 import Solitude
-import Test.Hspec
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
+import Test.Sandwich
 
 main :: IO ()
-main = hspec $ do
+main = runSandwichWithCommandLineArgs defaultOptions $ do
   Chapter3.spec
-
-
-
-
-
-
-
 
 {-
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text

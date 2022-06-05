@@ -6,14 +6,13 @@ import Yaifl.Properties.Property ( WMHasProperty )
 import Yaifl.Properties.Enclosing ( enclosingContains, Enclosing )
 import Solitude
 import qualified Data.EnumSet as ES
-import Yaifl.Common ( HasID(..), Entity, isRoom, tickGlobalTime, Metadata (Metadata) )
+import Yaifl.Common ( HasID(..), Entity, tickGlobalTime, Metadata (..) )
 import Yaifl.Logger ( debug, Log )
 import Yaifl.Objects.ObjectData ( thingContainedBy )
 import Yaifl.Objects.Query
-import Yaifl.Properties.Query ( getEnclosing, getPropertyOrThrow )
-import Cleff.Error ( note )
-import Data.Text.Display ( display )
+import Yaifl.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
 import Cleff.State
+import Display
 
 move :: 
   State (Metadata wm) :> es
@@ -31,11 +30,12 @@ move oObj oLoc = withoutMissingObjects (do
   loc <- getPropertyOrThrow "enclosing part of new location" oLoc =<< getEnclosing oLoc
   let c = o' ^. objData % thingContainedBy
   oldLocEnc <- getPropertyOrThrow "enclosing part of old location" c =<< getEnclosing c
-  debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) (o' ^. objName) (display c) (display oLoc)
+  debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) (o' ^. objName) (displayText c) (displayText (getID oLoc))
   -- at this point we know everything is well-formed and we are going to succeed
   let (movedObj, oldLocation, newLocation) = moveObjects (getID oLoc) o' oldLocEnc loc
   -- update them
-
+  setThing movedObj
+  mapM (uncurry setEnclosing) [(c, oldLocation), (getID oLoc, newLocation)] 
   tickGlobalTime True
   return $ True)
   (handleMissingObject (bformat ("Failed to move ObjectID " %! int %! " to ObjectID " %! int ) (getID oObj) (getID oLoc)) $ return False)

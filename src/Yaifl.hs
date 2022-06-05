@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl.hs
--- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0] project://lit/construction.md:41
+-- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0] project://lit/construction.md:6
 
 module Yaifl
   (
@@ -11,12 +11,13 @@ module Yaifl
     newWorld
   , blankWorld
   , HasStandardProperties
-  --, PlainWorldModel
+  , PlainWorldModel
+  , Game
+  , runGame
   ) where
 import Solitude
 
 import Yaifl.World
-import Solitude
 import qualified Data.Map as DM
 import Yaifl.Common
 import Yaifl.Say
@@ -25,18 +26,18 @@ import Yaifl.Properties.Property
 import Yaifl.Properties.Openable
 import Yaifl.Properties.Container
 import Yaifl.Properties.Enclosing
-import Yaifl.Game
+import Yaifl.Directions
+import Yaifl.Logger
+import Cleff.State hiding ( zoom )
+import Yaifl.Objects.Create
+import Yaifl.Objects.Query
+import Display
 --import Yaifl.Objects.Create
 --import Yaifl.Rulebooks.WhenPlayBegins
 --import Yaifl.ActivityCollection
 --import Yaifl.Directions
 
-newWorld :: 
-  a --Game s v
-  -> a --Game s (World s)
-newWorld = id -- modify addBaseActions >> addBaseObjects >> g >> get
-
---type PlainWorldModel = 'WorldModel () Direction () ()
+type PlainWorldModel = 'WorldModel () Direction () ()
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
@@ -81,9 +82,37 @@ blankMetadata = Metadata
   , _previousRoom = defaultVoidID
   , _firstRoom = defaultVoidID
   }
-{-
-  , _activities = defaultActivities
-  , _whenPlayBegins = whenPlayBeginsRules
-  , _actionProcessing = defaultActionProcessingRules
-  }-}
+
+type EffStack wm = '[Log, ObjectQuery wm, State (Metadata wm), ObjectCreation wm, IOE]
+type EffStackNoIO wm = '[Log, ObjectQuery wm, State (Metadata wm), ObjectCreation wm]
+type Game wm = Eff (EffStack wm) 
+
+type UnderlyingEffStack wm = '[State (World wm), IOE] 
+
+newWorld :: 
+  WMHasProperty wm Enclosing
+  => Eff (EffStack wm) ()
+newWorld = do
+  addBaseObjects
+  pass
+  {- addBaseActions >> -} 
+
+convertToUnderlyingStack :: 
+  forall wm. Eff (EffStack wm)
+  ~> Eff (UnderlyingEffStack wm) 
+convertToUnderlyingStack = 
+  runCreationAsLookup
+  . (zoom worldMetadata) 
+  . runQueryAsLookup
+  . runAndIgnoreLogging
+  . raiseUnderN @(State (World wm)) @(EffStackNoIO wm) @('[IOE])
+
+runGame :: 
+  Text 
+  -> Eff (EffStack wm) a
+  -> IO (World wm)
+runGame t f = do
+  (r, w) <- runIOE $ runState blankWorld $ convertToUnderlyingStack f
+  return w
+
 -- ~\~ end

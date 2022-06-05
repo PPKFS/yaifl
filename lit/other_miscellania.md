@@ -35,6 +35,8 @@ module Yaifl.Common
   , getGlobalTime
   , tickGlobalTime
   , previousRoom
+  , firstRoom
+  , setTitle
 
   , WMShow
   , WMRead

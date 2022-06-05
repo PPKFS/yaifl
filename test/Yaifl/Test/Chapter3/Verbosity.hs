@@ -5,7 +5,6 @@ module Yaifl.Test.Chapter3.Verbosity where
 import Yaifl
 import Yaifl.Test.Common
 import Solitude
-import Yaifl.Game
 import Yaifl.World
 import Yaifl.Objects.Create
 import Yaifl.Objects.Room

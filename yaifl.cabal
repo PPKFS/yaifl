@@ -28,34 +28,31 @@ common common-options
     , text
     , text-display
     , solitude
-    , optics
     , cleff
     , cleff-plugin
-    , cleff-optics
-    , mtl 
     , time
     -- to remove
     , hspec 
     -- to remove
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:74
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:71
     , display
-    , chapelure
-    , formatting
-    , pretty-simple
+    --, chapelure
+    --, formatting
+    --, pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:86
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:83
     , aeson
     , katip
     , enummapset
     , haskell-src-meta
     , haskell-src-exts
-    , neat-interpolation
-    , sandwich
+    --, neat-interpolation
+    --, sandwich
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:107
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:104
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -89,7 +86,7 @@ common common-options
     TypeOperators
     DerivingVia
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:147
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:144
 library
   import:          common-options
   hs-source-dirs:  src
@@ -111,7 +108,6 @@ library
     --Yaifl.ActivityCollection
     Yaifl.Common
     Yaifl.Directions
-    Yaifl.Game
     Yaifl.Logger
 
     Yaifl.Objects.Create
@@ -138,18 +134,17 @@ library
 
     Yaifl.Say
     Yaifl.World
-    --Yaifl.WorldInfo
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:202
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:197
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , hspec
+    , sandwich
+    , conduit
     , yaifl
-
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:
     QuasiQuotes
@@ -158,6 +153,6 @@ test-suite yaifl-test
   other-modules:
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
-    Yaifl.Test.Chapter3.Verbosity
+    --Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common
 -- ~\~ end

@@ -28,6 +28,8 @@ module Yaifl.Common
   , getGlobalTime
   , tickGlobalTime
   , previousRoom
+  , firstRoom
+  , setTitle
 
   , WMShow
   , WMRead
@@ -70,8 +72,12 @@ class HasID n where
 
 instance HasID Entity where
   getID = id
+
+instance Display Entity where
+  display (Entity i) = "ID: " <> show i
+
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:44
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:48
 defaultVoidID :: Entity
 defaultVoidID = Entity (-1)
 
@@ -81,7 +87,7 @@ defaultNothingID = Entity 0
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:59
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:63
 -- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
@@ -91,7 +97,7 @@ newtype Store a = Store
 emptyStore :: Store a
 emptyStore = Store EM.empty
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:76
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:80
 alterEMF :: 
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
@@ -110,23 +116,23 @@ alterNewtypeEMF ::
   -> f nt
 alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0] project://lit/worldmodel/objects/entities-stores.md:98
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-at>>[0] project://lit/worldmodel/objects/entities-stores.md:102
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0] project://lit/worldmodel/objects/entities-stores.md:105
+-- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-instances>>[0] project://lit/worldmodel/objects/entities-stores.md:109
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:87
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:100
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:127
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:140
 
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
@@ -184,6 +190,13 @@ tickGlobalTime ::
   => Bool
   -> Eff es ()
 tickGlobalTime _ = pass
+
+setTitle :: 
+  State (Metadata wm) :> es 
+  => Text -- ^ New title.
+  -> Eff es ()
+setTitle = (title .=)
+
 -- ~\~ end
 
 

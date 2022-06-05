@@ -36,6 +36,10 @@ class HasID n where
 
 instance HasID Entity where
   getID = id
+
+instance Display Entity where
+  display (Entity i) = "ID: " <> show i
+
 ```
 
 We also then reserve a few IDs for the 'default' objects which we never want to see at runtime, but need at construction time to avoid unnecessary `Maybe`s.
