@@ -21,6 +21,10 @@ import qualified Data.Text as T
 import Katip.Format.Time ( formatAsLogTime )
 
 <<log-effect>>
+<<log-interpreters>>
+<<log-functions>>
+<<callstack-log>>
+<<log-item>>
 ```
 
 ## Logging Effect
@@ -36,10 +40,6 @@ data Log :: Effect where
   WithContext :: Text -> m a -> Log m ()
 
 makeEffect ''Log
-<<log-interpreters>>
-<<log-functions>>
-<<callstack-log>>
-<<log-item>>
 ```
 
 ### Interpreters

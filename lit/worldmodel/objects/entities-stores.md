@@ -57,7 +57,7 @@ defaultPlayerID = Entity 1
 ## Stores
 
 A `Store` is a map from `Entity`s to `a`s. Usually this is some flavour of `Object wm d`, but we can also use
-`Store (Entity, Payload)` for relations and things like that.
+`Store (Entity, Payload)` for relations and things like that. Of course, since I've refactored the direct link of a `Map`-based store to a specific interpretation of the world's effects, this seems slightly out of place. But it's fairly obvious as the go-to implementation so it may as well stay here.
 
 ```haskell id=store-def
 -- import qualified Data.EnumMap.Strict as EM

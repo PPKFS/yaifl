@@ -1,13 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/World.hs
 -- ~\~ begin <<lit/worldmodel/state.md|src/Yaifl/World.hs>>[0] project://lit/worldmodel/state.md:9
-{-|
-Module      : Yaifl.World
-Description : The monolithic record state that runs everything.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
 
 {-# LANGUAGE TemplateHaskell #-}
 module Yaifl.World where
@@ -34,7 +26,7 @@ data World (wm :: WorldModel) = World
   , _messageBuffer :: MessageBuffer
   }
 
--- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:111
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:109
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -43,7 +35,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:125
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:123
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: () -- !(Map Text (Action wm))
@@ -58,7 +50,7 @@ makeLenses ''World
 makeLenses ''WorldModel
 makeLenses ''WorldStores
 
--- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:153
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:151
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
   State (Metadata wm) :> es

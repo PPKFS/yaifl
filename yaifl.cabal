@@ -19,7 +19,7 @@ source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1] project://lit/foundations/cabal.md:43
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1] project://lit/foundations/cabal.md:37
 common common-options
   build-depends:
       base
@@ -31,28 +31,20 @@ common common-options
     , cleff
     , cleff-plugin
     , time
-    -- to remove
-    , hspec 
-    -- to remove
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:71
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:61
     , display
-    --, chapelure
-    --, formatting
-    --, pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:83
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:69
     , aeson
     , katip
     , enummapset
     , haskell-src-meta
     , haskell-src-exts
-    --, neat-interpolation
-    --, sandwich
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:104
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:85
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -86,7 +78,7 @@ common common-options
     TypeOperators
     DerivingVia
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:144
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:125
 library
   import:          common-options
   hs-source-dirs:  src
@@ -135,7 +127,7 @@ library
     Yaifl.Say
     Yaifl.World
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:197
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:181
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0

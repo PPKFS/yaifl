@@ -9,18 +9,16 @@
 
 # The Yaifl Library
 
-- [Project Architecture](architecture.md)
-  - [Effects](foundations/effects.md)
+- [Effects](foundations/effects.md)
     - [Saying](effects/say.md)
     - [Logging](effects/logging.md)
 - [The World Model](worldmodel.md)
   - [WorldModel and WMx Type Families](worldmodel/typefamilies.md)
-  - [The World State](worldmodel/state.md)
+  
   - [Objects](worldmodel/objects.md)
     - [Entities and Stores](worldmodel/objects/entities-stores.md)
     - [Objects, At Last](worldmodel/objects/objects.md)
-    - [Object Querying Effects](worldmodel/objects/query.md)
-    - [ObjectLike](worldmodel/objects/objectlike.md)
+    - [Object Querying Effect](worldmodel/objects/query.md)
     - [Object Data](worldmodel/objects/data.md)
     - [Object Specifics](worldmodel/objects/specifics.md)
     - [Reification](worldmodel/objects/reification.md)
@@ -39,9 +37,11 @@
   - [Action Processing](rulebooks/ap.md)
   - [Activities](rulebooks/activities.md)
 - [Construction and Execution](construction.md)
+  - [The World State](worldmodel/state.md)
 - [Testing Framework](test-framework.md)
   - [Test Coverage](tests/coverage.md)
 - [Miscellenia](other_miscellania.md)
+  - [Module Files](misc/common.md)
 
 ---
 

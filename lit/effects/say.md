@@ -20,9 +20,7 @@ module Yaifl.Say
   )
 where
 
-import Cleff
-import Cleff.State hiding (zoom)
-
+import Cleff.State ( State, get, modify )
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Solitude
@@ -78,7 +76,6 @@ processDoc msg = do
 And we can then interpret a `SayDoc` by amending to the buffer:
 
 ```haskell id=interpret-say-pure
-
 class Has s t where
   buf :: Lens' s t
 

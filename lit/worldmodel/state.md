@@ -6,14 +6,6 @@ We put the message buffer as part of the state even though we are in `IO` becaus
 
 
 ```haskell file=src/Yaifl/World.hs
-{-|
-Module      : Yaifl.World
-Description : The monolithic record state that runs everything.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
 
 {-# LANGUAGE TemplateHaskell #-}
 module Yaifl.World where

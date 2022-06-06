@@ -85,13 +85,6 @@ addThing ::
 addThing name desc objtype specifics details = addObject addAbstractThing name desc objtype
   True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankThingData details)
 
--- | A version of 'addThing' that uses a state monad to provide imperative-like
--- descriptions of the internals of the object. Compare
--- @
--- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
--- @ with @
--- addThing' n d o (someLensField .= 5)
--- @
 addThing' :: 
   WMHasProperty wm Enclosing
   => AddObjects wm es

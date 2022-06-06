@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Common.hs
--- ~\~ begin <<lit/other_miscellania.md|src/Yaifl/Common.hs>>[0] project://lit/other_miscellania.md:10
+-- ~\~ begin <<lit/misc/common.md|src/Yaifl/Common.hs>>[0] project://lit/misc/common.md:10
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -12,16 +12,6 @@ module Yaifl.Common
   , WorldModel(..)
   , RoomDescriptions(..)
 
-  , defaultVoidID
-  , emptyStore
-  -- * Object querying
-  , isThing
-  , isRoom
-    -- * Type family nonsense
-  , WMObjSpecifics
-  , WMValues
-  , WMDirections
-
   -- * Metadata
   , Metadata(..)
   , CurrentStage(..)
@@ -31,6 +21,19 @@ module Yaifl.Common
   , firstRoom
   , setTitle
 
+  -- * Some defaults
+  , defaultVoidID
+  , defaultPlayerID
+  , emptyStore
+
+  -- * Object querying
+  , isThing
+  , isRoom
+
+    -- * Type family nonsense
+  , WMObjSpecifics
+  , WMValues
+  , WMDirections
   , WMShow
   , WMRead
   , WMOrd
@@ -38,11 +41,12 @@ module Yaifl.Common
   )
 where
 
-import Solitude
+import Cleff.State ( State )
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
-import Display
-import Cleff.State (State)
+import Display ( Display(..) )
+
+import Solitude
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
@@ -126,13 +130,13 @@ type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:100
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:98
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:140
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:138
 
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
@@ -160,7 +164,7 @@ type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 type WMEq wm = WMConstr Eq wm
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:52
+-- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:50
 
 data Metadata (wm :: WorldModel) = Metadata
   { _title :: Text
@@ -198,6 +202,4 @@ setTitle ::
 setTitle = (title .=)
 
 -- ~\~ end
-
-
 -- ~\~ end

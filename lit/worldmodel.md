@@ -1,6 +1,6 @@
 # The World Model
 
-The `WorldModel` encompasses the spatial object model, as Inform's literate source puts it. This provides us with everything to specify the layout of the game world, the objects within it, and properties they have. This only covers the *foundations* of a world model, rather than specific instantiations. For instance, `Thing`s and their `name` and `description` and `Room`s having `mapConnections`.
+The `WorldModel` encompasses the spatial object model, as Inform's literate source puts it. This provides us with everything to specify the layout of the game world, the objects within it, and properties they have. For instance, `Thing`s and their `name` and `description` and `Room`s having `mapConnections`.
 
 ## Sections
 

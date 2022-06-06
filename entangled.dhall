@@ -105,7 +105,8 @@ let database = Some ".entangled/db.sqlite"
    alpha-numerical order (same as `ls`).
   -}
 let watchList = [ "lit/*.md", "lit/foundations/*.md", "lit/properties/*.md", 
-   "lit/rulebooks/*.md", "lit/tests/*.md", "lit/worldmodel/*.md", "lit/worldmodel/objects/*.md", "lit/effects/*.md", "lit/properties/std/*.md" ]
+   "lit/rulebooks/*.md", "lit/tests/*.md", "lit/worldmodel/*.md", "lit/worldmodel/objects/*.md", "lit/effects/*.md", "lit/properties/std/*.md"
+   , "lit/misc/*.md" ]
 
 in { entangled = entangled.Config :: { database = database
                                      , watchList = watchList

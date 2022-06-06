@@ -17,9 +17,7 @@ module Yaifl.Say
   )
 where
 
-import Cleff
-import Cleff.State hiding (zoom)
-
+import Cleff.State ( State, get, modify )
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Solitude
@@ -35,14 +33,14 @@ data MessageBuffer = MessageBuffer
   , _msgBufContext :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   }
 
--- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:50
+-- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:48
 blankMessageBuffer :: MessageBuffer
 blankMessageBuffer = MessageBuffer [] Nothing []
 
 makeEffect ''Saying
 makeLenses ''MessageBuffer
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:62
+-- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:60
 processDoc ::
   State MessageBuffer :> es
   => StyledDoc
@@ -55,8 +53,7 @@ processDoc msg = do
         _ -> (PP.<+>)
   return $ PP.hcat cxt `joinOp` maybe id PP.annotate style msg
 
--- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:81
-
+-- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:79
 class Has s t where
   buf :: Lens' s t
 
@@ -73,7 +70,7 @@ runSayPure = zoom (buf @s @MessageBuffer) . reinterpret \case
     modify (\s -> s & msgBufBuffer %~ (r:))
 
 -- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:102
+-- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:99
 runSayIO ::
   IOE :> es
   => PartialState s MessageBuffer es
@@ -86,7 +83,7 @@ runSayIO = zoom (buf @_ @MessageBuffer) . reinterpret \case
 -- ~\~ end
 -- ~\~ end
 
--- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:118
+-- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:115
 -- | Say a string (well, Text).
 say :: 
   Saying :> es 

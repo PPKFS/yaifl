@@ -1,11 +1,10 @@
 # Yaifl - **Y**et **A**nother **I**nteractive **F**iction **L**ibrary
 
-Yaifl is a library for writing interactive fiction ("text adventures") in Haskell. 
-It is heavily based off [Inform7 by Graham Nelson](http://inform7.com/). I doubt anyone will ever choose this over Inform7 to actually produce a work of IF, but this is meant as more of an investigation as to how we can build an IF library that still has the full flexibility of the underlying language. 
+Yaifl is a library for writing interactive fiction ("text adventures") in Haskell. It is heavily based off [Inform7](http://inform7.com/) in terms of the semantic structure (things and rooms, rulebooks, the tests). I doubt anyone will ever choose this over Inform7 -- or Twine, TADS, etc. -- to actually produce a work of IF; so in this regard, this is more of a fiddle-toy than intended to be a platform for making games.
 
-The internals of Inform are not the easiest to pick apart. Even with the wonderful literate programming style (which was the inspiration for me to write this 'book'), it's a tangled web of interlocking pieces that aren't easy to find something in. Plus, I want to avoid a handful of Inform's restrictions at a fundamental level (e.g. objects are considered entirely unique). 
+The internals of Inform are not the easiest to pick apart. Even with the wonderful literate programming style (which was the inspiration for me to write this 'book'), it's a tangled web of interlocking pieces that aren't easy to find something in. A large amount of the documentation is specifically about trying to strong-arm literate English into something a computer can understand. Plus, I want to avoid a handful of Inform's restrictions at a fundamental level (e.g. objects are considered entirely unique). 
 
-To this extent, it's less of a library for *writing* pieces of interactive fiction and more for fiddling about with *text adventure world models*. A lot of weird things are done due to the limitations of the language itself and its targets (i.e. the Z-Machine, or Glulx). For example, did you know that the action **to look** makes a table of **every item in the entire game**?
+To this extent, `Yaifl` is less of a library for *writing* pieces of interactive fiction and more for fiddling about with *text adventure world models*. A lot of weird things are done due to the limitations of the language itself and its targets (i.e. the Z-Machine, or Glulx). For example, did you know that the action **to look** makes a table of **every item in the entire game**?
 
 ## Why this book?
 

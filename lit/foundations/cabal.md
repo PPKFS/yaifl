@@ -28,12 +28,6 @@ source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
 ```
-```admonish question "Why does the project use GHC 9.2.1?"
-
-- Using `GHC2021` as a `default-language` only works in 9.2, and it saves writing a huge number of extensions.
-- `9.2.2` doesn't (yet) support HLS. Even with `entangled`, I like HLS because I like keeping my sanity.
-- It could probably work just fine with GHC as low as 8.8.x, but this is untested.
-```
 
 ## Dependencies
 
@@ -51,12 +45,9 @@ common common-options
     , cleff
     , cleff-plugin
     , time
-    -- to remove
-    , hspec 
-    -- to remove
 ```
 
-I still have no idea why the first 3 of these aren't in `base`. `solitude` is my personal prelude, which is
+I still have no idea why the first 4 of these aren't in `base`. `solitude` is my personal prelude, which is
 mostly re-exports of the excellent [relude](https://hackage.haskell.org/package/relude) alternative prelude and
 also some `optics`-lens things. 
 
@@ -64,20 +55,15 @@ also some `optics`-lens things.
 
 - No idea, I just wanted to.
 - The error messages and the explicit `AffineTraversal` you get from combining a `Lens` and a `Prism` are cool though.
-
 ```
 
 ```cabal file=yaifl.cabal
     , display
-    --, chapelure
-    --, formatting
-    --, pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
 ```
 
-`display` and `chapelure` are for being *technically* lawful with `Show` instances when it comes to logging and
-for making pretty error messages. The other libraries are various pretty printing for pretty logging and output.
+`display` is for being *technically* lawful with `Show` instances when it comes to logging and for making pretty error messages. I would also like to re-add `chapelure` but I've not quite found the use-case (maybe in the test suite). `prettyprinter` gives nicer string formatting options.
 
 ```cabal file=yaifl.cabal
     , aeson
@@ -85,18 +71,13 @@ for making pretty error messages. The other libraries are various pretty printin
     , enummapset
     , haskell-src-meta
     , haskell-src-exts
-    --, neat-interpolation
-    --, sandwich
 ```
 
 - `enummapset` is a nice set of wrappers for using `Enum` keys in `IntMap`s for better performance (i.e. `Entity`).
 - `haskell-src-*` I use because writing well-formed TH is hard, and I wanted to just write Haskell strings with
 text substitutions in. 
-- `neat-interpolation` makes wrapped raw string quasi-quotes better, which is important given
-how many room descriptions are very long lines of text. 
-- `sandwich` is a really sweet looking testing library so I
-wanted to try it.
-- `katip` for logging and `aeson` for writing some wrappers to customise the logging format.
+
+- `katip` is only currently used because it has excellent time formatting, but it's a bit heavy for that purpose.
 
 ## GHC extensions
 
@@ -192,6 +173,10 @@ library
 
 ## Test stanza
 
+- `neat-interpolation` makes wrapped raw string quasi-quotes better, which is important given
+how many room descriptions are very long lines of text. 
+- `sandwich` is a really sweet looking testing library so I wanted to try it.
+- `conduit` I needed because of `MonadThrow` constraints for `sandwich`'s `shouldBe`.
 ```cabal file=yaifl.cabal
 test-suite yaifl-test
   import:             common-options

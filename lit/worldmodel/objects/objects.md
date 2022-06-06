@@ -3,29 +3,34 @@
 And now we turn to the final of the foundational parts of the world model, the `Object`. Whilst we don't go quite as far as
 Inform does, where *everything* is an object of some kind (including directions, or if you wanted to extend the system with ideas such as people having knowledge of something), we still consider most things in a game to be an `Object` of some kind. These can be split into two categories; `Thing`s (physical, interactable, objects) and `Room`s (spaces to be moved between). Each of these can be further divided into more specific instances, but it is significantly simpler to deal with everything being either a realisable object or a space, and treat the very few intangible objects as their own specific thing (for example, directions). The obvious downside of this is that we have to treat directions specially -- but since when has anyone written a piece of IF where they need to invent new directions *at runtime*? 
 
-First we have a whole bunch of file header stuff:
+First we have the overview of the module.
 
 ```haskell file=src/Yaifl/Objects/Object.hs
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE InstanceSigs #-}
 
 module Yaifl.Objects.Object ( 
   -- * Types
-    ObjType(..), Object(..), {-ObjectLike(..), CanBeAny(..),-} Thing, Room, AnyObject
+  ObjType(..)
+  , Object(..)
+  , Thing
+  , Room
+  , AnyObject
   -- * Object Helpers
-  , objectEquals --isType
+  , objectEquals
   -- * Lenses
-  , objName, objDescription, objID, objType, objCreationTime, objSpecifics, objData --, containedBy
+  , objName, objDescription, objID, objType
+  , objCreationTime, objSpecifics, objData
+  -- * Prisms
   , _Room, _Thing ) where
 
 import Solitude
-import Yaifl.Common
-import Yaifl.Objects.Specifics (ObjectSpecifics)
-import Yaifl.Objects.ObjectData
---import Yaifl.Objects.Missing
+import Yaifl.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
+import Yaifl.Objects.ObjectData ( RoomData, ThingData )
+import Yaifl.Objects.Specifics ( ObjectSpecifics )
 
 <<obj-type>>
 <<thing-room-anyobject>>
@@ -35,10 +40,8 @@ import Yaifl.Objects.ObjectData
 makeLenses ''Object
 <<obj-functor>>
 
-
 <<obj-prisms>>
 <<can-be-any>>
-<<objectlike>>
 ```
 
 And the object type itself:
@@ -138,11 +141,9 @@ newtype ObjType = ObjType
 And at last, we can talk about `Thing`, `Room`, and `AnyObject`:
 
 ```haskell id=thing-room-anyobject
-
 type Thing wm = Object wm ThingData
 type Room wm = Object wm (RoomData wm)
 type AnyObject wm = Object wm (Either ThingData (RoomData wm))
-
 ```
 
 ### Lenses and Prisms
@@ -162,9 +163,6 @@ _Room = prism' (fmap Right) (traverse rightToMaybe)
 
 _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (fmap Left) (traverse leftToMaybe)
-
---_AbstractThing :: Prism' (AnyAbstractObject wm) (AbstractThing wm)
---_AbstractThing = prism' (fmap Left) (traverse leftToMaybe)
 ```
 
 Though I keep the class around regardless, because `toAny o` makes more semantic sense than `review _Thing`.

@@ -17,7 +17,7 @@ import qualified Data.Aeson as A
 import qualified Data.Text as T
 import Katip.Format.Time ( formatAsLogTime )
 
--- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:30
+-- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:34
 data MsgSeverity = Debug | Info | Warning | Error
   deriving stock (Eq, Ord, Enum, Bounded, Show)
   deriving (Display) via (ShowInstance MsgSeverity)
@@ -27,6 +27,7 @@ data Log :: Effect where
   WithContext :: Text -> m a -> Log m ()
 
 makeEffect ''Log
+-- ~\~ end
 -- ~\~ begin <<lit/effects/logging.md|log-interpreters>>[0] project://lit/effects/logging.md:50
 runAndIgnoreLogging :: 
   Eff (Log : es) 
@@ -129,6 +130,5 @@ instance A.ToJSON YaiflItem where
       , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) $ itemContext) in if T.empty == f then "" else "❬"<>f<>"❭"
       , "loc" A..= fmap reshapeFilename itemLoc
       ]
--- ~\~ end
 -- ~\~ end
 -- ~\~ end
