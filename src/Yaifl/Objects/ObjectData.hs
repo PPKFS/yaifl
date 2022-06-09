@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Objects/ObjectData.hs
--- ~\~ begin <<lit/worldmodel/objects/data.md|src/Yaifl/Objects/ObjectData.hs>>[0] project://lit/worldmodel/objects/data.md:4
+-- ~\~ begin <<lit/worldmodel/objects/data.md|src/Yaifl/Objects/ObjectData.hs>>[0] project://lit/worldmodel/objects/data.md:8
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -17,31 +17,23 @@ module Yaifl.Objects.ObjectData
   , ContainingRegion(..)
   , Darkness(..)
   , RoomData(..)
-  , Explicitness(..)
+  , ConnectionExplicitness(..)
   , Connection(..)
   , blankRoomData
 
   -- * Lenses
-  , thingContainedBy
-  , thingLit
-  , thingWearable
-  , thingDescribed
-  , roomIsVisited
-  , roomDarkness
-  , roomMapConnections
-  , roomContainingRegion
-  , roomEnclosing
-  , _Wearable
+  , thingContainedBy, thingLit, thingWearable, thingDescribed, _Wearable
+  , roomIsVisited, roomDarkness, roomMapConnections, roomContainingRegion, roomEnclosing
 
-  , connectionExplicitness
-  , connectionRoom
+  , connectionExplicitness, connectionRoom
   ) where
 
+import qualified Data.Map as Map
 import Solitude 
 import Yaifl.Common ( WMDirections, Entity, defaultVoidID )
 import Yaifl.Properties.Enclosing ( Enclosing, blankEnclosing )
-import qualified Data.Map as Map
 
+-- ~\~ begin <<lit/worldmodel/objects/data.md|thing-data>>[0] project://lit/worldmodel/objects/data.md:51
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit 
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
@@ -54,7 +46,6 @@ data ThingWearability = NotWearable | Wearable (Maybe Entity)
 data ThingDescribed = Undescribed | Described 
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
--- | Details for things. This is anything tangible.
 data ThingData = ThingData
   { _thingContainedBy :: Entity
   , _thingLit :: ThingLit
@@ -62,25 +53,19 @@ data ThingData = ThingData
   , _thingDescribed :: ThingDescribed
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
--- | Default thing data.
 blankThingData :: ThingData
 blankThingData = ThingData defaultVoidID NotLit NotWearable Described
 
--- | Whether a room has an intrinsic light-ness. This isn't equivalent to whether a
--- room is currently dark - for instance, a cave may have light (if the player has a
--- lantern) but the cave will be Dark.
-data Darkness = Lighted | Dark 
-  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+makeLenses ''ThingData
+makePrisms ''ThingWearability
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/objects/data.md|connections>>[0] project://lit/worldmodel/objects/data.md:90
 
--- | Whether a room has been visited before or not.
-data IsVisited = Visited | Unvisited 
-  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
-
-data Explicitness = Explicit | Implicit 
+data ConnectionExplicitness = Explicit | Implicit 
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
 data Connection = Connection 
-  { _connectionExplicitness :: Explicitness
+  { _connectionExplicitness :: ConnectionExplicitness
   , _connectionRoom :: Entity
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
@@ -94,14 +79,23 @@ deriving newtype instance (Ord (WMDirections wm)) => Ord (MapConnections wm)
 deriving newtype instance (Read (WMDirections wm), Ord (WMDirections wm)) => Read (MapConnections wm)
 deriving newtype instance (Show (WMDirections wm)) => Show (MapConnections wm)
 deriving stock instance (Eq (WMDirections wm)) => Eq (MapConnections wm)
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/objects/data.md|room-data>>[0] project://lit/worldmodel/objects/data.md:116
+-- | Whether a room has an intrinsic light-ness. This isn't equivalent to whether a
+-- room is currently dark - for instance, a cave may have light (if the player has a
+-- lantern) but the cave will be Dark.
+data Darkness = Lighted | Dark 
+  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
--- | An abstract grouping of rooms.
+-- | Whether a room has been visited before or not.
+data IsVisited = Visited | Unvisited 
+  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+
 newtype ContainingRegion = ContainingRegion
   { unRegion :: Maybe Entity
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, Generic)
 
--- | Details for room objects. This is anything which is...well, a room. Nontangible.
 data RoomData wm = RoomData
   { _roomIsVisited :: IsVisited
   , _roomDarkness :: Darkness
@@ -118,9 +112,8 @@ deriving stock instance (Eq (WMDirections wm)) => Eq (RoomData wm)
 blankRoomData :: RoomData wm
 blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
 
-makeLenses ''ThingData
+
 makeLenses ''RoomData
 makeLenses ''Connection
-
-makePrisms ''ThingWearability
+-- ~\~ end
 -- ~\~ end

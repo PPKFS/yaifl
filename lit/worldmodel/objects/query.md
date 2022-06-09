@@ -10,11 +10,15 @@ module Yaifl.Objects.Query
   ( -- * Types
   ObjectLike(..)
   , MissingObject(..)
+  , ObjectQuery(..)
   -- * Missing Objects
   , withoutMissingObjects 
   , failHorriblyIfMissing
   , handleMissingObject
+  , NoMissingObjects
   -- * Get
+  , lookupThing
+  , lookupRoom
   , getObject
   , getThingMaybe
   , getRoomMaybe
@@ -23,6 +27,9 @@ module Yaifl.Objects.Query
   , modifyObject
   , modifyThing
   , modifyRoom
+  -- * Set
+  , setThing
+  , setRoom
   ) where
 
 import Cleff.Error ( Error, fromEither, runError, throwError )
@@ -159,14 +166,16 @@ getObject e = if isThing e
   else (review _Room <$> getRoom e)
 
 getThingMaybe :: 
-  NoMissingObjects wm es
+  ObjectQuery wm :> es
+  => State (Metadata wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
 
 getRoomMaybe ::
-  NoMissingObjects wm es
+  ObjectQuery wm :> es
+  => State (Metadata wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))

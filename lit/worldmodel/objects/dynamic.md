@@ -1,5 +1,10 @@
--- ~\~ language=Haskell filename=src/Yaifl/Objects/Dynamic.hs
--- ~\~ begin <<lit/worldmodel/objects/dynamic.md|src/Yaifl/Objects/Dynamic.hs>>[0] project://lit/worldmodel/objects/dynamic.md:8
+# Dynamic Objects
+
+One of the coolest features of Inform is to have attributes and properties of objects be dynamic; for instance, `Slightly Wrong` shows a room with a dynamic description. Originally I had this only for descriptions but it made more sense to be applied to entire objects.
+
+The only times that we actually care about the underlying representation of an object is when creating them (because we need to supply an update function) and when reifying `AbstractObject`s from a `State`-based implementation. This is a big refactor I'm happy to have made because it cleanly breaks apart implementation (cached objects) and semantics (objects at a point in time). It does have the slight issue that we need to be cautious: if we reify a dynamic object at some point in time, then we change some part of the world that may affect its update function, we will need to re-reify the object.
+
+```haskell file=src/Yaifl/Objects/Dynamic.hs
 
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -22,7 +27,13 @@ import Yaifl.Common ( WorldModel, Timestamp, HasID(..) )
 import Yaifl.Objects.Object ( Object )
 import Yaifl.Objects.ObjectData ( RoomData, ThingData )
 
--- ~\~ begin <<lit/worldmodel/objects/dynamic.md|timestamped-object>>[0] project://lit/worldmodel/objects/dynamic.md:37
+<<timestamped-object>>
+<<abstract-object>>
+```
+
+## Timestamped Objects
+
+```haskell id=timestamped-object
 data TimestampedObject wm d = TimestampedObject
   { _tsCachedObject :: !(Object wm d)
   , _tsCacheStamp :: !Timestamp
@@ -36,8 +47,10 @@ instance HasID (TimestampedObject wm d) where
 newtype ObjectUpdate (wm :: WorldModel) d = ObjectUpdate
   { runObjectUpdate :: forall es. Object wm d -> Eff es (Object wm d)
   } 
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/dynamic.md|abstract-object>>[0] project://lit/worldmodel/objects/dynamic.md:54
+```
+
+## Abstract Objects
+```haskell id=abstract-object
 data AbstractObject wm d
   = DynamicObject (TimestampedObject wm d)
   | StaticObject (Object wm d)
@@ -51,5 +64,4 @@ type AbstractRoom wm = AbstractObject wm (RoomData wm)
 type AnyAbstractObject wm = AbstractObject wm (Either ThingData (RoomData wm))
 
 makeLenses ''TimestampedObject
--- ~\~ end
--- ~\~ end
+```

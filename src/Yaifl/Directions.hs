@@ -1,20 +1,27 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Directions.hs
--- ~\~ begin <<lit/worldmodel/directions.md|src/Yaifl/Directions.hs>>[0] project://lit/worldmodel/directions.md:5
-module Yaifl.Directions where
+-- ~\~ begin <<lit/worldmodel/directions.md|src/Yaifl/Directions.hs>>[0] project://lit/worldmodel/directions.md:4
+module Yaifl.Directions
+  ( WithStandardDirections(..)
+  , HasOpposite(..)
+  , Direction(..)
+  , WithDirections
+  , WMStdDirections
+  ) where
 
-import Solitude hiding (Down)
+import Solitude hiding ( Down )
 import Yaifl.Common
 
+-- ~\~ begin <<lit/worldmodel/directions.md|direction-injection>>[0] project://lit/worldmodel/directions.md:20
 class WithStandardDirections d where
   injectDirection :: Direction -> d
-
-
-type WithDirections (wm :: WorldModel) = (Ord (WMDirections wm), HasOpposite (WMDirections wm))
-type WMStdDirections (wm :: WorldModel) = (WithStandardDirections (WMDirections wm), WithDirections wm)
 
 class HasOpposite d where
   opposite :: d -> d
 
+type WithDirections (wm :: WorldModel) = (Ord (WMDirections wm), HasOpposite (WMDirections wm))
+type WMStdDirections (wm :: WorldModel) = (WithStandardDirections (WMDirections wm), WithDirections wm)
+-- ~\~ end
+-- ~\~ begin <<lit/worldmodel/directions.md|stock-directions>>[0] project://lit/worldmodel/directions.md:31
 data Direction = 
   North
   | South
@@ -47,4 +54,5 @@ instance HasOpposite Direction where
     Out -> In
     Up -> Down
     Down -> Up
+-- ~\~ end
 -- ~\~ end

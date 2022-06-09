@@ -1,7 +1,9 @@
 # Objects
 
 And now we turn to the final of the foundational parts of the world model, the `Object`. Whilst we don't go quite as far as
-Inform does, where *everything* is an object of some kind (including directions, or if you wanted to extend the system with ideas such as people having knowledge of something), we still consider most things in a game to be an `Object` of some kind. These can be split into two categories; `Thing`s (physical, interactable, objects) and `Room`s (spaces to be moved between). Each of these can be further divided into more specific instances, but it is significantly simpler to deal with everything being either a realisable object or a space, and treat the very few intangible objects as their own specific thing (for example, directions). The obvious downside of this is that we have to treat directions specially -- but since when has anyone written a piece of IF where they need to invent new directions *at runtime*? 
+Inform does, where *everything* is an object of some kind (including directions, or if you wanted to extend the system with ideas such as people having knowledge of something), we still consider most things in a game to be an `Object` of some kind. These can be split into two categories; `Thing`s (physical, interactable, objects) and `Room`s (spaces to be moved between). 
+
+Each of these can be further divided into more specific instances, but it is significantly simpler to deal with everything being either a realisable object or a space, and treat the very few intangible objects as their own specific thing (for example, directions). The obvious downside of this is that we have to treat directions specially -- but since when has anyone written a piece of IF where they need to invent new directions *at runtime*? 
 
 First we have the overview of the module.
 
@@ -67,6 +69,7 @@ So there's a handful of things here:
   - `ThingData wm`, and we have a `Thing`;
   - `RoomData wm`, and we have a `Room`;
   - `Either (ThingData wm) (RoomData wm)`, and we have no idea which so we call it `AnyObject`.
+`ThingData` and `ObjectData` are covered in [the next section](data.md)
 - Yes, everything is prefixed with an underscore because we use a *lot* of lens TH generation.
 - This is the first of many standalone deriving instances. Will we ever need `Read (Object wm d)`? Probably not, but still.
 

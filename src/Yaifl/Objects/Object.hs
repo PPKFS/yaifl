@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Objects/Object.hs
--- ~\~ begin <<lit/worldmodel/objects/objects.md|src/Yaifl/Objects/Object.hs>>[0] project://lit/worldmodel/objects/objects.md:9
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|src/Yaifl/Objects/Object.hs>>[0] project://lit/worldmodel/objects/objects.md:11
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -26,18 +26,18 @@ import Yaifl.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
 import Yaifl.Objects.ObjectData ( RoomData, ThingData )
 import Yaifl.Objects.Specifics ( ObjectSpecifics )
 
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-type>>[0] project://lit/worldmodel/objects/objects.md:130
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-type>>[0] project://lit/worldmodel/objects/objects.md:133
 newtype ObjType = ObjType
   { unObjType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|thing-room-anyobject>>[0] project://lit/worldmodel/objects/objects.md:144
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|thing-room-anyobject>>[0] project://lit/worldmodel/objects/objects.md:147
 type Thing wm = Object wm ThingData
 type Room wm = Object wm (RoomData wm)
 type AnyObject wm = Object wm (Either ThingData (RoomData wm))
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-definition>>[0] project://lit/worldmodel/objects/objects.md:50
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-definition>>[0] project://lit/worldmodel/objects/objects.md:52
 data Object wm objData = Object
   { _objName :: !Text
   , _objDescription :: !Text
@@ -51,11 +51,11 @@ data Object wm objData = Object
 deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
 deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-hasid>>[0] project://lit/worldmodel/objects/objects.md:78
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-hasid>>[0] project://lit/worldmodel/objects/objects.md:81
 instance HasID (Object wm d) where
   getID = _objID
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-eq>>[0] project://lit/worldmodel/objects/objects.md:85
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-eq>>[0] project://lit/worldmodel/objects/objects.md:88
 objectEquals :: 
   Object wm d
   -> Object wm d'
@@ -70,7 +70,7 @@ instance Ord (Object wm d) where
   compare = (. _objID) . compare . _objID
 -- ~\~ end
 makeLenses ''Object
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-functor>>[0] project://lit/worldmodel/objects/objects.md:102
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-functor>>[0] project://lit/worldmodel/objects/objects.md:105
 instance Functor (Object wm) where
   fmap :: 
     (a -> b)
@@ -94,14 +94,14 @@ instance Traversable (Object wm) where
   traverse f o = (\v -> o {_objData = v}) <$> f (_objData o)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-prisms>>[0] project://lit/worldmodel/objects/objects.md:161
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-prisms>>[0] project://lit/worldmodel/objects/objects.md:164
 _Room :: Prism' (AnyObject wm) (Room wm)
 _Room = prism' (fmap Right) (traverse rightToMaybe)
 
 _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (fmap Left) (traverse leftToMaybe)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/objects.md|can-be-any>>[0] project://lit/worldmodel/objects/objects.md:171
+-- ~\~ begin <<lit/worldmodel/objects/objects.md|can-be-any>>[0] project://lit/worldmodel/objects/objects.md:174
 class CanBeAny wm o where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o

@@ -7,11 +7,15 @@ module Yaifl.Objects.Query
   ( -- * Types
   ObjectLike(..)
   , MissingObject(..)
+  , ObjectQuery(..)
   -- * Missing Objects
   , withoutMissingObjects 
   , failHorriblyIfMissing
   , handleMissingObject
+  , NoMissingObjects
   -- * Get
+  , lookupThing
+  , lookupRoom
   , getObject
   , getThingMaybe
   , getRoomMaybe
@@ -20,6 +24,9 @@ module Yaifl.Objects.Query
   , modifyObject
   , modifyThing
   , modifyRoom
+  -- * Set
+  , setThing
+  , setRoom
   ) where
 
 import Cleff.Error ( Error, fromEither, runError, throwError )
@@ -32,7 +39,7 @@ import Yaifl.Common ( Metadata, WorldModel, HasID(..), Entity, isThing )
 import Yaifl.Logger ( Log, err )
 import Yaifl.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing )
 
--- ~\~ begin <<lit/worldmodel/objects/query.md|missing-object>>[0] project://lit/worldmodel/objects/query.md:52
+-- ~\~ begin <<lit/worldmodel/objects/query.md|missing-object>>[0] project://lit/worldmodel/objects/query.md:59
 data MissingObject = MissingObject 
   { _moExpected :: Text
   , _moEntity :: Entity
@@ -40,7 +47,7 @@ data MissingObject = MissingObject
 
 makeLenses ''MissingObject
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|handle-missing-objects>>[0] project://lit/worldmodel/objects/query.md:61
+-- ~\~ begin <<lit/worldmodel/objects/query.md|handle-missing-objects>>[0] project://lit/worldmodel/objects/query.md:68
 withoutMissingObjects :: 
   (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
   -> (HasCallStack => MissingObject -> Eff es a)  -- ^ the handler
@@ -72,7 +79,7 @@ failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   err emsg
   error $ show emsg)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|object-query-effect>>[0] project://lit/worldmodel/objects/query.md:98
+-- ~\~ begin <<lit/worldmodel/objects/query.md|object-query-effect>>[0] project://lit/worldmodel/objects/query.md:105
 data ObjectQuery (wm :: WorldModel) :: Effect where
   LookupThing :: HasID o => o -> ObjectQuery wm m (Either Text (Thing wm))
   LookupRoom :: HasID o => o -> ObjectQuery wm m (Either Text (Room wm))
@@ -83,7 +90,7 @@ makeEffect ''ObjectQuery
 
 type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es, State (Metadata wm) :> es) 
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike>>[0] project://lit/worldmodel/objects/query.md:113
+-- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike>>[0] project://lit/worldmodel/objects/query.md:120
 class HasID o => ObjectLike wm o where
   getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
   default getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
@@ -93,7 +100,7 @@ class HasID o => ObjectLike wm o where
   default getThing :: (NoMissingObjects wm es) => o -> Eff es (Thing wm)
   getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike-instances>>[0] project://lit/worldmodel/objects/query.md:126
+-- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike-instances>>[0] project://lit/worldmodel/objects/query.md:133
 instance ObjectLike wm (Thing wm) where
   getThing = pure
 
@@ -112,7 +119,7 @@ instance ObjectLike wm Entity where
   getRoom e = lookupRoom e >>= either (throwError . flip MissingObject e) return
   getThing e = lookupThing e >>= either (throwError . flip MissingObject e) return
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|get-objects>>[0] project://lit/worldmodel/objects/query.md:152
+-- ~\~ begin <<lit/worldmodel/objects/query.md|get-objects>>[0] project://lit/worldmodel/objects/query.md:159
 getObject ::
   NoMissingObjects wm es
   => ObjectLike wm o
@@ -123,14 +130,16 @@ getObject e = if isThing e
   else (review _Room <$> getRoom e)
 
 getThingMaybe :: 
-  NoMissingObjects wm es
+  ObjectQuery wm :> es
+  => State (Metadata wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
 
 getRoomMaybe ::
-  NoMissingObjects wm es
+  ObjectQuery wm :> es
+  => State (Metadata wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))
@@ -148,7 +157,7 @@ asThingOrRoom o tf rf =
   then tf <$> getThing o
   else rf <$> getRoom o
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/query.md|modify-objects>>[0] project://lit/worldmodel/objects/query.md:193
+-- ~\~ begin <<lit/worldmodel/objects/query.md|modify-objects>>[0] project://lit/worldmodel/objects/query.md:202
 modifyObjectFrom :: 
   (o -> Eff es (Object wm any))
   -> (Object wm any -> Eff es ())

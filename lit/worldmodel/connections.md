@@ -1,5 +1,6 @@
--- ~\~ language=Haskell filename=src/Yaifl/Objects/Room.hs
--- ~\~ begin <<lit/worldmodel/connections.md|src/Yaifl/Objects/Room.hs>>[0] project://lit/worldmodel/connections.md:4
+# Making Connections
+
+```haskell file=src/Yaifl/Objects/Room.hs
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Objects.Room
@@ -126,4 +127,4 @@ isDirectionFromInternal mkRev dir o1 o2 = withoutMissingObjects (do
 
 -- makeDirections True ["West"]
 
--- ~\~ end
+```

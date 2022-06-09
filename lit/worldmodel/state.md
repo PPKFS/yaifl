@@ -83,6 +83,16 @@ setTitle ::
   -> Eff es ()
 setTitle = (title .=)
 
+whenConstructingM :: 
+  State (Metadata wm) :> es
+  => Eff es Bool 
+  -> Eff es () 
+  -> Eff es ()
+whenConstructingM cond = 
+  whenM (andM [do
+    cs <- use currentStage
+    return $ cs == Construction, cond])
+
 ```
 
 ```haskell id=world-staging
@@ -240,14 +250,6 @@ addBaseActions = foldr (.) id [
   , addAction goingActionImpl
   ]
 
-whenConstructingM :: 
-  MonadWorld wm m 
-  => m Bool 
-  -> m () 
-  -> m ()
-whenConstructingM cond = 
-  whenM (andM [do
-    cs <- use currentStage
-    return $ cs == Construction, cond])
+
 -}
 ```

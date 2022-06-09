@@ -3,20 +3,39 @@
 ```haskell file=src/Yaifl/Objects/Create.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Create where
-import Solitude
-import Yaifl.Objects.Object
-import Yaifl.Objects.Specifics
-import Yaifl.Objects.Dynamic
-import Yaifl.Common
-import Yaifl.Properties.Property
-import Yaifl.Properties.Enclosing
-import Yaifl.Logger
-import Yaifl.Objects.Query
-import Yaifl.Objects.ObjectData
-import Cleff.State
-import Yaifl.Objects.Move
+module Yaifl.Objects.Create
+  ( -- * Effect
+  ObjectCreation(..)
+  , generateEntity
+  , addAbstractThing
+  , addAbstractRoom
+  , addThing
+  , addRoom
+  , addThing'
+  , addRoom'
+  , addBaseObjects
+  ) where
 
+import Cleff.State ( State, get, runState )
+import Solitude
+import Yaifl.Common
+import Yaifl.Logger ( debug, Log )
+import Yaifl.Objects.Dynamic
+import Yaifl.Objects.Move ( move )
+import Yaifl.Objects.Object ( ObjType(ObjType), Object(Object) )
+import Yaifl.Objects.ObjectData
+import Yaifl.Objects.Query ( ObjectQuery )
+import Yaifl.Objects.Specifics ( ObjectSpecifics(NoSpecifics) )
+import Yaifl.Properties.Enclosing ( Enclosing )
+import Yaifl.Properties.Property ( WMHasProperty )
+
+<<creation-effect>>
+<<make-object>>
+<<add-objects>>
+<<base-objects>>
+```
+
+```haskell id=creation-effect
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity 
   AddAbstractThing :: AbstractThing wm -> ObjectCreation wm m ()
@@ -25,7 +44,9 @@ data ObjectCreation wm :: Effect where
 makeEffect ''ObjectCreation
 
 type AddObjects wm es = '[ObjectCreation wm, State (Metadata wm), Log, ObjectQuery wm] :>> es
+```
 
+```haskell id=make-object
 makeObject :: 
   ObjectCreation wm :> es
   => State (Metadata wm) :> es
@@ -55,8 +76,6 @@ addObject ::
   -> d
   -> Maybe (ObjectUpdate wm d)
   -> Eff es Entity
--- hilariously the pointfree version of this is
--- addObject = (. makeObject) . (.) . (.) . (.) . (.) . (.) . uncurry
 addObject updWorld n d ty isT specifics details updateFunc = do
   (e, obj) <- makeObject n d ty isT specifics details updateFunc
   debug $ bformat ("Made a new " %! stext %! " called " %! stext %! " with ID " %! int)
@@ -70,8 +89,17 @@ addObject updWorld n d ty isT specifics details updateFunc = do
   else
     move e lastRoom >> pass -- move it if we're still 
   return e
+```
 
--- | Create a new 'Thing' and add it to the relevant stores.
+-- | A version of 'addRoom' that uses a state monad to provide imperative-like
+-- descriptions of the internals of the object. Compare
+-- @
+-- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
+-- @ with @
+-- addThing' n d o (someLensField .= 5)
+-- @
+
+```haskell id=add-objects
 addThing ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
@@ -95,7 +123,6 @@ addThing' ::
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
     Nothing (Just $ snd $ runPure $ runState blankThingData stateUpdate) Nothing
 
--- | Create a new 'Room' and add it to the relevant stores.
 addRoom :: 
   WMHasProperty wm Enclosing
   => AddObjects wm es
@@ -116,13 +143,6 @@ addRoom name desc objtype specifics details upd = do
 isVoid :: Entity -> Bool
 isVoid = (defaultVoidID ==)
 
--- | A version of 'addRoom' that uses a state monad to provide imperative-like
--- descriptions of the internals of the object. Compare
--- @
--- addThing n d o (Just $ (ThingData default default default .. mod1)) ...
--- @ with @
--- addThing' n d o (someLensField .= 5)
--- @
 addRoom' :: 
  WMHasProperty wm Enclosing
   => AddObjects wm es
@@ -132,7 +152,9 @@ addRoom' ::
   -> Eff es Entity
 addRoom' n d rd = addRoom n d (ObjType "room")
   Nothing (Just $ snd $ runPure $ runState blankRoomData rd) Nothing
+```
 
+```haskell id=base-objects
 addBaseObjects ::
   WMHasProperty wm Enclosing
   => AddObjects wm es

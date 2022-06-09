@@ -26,7 +26,7 @@ data World (wm :: WorldModel) = World
   , _messageBuffer :: MessageBuffer
   }
 
--- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:109
+-- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:119
 data WorldStores (wm :: WorldModel) = WorldStores
   { _entityCounter :: (Entity, Entity)
   , _things :: Store (AbstractThing wm)
@@ -35,7 +35,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   , _concepts :: ()-- !(Store (AbstractConcept t r c))
   }
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:123
+-- ~\~ begin <<lit/worldmodel/state.md|world-actions>>[0] project://lit/worldmodel/state.md:133
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: () -- !(Map Text (Action wm))
@@ -50,7 +50,7 @@ makeLenses ''World
 makeLenses ''WorldModel
 makeLenses ''WorldStores
 
--- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:151
+-- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:161
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
   State (Metadata wm) :> es
@@ -143,15 +143,7 @@ addBaseActions = foldr (.) id [
   , addAction goingActionImpl
   ]
 
-whenConstructingM :: 
-  MonadWorld wm m 
-  => m Bool 
-  -> m () 
-  -> m ()
-whenConstructingM cond = 
-  whenM (andM [do
-    cs <- use currentStage
-    return $ cs == Construction, cond])
+
 -}
 -- ~\~ end
 -- ~\~ end

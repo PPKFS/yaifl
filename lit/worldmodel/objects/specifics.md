@@ -1,5 +1,7 @@
 # Object Specifics
 
+Here we define the standard library of object specifics. It's not very exciting; mostly we just list all the properties we define and some lenses for our property querying code. 
+
 ```haskell file=src/Yaifl/Objects/Specifics.hs
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -9,8 +11,8 @@ module Yaifl.Objects.Specifics
   ) where
 
 import Solitude
-import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Container
+import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Openable
 import Yaifl.Properties.Property
 

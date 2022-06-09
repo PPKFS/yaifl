@@ -27,6 +27,7 @@ module Yaifl.Common
   , previousRoom
   , firstRoom
   , setTitle
+  , whenConstructingM
 
   -- * Some defaults
   , defaultVoidID

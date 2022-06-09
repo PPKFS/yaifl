@@ -20,6 +20,7 @@ module Yaifl.Common
   , previousRoom
   , firstRoom
   , setTitle
+  , whenConstructingM
 
   -- * Some defaults
   , defaultVoidID
@@ -130,13 +131,13 @@ type instance Index (Store a) = Entity
 instance Ixed (Store a)
 -- ~\~ end
 
--- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:98
+-- ~\~ begin <<lit/worldmodel/state.md|room-descriptions>>[0] project://lit/worldmodel/state.md:108
 data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
   | AbbreviatedRoomDescriptions
   | NoAbbreviatedRoomDescriptions 
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 -- ~\~ end
--- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:138
+-- ~\~ begin <<lit/worldmodel/state.md|timestamp>>[0] project://lit/worldmodel/state.md:148
 
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
@@ -200,6 +201,16 @@ setTitle ::
   => Text -- ^ New title.
   -> Eff es ()
 setTitle = (title .=)
+
+whenConstructingM :: 
+  State (Metadata wm) :> es
+  => Eff es Bool 
+  -> Eff es () 
+  -> Eff es ()
+whenConstructingM cond = 
+  whenM (andM [do
+    cs <- use currentStage
+    return $ cs == Construction, cond])
 
 -- ~\~ end
 -- ~\~ end

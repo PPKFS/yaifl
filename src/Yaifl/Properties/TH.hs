@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Properties/TH.hs
--- ~\~ begin <<lit/properties.md|src/Yaifl/Properties/TH.hs>>[0] project://lit/properties.md:32
+-- ~\~ begin <<lit/properties/getsetmodify.md|src/Yaifl/Properties/TH.hs>>[0] project://lit/properties/getsetmodify.md:5
 {-# LANGUAGE DataKinds #-}
 
 module Yaifl.Properties.TH
@@ -11,7 +11,7 @@ module Yaifl.Properties.TH
 ) where
 
 import Solitude
-import Language.Haskell.Meta hiding (myDefaultParseMode)
+import Language.Haskell.Meta hiding (myDefaultParseMode)nice 
 import Data.Text (replace)
 import Language.Haskell.Exts.Parser
 import Language.Haskell.Exts.Extension
@@ -23,13 +23,6 @@ data SpecificsFunctions =
   | ModifyX
   deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
-{-
-getX :: HasProperty s X
-=> HasID o
- => o
- -> State (World s) (Maybe X)
- getX = defaultPropertyGetter
--}
 
 myDefaultParseMode :: ParseMode
 myDefaultParseMode = defaultParseMode

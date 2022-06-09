@@ -1,5 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Objects/Specifics.hs
--- ~\~ begin <<lit/worldmodel/objects/specifics.md|src/Yaifl/Objects/Specifics.hs>>[0] project://lit/worldmodel/objects/specifics.md:4
+-- ~\~ begin <<lit/worldmodel/objects/specifics.md|src/Yaifl/Objects/Specifics.hs>>[0] project://lit/worldmodel/objects/specifics.md:6
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Objects.Specifics
@@ -8,8 +8,8 @@ module Yaifl.Objects.Specifics
   ) where
 
 import Solitude
-import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Container
+import Yaifl.Properties.Enclosing
 import Yaifl.Properties.Openable
 import Yaifl.Properties.Property
 

@@ -15,7 +15,7 @@ ex3World = newWorld $ do
     -- inform7 uses superbrief, brief, and verbose as the command words
     -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
     --roomDescriptions .= SometimesAbbreviatedRoomDescriptions 
-    addThing' "Bic pen" "" pass
+    -- addThing' "Bic pen" "" pass
     w <- addRoom' "The Wilkie Memorial Research Wing"
       [wrappedText|
       The research wing was built onto the science building in 1967, when the college's finances were 
