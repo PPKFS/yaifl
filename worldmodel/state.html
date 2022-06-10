@@ -1,0 +1,425 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>The World State - Yaifl Docs</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/mdbook-admonish.css">
+        <link rel="stylesheet" href="../././mdbook-admonish.css">
+
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../foundations/tech.html">The Tech</a></li><li class="chapter-item expanded affix "><a href="../foundations/structure.html">Structure of the book</a></li><li class="chapter-item expanded affix "><a href="../foundations/cabal.html">Cabal, Extensions, Dependencies</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">The Yaifl Library</li><li class="chapter-item expanded "><a href="../foundations/effects.html"><strong aria-hidden="true">1.</strong> Effects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../effects/say.html"><strong aria-hidden="true">1.1.</strong> Saying</a></li><li class="chapter-item expanded "><a href="../effects/logging.html"><strong aria-hidden="true">1.2.</strong> Logging</a></li></ol></li><li class="chapter-item expanded "><a href="../worldmodel.html"><strong aria-hidden="true">2.</strong> The World Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/typefamilies.html"><strong aria-hidden="true">2.1.</strong> WorldModel and WMx Type Families</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects.html"><strong aria-hidden="true">2.2.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/objects/entities-stores.html"><strong aria-hidden="true">2.2.1.</strong> Entities and Stores</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/objects.html"><strong aria-hidden="true">2.2.2.</strong> Objects, At Last</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/query.html"><strong aria-hidden="true">2.2.3.</strong> Object Querying Effect</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/data.html"><strong aria-hidden="true">2.2.4.</strong> ThingData and RoomData</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/specifics.html"><strong aria-hidden="true">2.2.5.</strong> Object Specifics</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/dynamic.html"><strong aria-hidden="true">2.2.6.</strong> Dynamic Objects</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/creation.html"><strong aria-hidden="true">2.2.7.</strong> Creating Objects</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/move.html"><strong aria-hidden="true">2.2.8.</strong> Moving Objects</a></li></ol></li><li class="chapter-item expanded "><a href="../worldmodel/rooms.html"><strong aria-hidden="true">2.3.</strong> Rooms and Spatial Stuff</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/directions.html"><strong aria-hidden="true">2.3.1.</strong> Directions</a></li><li class="chapter-item expanded "><a href="../worldmodel/connections.html"><strong aria-hidden="true">2.3.2.</strong> Making Connections</a></li></ol></li><li class="chapter-item expanded "><a href="../properties.html"><strong aria-hidden="true">2.4.</strong> Properties</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../properties/getsetmodify.html"><strong aria-hidden="true">2.4.1.</strong> Get, Set, Modify with TemplateHaskell</a></li><li class="chapter-item expanded "><a href="../properties/standard.html"><strong aria-hidden="true">2.4.2.</strong> Standard Properties</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../properties/std/enclosing.html"><strong aria-hidden="true">2.4.2.1.</strong> Enclosing</a></li><li class="chapter-item expanded "><a href="../properties/std/openable.html"><strong aria-hidden="true">2.4.2.2.</strong> Openable</a></li><li class="chapter-item expanded "><a href="../properties/std/container.html"><strong aria-hidden="true">2.4.2.3.</strong> Container</a></li></ol></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../rulebooks.html"><strong aria-hidden="true">3.</strong> Rulebooks, Actions, and Activities</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rulebooks/running.html"><strong aria-hidden="true">3.1.</strong> Running a Rulebook</a></li><li class="chapter-item expanded "><a href="../rulebooks/ap.html"><strong aria-hidden="true">3.2.</strong> Action Processing</a></li><li class="chapter-item expanded "><a href="../rulebooks/activities.html"><strong aria-hidden="true">3.3.</strong> Activities</a></li></ol></li><li class="chapter-item expanded "><a href="../construction.html"><strong aria-hidden="true">4.</strong> Construction and Execution</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/state.html" class="active"><strong aria-hidden="true">4.1.</strong> The World State</a></li></ol></li><li class="chapter-item expanded "><a href="../test-framework.html"><strong aria-hidden="true">5.</strong> Testing Framework</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tests/coverage.html"><strong aria-hidden="true">5.1.</strong> Test Coverage</a></li></ol></li><li class="chapter-item expanded "><a href="../other_miscellania.html"><strong aria-hidden="true">6.</strong> Miscellenia</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../misc/common.html"><strong aria-hidden="true">6.1.</strong> Module Files</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><li class="part-title">Reference</li><li class="chapter-item expanded "><div><strong aria-hidden="true">7.</strong> Properties</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Actions</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Activities</div></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="../other_miscellania.html">Module Headers and Other Miscellania</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Yaifl Docs</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="the-world-state"><a class="header" href="#the-world-state">The World State</a></h1>
+<p>This is the monolithic core of the library. It can be chunked into a few main pieces, each of which is handled by a separate effect handler to keep our separation of concerns as modular as possible (for instance, an object should not be able to run an <code>Action</code> when printing out some text!).</p>
+<p>We put the message buffer as part of the state even though we are in <code>IO</code> because it allows us to directly consume the output (e.g. for testing).</p>
+<pre><code class="language-haskell file=src/Yaifl/World.hs">
+{-# LANGUAGE TemplateHaskell #-}
+module Yaifl.World where
+import Solitude
+import Yaifl.Common
+
+import Yaifl.Say
+--import Yaifl.Rulebooks.Rulebook
+--import Yaifl.Activities.Activity
+--import Yaifl.Actions.Action
+import Yaifl.Objects.Dynamic
+import Yaifl.Objects.Query
+import Cleff.State
+import Yaifl.Objects.Object
+import Yaifl.Objects.Create
+import Display
+--import Yaifl.Actions.Looking
+--import Yaifl.Actions.Going
+
+data World (wm :: WorldModel) = World
+  { _worldMetadata :: Metadata wm
+  , _worldStores :: WorldStores wm
+  , _worldActions :: WorldActions wm
+  , _messageBuffer :: MessageBuffer
+  }
+
+&lt;&lt;world-stores&gt;&gt;
+&lt;&lt;world-actions&gt;&gt;
+
+makeLenses ''World
+makeLenses ''WorldModel
+makeLenses ''WorldStores
+
+&lt;&lt;world-other&gt;&gt;
+</code></pre>
+<hr />
+<h2 id="metadata"><a class="header" href="#metadata">Metadata</a></h2>
+<p>These fields are for information we need to keep around but don't have complex dependencies -- so we can define the metadata in <code>Yaifl.Common</code> and therefore break the import cycle of individual modules &lt;-&gt; <code>Yaifl.World</code> we have with a monolithic state record, but without having to write the boilerplate of an effect that exposes each of these fields individually.</p>
+<pre><code class="language-haskell id=world-metadata">
+data Metadata (wm :: WorldModel) = Metadata
+  { _title :: Text
+  , _roomDescriptions :: RoomDescriptions
+  , _dirtyTime :: Bool
+  , _globalTime :: Timestamp
+  , _darknessWitnessed :: Bool
+  , _currentPlayer :: Entity
+  , _currentStage :: CurrentStage
+  , _previousRoom :: Entity
+  , _firstRoom :: Entity
+  -- more to come I guess
+  }
+
+data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+makeLenses ''Metadata
+
+getGlobalTime :: 
+  State (Metadata wm) :&gt; es 
+  =&gt; Eff es Timestamp
+getGlobalTime = use globalTime
+
+tickGlobalTime ::
+  State (Metadata wm) :&gt; es 
+  =&gt; Bool
+  -&gt; Eff es ()
+tickGlobalTime _ = pass
+
+setTitle :: 
+  State (Metadata wm) :&gt; es 
+  =&gt; Text -- ^ New title.
+  -&gt; Eff es ()
+setTitle = (title .=)
+
+whenConstructingM :: 
+  State (Metadata wm) :&gt; es
+  =&gt; Eff es Bool 
+  -&gt; Eff es () 
+  -&gt; Eff es ()
+whenConstructingM cond = 
+  whenM (andM [do
+    cs &lt;- use currentStage
+    return $ cs == Construction, cond])
+
+</code></pre>
+<pre><code class="language-haskell id=world-staging">data CurrentStage = Construction | Verification | Runtime
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
+</code></pre>
+<h3 id="room-descriptions"><a class="header" href="#room-descriptions">Room Descriptions</a></h3>
+<p>Lifted directly from Inform; this sets whether to always print room descriptions (No..) even if the room is visited, to only print them on the first entry (Sometimes..), or never.</p>
+<pre><code class="language-haskell id=room-descriptions">data RoomDescriptions = SometimesAbbreviatedRoomDescriptions
+  | AbbreviatedRoomDescriptions
+  | NoAbbreviatedRoomDescriptions 
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+</code></pre>
+<h2 id="world-stores"><a class="header" href="#world-stores">World Stores</a></h2>
+<p>The lookup tables for various objects, values, etc in the game. This is probably the most important part of the <code>World</code> state.</p>
+<pre><code class="language-haskell id=world-stores">data WorldStores (wm :: WorldModel) = WorldStores
+  { _entityCounter :: (Entity, Entity)
+  , _things :: Store (AbstractThing wm)
+  , _rooms :: Store (AbstractRoom wm)
+  , _values :: Map Text (WMValues wm)
+  , _concepts :: ()-- !(Store (AbstractConcept t r c))
+  }
+</code></pre>
+<h2 id="world-actions"><a class="header" href="#world-actions">World Actions</a></h2>
+<p>These are the dynamic parts that run things. This is the in-world actions, the standard activities (because user-defined activities can be done separately and don't need a lookup), and the two standalone rulebooks. Again, user-defined rulebooks act the same as activities and don't need to be stored around in the state.</p>
+<pre><code class="language-haskell id=world-actions">
+data WorldActions (wm :: WorldModel) = WorldActions
+  { _actions :: () -- !(Map Text (Action wm))
+  , _activities :: () -- !(ActivityCollection wm)
+  , _whenPlayBegins :: () -- !(Rulebook wm () () Bool)
+  , _actionProcessing :: ()-- ActionProcessing wm
+  }
+
+</code></pre>
+<h3 id="timestamp-caching"><a class="header" href="#timestamp-caching">Timestamp Caching</a></h3>
+<p>It is up to functions which might do some more complex processing (e.g. <code>move</code>) to update the time.</p>
+<pre><code class="language-haskell id=timestamp">
+newtype Timestamp = Timestamp
+  { unTimestamp :: Int
+  } deriving stock   (Show, Read, Generic)
+    deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
+
+</code></pre>
+<hr />
+<h1 id="other"><a class="header" href="#other">Other</a></h1>
+<pre><code class="language-haskell id=world-other">-- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
+reifyObject ::
+  State (Metadata wm) :&gt; es
+  =&gt; (AbstractObject wm d -&gt; Eff es ())
+  -&gt; AbstractObject wm d
+  -&gt; Eff es (Object wm d)
+reifyObject _ (StaticObject v) = return v
+reifyObject setFunc (DynamicObject ts) = do
+  let co = _tsCachedObject ts
+  now &lt;- getGlobalTime
+  if
+    _tsCacheStamp ts == now
+  then
+    return co
+  else
+    do
+      -- update the object
+      updatedObj &lt;- runObjectUpdate (_tsUpdateFunc ts) co
+      t &lt;- getGlobalTime
+      setFunc (DynamicObject $ TimestampedObject updatedObj t (_tsUpdateFunc ts))
+      return updatedObj
+
+reifyRoom :: 
+  State (Metadata wm) :&gt; es
+  =&gt; (ObjectCreation wm :&gt; es)
+  =&gt; AbstractRoom wm
+  -&gt; Eff es (Room wm)
+reifyRoom = reifyObject addAbstractRoom
+
+reifyThing :: 
+  State (Metadata wm) :&gt; es
+  =&gt; (ObjectCreation wm :&gt; es)
+  =&gt; AbstractThing wm
+  -&gt; Eff es (Thing wm)
+reifyThing = reifyObject addAbstractThing
+
+runCreationAsLookup :: 
+  State (World wm) :&gt; es
+  =&gt; Eff (ObjectCreation wm : es) 
+  ~&gt; Eff es
+runCreationAsLookup = interpret \case
+  GenerateEntity bThing -&gt; if bThing then 
+    ((worldStores % entityCounter % _1) &lt;&lt;%= (+1)) else ((worldStores % entityCounter % _2) &lt;&lt;%= (+1))
+  AddAbstractRoom aRoom -&gt; worldStores % rooms % at (getID aRoom) ?= aRoom
+  AddAbstractThing aThing -&gt; worldStores % things % at (getID aThing) ?= aThing
+
+runQueryAsLookup :: 
+  State (World wm) :&gt; es
+  =&gt; (ObjectCreation wm :&gt; es)
+  =&gt; (State (Metadata wm) :&gt; es)
+  =&gt; Eff (ObjectQuery wm : es) 
+  ~&gt; Eff es
+runQueryAsLookup = interpret \case
+  LookupThing e -&gt; do
+    mbObj &lt;- use $ worldStores % things % at (getID e)
+    case mbObj of
+      Nothing -&gt; return 
+        if isThing e 
+          then 
+            Left $ &quot;Tried to lookup a room as a thing &quot; &lt;&gt; displayText (getID e) 
+          else 
+            Left $ &quot;Could not find&quot; &lt;&gt; displayText (getID e)
+      Just ao -&gt; withoutMissingObjects (Right &lt;$&gt; reifyThing ao) (\mo -&gt; return $ Left $ &quot;Failed to reify &quot; &lt;&gt; displayText mo)
+  LookupRoom e -&gt; error &quot;&quot;
+  SetRoom r -&gt; error &quot;&quot;
+  SetThing t -&gt; error &quot;&quot;
+
+
+{-
+
+
+tickGlobalTime :: 
+  MonadWorld wm m
+  =&gt; Bool
+  -&gt; m ()
+--I have no idea what my plans were for this flag.
+tickGlobalTime False = dirtyTime .= True
+tickGlobalTime True = do
+  dirtyTime .= False
+  _ &lt;- globalTime &lt;%= (+1)
+  pass
+  -- debug (bformat (&quot;Dong. The time is now &quot; %! int %! &quot;.&quot;) r)
+
+addBaseActions :: 
+  HasLookingProperties wm
+  =&gt; World wm
+  -&gt; World wm
+addBaseActions = foldr (.) id [
+    addAction lookingActionImpl
+  , addAction goingActionImpl
+  ]
+
+
+-}
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../construction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../test-framework.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../construction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../test-framework.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

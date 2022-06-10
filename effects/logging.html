@@ -1,0 +1,344 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Logging - Yaifl Docs</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/mdbook-admonish.css">
+        <link rel="stylesheet" href="../././mdbook-admonish.css">
+
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../foundations/tech.html">The Tech</a></li><li class="chapter-item expanded affix "><a href="../foundations/structure.html">Structure of the book</a></li><li class="chapter-item expanded affix "><a href="../foundations/cabal.html">Cabal, Extensions, Dependencies</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">The Yaifl Library</li><li class="chapter-item expanded "><a href="../foundations/effects.html"><strong aria-hidden="true">1.</strong> Effects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../effects/say.html"><strong aria-hidden="true">1.1.</strong> Saying</a></li><li class="chapter-item expanded "><a href="../effects/logging.html" class="active"><strong aria-hidden="true">1.2.</strong> Logging</a></li></ol></li><li class="chapter-item expanded "><a href="../worldmodel.html"><strong aria-hidden="true">2.</strong> The World Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/typefamilies.html"><strong aria-hidden="true">2.1.</strong> WorldModel and WMx Type Families</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects.html"><strong aria-hidden="true">2.2.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/objects/entities-stores.html"><strong aria-hidden="true">2.2.1.</strong> Entities and Stores</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/objects.html"><strong aria-hidden="true">2.2.2.</strong> Objects, At Last</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/query.html"><strong aria-hidden="true">2.2.3.</strong> Object Querying Effect</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/data.html"><strong aria-hidden="true">2.2.4.</strong> ThingData and RoomData</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/specifics.html"><strong aria-hidden="true">2.2.5.</strong> Object Specifics</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/dynamic.html"><strong aria-hidden="true">2.2.6.</strong> Dynamic Objects</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/creation.html"><strong aria-hidden="true">2.2.7.</strong> Creating Objects</a></li><li class="chapter-item expanded "><a href="../worldmodel/objects/move.html"><strong aria-hidden="true">2.2.8.</strong> Moving Objects</a></li></ol></li><li class="chapter-item expanded "><a href="../worldmodel/rooms.html"><strong aria-hidden="true">2.3.</strong> Rooms and Spatial Stuff</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/directions.html"><strong aria-hidden="true">2.3.1.</strong> Directions</a></li><li class="chapter-item expanded "><a href="../worldmodel/connections.html"><strong aria-hidden="true">2.3.2.</strong> Making Connections</a></li></ol></li><li class="chapter-item expanded "><a href="../properties.html"><strong aria-hidden="true">2.4.</strong> Properties</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../properties/getsetmodify.html"><strong aria-hidden="true">2.4.1.</strong> Get, Set, Modify with TemplateHaskell</a></li><li class="chapter-item expanded "><a href="../properties/standard.html"><strong aria-hidden="true">2.4.2.</strong> Standard Properties</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../properties/std/enclosing.html"><strong aria-hidden="true">2.4.2.1.</strong> Enclosing</a></li><li class="chapter-item expanded "><a href="../properties/std/openable.html"><strong aria-hidden="true">2.4.2.2.</strong> Openable</a></li><li class="chapter-item expanded "><a href="../properties/std/container.html"><strong aria-hidden="true">2.4.2.3.</strong> Container</a></li></ol></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../rulebooks.html"><strong aria-hidden="true">3.</strong> Rulebooks, Actions, and Activities</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rulebooks/running.html"><strong aria-hidden="true">3.1.</strong> Running a Rulebook</a></li><li class="chapter-item expanded "><a href="../rulebooks/ap.html"><strong aria-hidden="true">3.2.</strong> Action Processing</a></li><li class="chapter-item expanded "><a href="../rulebooks/activities.html"><strong aria-hidden="true">3.3.</strong> Activities</a></li></ol></li><li class="chapter-item expanded "><a href="../construction.html"><strong aria-hidden="true">4.</strong> Construction and Execution</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../worldmodel/state.html"><strong aria-hidden="true">4.1.</strong> The World State</a></li></ol></li><li class="chapter-item expanded "><a href="../test-framework.html"><strong aria-hidden="true">5.</strong> Testing Framework</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tests/coverage.html"><strong aria-hidden="true">5.1.</strong> Test Coverage</a></li></ol></li><li class="chapter-item expanded "><a href="../other_miscellania.html"><strong aria-hidden="true">6.</strong> Miscellenia</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../misc/common.html"><strong aria-hidden="true">6.1.</strong> Module Files</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><li class="part-title">Reference</li><li class="chapter-item expanded "><div><strong aria-hidden="true">7.</strong> Properties</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Actions</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Activities</div></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="../other_miscellania.html">Module Headers and Other Miscellania</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Yaifl Docs</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="logging"><a class="header" href="#logging">Logging</a></h1>
+<p>With the move from <code>mtl</code> to <code>cleff</code>, it was probably less effort to just write my own logging effect than to find how to get e.g. <a href="https://hackage.haskell.org/package/co-log"><code>co-log</code></a> working with an arbitrary effects system. Plus, I don't need that much of the fancy stuff it does? I just want a context and to write to many different places.</p>
+<pre><code class="language-haskell file=src/Yaifl/Logger.hs">{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
+
+module Yaifl.Logger where
+
+import Solitude hiding ( trace, local, asks, Reader, runReader )
+import Language.Haskell.TH ( Loc(..) )
+import qualified Data.Text.Lazy.Builder as TLB
+import Cleff.Trace ( trace, Trace )
+import Cleff.Reader ( Reader, asks, local )
+import Data.Text.Display ( display, Display, ShowInstance(..) )
+import GHC.Stack
+import Data.Time ( getCurrentTime, UTCTime )
+import qualified Data.Aeson as A
+import qualified Data.Text as T
+import Katip.Format.Time ( formatAsLogTime )
+
+&lt;&lt;log-effect&gt;&gt;
+&lt;&lt;log-interpreters&gt;&gt;
+&lt;&lt;log-functions&gt;&gt;
+&lt;&lt;callstack-log&gt;&gt;
+&lt;&lt;log-item&gt;&gt;
+</code></pre>
+<h2 id="logging-effect"><a class="header" href="#logging-effect">Logging Effect</a></h2>
+<p>We only need two functions here, one to log a message of any severity (optionally with a callstack, stolen from <code>katip</code>) and another to make a contexted block (so we can have <code>[Some][Context][Here]</code> at the start of our lines in a hierarchal way). </p>
+<pre><code class="language-haskell id=log-effect">data MsgSeverity = Debug | Info | Warning | Error
+  deriving stock (Eq, Ord, Enum, Bounded, Show)
+  deriving (Display) via (ShowInstance MsgSeverity)
+
+data Log :: Effect where
+  LogMsg :: Maybe Loc -&gt; MsgSeverity -&gt; Text -&gt; Log m () 
+  WithContext :: Text -&gt; m a -&gt; Log m ()
+
+makeEffect ''Log
+</code></pre>
+<h3 id="interpreters"><a class="header" href="#interpreters">Interpreters</a></h3>
+<p>There already exist 3 different output-like effects in <code>cleff</code>; <code>Output</code> (for arbitrary <code>o</code>), <code>Trace</code> (which says it's for debugging logs), and <code>Writer</code> (which is even more general still). For the most flexibility, it's best to <code>reinterpret</code> our logging as a <code>Trace</code> effect (which has built-in interpreters to produce <code>Writer</code>s or <code>Output</code>s) with a <code>Reader</code> for the logging context. Of course, we may not want this <code>Reader</code> in the case we won't use it for anything (ignoring output) so we write our own ignore interpreter.</p>
+<pre><code class="language-haskell id=log-interpreters">runAndIgnoreLogging :: 
+  Eff (Log : es) 
+  ~&gt; Eff es
+runAndIgnoreLogging = interpret \case
+  LogMsg _ _ _ -&gt; pass
+  WithContext _ m -&gt; toEff $ void m
+
+runLoggingAsTrace :: 
+  [Reader [Text], IOE] :&gt;&gt; es 
+  =&gt; Eff (Log : es) 
+  ~&gt; Eff (Trace : es)
+runLoggingAsTrace = reinterpret \case
+  LogMsg mbLoc sev msg -&gt; do
+    now &lt;- liftIO getCurrentTime
+    cxt &lt;- asks reverse
+    trace $ makeJSONObject now cxt sev mbLoc msg
+  WithContext cxt m -&gt; void $ local (cxt:) (toEff m)
+
+makeJSONObject :: UTCTime -&gt; [Text] -&gt; MsgSeverity -&gt; Maybe Loc -&gt; Text -&gt; String
+makeJSONObject now cxt sev mbLoc pl = (decodeUtf8 $ A.encode $
+  YaiflItem
+  { itemSeverity = display sev
+  , itemLoc = mbLoc
+  , itemMessage = pl
+  , itemTime = now
+  , itemContext = cxt
+  })
+</code></pre>
+<h2 id="extracting-callsite-info"><a class="header" href="#extracting-callsite-info">Extracting callsite info</a></h2>
+<p>We try to extract the last callsite from some GHC <code>CallStack</code> and convert it to a <code>Loc</code>.</p>
+<pre><code class="language-haskell id=callstack-log">toLoc :: 
+  CallStack
+  -&gt; Maybe Loc
+toLoc stk = (listToMaybe . reverse $ getCallStack stk) &lt;&amp;&gt; \(_, loc) -&gt; 
+  Loc
+    { loc_filename = srcLocFile loc,
+      loc_package = srcLocPackage loc,
+      loc_module = srcLocModule loc,
+      loc_start = (srcLocStartLine loc, srcLocStartCol loc),
+      loc_end = (srcLocEndLine loc, srcLocEndCol loc)
+    }
+</code></pre>
+<h2 id="logging-functions"><a class="header" href="#logging-functions">Logging Functions</a></h2>
+<p>Each of our logging functions is a more concise way to log with a set severity and a callstack. This is inherently a structured logging format (perhaps in the future it'd be better to have the option of plaintext logging rather than explicitly and only JSON formatting) but JSON is what works nicely with <code>lnav</code>.</p>
+<pre><code class="language-haskell id=log-functions">logInternal ::
+  HasCallStack
+  =&gt; Log :&gt; es
+  =&gt; MsgSeverity
+  -&gt; TLB.Builder
+  -&gt; Eff es ()
+logInternal sev msg = logMsg (toLoc callStack) sev (toText $ TLB.toLazyText msg)
+
+debug :: 
+  HasCallStack
+  =&gt; Log :&gt; es
+  =&gt; TLB.Builder
+  -&gt; Eff es ()
+debug = logInternal Debug
+
+info :: 
+  HasCallStack 
+  =&gt; Log :&gt; es
+  =&gt; TLB.Builder
+  -&gt; Eff es ()
+info = logInternal Info
+
+warn :: 
+  HasCallStack 
+  =&gt; Log :&gt; es
+  =&gt; TLB.Builder
+  -&gt; Eff es ()
+warn = logInternal Warning
+
+err :: 
+  HasCallStack 
+  =&gt; Log :&gt; es
+  =&gt; TLB.Builder
+  -&gt; Eff es ()
+err = logInternal Error
+</code></pre>
+<h2 id="structured-logging-at-last"><a class="header" href="#structured-logging-at-last">Structured logging, at last</a></h2>
+<p>So we have everything done except the middle piece of glue that turns a logging message (probably with a callstack) into a JSON object. We need to relativise the filename to just <code>Foo.hs</code> and build the JSON object.</p>
+<p>We use <code>katip</code> just because it has really nice time formatting that is nontrivial to repeat.</p>
+<pre><code class="language-haskell id=log-item">
+reshapeFilename :: 
+  Loc 
+  -&gt; String
+reshapeFilename Loc{..} = drop 1 (dropWhile (/= '/') loc_filename) &lt;&gt; &quot;:&quot; &lt;&gt; show (fst loc_start) &lt;&gt; &quot;:&quot; &lt;&gt; show (snd loc_start)
+
+data YaiflItem = YaiflItem
+  { itemSeverity :: Text
+  , itemMessage :: Text
+  , itemTime :: UTCTime
+  , itemContext :: [Text]
+  , itemLoc :: Maybe Loc
+  } deriving stock (Show, Eq)
+
+instance A.ToJSON YaiflItem where
+    toJSON (YaiflItem{..}) = A.object $
+      [ &quot;level&quot; A..= itemSeverity
+      , &quot;message&quot; A..= itemMessage
+      , &quot;timestamp&quot; A..= formatAsLogTime itemTime
+      , &quot;ns&quot; A..= let f = T.intercalate &quot;➤&quot; (filter (/= T.empty) $ itemContext) in if T.empty == f then &quot;&quot; else &quot;❬&quot;&lt;&gt;f&lt;&gt;&quot;❭&quot;
+      , &quot;loc&quot; A..= fmap reshapeFilename itemLoc
+      ]
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../effects/say.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../worldmodel.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../effects/say.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../worldmodel.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>
