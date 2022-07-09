@@ -13,7 +13,7 @@ Stability   : No
 module Yaifl.Core.Actions.Going
   (goingActionImpl) where
 
-import Solitude
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Common

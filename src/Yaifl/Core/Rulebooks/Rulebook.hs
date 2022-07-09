@@ -31,7 +31,7 @@ module Yaifl.Core.Rulebooks.Rulebook
   , rbRules
   ) where
 
-import Solitude
+
 import Yaifl.Core.Logger
 import Cleff.State
 import Yaifl.Core.Common

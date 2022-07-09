@@ -19,7 +19,7 @@ module Yaifl.Core.Properties.Container
   , containerEnterable
   ) where
 
-import Solitude
+
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Openable ( Openable(..) )
 

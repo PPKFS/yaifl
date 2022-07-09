@@ -18,9 +18,10 @@ module Yaifl.Lamp.Properties.Container
   , containerEnterable
   ) where
 
-import Solitude
+
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Lamp.Properties.Openable ( Openable(..) )
+import Yaifl.Core.Properties.TH (makeSpecificsWithout)
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent 
@@ -39,7 +40,7 @@ data Container = Container
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeLenses ''Container
-
+makeSpecificsWithout [] ''Container 
 isOpaqueClosedContainer :: 
   Container
   -> Bool

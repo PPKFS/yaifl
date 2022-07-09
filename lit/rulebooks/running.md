@@ -9,7 +9,7 @@ module Yaifl.Core.Rulebooks.Run
   ) where
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rulebook
-import Solitude
+
 import Yaifl.Core.Rulebooks.Rule
 import qualified Data.Text as T
 import Yaifl.Core.Logger

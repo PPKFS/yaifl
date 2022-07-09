@@ -9,7 +9,7 @@ module Yaifl.Core.Rulebooks.ActionProcessing
   ( actionProcessingRules
   ) where
 
-import Solitude
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Rulebook
 

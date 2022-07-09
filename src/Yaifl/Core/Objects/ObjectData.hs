@@ -29,7 +29,7 @@ module Yaifl.Core.Objects.ObjectData
   ) where
 
 import qualified Data.Map as Map
-import Solitude 
+ 
 import Yaifl.Core.Common ( WMDirections, Entity, defaultVoidID )
 import Yaifl.Core.Properties.Enclosing ( Enclosing, blankEnclosing )
 

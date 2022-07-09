@@ -14,7 +14,7 @@ module Yaifl.Core.Properties.Enclosing
   , enclosingCapacity
   ) where
 
-import Solitude hiding (empty)
+ hiding (empty)
 import Data.EnumSet (EnumSet, empty)
 import Yaifl.Core.Common (Entity)
 

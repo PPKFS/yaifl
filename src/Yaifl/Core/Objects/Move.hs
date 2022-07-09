@@ -6,7 +6,7 @@ module Yaifl.Core.Objects.Move
 import Cleff.State ( State )
 import qualified Data.EnumSet as ES
 import Display ( displayText )
-import Solitude
+
 
 import Yaifl.Core.Common ( HasID(..), tickGlobalTime, Metadata (..) )
 import Yaifl.Core.Logger ( debug, Log )

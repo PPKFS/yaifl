@@ -9,7 +9,7 @@ module Yaifl.Core.Directions
   , WMStdDirections
   ) where
 
-import Solitude hiding ( Down )
+ hiding ( Down )
 import Yaifl.Core.Common
 
 <<direction-injection>>

@@ -12,7 +12,7 @@ module Yaifl.Core.Activities.PrintingLocaleParagraphAbout where
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Objects.Query (getThingMaybe)
 import Yaifl.Core.Objects.Object
-import Solitude
+
 import Yaifl.Core.Activities.Activity
 import Yaifl.Core.Objects.ObjectData
 

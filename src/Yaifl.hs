@@ -10,7 +10,6 @@ module Yaifl
   , Game
   , runGame
   ) where
-import Solitude hiding (Reader, runReader)
 
 import Yaifl.Core.World
 import qualified Data.Map as DM
@@ -28,8 +27,6 @@ import Cleff.Reader
 import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.WhenPlayBegins
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Actions.Action
 import Display
 import Yaifl.Core.Rulebooks.ActionProcessing
@@ -37,6 +34,7 @@ import Cleff.Trace (runTraceStderr)
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Actions.Parser
+import Yaifl.Lamp.Actions.Looking
 --import Yaifl.Core.Objects.Create
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.ActivityCollection
@@ -86,6 +84,8 @@ blankMetadata = Metadata
   , _currentStage = Construction
   , _previousRoom = defaultVoidID
   , _firstRoom = defaultVoidID
+  , _errorLog = []
+  , _typeDAG = makeTypeDAG
   }
 
 type family (xs :: [(* -> *) -> * -> *]) :++: (ys :: [(* -> *) -> * -> *]) :: [(* -> *) -> * -> *] where
@@ -205,8 +205,16 @@ addBaseActions ::
   State (WorldActions wm) :> es
   => Eff es ()
 addBaseActions = do
-  pass
-  --addAction lookingActionImpl
+  addAction lookingAction
   --addAction goingActionImpl
+
+makeTypeDAG :: Map Text (Set Text)
+makeTypeDAG = fromList 
+  [ ("object", fromList [])
+  , ("thing", fromList ["object"])
+  , ("room", fromList ["object"])
+  , ("container", fromList ["thing"])
+  , ("supporter", fromList ["thing"])  
+  ]
 
 -- ~\~ end

@@ -3,7 +3,7 @@ module Yaifl.Core.Properties.Query where
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Property ( HasProperty(..), WMHasProperty )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
-import Solitude
+
 import Yaifl.Core.Common ( isThing, HasID, getID )
 import Yaifl.Core.Objects.Object ( objData, objSpecifics )
 import Yaifl.Core.Objects.ObjectData ( roomEnclosing )

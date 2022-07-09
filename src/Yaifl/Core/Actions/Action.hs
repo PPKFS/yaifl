@@ -23,7 +23,7 @@ module Yaifl.Core.Actions.Action
   , makeActionRulebook
   ) where
 
-import Solitude
+
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Common
 import Yaifl.Core.Rulebooks.Rule
@@ -65,7 +65,6 @@ makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Just 
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Action wm))
-  , _activities :: () -- !(ActivityCollection wm)
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
   , _actionProcessing :: ActionProcessing wm
   }

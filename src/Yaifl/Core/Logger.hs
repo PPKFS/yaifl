@@ -5,7 +5,6 @@
 
 module Yaifl.Core.Logger where
 
-import Solitude hiding ( trace, local, asks, Reader, runReader )
 import Language.Haskell.TH ( Loc(..) )
 import qualified Data.Text.Lazy.Builder as TLB
 import Cleff.Trace ( trace, Trace )
@@ -16,6 +15,7 @@ import Data.Time ( getCurrentTime, UTCTime )
 import qualified Data.Aeson as A
 import qualified Data.Text as T
 import Katip.Format.Time ( formatAsLogTime )
+import Prelude hiding (Reader, asks, trace, local)
 
 -- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:34
 data MsgSeverity = Debug | Info | Warning | Error

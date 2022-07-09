@@ -6,7 +6,6 @@
 module Yaifl.Core.Rulebooks.Args where
 
 import Yaifl.Core.Objects.Object
-import Solitude
 import Yaifl.Core.Common
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
 
@@ -22,15 +21,14 @@ data Args wm v = Args
 deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
 deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 
-{-
+
 -- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the 
 -- refreshVariables function is called to replace and update the objects
 class Refreshable wm av where
-  refreshVariables :: forall m. (NoMissingObjects m, MonadWorld wm m) => av -> m av
+  refreshVariables :: forall es. (NoMissingObjects wm es) => av -> Eff es av
 
 instance Refreshable wm () where
   refreshVariables = pure
--}
 
 data ArgSubject wm = 
   RegularSubject Entity -- GET LAMP

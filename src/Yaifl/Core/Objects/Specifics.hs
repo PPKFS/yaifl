@@ -7,7 +7,7 @@ module Yaifl.Core.Objects.Specifics
   ObjectSpecifics(..)
   ) where
 
-import Solitude
+
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Lamp.Properties.Openable

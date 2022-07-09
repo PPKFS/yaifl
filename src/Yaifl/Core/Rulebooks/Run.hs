@@ -6,17 +6,17 @@ module Yaifl.Core.Rulebooks.Run
   , runRulebookAndReturnVariables
   , failRuleWithError
   ) where
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rulebook
-import Solitude
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
+
+import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
 import qualified Data.Text as T
-import Yaifl.Core.Logger
+import Yaifl.Core.Logger ( Log, err, debug, withContext )
+import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook :: 
-  RuleEffects wm es
-  => NoMissingObjects wm es
+  Refreshable wm v
+  => RuleEffects wm es
   => Rulebook wm ia v re
   -> ia
   -> Eff es (Maybe re)
@@ -27,8 +27,8 @@ runRulebook rb ia = runRulebookAndReturnVariables rb ia >>= (\mvre -> return $ m
 -- Just (v, Nothing) -> the rulebook ran successfully, but had no definite outcome
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
 runRulebookAndReturnVariables :: 
-  RuleEffects wm es
-  => NoMissingObjects wm es
+  Refreshable wm v
+  => RuleEffects wm es
   => Rulebook wm ia v re
   -> ia
   -> Eff es (Maybe (v, Maybe re))
@@ -47,15 +47,15 @@ runRulebookAndReturnVariables Rulebook{..} args = do
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
 processRuleList :: 
-  RuleEffects wm es
-  => NoMissingObjects wm es
+  Refreshable wm v
+  => RuleEffects wm es
   => [Rule wm v re]
   -> v
   -> Eff es (v, Maybe re)
 processRuleList [] v = return (v, Nothing)
 processRuleList (Rule{..} : xs) args = do
   (v, res) <- _runRule args
-  let newArgs = fromMaybe args v
+  newArgs <- refreshVariables $ fromMaybe args v
   -- if we hit nothing, continue; otherwise return
   case res of
     Nothing -> processRuleList xs newArgs

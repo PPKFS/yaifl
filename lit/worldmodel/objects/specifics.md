@@ -10,7 +10,7 @@ module Yaifl.Core.Objects.Specifics
   ObjectSpecifics(..)
   ) where
 
-import Solitude
+
 import Yaifl.Core.Properties.Container
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Openable

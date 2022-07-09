@@ -7,7 +7,7 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.Core.Activities.PrintingNameOfSomething
+module Yaifl.Lamp.Activities.PrintingNameOfSomething
 ( printNameEx
 , printName
 , capitalThe
@@ -17,16 +17,14 @@ module Yaifl.Core.Activities.PrintingNameOfSomething
 , Capitalisation(..)
 ) where
 
-import Yaifl.Core.Activities.Activity
-import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Say
-import Yaifl.Core.Objects.Missing
 import Yaifl.Core.Objects.Object
-import Yaifl.Core.WorldInfo
 import Yaifl.Core.Objects.Query
-import Solitude
-
-
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Logger
+import Yaifl.Core.Common
+import Cleff.State
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -40,21 +38,21 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
-printName
-  :: NoMissingObjects m
-  => MonadWorld s m
-  => ObjectLike s o
+printName :: 
+  NoMissingObjects wm es
+  => '[Log, Saying, ActionHandler, State (ActivityCollection wm)] :>> es
+  => ObjectLike wm o
   => o
-  -> m ()
+  -> Eff es ()
 printName o = printNameEx o noSayOptions
 
-printNameEx
-  :: NoMissingObjects m
-  => MonadWorld s m
-  => ObjectLike s o
+printNameEx :: 
+  NoMissingObjects wm es
+  => '[Log, Saying, ActionHandler, State (ActivityCollection wm)] :>> es
+  => ObjectLike wm o
   => o
   -> SayOptions
-  -> m ()
+  -> Eff es ()
 printNameEx o p = do
   e <- getObject o
   let pr = doActivity printingNameOfSomething e

@@ -6,7 +6,7 @@ module Yaifl.Core.Actions.Parser
   ( runActionHandlerAsWorldActions
 
   ) where
-import Solitude
+
 import Cleff.State
 import Yaifl.Core.Actions.Action
 import qualified Data.Text as T
@@ -30,13 +30,15 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler : es)
   ~> Eff es
 runActionHandlerAsWorldActions = interpret $ \case
-      ParseAction t -> do
-        --find the verb, which will be the first N words
-        possVerbs <- findVerb t
-        case possVerbs of
-          [] -> return $ Left "I have no idea what you meant."
-          [(r, x)] -> runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
-          xs -> return $ Left $ "Did you mean " <> prettyPrintList (map (displayText . fst) xs) 
+  ParseAction t -> do
+    --find the verb, which will be the first N words
+    possVerbs <- findVerb t
+    ac <- case possVerbs of
+      [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
+      [(r, x)] -> runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
+      xs -> return $ Left $ "Did you mean " <> prettyPrintList (map (displayText . fst) xs)
+    either noteError (const pass) ac
+    return ac
 
 findVerb :: 
   State (WorldActions wm) :> es

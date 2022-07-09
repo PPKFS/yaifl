@@ -25,7 +25,7 @@ where
 import Cleff.State ( State, get, modify )
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Solitude
+
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 

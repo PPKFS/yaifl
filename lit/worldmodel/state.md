@@ -9,7 +9,7 @@ We put the message buffer as part of the state even though we are in `IO` becaus
 
 {-# LANGUAGE TemplateHaskell #-}
 module Yaifl.Core.World where
-import Solitude
+
 import Yaifl.Core.Common
 
 import Yaifl.Core.Say

@@ -26,7 +26,7 @@ import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Objects.Missing
 import Yaifl.Core.WorldInfo
 import Yaifl.Core.Objects.Object
-import Solitude
+
 import Yaifl.Core.Say
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Logger

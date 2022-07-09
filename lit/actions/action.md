@@ -19,7 +19,7 @@ module Yaifl.Core.Actions.Action
   , makeActionRulebook
   ) where
 
-import Solitude
+
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Common
 import Yaifl.Core.Rulebooks.Rule

@@ -8,8 +8,8 @@ module Yaifl.Core.Directions
   , WMStdDirections
   ) where
 
-import Solitude hiding ( Down )
 import Yaifl.Core.Common
+import Prelude hiding (Down)
 
 -- ~\~ begin <<lit/worldmodel/directions.md|direction-injection>>[0] project://lit/worldmodel/directions.md:20
 class WithStandardDirections d where

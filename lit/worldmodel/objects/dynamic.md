@@ -22,7 +22,7 @@ module Yaifl.Core.Objects.Dynamic
   , tsUpdateFunc
   ) where
 
-import Solitude ( Generic, Either, makeLenses, Eff )
+ ( Generic, Either, makeLenses, Eff )
 import Yaifl.Core.Common ( WorldModel, Timestamp, HasID(..) )
 import Yaifl.Core.Objects.Object ( Object )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )

@@ -13,7 +13,7 @@ module Yaifl
   , Game
   , runGame
   ) where
-import Solitude
+
 
 import Yaifl.Core.World
 import qualified Data.Map as DM

@@ -29,7 +29,7 @@ module Yaifl.Core.Objects.Object (
   -- * Prisms
   , _Room, _Thing ) where
 
-import Solitude
+
 import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
 import Yaifl.Core.Objects.Specifics ( ObjectSpecifics )

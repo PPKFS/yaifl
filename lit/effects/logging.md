@@ -8,7 +8,7 @@ With the move from `mtl` to `cleff`, it was probably less effort to just write m
 
 module Yaifl.Core.Logger where
 
-import Solitude hiding ( trace, local, asks, Reader, runReader )
+ hiding ( trace, local, asks, Reader, runReader )
 import Language.Haskell.TH ( Loc(..) )
 import qualified Data.Text.Lazy.Builder as TLB
 import Cleff.Trace ( trace, Trace )

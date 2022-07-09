@@ -26,7 +26,7 @@ module Yaifl.Core.Actions.Activity
   , priority
   ) where
 
-import Solitude
+
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.WorldInfo
 import Yaifl.Core.Objects.Missing

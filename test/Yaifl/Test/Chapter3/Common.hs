@@ -1,7 +1,7 @@
 module Yaifl.Test.Chapter3.Common ( examples, goldens ) where
 
 import Yaifl.Test.Common
-import Solitude
+
 import Yaifl.Test.Chapter3.Bic
 import Test.Syd
 --import Yaifl.Core.Test.Chapter3.Verbosity

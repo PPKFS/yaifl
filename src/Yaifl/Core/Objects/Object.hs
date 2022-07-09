@@ -13,24 +13,47 @@ module Yaifl.Core.Objects.Object (
   , Thing
   , Room
   , AnyObject
+  , CanBeAny(..)
   -- * Object Helpers
   , objectEquals
+  , isType
   -- * Lenses
   , objName, objDescription, objID, objType
   , objCreationTime, objSpecifics, objData
   -- * Prisms
   , _Room, _Thing ) where
 
-import Solitude
-import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
+
+import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity, typeDAG, Metadata, noteError )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
 import Yaifl.Core.Objects.Specifics ( ObjectSpecifics )
+import Cleff.State
+import Data.Set (member)
 
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-type>>[0] project://lit/worldmodel/objects/objects.md:133
 newtype ObjType = ObjType
   { unObjType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
+
+isType :: 
+  State (Metadata wm) :> es
+  => ObjType 
+  -> Text 
+  -> Eff es Bool
+isType (ObjType o) e = do
+  td <- use $ typeDAG % at o
+  case td of
+    Nothing -> noteError ("Found no type entry for " <> o) >> return False
+    Just iv -> 
+      if 
+        e `member` iv || o == e
+      then
+        return True
+      else 
+        anyM (\x -> ((ObjType x) `isType` e)) iv
+
+
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|thing-room-anyobject>>[0] project://lit/worldmodel/objects/objects.md:147
 type Thing wm = Object wm ThingData

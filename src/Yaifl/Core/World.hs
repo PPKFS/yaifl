@@ -3,24 +3,26 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 module Yaifl.Core.World where
-import Solitude
+
 import Yaifl.Core.Common
 
 import Yaifl.Core.Say
 --import Yaifl.Core.Rulebooks.Rulebook
 --import Yaifl.Core.Activities.Activity
-import Yaifl.Core.Actions.Action
+import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
 import Yaifl.Core.Objects.Dynamic
-import Cleff.State
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Objects.Create
+import Cleff.State ( State )
+import Yaifl.Core.Objects.Object ( Object, Room, Thing )
+import Yaifl.Core.Objects.Create ( ObjectCreation, addAbstractRoom, addAbstractThing )
 import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rulebooks.Rule ( Rule )
+import Yaifl.Core.Actions.Activity ( ActivityCollection )
 
 data World (wm :: WorldModel) = World
   { _worldMetadata :: Metadata wm
   , _worldStores :: WorldStores wm
   , _worldActions :: WorldActions wm
+  , _worldActivities :: ActivityCollection wm
   , _messageBuffer :: MessageBuffer
   }
 

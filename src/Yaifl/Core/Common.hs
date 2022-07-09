@@ -1,6 +1,6 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Core/Common.hs
 -- ~\~ begin <<lit/misc/common.md|src/Yaifl/Core/Common.hs>>[0] project://lit/misc/common.md:10
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-orphans #-} --for the very disgusting display instance
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Core.Common
@@ -23,6 +23,9 @@ module Yaifl.Core.Common
   , currentPlayer
   , title
   , setTitle
+  , errorLog
+  , noteError
+  , typeDAG
 
   , ActionHandler(..)
   , parseAction
@@ -52,7 +55,7 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import Display ( Display(..) )
 
-import Solitude
+
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"
@@ -182,6 +185,8 @@ data Metadata (wm :: WorldModel) = Metadata
   , _currentStage :: CurrentStage
   , _previousRoom :: Entity
   , _firstRoom :: Entity
+  , _errorLog :: [Text]
+  , _typeDAG :: Map Text (Set Text)
   -- more to come I guess
   }
 
@@ -189,6 +194,12 @@ data CurrentStage = Construction | Verification | Runtime
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
 makeLenses ''Metadata
+
+noteError :: 
+  State (Metadata wm) :> es 
+  => Text 
+  -> Eff es ()
+noteError t = errorLog %= (t:)
 
 getGlobalTime :: 
   State (Metadata wm) :> es 

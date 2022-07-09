@@ -17,7 +17,7 @@ import Yaifl.Core.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.Core.ObjectLookup
 -}
-import Solitude hiding (map)
+ hiding (map)
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Test.Syd
 import Data.Map ((!), unions, map)
@@ -27,6 +27,7 @@ import Test.Syd.OptParse
 import Data.Text (unpack)
 import qualified Data.Text as T
 import Yaifl.Test.Common (expectTitle)
+
 
 main :: IO ()
 main = do
@@ -40,7 +41,13 @@ main = do
           print $ "Doing" <> t
           writeFile fp . unpack . unlines $ collectGoldens ! (unpack t) $ t
         else
-          it "Runs" $ goldenTextFile fp $ collectExamples ! takeBaseName fp
+          let ce = collectExamples ! takeBaseName fp in            
+            it "Runs" $ do         
+              goldenTextFile fp ce
+            
+
+
+
 
 collectGoldens :: Map String (Text -> [Text])
 collectGoldens = map (\v -> \t -> (expectTitle t :  v)) $ unions 

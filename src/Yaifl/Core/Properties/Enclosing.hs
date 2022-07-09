@@ -13,7 +13,6 @@ module Yaifl.Core.Properties.Enclosing
   , enclosingCapacity
   ) where
 
-import Solitude hiding (empty)
 import Data.EnumSet (EnumSet, empty)
 import Yaifl.Core.Common (Entity)
 
@@ -24,7 +23,7 @@ data Enclosing = Enclosing
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 blankEnclosing :: Enclosing
-blankEnclosing = Enclosing empty Nothing
+blankEnclosing = Enclosing Data.EnumSet.empty Nothing
 
 makeLenses ''Enclosing
 -- ~\~ end

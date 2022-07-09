@@ -4,7 +4,7 @@ module Yaifl.Core.Test.Chapter3.Verbosity where
 
 import Yaifl
 import Yaifl.Core.Test.Common
-import Solitude
+
 import Yaifl.Core.World
 import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Room

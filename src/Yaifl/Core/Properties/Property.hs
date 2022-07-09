@@ -7,7 +7,6 @@ module Yaifl.Core.Properties.Property
   , WMHasProperty
   ) where
 
-import Solitude ( Either(..), const, atraversal, eitherJoin, AffineTraversal' )
 import Yaifl.Core.Common ( WMObjSpecifics )
 
 -- | A helper to define that a world model `wm` has a Property.

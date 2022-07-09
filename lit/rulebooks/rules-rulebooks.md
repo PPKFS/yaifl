@@ -21,7 +21,7 @@ module Yaifl.Core.Rulebooks.Rule
 
 import Cleff.State
 import Yaifl.Core.Common
-import Solitude
+
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Logger
 import Yaifl.Core.Say
@@ -98,7 +98,7 @@ module Yaifl.Core.Rulebooks.Rulebook
   , rbRules
   ) where
 
-import Solitude
+
 import Yaifl.Core.Logger
 import Cleff.State
 import Yaifl.Core.Common

@@ -25,13 +25,14 @@ module Yaifl.Core.Actions.Activity
   , priority
   ) where
 
-import Solitude
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Common
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Run
+
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(_rbRules), blankRulebook )
+import Yaifl.Core.Objects.Object ( AnyObject )
+import Yaifl.Core.Common ( Store )
+import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
+import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject )
+import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
+import Cleff.State (gets, State)
 
 data Activity wm v r = Activity
     { _activityName :: !Text
@@ -40,7 +41,6 @@ data Activity wm v r = Activity
     , _activityCarryOutRules :: !(Rulebook wm v v r)
     , _activityAfterRules :: !(Rulebook wm v v ())
     }
-
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables
@@ -67,7 +67,6 @@ data ActivityCollection wm = ActivityCollection
   , describingLocale :: !(Activity wm (LocaleVariables wm) ())
   }
 
-
 makeActivity :: 
   Text
   -> Rule wm v r
@@ -78,13 +77,13 @@ makeActivity n r = Activity n Nothing
   (blankRulebook ("After " <> n))
 
 doActivity ::
-  RuleEffects wm es
+  State (ActivityCollection wm) :> es
+  => RuleEffects wm es
   => (ActivityCollection wm -> Activity wm v r)
   -> v
   -> Eff es (Maybe r)
-doActivity f v = do
-  x <- error "" --use (activities % to f)
-  doActivity' x v
+doActivity = (. flip doActivity') . (>>=) . gets
+
 doActivity' :: 
   RuleEffects wm es
   => Activity wm v r

@@ -20,7 +20,7 @@ module Yaifl.Core.Rulebooks.Rule
 
 import Cleff.State
 import Yaifl.Core.Common
-import Solitude
+
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Logger
 import Yaifl.Core.Say

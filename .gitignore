@@ -57,3 +57,5 @@ book
 
 test_runs
 .entangled
+
+.hlint.yaml

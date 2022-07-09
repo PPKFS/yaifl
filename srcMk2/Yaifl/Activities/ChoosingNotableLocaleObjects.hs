@@ -13,7 +13,7 @@ module Yaifl.Core.Activities.ChoosingNotableLocaleObjects
 
 import Yaifl.Core.Common
 import Yaifl.Core.Activities.Activity
-import Solitude
+
 import Yaifl.Core.Properties.Property
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES

@@ -1,7 +1,7 @@
 module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-import Solitude
+
 import Yaifl.Core.Objects.Create
 --import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Test.Common

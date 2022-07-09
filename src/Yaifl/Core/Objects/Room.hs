@@ -12,7 +12,7 @@ import Cleff.State ( State )
 import qualified Data.Map as Map
 import qualified Data.Text.Lazy.Builder as TLB
 import Display ( displayText )
-import Solitude
+
 
 import Yaifl.Core.Common ( Entity, HasID(getID), Metadata, WMDirections, whenConstructingM )
 import Yaifl.Core.Directions ( HasOpposite(opposite), WithDirections )

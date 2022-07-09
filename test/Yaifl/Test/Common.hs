@@ -1,6 +1,6 @@
 module Yaifl.Test.Common where
 
-import Solitude
+
 
 import Yaifl
 import qualified Data.Text as T
@@ -16,6 +16,7 @@ import Cleff.State (runState, get)
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Run
+import Yaifl.Core.Common
 import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.Actions.Action
@@ -63,7 +64,7 @@ testHarness ::
   => Text
   -> Game wm a
   -> [Text]
-  -> IO Text
+  -> IO (Text)
 testHarness fullTitle initWorld actionsToDo = do
   let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
   (w2 :: World wm) <- liftIO $ runGame shortName (do
@@ -83,7 +84,10 @@ testHarness fullTitle initWorld actionsToDo = do
         return $ (mconcat . map show) msgList
   let (x, _) = flushBufferToText w2
   putStrLn . T.unpack $ x
-  return x
+  let errs = w2 ^. worldMetadata % errorLog
+  case errs of
+    [] -> return x
+    xs -> return $ x <> "\nEncountered the following errors:  \n" <> unlines xs
 
 --buildExpected = mconcat (expectTitle t : expected )
 {-

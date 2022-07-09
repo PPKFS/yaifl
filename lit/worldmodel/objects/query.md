@@ -38,7 +38,7 @@ import Cleff.Error ( Error, fromEither, runError, throwError )
 import Cleff.State ( State )
 import qualified Data.Text.Lazy.Builder as TLB
 
-import Solitude
+
 
 import Yaifl.Core.Common ( Metadata, WorldModel, HasID(..), Entity, isThing )
 import Yaifl.Core.Logger ( Log, err )

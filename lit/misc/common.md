@@ -56,7 +56,7 @@ import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import Display ( Display(..) )
 
-import Solitude
+
 
 instance {-# OVERLAPPABLE #-} Display a where
   display = const "No display instance"

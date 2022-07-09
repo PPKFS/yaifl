@@ -1,22 +1,12 @@
-
-{-|
-Module      : Yaifl.Actions.Looking
-Description : The looking action.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Actions.Looking
-  ( lookingActionImpl
+module Yaifl.Lamp.Actions.Looking
+  ( lookingAction
   , HasLookingProperties
   ) where
 
-import Solitude
+
 import Yaifl.Core.Common
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Property
@@ -26,19 +16,17 @@ import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say
 import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Core.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
+import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
 import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Properties.Container
+import Yaifl.Lamp.Properties.Container
 import Yaifl.Core.Objects.Object
 import Display
-import Yaifl.Core.WorldInfo
-import Yaifl.Core.Objects.Missing
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Logger
-import Yaifl.Core.Properties.Openable
+import Yaifl.Lamp.Properties.Openable
 import Yaifl.Core.Objects.ObjectData
-import Yaifl.Core.Activities.Activity
-import Yaifl.Core.Properties.Supporter
+import Yaifl.Core.Actions.Activity
+import Yaifl.Lamp.Properties.Supporter
 import qualified Data.Text as T
 import Yaifl.Core.Rulebooks.Args
 
@@ -70,10 +58,10 @@ instance Refreshable wm (LookingActionVariables wm) where
 lookingActionName :: Text 
 lookingActionName = "looking"
 
-lookingActionImpl ::
+lookingAction ::
   HasLookingProperties wm
   => Action wm
-lookingActionImpl = Action
+lookingAction = Action
   lookingActionName
   [] --todo: add "at => examine"
   ["look", "looking"]
@@ -90,22 +78,20 @@ lookingActionImpl = Action
 -- 100 up.
 lookingActionSet ::
   HasLookingProperties wm
-  => MonadWorld wm m
   => UnverifiedArgs wm
-  -> m (Maybe (LookingActionVariables wm))
-lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (runMaybeT $ do
-  let t = _argsSource
-  reifyLoc <- getObject (t ^. containedBy)
-  vl <- getVisibilityLevels reifyLoc
-  lightLevels <- recalculateLightOfParent t
-  return $ LookingActionVariables reifyLoc lightLevels (take lightLevels vl) "looking") (handleMissingObject "" $ return Nothing)
+  -> Eff es (Maybe (LookingActionVariables wm))
+lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
+  -- loc may be a thing (a container) or a room (the more likely case)
+  loc <- getObject (_argsSource ^. objData % thingContainedBy)
+  vl <- getVisibilityLevels loc
+  lightLevels <- recalculateLightOfParent _argsSource
+  return $ Just $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking") (handleMissingObject "Failed to set the variables for looking" $ return Nothing)
 
 getVisibilityLevels :: 
-  MonadWorld wm m
-  => NoMissingObjects m
+  NoMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm
-  -> m [AnyObject wm]
+  -> Eff es [AnyObject wm]
 getVisibilityLevels e = do
   vh <- findVisibilityHolder e
   if vh `objectEquals` e
@@ -114,16 +100,16 @@ getVisibilityLevels e = do
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder ::
-  MonadWorld s m
-  => HasLookingProperties s
-  => NoMissingObjects m
-  => CanBeAny s o
-  => ObjectLike s o
+  NoMissingObjects wm es
+  => HasLookingProperties wm
+  => CanBeAny wm o
+  => ObjectLike wm o
   => o
-  -> m (AnyObject s)
+  -> Eff es (AnyObject wm)
 findVisibilityHolder e' = do
+  obj <- getObject e'
   mCont <- getContainer e'
-  n <- objectName e'
+  let n = _objName obj
   if
     isRoom e' || isOpaqueClosedContainer <$?> mCont
   then
@@ -144,8 +130,7 @@ findVisibilityHolder e' = do
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent :: 
-  NoMissingObjects m
-  => MonadWorld wm m
+  NoMissingObjects wm es
   => HasLookingProperties wm
   => ObjectLike wm o
   => o
@@ -170,8 +155,7 @@ recalculateLightOfParent e = do
 -- - it is see-through and its parent offers light
 -- this goes DOWN the object tree; the light goes to its contents
 offersLight :: 
-  NoMissingObjects m
-  => MonadWorld wm m
+  NoMissingObjects wm es
   => HasLookingProperties wm
   => ObjectLike wm o
   => o
@@ -187,8 +171,7 @@ offersLight e = do
 
 -- | an object is see through if...
 isSeeThrough :: 
-  NoMissingObjects m
-  => MonadWorld wm m
+  NoMissingObjects wm es
   => HasLookingProperties wm
   => Thing wm
   -> m Bool
@@ -206,10 +189,8 @@ isSeeThrough e = do
       || isOpenContainer -- it's an open container
 
 containsLitObj :: 
-  NoMissingObjects m
-  => HasLookingProperties s
+  HasLookingProperties s
   => ObjectLike s o
-  => MonadWorld s m
   => o -- ^ the object
   -> m Bool
 containsLitObj e = do
@@ -224,10 +205,9 @@ containsLitObj e = do
   (b) it's a thing with the lit property.  
   If you want to include transitive light, you want `hasLight`.
 -}
-objectItselfHasLight
-  :: NoMissingObjects m
+objectItselfHasLight :: 
+  NoMissingObjects wm es
   => ObjectLike s o
-  => MonadWorld s m
   => o -- ^ the object
   -> m Bool
 objectItselfHasLight e = asThingOrRoom e
@@ -241,10 +221,9 @@ objectItselfHasLight e = asThingOrRoom e
   ignoring (c) for now; TODO?  
   this goes UP the object tree; it provides light TO its surroundings.  
 -}
-hasLight
-  :: NoMissingObjects m
+hasLight :: 
+  NoMissingObjects wm es
   => HasLookingProperties s
-  => MonadWorld s m
   => ObjectLike s o
   => o
   -> m Bool
@@ -308,8 +287,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   ]
 
 foreachVisibilityHolder :: 
-  NoMissingObjects m
-  => MonadWorld s m
+  NoMissingObjects wm es
   => AnyObject s
   -> m ()
 foreachVisibilityHolder e = do

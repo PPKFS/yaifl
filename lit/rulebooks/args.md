@@ -9,7 +9,7 @@ Which is a very roundabout way of finishing up rulebooks, aka modular functions,
 module Yaifl.Core.Rulebooks.Args where
 
 import Yaifl.Core.Objects.Object
-import Solitude
+
 import Yaifl.Core.Common
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
 

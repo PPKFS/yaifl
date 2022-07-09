@@ -7,21 +7,21 @@ module Yaifl.Core.Rulebooks.WhenPlayBegins
   , introText
   ) where
 
-import Solitude
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Properties.Property
+
+import Yaifl.Core.Properties.Enclosing ( Enclosing )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
+import Yaifl.Core.Properties.Property ( WMHasProperty )
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import qualified Data.Text as T
-import Yaifl.Core.Say
-import Yaifl.Core.Objects.Move
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Say ( Saying, say, setStyle )
+import Yaifl.Core.Objects.Move ( move )
+import Yaifl.Core.Objects.Query ( NoMissingObjects )
+import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass )
 import Yaifl.Core.Common
-import Yaifl.Core.Rulebooks.Run
-import Yaifl.Core.Logger
-import Cleff.State
-import Yaifl.Core.Actions.Action
+import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
+import Yaifl.Core.Logger ( Log, err )
+import Cleff.State ( State )
+import qualified Data.Text.Lazy.Builder as TLB
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -63,10 +63,14 @@ introText w = fold
       (2 * T.length shortBorder + T.length w + 2) "-"
 
 initRoomDescription :: 
-  ActionHandler :> es
-  => Eff es (Maybe a)
+  '[Log, Saying, ActionHandler, State (Metadata wm)] :>> es
+  => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction "looking" >> rulePass
+  parseAction "looking" >>= (\case
+     Left txt -> err (TLB.fromText txt)
+     Right True -> pure ()
+     Right False -> noteError "Somehow, looking when play begins failed")
+  rulePass
 
 positionPlayer :: 
   Log :> es

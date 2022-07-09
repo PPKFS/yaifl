@@ -13,7 +13,7 @@ module Yaifl.Core.Activities.PrintingADarkRoom
   ) where
 
 import Yaifl.Core.Activities.Activity
-import Solitude
+
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say
 

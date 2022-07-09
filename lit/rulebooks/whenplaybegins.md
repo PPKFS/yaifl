@@ -8,7 +8,7 @@ module Yaifl.Core.Rulebooks.WhenPlayBegins
   , introText
   ) where
 
-import Solitude
+
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Properties.Property

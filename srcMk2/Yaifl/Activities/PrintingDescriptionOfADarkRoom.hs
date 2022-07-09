@@ -16,7 +16,7 @@ module Yaifl.Core.Activities.PrintingDescriptionOfADarkRoom
 import Yaifl.Core.Activities.Activity
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say
-import Solitude
+
 
 printingDescriptionOfADarkRoomImpl :: Activity o () ()
 printingDescriptionOfADarkRoomImpl = makeActivity "Printing description of a dark room"

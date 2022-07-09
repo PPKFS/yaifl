@@ -12,7 +12,7 @@ module Yaifl.Core.Properties.TH
   , makeDirections
 ) where
 
-import Solitude
+
 import Language.Haskell.Meta hiding (myDefaultParseMode)
 import Data.Text (replace)
 import Language.Haskell.Exts.Parser
