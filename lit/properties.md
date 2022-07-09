@@ -2,16 +2,16 @@
 
 properties
 
-```haskell file=src/Yaifl/Properties/Property.hs
+```haskell file=src/Yaifl/Core/Properties/Property.hs
 {-# LANGUAGE DefaultSignatures #-}
 
-module Yaifl.Properties.Property 
+module Yaifl.Core.Properties.Property 
   ( HasProperty(..)
   , WMHasProperty
   ) where
 
 import Solitude ( Either(..), const, atraversal, eitherJoin, AffineTraversal' )
-import Yaifl.Common ( WMObjSpecifics )
+import Yaifl.Core.Common ( WMObjSpecifics )
 
 -- | A helper to define that a world model `wm` has a Property.
 type WMHasProperty wm v = HasProperty (WMObjSpecifics wm) v

@@ -32,19 +32,19 @@ common common-options
     , cleff-plugin
     , time
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:61
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:55
     , display
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:69
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:63
     , aeson
     , katip
     , enummapset
     , haskell-src-meta
     , haskell-src-exts
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:85
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:79
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints 
     -fhide-source-paths -Wno-unused-top-binds
@@ -78,17 +78,49 @@ common common-options
     TypeOperators
     DerivingVia
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:125
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:121
 library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules:
     Yaifl
 
-    --Yaifl.Actions.Action
+    Yaifl.Core.Actions.Action
+    Yaifl.Core.Actions.Activity
+    Yaifl.Core.Actions.Parser
+    Yaifl.Core.Common
+    Yaifl.Core.Directions
+    Yaifl.Core.Logger
+    Yaifl.Core.Objects.Create
+    Yaifl.Core.Objects.Dynamic
+    Yaifl.Core.Objects.Move
+    Yaifl.Core.Objects.Object
+    Yaifl.Core.Objects.ObjectData
+    Yaifl.Core.Objects.Query
+    Yaifl.Core.Objects.Room
+    Yaifl.Core.Objects.Specifics
+    Yaifl.Core.Properties.Enclosing
+    Yaifl.Core.Properties.Property
+    Yaifl.Core.Properties.Query
+    Yaifl.Core.Properties.TH
+
+    Yaifl.Core.Rulebooks.ActionProcessing
+    Yaifl.Core.Rulebooks.Args
+    Yaifl.Core.Rulebooks.Run
+    Yaifl.Core.Rulebooks.Rule
+    Yaifl.Core.Rulebooks.Rulebook
+    Yaifl.Core.Rulebooks.WhenPlayBegins
+
+    Yaifl.Core.Say
+    Yaifl.Core.World
+
+    Yaifl.Lamp.Properties.Openable
+    Yaifl.Lamp.Properties.Container
+    --Yaifl.Properties.Supporter
+
+    --Yaifl.ActivityCollection
     --Yaifl.Actions.Going
     --Yaifl.Actions.Looking
-
     --Yaifl.Activities.Activity
     --Yaifl.Activities.ChoosingNotableLocaleObjects
     --Yaifl.Activities.DescribingLocale
@@ -96,46 +128,15 @@ library
     --Yaifl.Activities.PrintingDescriptionOfADarkRoom
     --Yaifl.Activities.PrintingLocaleParagraphAbout
     --Yaifl.Activities.PrintingNameOfSomething
-
-    --Yaifl.ActivityCollection
-    Yaifl.Common
-    Yaifl.Directions
-    Yaifl.Logger
-
-    Yaifl.Objects.Create
-    Yaifl.Objects.Dynamic
-    Yaifl.Objects.Move
-    Yaifl.Objects.Object
-    Yaifl.Objects.ObjectData
-    Yaifl.Objects.Query
-    Yaifl.Objects.Room
-    Yaifl.Objects.Specifics
-
-    Yaifl.Properties.Container
-    Yaifl.Properties.Enclosing
-    Yaifl.Properties.Openable
-    Yaifl.Properties.Property
-    Yaifl.Properties.Query
-    --Yaifl.Properties.Supporter
-    Yaifl.Properties.TH
-
-    --Yaifl.Rulebooks.ActionProcessing
-    --Yaifl.Rulebooks.Args
-    --Yaifl.Rulebooks.Rulebook
-    --Yaifl.Rulebooks.WhenPlayBegins
-
-    Yaifl.Say
-    Yaifl.World
 -- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:181
+-- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:179
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , sandwich
-    , conduit
+    , sydtest
     , yaifl
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:

@@ -7,22 +7,22 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.Activities.ChoosingNotableLocaleObjects
+module Yaifl.Core.Activities.ChoosingNotableLocaleObjects
   ( choosingNotableLocaleObjectsImpl
   ) where
 
-import Yaifl.Common
-import Yaifl.Activities.Activity
+import Yaifl.Core.Common
+import Yaifl.Core.Activities.Activity
 import Solitude
-import Yaifl.Properties.Property
+import Yaifl.Core.Properties.Property
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Yaifl.Properties.Enclosing
-import Yaifl.Objects.Object
-import Yaifl.Properties.Query
-import Yaifl.Logger
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Objects.Query
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.Properties.Query
+import Yaifl.Core.Logger
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Objects.Query
 
 
 choosingNotableLocaleObjectsImpl :: 

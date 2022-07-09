@@ -10,19 +10,19 @@ Stability   : No
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Yaifl.Actions.Going
+module Yaifl.Core.Actions.Going
   (goingActionImpl) where
 
 import Solitude
-import Yaifl.Actions.Action
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Common
-import Yaifl.Objects.Object
-import Yaifl.Objects.Move (getLocation)
-import Yaifl.Objects.Missing
-import Yaifl.Objects.Query
-import Yaifl.Rulebooks.Args
-import Yaifl.Objects.Room
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Common
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.Objects.Move (getLocation)
+import Yaifl.Core.Objects.Missing
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Rulebooks.Args
+import Yaifl.Core.Objects.Room
 
 data GoingActionVariables wm = GoingActionVariables
   { _gavRoomFrom :: Room wm

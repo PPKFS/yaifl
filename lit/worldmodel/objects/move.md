@@ -2,8 +2,8 @@
 
 This is the first piece of code where we interact with objects at a higher level than foundational, and therefore we aim to exhibit the three layer cake model. That is, we aim to make as much separation between the things in layer 2 (things that require our monadic context) and those in layer 3 (the pure functions that do the work). It results in slightly more verbose code for this case, but it does pave the way for better testing later on.
 
-```haskell file=src/Yaifl/Objects/Move.hs
-module Yaifl.Objects.Move 
+```haskell file=src/Yaifl/Core/Objects/Move.hs
+module Yaifl.Core.Objects.Move 
   ( move
   ) where
 import Cleff.State ( State )
@@ -11,14 +11,14 @@ import qualified Data.EnumSet as ES
 import Display ( displayText )
 import Solitude
 
-import Yaifl.Common ( HasID(..), tickGlobalTime, Metadata (..) )
-import Yaifl.Logger ( debug, Log )
-import Yaifl.Objects.Object ( objData, objName )
-import Yaifl.Objects.ObjectData ( thingContainedBy )
-import Yaifl.Objects.Query
-import Yaifl.Properties.Enclosing ( enclosingContains, Enclosing )
-import Yaifl.Properties.Property ( WMHasProperty )
-import Yaifl.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
+import Yaifl.Core.Common ( HasID(..), tickGlobalTime, Metadata (..) )
+import Yaifl.Core.Logger ( debug, Log )
+import Yaifl.Core.Objects.Object ( objData, objName )
+import Yaifl.Core.Objects.ObjectData ( thingContainedBy )
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Properties.Enclosing ( enclosingContains, Enclosing )
+import Yaifl.Core.Properties.Property ( WMHasProperty )
+import Yaifl.Core.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
 
 <<move-func>>
 ```
@@ -27,7 +27,7 @@ import Yaifl.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
 move :: 
   State (Metadata wm) :> es
   => Log :> es
-  => ObjectQuery wm :> es
+  => ObjectQuery wm es
   => WMHasProperty wm Enclosing
   => ObjectLike wm o1
   => ObjectLike wm o2

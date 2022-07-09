@@ -1,9 +1,9 @@
 # Creating Objects
 
-```haskell file=src/Yaifl/Objects/Create.hs
+```haskell file=src/Yaifl/Core/Objects/Create.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Create
+module Yaifl.Core.Objects.Create
   ( -- * Effect
   ObjectCreation(..)
   , generateEntity
@@ -18,16 +18,17 @@ module Yaifl.Objects.Create
 
 import Cleff.State ( State, get, runState )
 import Solitude
-import Yaifl.Common
-import Yaifl.Logger ( debug, Log )
-import Yaifl.Objects.Dynamic
-import Yaifl.Objects.Move ( move )
-import Yaifl.Objects.Object ( ObjType(ObjType), Object(Object) )
-import Yaifl.Objects.ObjectData
-import Yaifl.Objects.Query ( ObjectQuery )
-import Yaifl.Objects.Specifics ( ObjectSpecifics(NoSpecifics) )
-import Yaifl.Properties.Enclosing ( Enclosing )
-import Yaifl.Properties.Property ( WMHasProperty )
+import Yaifl.Core.Common
+import Yaifl.Core.Logger ( debug, Log )
+import Yaifl.Core.Objects.Dynamic
+import Yaifl.Core.Objects.Move ( move )
+import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object) )
+import Yaifl.Core.Objects.ObjectData
+import Yaifl.Core.Objects.Query ( ObjectQuery, ObjectUpdate )
+import Yaifl.Core.Objects.Specifics ( ObjectSpecifics(NoSpecifics) )
+import Yaifl.Core.Properties.Enclosing ( Enclosing )
+import Yaifl.Core.Properties.Property ( WMHasProperty )
+import Yaifl.Core.Objects.Query (ObjectLookup)
 
 <<creation-effect>>
 <<make-object>>
@@ -43,7 +44,7 @@ data ObjectCreation wm :: Effect where
 
 makeEffect ''ObjectCreation
 
-type AddObjects wm es = '[ObjectCreation wm, State (Metadata wm), Log, ObjectQuery wm] :>> es
+type AddObjects wm es = '[ObjectCreation wm, State (Metadata wm), Log, ObjectUpdate wm, ObjectLookup wm] :>> es
 ```
 
 ```haskell id=make-object
@@ -56,7 +57,7 @@ makeObject ::
   -> Bool
   -> Either ObjectSpecifics (WMObjSpecifics wm) -- ^ Object details.
   -> d
-  -> Maybe (ObjectUpdate wm d) -- ^ 'Nothing' for a static object, 'Just f' for a dynamic object.
+  -> Maybe (ObjectUpdateFunc wm d) -- ^ 'Nothing' for a static object, 'Just f' for a dynamic object.
   -> Eff es (Entity, AbstractObject wm d)
 makeObject n d ty isT specifics details upd = do
   e <- generateEntity isT
@@ -74,7 +75,7 @@ addObject ::
   -> Bool
   -> Either ObjectSpecifics (WMObjSpecifics wm)
   -> d
-  -> Maybe (ObjectUpdate wm d)
+  -> Maybe (ObjectUpdateFunc wm d)
   -> Eff es Entity
 addObject updWorld n d ty isT specifics details updateFunc = do
   (e, obj) <- makeObject n d ty isT specifics details updateFunc
@@ -108,7 +109,7 @@ addThing ::
   -> ObjType -- ^ Type.
   -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Maybe (ObjectUpdate wm ThingData) -- ^ Static/Dynamic.
+  -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ Static/Dynamic.
   -> Eff es Entity
 addThing name desc objtype specifics details = addObject addAbstractThing name desc objtype
   True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankThingData details)
@@ -131,7 +132,7 @@ addRoom ::
   -> ObjType -- ^ Type.
   -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
   -> Maybe (RoomData wm) -- ^
-  -> Maybe (ObjectUpdate wm (RoomData wm))  -- ^
+  -> Maybe (ObjectUpdateFunc wm (RoomData wm))  -- ^
   -> Eff es Entity
 addRoom name desc objtype specifics details upd = do
   e <- addObject addAbstractRoom name desc objtype False

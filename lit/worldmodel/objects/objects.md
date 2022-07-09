@@ -7,14 +7,14 @@ Each of these can be further divided into more specific instances, but it is sig
 
 First we have the overview of the module.
 
-```haskell file=src/Yaifl/Objects/Object.hs
+```haskell file=src/Yaifl/Core/Objects/Object.hs
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Objects.Object ( 
+module Yaifl.Core.Objects.Object ( 
   -- * Types
   ObjType(..)
   , Object(..)
@@ -30,9 +30,9 @@ module Yaifl.Objects.Object (
   , _Room, _Thing ) where
 
 import Solitude
-import Yaifl.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
-import Yaifl.Objects.ObjectData ( RoomData, ThingData )
-import Yaifl.Objects.Specifics ( ObjectSpecifics )
+import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity )
+import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
+import Yaifl.Core.Objects.Specifics ( ObjectSpecifics )
 
 <<obj-type>>
 <<thing-room-anyobject>>

@@ -1,13 +1,13 @@
 
 
-module Yaifl.Test.Chapter3.Verbosity where
+module Yaifl.Core.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Test.Common
+import Yaifl.Core.Test.Common
 import Solitude
-import Yaifl.World
-import Yaifl.Objects.Create
-import Yaifl.Objects.Room
+import Yaifl.Core.World
+import Yaifl.Core.Objects.Create
+import Yaifl.Core.Objects.Room
 
 ex3World :: Game PlainWorldModel (World PlainWorldModel)
 ex3World = newWorld $ do

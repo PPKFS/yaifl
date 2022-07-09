@@ -1,13 +1,15 @@
 # Introduction
 
 [Introduction](./README.md)
-[The Tech](foundations/tech.md)
-[Structure of the book](foundations/structure.md)
-[Cabal, Extensions, Dependencies](foundations/cabal.md)
+
 
 ---
 
 # The Yaifl Library
+
+- [The Tech](foundations/tech.md)
+- [Structure of the book](foundations/structure.md)
+- [Cabal, Extensions, Dependencies](foundations/cabal.md)
 
 - [Effects](foundations/effects.md)
     - [Saying](effects/say.md)
@@ -33,10 +35,15 @@
       - [Enclosing](properties/std/enclosing.md)
       - [Openable](properties/std/openable.md)
       - [Container](properties/std/container.md)
-- [Rulebooks, Actions, and Activities](rulebooks.md)
+- [Rulebooks, or Overly Complicated Function Composition](rulebooks.md)
+  - [Rules and Rulebooks](rulebooks/rules-rulebooks.md)
+  - [Arguments](rulebooks/args.md)
   - [Running a Rulebook](rulebooks/running.md)
-  - [Action Processing](rulebooks/ap.md)
-  - [Activities](rulebooks/activities.md)
+- [Actions and Activities](actions.md)
+  - [Actions](actions/action.md)
+  - [Action Processing](actions/ap.md)
+  - [Parsing](actions/parsing.md)
+  - [Activities](actions/activity.md)
 - [Construction and Execution](construction.md)
   - [The World State](worldmodel/state.md)
 - [Testing Framework](test-framework.md)

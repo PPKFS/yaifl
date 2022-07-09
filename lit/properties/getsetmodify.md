@@ -1,10 +1,10 @@
 # Get, Set, Modify
 
 
-```haskell file=src/Yaifl/Properties/TH.hs
+```haskell file=src/Yaifl/Core/Properties/TH.hs
 {-# LANGUAGE DataKinds #-}
 
-module Yaifl.Properties.TH
+module Yaifl.Core.Properties.TH
 (
     makeSpecificsWithout
   , makePropertyFunction
@@ -13,7 +13,7 @@ module Yaifl.Properties.TH
 ) where
 
 import Solitude
-import Language.Haskell.Meta hiding (myDefaultParseMode)nice 
+import Language.Haskell.Meta hiding (myDefaultParseMode)
 import Data.Text (replace)
 import Language.Haskell.Exts.Parser
 import Language.Haskell.Exts.Extension

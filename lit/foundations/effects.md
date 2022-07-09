@@ -22,3 +22,7 @@ runBarAsPure :: ...
 ## Why effects and not mtl?
 
 The main reason is because effect frameworks are cool.
+
+## This section
+
+This section just has the two non-specific effects I've written; one for logging and one for printing text to the screen.

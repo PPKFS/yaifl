@@ -7,7 +7,7 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.Activities.PrintingNameOfSomething
+module Yaifl.Core.Activities.PrintingNameOfSomething
 ( printNameEx
 , printName
 , capitalThe
@@ -17,13 +17,13 @@ module Yaifl.Activities.PrintingNameOfSomething
 , Capitalisation(..)
 ) where
 
-import Yaifl.Activities.Activity
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Say
-import Yaifl.Objects.Missing
-import Yaifl.Objects.Object
-import Yaifl.WorldInfo
-import Yaifl.Objects.Query
+import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Say
+import Yaifl.Core.Objects.Missing
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.WorldInfo
+import Yaifl.Core.Objects.Query
 import Solitude
 
 

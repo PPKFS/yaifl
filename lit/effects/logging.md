@@ -2,11 +2,11 @@
 
 With the move from `mtl` to `cleff`, it was probably less effort to just write my own logging effect than to find how to get e.g. [`co-log`](https://hackage.haskell.org/package/co-log) working with an arbitrary effects system. Plus, I don't need that much of the fancy stuff it does? I just want a context and to write to many different places.
 
-```haskell file=src/Yaifl/Logger.hs
+```haskell file=src/Yaifl/Core/Logger.hs
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Logger where
+module Yaifl.Core.Logger where
 
 import Solitude hiding ( trace, local, asks, Reader, runReader )
 import Language.Haskell.TH ( Loc(..) )
@@ -37,7 +37,7 @@ data MsgSeverity = Debug | Info | Warning | Error
 
 data Log :: Effect where
   LogMsg :: Maybe Loc -> MsgSeverity -> Text -> Log m () 
-  WithContext :: Text -> m a -> Log m ()
+  WithContext :: Text -> m a -> Log m a
 
 makeEffect ''Log
 ```
@@ -52,7 +52,7 @@ runAndIgnoreLogging ::
   ~> Eff es
 runAndIgnoreLogging = interpret \case
   LogMsg _ _ _ -> pass
-  WithContext _ m -> toEff $ void m
+  WithContext _ m -> toEff m
 
 runLoggingAsTrace :: 
   [Reader [Text], IOE] :>> es 
@@ -63,7 +63,7 @@ runLoggingAsTrace = reinterpret \case
     now <- liftIO getCurrentTime
     cxt <- asks reverse
     trace $ makeJSONObject now cxt sev mbLoc msg
-  WithContext cxt m -> void $ local (cxt:) (toEff m)
+  WithContext cxt m -> local (cxt:) (toEff m)
 
 makeJSONObject :: UTCTime -> [Text] -> MsgSeverity -> Maybe Loc -> Text -> String
 makeJSONObject now cxt sev mbLoc pl = (decodeUtf8 $ A.encode $

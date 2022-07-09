@@ -8,31 +8,31 @@ Stability   : No
 -}
 
 
-module Yaifl.Activities.DescribingLocale
+module Yaifl.Core.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
 
 import qualified Data.EnumMap.Strict as DEM
-import Yaifl.Activities.PrintingNameOfSomething
-import Yaifl.Common
+import Yaifl.Core.Activities.PrintingNameOfSomething
+import Yaifl.Core.Common
 import Data.List (groupBy)
 import qualified Data.EnumSet as DES
-import Yaifl.Properties.Property
-import Yaifl.Activities.Activity
-import Yaifl.Properties.Enclosing
-import Yaifl.Properties.Container
-import Yaifl.Properties.Openable
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Objects.Missing
-import Yaifl.WorldInfo
-import Yaifl.Objects.Object
+import Yaifl.Core.Properties.Property
+import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Properties.Container
+import Yaifl.Core.Properties.Openable
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Objects.Missing
+import Yaifl.Core.WorldInfo
+import Yaifl.Core.Objects.Object
 import Solitude
-import Yaifl.Say
-import Yaifl.Properties.Query
-import Yaifl.Logger
-import Yaifl.Objects.Move
-import Yaifl.Objects.ObjectData
-import Yaifl.Objects.Query
+import Yaifl.Core.Say
+import Yaifl.Core.Properties.Query
+import Yaifl.Core.Logger
+import Yaifl.Core.Objects.Move
+import Yaifl.Core.Objects.ObjectData
+import Yaifl.Core.Objects.Query
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing

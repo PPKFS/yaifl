@@ -2,13 +2,13 @@ module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
 import Solitude
-import Yaifl.Objects.Create
---import Yaifl.Rulebooks.Rulebook
+import Yaifl.Core.Objects.Create
+--import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Test.Common
---import Yaifl.Activities.PrintingNameOfSomething
---import Yaifl.Rulebooks.WhenPlayBegins
+--import Yaifl.Core.Activities.PrintingNameOfSomething
+--import Yaifl.Core.Rulebooks.WhenPlayBegins
 import qualified Data.Text as T
-import Yaifl.Common
+import Yaifl.Core.Common
 
 isBlankDescription :: Text -> Bool
 isBlankDescription d = T.empty == d

@@ -6,11 +6,11 @@ There's some additional baggage hanging around that, in the literate programming
 
 As this just includes some basic types, it doesn't really have a section specifically for it and as such does not have its file outline described anywhere. So it's here.
 
-```haskell file=src/Yaifl/Common.hs
+```haskell file=src/Yaifl/Core/Common.hs
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Common
+module Yaifl.Core.Common
   (-- * Datatypes
   Entity(..)
   , Store(..)
@@ -26,8 +26,10 @@ module Yaifl.Common
   , tickGlobalTime
   , previousRoom
   , firstRoom
-  , setTitle
   , whenConstructingM
+  , currentPlayer
+  , title
+  , setTitle
 
   -- * Some defaults
   , defaultVoidID

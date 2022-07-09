@@ -2,24 +2,24 @@
 
 Here we define the standard library of object specifics. It's not very exciting; mostly we just list all the properties we define and some lenses for our property querying code. 
 
-```haskell file=src/Yaifl/Objects/Specifics.hs
+```haskell file=src/Yaifl/Core/Objects/Specifics.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Specifics
+module Yaifl.Core.Objects.Specifics
   ( -- * Specifics
   ObjectSpecifics(..)
   ) where
 
 import Solitude
-import Yaifl.Properties.Container
-import Yaifl.Properties.Enclosing
-import Yaifl.Properties.Openable
-import Yaifl.Properties.Property
+import Yaifl.Core.Properties.Container
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Properties.Openable
+import Yaifl.Core.Properties.Property
 
 data ObjectSpecifics =
   NoSpecifics
   | EnclosingSpecifics Enclosing
-  | ContainerSpecifics Container 
+  | ContainerSpecifics Container
   | OpenableSpecifics Openable
   deriving stock (Eq, Show, Read)
 

@@ -51,12 +51,6 @@ I still have no idea why the first 4 of these aren't in `base`. `solitude` is my
 mostly re-exports of the excellent [relude](https://hackage.haskell.org/package/relude) alternative prelude and
 also some `optics`-lens things. 
 
-```admonish question "Why optics over lens?"
-
-- No idea, I just wanted to.
-- The error messages and the explicit `AffineTraversal` you get from combining a `Lens` and a `Prism` are cool though.
-```
-
 ```cabal file=yaifl.cabal
     , display
     , prettyprinter
@@ -120,6 +114,8 @@ We enable a whole bunch of options and extensions. Notably `NoImplicitPrelude` m
 mixins for using `solitude` over `Prelude`, `BlockArguments` for my love of using inline `do` blocks, and `TypeFamilies`
 because I like to try and be smarter than I am.
 
+I'd like to switch to GHC 9.2, but currently HLS doesn't like `cleff-plugin`.
+
 ## Library stanza
 ```cabal file=yaifl.cabal
 library
@@ -128,10 +124,42 @@ library
   exposed-modules:
     Yaifl
 
-    --Yaifl.Actions.Action
+    Yaifl.Core.Actions.Action
+    Yaifl.Core.Actions.Activity
+    Yaifl.Core.Actions.Parser
+    Yaifl.Core.Common
+    Yaifl.Core.Directions
+    Yaifl.Core.Logger
+    Yaifl.Core.Objects.Create
+    Yaifl.Core.Objects.Dynamic
+    Yaifl.Core.Objects.Move
+    Yaifl.Core.Objects.Object
+    Yaifl.Core.Objects.ObjectData
+    Yaifl.Core.Objects.Query
+    Yaifl.Core.Objects.Room
+    Yaifl.Core.Objects.Specifics
+    Yaifl.Core.Properties.Enclosing
+    Yaifl.Core.Properties.Property
+    Yaifl.Core.Properties.Query
+    Yaifl.Core.Properties.TH
+
+    Yaifl.Core.Rulebooks.ActionProcessing
+    Yaifl.Core.Rulebooks.Args
+    Yaifl.Core.Rulebooks.Run
+    Yaifl.Core.Rulebooks.Rule
+    Yaifl.Core.Rulebooks.Rulebook
+    Yaifl.Core.Rulebooks.WhenPlayBegins
+
+    Yaifl.Core.Say
+    Yaifl.Core.World
+
+    Yaifl.Lamp.Properties.Openable
+    Yaifl.Lamp.Properties.Container
+    --Yaifl.Properties.Supporter
+
+    --Yaifl.ActivityCollection
     --Yaifl.Actions.Going
     --Yaifl.Actions.Looking
-
     --Yaifl.Activities.Activity
     --Yaifl.Activities.ChoosingNotableLocaleObjects
     --Yaifl.Activities.DescribingLocale
@@ -139,36 +167,6 @@ library
     --Yaifl.Activities.PrintingDescriptionOfADarkRoom
     --Yaifl.Activities.PrintingLocaleParagraphAbout
     --Yaifl.Activities.PrintingNameOfSomething
-
-    --Yaifl.ActivityCollection
-    Yaifl.Common
-    Yaifl.Directions
-    Yaifl.Logger
-
-    Yaifl.Objects.Create
-    Yaifl.Objects.Dynamic
-    Yaifl.Objects.Move
-    Yaifl.Objects.Object
-    Yaifl.Objects.ObjectData
-    Yaifl.Objects.Query
-    Yaifl.Objects.Room
-    Yaifl.Objects.Specifics
-
-    Yaifl.Properties.Container
-    Yaifl.Properties.Enclosing
-    Yaifl.Properties.Openable
-    Yaifl.Properties.Property
-    Yaifl.Properties.Query
-    --Yaifl.Properties.Supporter
-    Yaifl.Properties.TH
-
-    --Yaifl.Rulebooks.ActionProcessing
-    --Yaifl.Rulebooks.Args
-    --Yaifl.Rulebooks.Rulebook
-    --Yaifl.Rulebooks.WhenPlayBegins
-
-    Yaifl.Say
-    Yaifl.World
 ```
 
 ## Test stanza

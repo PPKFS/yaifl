@@ -8,14 +8,14 @@ Stability   : No
 -}
 
 
-module Yaifl.Activities.PrintingADarkRoom
+module Yaifl.Core.Activities.PrintingADarkRoom
   ( printingNameOfADarkRoomImpl
   ) where
 
-import Yaifl.Activities.Activity
+import Yaifl.Core.Activities.Activity
 import Solitude
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Say
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Say
 
 printingNameOfADarkRoomImpl :: Activity o () ()
 printingNameOfADarkRoomImpl = makeActivity "Printing name of a dark room"

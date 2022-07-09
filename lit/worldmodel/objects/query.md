@@ -2,15 +2,17 @@
 
 This is an excellent example of how smaller effects mean less boilerplate over the equivalent mtl solution. I think. At least it certainly avoid the O(n^2) instances that come from having a `ObjectRead`, `ObjectWrite`, `ObjectQuery`, etc set of constraints.
 
-```haskell file=src/Yaifl/Objects/Query.hs
+```haskell file=src/Yaifl/Core/Objects/Query.hs
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Query
+module Yaifl.Core.Objects.Query
   ( -- * Types
   ObjectLike(..)
   , MissingObject(..)
-  , ObjectQuery(..)
+  , ObjectQuery
+  , ObjectLookup(..)
+  , ObjectUpdate(..)
   -- * Missing Objects
   , withoutMissingObjects 
   , failHorriblyIfMissing
@@ -38,9 +40,9 @@ import qualified Data.Text.Lazy.Builder as TLB
 
 import Solitude
 
-import Yaifl.Common ( Metadata, WorldModel, HasID(..), Entity, isThing )
-import Yaifl.Logger ( Log, err )
-import Yaifl.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing )
+import Yaifl.Core.Common ( Metadata, WorldModel, HasID(..), Entity, isThing )
+import Yaifl.Core.Logger ( Log, err )
+import Yaifl.Core.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing )
 
 <<missing-object>>
 <<handle-missing-objects>>
@@ -102,15 +104,20 @@ failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
 And now we have the effects themselves. A write-only effect wouldn't be particularly useful, and similarly there's not a great use-case for thing-only or room-only. We return `Either` in the `lookup` functions because we have multiple possible fail cases (when we are reifying dynamic objects as well as the expected failed lookup). The `Either` is consumed by higher-level functions, so we probably never use `lookup` directly.
 
 ```haskell id=object-query-effect
-data ObjectQuery (wm :: WorldModel) :: Effect where
-  LookupThing :: HasID o => o -> ObjectQuery wm m (Either Text (Thing wm))
-  LookupRoom :: HasID o => o -> ObjectQuery wm m (Either Text (Room wm))
-  SetRoom :: Room wm -> ObjectQuery wm m ()
-  SetThing :: Thing wm -> ObjectQuery wm m ()
+data ObjectLookup (wm :: WorldModel) :: Effect where
+  LookupThing :: HasID o => o -> ObjectLookup wm m (Either Text (Thing wm))
+  LookupRoom :: HasID o => o -> ObjectLookup wm m (Either Text (Room wm))
 
-makeEffect ''ObjectQuery
+data ObjectUpdate (wm :: WorldModel) :: Effect where
+  SetRoom :: Room wm -> ObjectUpdate wm m ()
+  SetThing :: Thing wm -> ObjectUpdate wm m ()
 
-type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es, State (Metadata wm) :> es) 
+makeEffect ''ObjectLookup
+makeEffect ''ObjectUpdate
+
+type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
+
+type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm es, State (Metadata wm) :> es) 
 ```
 ## ObjectLike
 
@@ -166,7 +173,7 @@ getObject e = if isThing e
   else (review _Room <$> getRoom e)
 
 getThingMaybe :: 
-  ObjectQuery wm :> es
+  ObjectQuery wm es
   => State (Metadata wm) :> es
   => ObjectLike wm o
   => o
@@ -174,7 +181,7 @@ getThingMaybe ::
 getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
 
 getRoomMaybe ::
-  ObjectQuery wm :> es
+  ObjectQuery wm es
   => State (Metadata wm) :> es
   => ObjectLike wm o
   => o

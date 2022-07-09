@@ -8,14 +8,14 @@ Stability   : No
 -}
 
 
-module Yaifl.Activities.PrintingDescriptionOfADarkRoom
+module Yaifl.Core.Activities.PrintingDescriptionOfADarkRoom
 (
     printingDescriptionOfADarkRoomImpl
 ) where
 
-import Yaifl.Activities.Activity
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Say
+import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Say
 import Solitude
 
 printingDescriptionOfADarkRoomImpl :: Activity o () ()

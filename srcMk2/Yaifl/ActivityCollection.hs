@@ -7,24 +7,24 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.ActivityCollection
+module Yaifl.Core.ActivityCollection
   ( ActivityCollection(..)
   , defaultActivities
 
   ) where
 
-import Yaifl.Activities.Activity
-import Yaifl.Properties.Property
-import Yaifl.Properties.Enclosing
-import Yaifl.Properties.Container
-import Yaifl.Properties.Openable
+import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Properties.Property
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Properties.Container
+import Yaifl.Core.Properties.Openable
 
-import Yaifl.Activities.PrintingADarkRoom
-import Yaifl.Activities.PrintingNameOfSomething
-import Yaifl.Activities.PrintingDescriptionOfADarkRoom
-import Yaifl.Activities.ChoosingNotableLocaleObjects 
-import Yaifl.Activities.DescribingLocale
-import Yaifl.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Core.Activities.PrintingADarkRoom
+import Yaifl.Core.Activities.PrintingNameOfSomething
+import Yaifl.Core.Activities.PrintingDescriptionOfADarkRoom
+import Yaifl.Core.Activities.ChoosingNotableLocaleObjects 
+import Yaifl.Core.Activities.DescribingLocale
+import Yaifl.Core.Activities.PrintingLocaleParagraphAbout
 
 defaultActivities ::
   WMHasProperty wm Enclosing

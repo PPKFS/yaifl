@@ -1,11 +1,11 @@
 # Container
 
-```haskell file=src/Yaifl/Properties/Container.hs
+```haskell file=src/Yaifl/Lamp/Properties/Container.hs
 
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Properties.Container 
+module Yaifl.Core.Properties.Container 
   ( -- * Types
     Opacity(..)
   , Enterable(..)
@@ -20,8 +20,8 @@ module Yaifl.Properties.Container
   ) where
 
 import Solitude
-import Yaifl.Properties.Enclosing ( Enclosing )
-import Yaifl.Properties.Openable ( Openable(..) )
+import Yaifl.Core.Properties.Enclosing ( Enclosing )
+import Yaifl.Core.Properties.Openable ( Openable(..) )
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent 

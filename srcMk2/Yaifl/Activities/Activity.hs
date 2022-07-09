@@ -9,7 +9,7 @@ Stability   : No
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Activities.Activity
+module Yaifl.Core.Activities.Activity
   ( Activity(..)
   , ActivityCollection(..)
   , makeActivity
@@ -24,11 +24,11 @@ module Yaifl.Activities.Activity
   ) where
 
 import Solitude
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.WorldInfo
-import Yaifl.Objects.Missing
-import Yaifl.Objects.Object
-import Yaifl.Common
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.WorldInfo
+import Yaifl.Core.Objects.Missing
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.Common
 
 data Activity wm v r = Activity
     { _activityName :: !Text

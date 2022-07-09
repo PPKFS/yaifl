@@ -1,10 +1,10 @@
 # Enclosing
 
-```haskell file=src/Yaifl/Properties/Enclosing.hs
+```haskell file=src/Yaifl/Core/Properties/Enclosing.hs
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Properties.Enclosing 
+module Yaifl.Core.Properties.Enclosing 
   ( -- * Types
     Enclosing(..)
   , blankEnclosing
@@ -16,7 +16,7 @@ module Yaifl.Properties.Enclosing
 
 import Solitude hiding (empty)
 import Data.EnumSet (EnumSet, empty)
-import Yaifl.Common (Entity)
+import Yaifl.Core.Common (Entity)
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing

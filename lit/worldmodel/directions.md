@@ -1,7 +1,7 @@
 # Directions
 
-```haskell file=src/Yaifl/Directions.hs
-module Yaifl.Directions
+```haskell file=src/Yaifl/Core/Directions.hs
+module Yaifl.Core.Directions
   ( WithStandardDirections(..)
   , HasOpposite(..)
   , Direction(..)
@@ -10,7 +10,7 @@ module Yaifl.Directions
   ) where
 
 import Solitude hiding ( Down )
-import Yaifl.Common
+import Yaifl.Core.Common
 
 <<direction-injection>>
 <<stock-directions>>

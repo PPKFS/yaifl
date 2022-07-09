@@ -4,14 +4,14 @@ One of the coolest features of Inform is to have attributes and properties of ob
 
 The only times that we actually care about the underlying representation of an object is when creating them (because we need to supply an update function) and when reifying `AbstractObject`s from a `State`-based implementation. This is a big refactor I'm happy to have made because it cleanly breaks apart implementation (cached objects) and semantics (objects at a point in time). It does have the slight issue that we need to be cautious: if we reify a dynamic object at some point in time, then we change some part of the world that may affect its update function, we will need to re-reify the object.
 
-```haskell file=src/Yaifl/Objects/Dynamic.hs
+```haskell file=src/Yaifl/Core/Objects/Dynamic.hs
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Dynamic 
+module Yaifl.Core.Objects.Dynamic 
   ( -- * Types
     TimestampedObject(..)
-  , ObjectUpdate(..)
+  , ObjectUpdateFunc(..)
   , AbstractObject(..)
   , AbstractThing
   , AbstractRoom
@@ -23,9 +23,9 @@ module Yaifl.Objects.Dynamic
   ) where
 
 import Solitude ( Generic, Either, makeLenses, Eff )
-import Yaifl.Common ( WorldModel, Timestamp, HasID(..) )
-import Yaifl.Objects.Object ( Object )
-import Yaifl.Objects.ObjectData ( RoomData, ThingData )
+import Yaifl.Core.Common ( WorldModel, Timestamp, HasID(..) )
+import Yaifl.Core.Objects.Object ( Object )
+import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
 
 <<timestamped-object>>
 <<abstract-object>>
@@ -37,14 +37,14 @@ import Yaifl.Objects.ObjectData ( RoomData, ThingData )
 data TimestampedObject wm d = TimestampedObject
   { _tsCachedObject :: !(Object wm d)
   , _tsCacheStamp :: !Timestamp
-  , _tsUpdateFunc :: ObjectUpdate wm d
+  , _tsUpdateFunc :: ObjectUpdateFunc wm d
   } deriving stock (Generic)
 
 instance HasID (TimestampedObject wm d) where
   getID (TimestampedObject o _ _) = getID o
 
 -- | Function to update an object. It is read-only on the world; i.e. it can only modify itself
-newtype ObjectUpdate (wm :: WorldModel) d = ObjectUpdate
+newtype ObjectUpdateFunc (wm :: WorldModel) d = ObjectUpdateFunc
   { runObjectUpdate :: forall es. Object wm d -> Eff es (Object wm d)
   } 
 ```

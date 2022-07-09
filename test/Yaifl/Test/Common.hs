@@ -7,17 +7,18 @@ import qualified Data.Text as T
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Language.Haskell.TH
 import Data.Char (isSpace)
-import Yaifl.World
-import Yaifl.Say
---import Yaifl.Objects.Missing
---import Yaifl.Rulebooks.Rulebook
-import Yaifl.Logger
-import Cleff.State (runState)
-import qualified Test.Sandwich as Sandwich hiding (info)
-import Test.Sandwich hiding (info)
-import Conduit
---import Yaifl.Rulebooks.WhenPlayBegins
---import Yaifl.Actions.Action
+import Yaifl.Core.World
+import Yaifl.Core.Say
+--import Yaifl.Core.Objects.Missing
+--import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Logger
+import Cleff.State (runState, get)
+import Test.Syd
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Rulebooks.Run
+--import Yaifl.Core.Rulebooks.WhenPlayBegins
+--import Yaifl.Core.Actions.Action
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -56,25 +57,24 @@ newlinesToWrap = foldl' (\acc -> \case
   x -> acc <> x) "" . lines
 
 testHarness ::
+  forall wm a. 
   HasStandardProperties wm
-  => MonadIO m
-  => MonadThrow m
+  => HasCallStack
   => Text
   -> Game wm a
   -> [Text]
   -> [Text]
-  -> ExampleT context m ()
+  -> IO ()
 testHarness fullTitle initWorld actionsToDo expected = do
   let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
   (w2 :: World wm) <- liftIO $ runGame shortName (do
     newWorld
     info $ bformat ("Building world " %! stext %! "...") shortName
     initWorld
-    info $ bformat "World construction finished, beginning game...")
+    info $ bformat "World construction finished, beginning game..."
+    wa <- get @(WorldActions wm)
     --when I write a proper game loop, this is where it needs to go
-   -- withoutMissingObjects
-   --  (runRulebook (_whenPlayBegins w') ())
-    --  (handleMissingObject "Failed when beginning" (return $ Just False))
+    withoutMissingObjects (runRulebook (wa ^. whenPlayBegins) ()) (handleMissingObject "Failed when beginning" (return $ Just False)))
     --do the commands...
    -- rs <- mapM parseAction actionsToDo
   --  print rs
@@ -84,7 +84,8 @@ testHarness fullTitle initWorld actionsToDo expected = do
         return $ (mconcat . map show) msgList
   let (x, _) = flushBufferToText w2
       buildExpected = mconcat (expectTitle t : expected )
-  x `Sandwich.shouldBe` buildExpected
+  putStrLn . T.unpack $ x
+  x `shouldBe` buildExpected
 {-
 foreachObject ::
   MonadWorld s m
@@ -104,7 +105,7 @@ expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"
 
 expectTitle :: Text -> Text
-expectTitle = id -- introText
+expectTitle = id . id -- introText
 
 expectYouCanSee :: [Text] -> Text
 expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")

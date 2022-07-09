@@ -2,12 +2,13 @@
 
 This is just a riff on every `Teletype` example that seems to be standard with effect frameworks. It's slightly more involved than the logging effect because we have conditional saying as well as formatting to keep track of.
 
-```haskell file=src/Yaifl/Say.hs
+```haskell file=src/Yaifl/Core/Say.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Say
+module Yaifl.Core.Say
   ( -- * Types
     MessageBuffer (..)
+  , Saying(..)
   -- * Smart constructors
   , blankMessageBuffer
   -- * Buffer modification
@@ -29,6 +30,7 @@ type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
 data Saying :: Effect where
   SayDoc :: StyledDoc -> Saying m ()
+  SetStyle :: Maybe PPTTY.AnsiStyle -> Saying m ()
 
 data MessageBuffer = MessageBuffer
   { _msgBufBuffer :: [StyledDoc] -- ^ Current messages held before flushing.
@@ -137,12 +139,12 @@ sayIf False = const pass
 
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setStyle :: 
+setStyle' :: 
   forall s es. 
   PartialState s MessageBuffer es
   => Maybe PPTTY.AnsiStyle -- ^ The updated style.
   -> Eff es ()
-setStyle s = buf @s @MessageBuffer % msgBufStyle .= s
+setStyle' s = buf @s @MessageBuffer % msgBufStyle .= s
 
 {-
 -- | Clear a message buffer and return the container (with a clean buffer)

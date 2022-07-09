@@ -1,12 +1,12 @@
 
 
-module Yaifl.Properties.Supporter
+module Yaifl.Core.Properties.Supporter
   ( isSupporter
 
   ) where
 import Solitude
-import Yaifl.Objects.Object
-import Yaifl.WorldInfo
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.WorldInfo
 
 isSupporter ::
   MonadReader (World wm) m

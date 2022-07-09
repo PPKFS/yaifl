@@ -5,25 +5,26 @@ This is the monolithic core of the library. It can be chunked into a few main pi
 We put the message buffer as part of the state even though we are in `IO` because it allows us to directly consume the output (e.g. for testing).
 
 
-```haskell file=src/Yaifl/World.hs
+```haskell file=src/Yaifl/Core/World.hs
 
 {-# LANGUAGE TemplateHaskell #-}
-module Yaifl.World where
+module Yaifl.Core.World where
 import Solitude
-import Yaifl.Common
+import Yaifl.Core.Common
 
-import Yaifl.Say
---import Yaifl.Rulebooks.Rulebook
---import Yaifl.Activities.Activity
---import Yaifl.Actions.Action
-import Yaifl.Objects.Dynamic
-import Yaifl.Objects.Query
+import Yaifl.Core.Say
+--import Yaifl.Core.Rulebooks.Rulebook
+--import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Objects.Dynamic
+import Yaifl.Core.Objects.Query
 import Cleff.State
-import Yaifl.Objects.Object
-import Yaifl.Objects.Create
+import Yaifl.Core.Objects.Object
+import Yaifl.Core.Objects.Create
 import Display
---import Yaifl.Actions.Looking
---import Yaifl.Actions.Going
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook, addRuleLast, UnverifiedArgs )
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Actions.Action
 
 data World (wm :: WorldModel) = World
   { _worldMetadata :: Metadata wm
@@ -34,11 +35,6 @@ data World (wm :: WorldModel) = World
 
 <<world-stores>>
 <<world-actions>>
-
-makeLenses ''World
-makeLenses ''WorldModel
-makeLenses ''WorldStores
-
 <<world-other>>
 ```
 ---
@@ -131,12 +127,10 @@ These are the dynamic parts that run things. This is the in-world actions, the s
 
 ```haskell id=world-actions
 
-data WorldActions (wm :: WorldModel) = WorldActions
-  { _actions :: () -- !(Map Text (Action wm))
-  , _activities :: () -- !(ActivityCollection wm)
-  , _whenPlayBegins :: () -- !(Rulebook wm () () Bool)
-  , _actionProcessing :: ()-- ActionProcessing wm
-  }
+
+makeLenses ''World
+makeLenses ''WorldModel
+makeLenses ''WorldStores
 
 ```
 
@@ -158,6 +152,13 @@ newtype Timestamp = Timestamp
 # Other
 
 ```haskell id=world-other
+
+addWhenPlayBegins ::
+  State (WorldActions wm) :> es
+  => Rule wm () Bool
+  -> Eff es ()
+addWhenPlayBegins r = whenPlayBegins %= addRuleLast r
+
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
   State (Metadata wm) :> es
@@ -194,41 +195,10 @@ reifyThing ::
   -> Eff es (Thing wm)
 reifyThing = reifyObject addAbstractThing
 
-runCreationAsLookup :: 
-  State (World wm) :> es
-  => Eff (ObjectCreation wm : es) 
-  ~> Eff es
-runCreationAsLookup = interpret \case
-  GenerateEntity bThing -> if bThing then 
-    ((worldStores % entityCounter % _1) <<%= (+1)) else ((worldStores % entityCounter % _2) <<%= (+1))
-  AddAbstractRoom aRoom -> worldStores % rooms % at (getID aRoom) ?= aRoom
-  AddAbstractThing aThing -> worldStores % things % at (getID aThing) ?= aThing
 
-runQueryAsLookup :: 
-  State (World wm) :> es
-  => (ObjectCreation wm :> es)
-  => (State (Metadata wm) :> es)
-  => Eff (ObjectQuery wm : es) 
-  ~> Eff es
-runQueryAsLookup = interpret \case
-  LookupThing e -> do
-    mbObj <- use $ worldStores % things % at (getID e)
-    case mbObj of
-      Nothing -> return 
-        if isThing e 
-          then 
-            Left $ "Tried to lookup a room as a thing " <> displayText (getID e) 
-          else 
-            Left $ "Could not find" <> displayText (getID e)
-      Just ao -> withoutMissingObjects (Right <$> reifyThing ao) (\mo -> return $ Left $ "Failed to reify " <> displayText mo)
-  LookupRoom e -> error ""
-  SetRoom r -> error ""
-  SetThing t -> error ""
 
 
 {-
-
-
 tickGlobalTime :: 
   MonadWorld wm m
   => Bool
@@ -249,7 +219,5 @@ addBaseActions = foldr (.) id [
     addAction lookingActionImpl
   , addAction goingActionImpl
   ]
-
-
 -}
 ```

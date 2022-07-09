@@ -3,18 +3,21 @@ module Main ( main ) where
 import Yaifl
 import Test.Hspec
 import qualified Data.Text as T
-import Yaifl.Prelude
-import Yaifl.Activities
+import Yaifl.Core.Prelude
+import Yaifl.Core.Activities
 import qualified Data.EnumMap as DEM
-import Yaifl.ObjectLookup
+import Yaifl.Core.ObjectLookup
 -}
 import Solitude
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
-import Test.Sandwich
+import Test.Syd
 
 main :: IO ()
-main = runSandwichWithCommandLineArgs defaultOptions $ do
+main = sydTest $ do
   Chapter3.spec
+  scenarioDirRecur "test" $ \fp -> do
+    it "has a test" $
+      5 `shouldBe` 4
 
 {-
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text

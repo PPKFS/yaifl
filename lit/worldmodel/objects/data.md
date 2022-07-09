@@ -4,12 +4,12 @@ This is where we differentiate between `Thing`s and `Room`s. Object data is thos
 
 We start with the module overview:
 
-```haskell file=src/Yaifl/Objects/ObjectData.hs
+```haskell file=src/Yaifl/Core/Objects/ObjectData.hs
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Objects.ObjectData
+module Yaifl.Core.Objects.ObjectData
   ( -- * Things
     ThingLit(..)
   , ThingWearability(..)
@@ -35,8 +35,8 @@ module Yaifl.Objects.ObjectData
 
 import qualified Data.Map as Map
 import Solitude 
-import Yaifl.Common ( WMDirections, Entity, defaultVoidID )
-import Yaifl.Properties.Enclosing ( Enclosing, blankEnclosing )
+import Yaifl.Core.Common ( WMDirections, Entity, defaultVoidID )
+import Yaifl.Core.Properties.Enclosing ( Enclosing, blankEnclosing )
 
 <<thing-data>>
 <<connections>>
@@ -143,7 +143,6 @@ deriving stock instance (Eq (WMDirections wm)) => Eq (RoomData wm)
 
 blankRoomData :: RoomData wm
 blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
-
 
 makeLenses ''RoomData
 makeLenses ''Connection

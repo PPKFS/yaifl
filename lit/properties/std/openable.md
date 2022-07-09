@@ -1,7 +1,7 @@
 # Openable
 
-```haskell file=src/Yaifl/Properties/Openable.hs
-module Yaifl.Properties.Openable 
+```haskell file=src/Yaifl/Core/Properties/Openable.hs
+module Yaifl.Core.Properties.Openable 
   ( -- * Types
     Openable(..)
   ) where

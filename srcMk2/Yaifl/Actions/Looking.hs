@@ -11,36 +11,36 @@ Stability   : No
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Actions.Looking
+module Yaifl.Core.Actions.Looking
   ( lookingActionImpl
   , HasLookingProperties
   ) where
 
 import Solitude
-import Yaifl.Common
-import Yaifl.Objects.Query
-import Yaifl.Properties.Property
+import Yaifl.Core.Common
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Properties.Property
 import qualified Data.EnumSet as DES
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Actions.Action
-import Yaifl.Rulebooks.Rulebook
-import Yaifl.Say
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Say
 import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
-import Yaifl.Properties.Enclosing
-import Yaifl.Properties.Container
-import Yaifl.Objects.Object
+import Yaifl.Core.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Properties.Container
+import Yaifl.Core.Objects.Object
 import Display
-import Yaifl.WorldInfo
-import Yaifl.Objects.Missing
-import Yaifl.Properties.Query
-import Yaifl.Logger
-import Yaifl.Properties.Openable
-import Yaifl.Objects.ObjectData
-import Yaifl.Activities.Activity
-import Yaifl.Properties.Supporter
+import Yaifl.Core.WorldInfo
+import Yaifl.Core.Objects.Missing
+import Yaifl.Core.Properties.Query
+import Yaifl.Core.Logger
+import Yaifl.Core.Properties.Openable
+import Yaifl.Core.Objects.ObjectData
+import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Properties.Supporter
 import qualified Data.Text as T
-import Yaifl.Rulebooks.Args
+import Yaifl.Core.Rulebooks.Args
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm = 

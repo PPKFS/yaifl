@@ -1,9 +1,9 @@
 # Making Connections
 
-```haskell file=src/Yaifl/Objects/Room.hs
+```haskell file=src/Yaifl/Core/Objects/Room.hs
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Objects.Room
+module Yaifl.Core.Objects.Room
   --( isWestOf
   --, getMapConnection
 where
@@ -15,15 +15,15 @@ import qualified Data.Text.Lazy.Builder as TLB
 import Display ( displayText )
 import Solitude
 
-import Yaifl.Common ( Entity, HasID(getID), Metadata, WMDirections, whenConstructingM )
-import Yaifl.Directions ( HasOpposite(opposite), WithDirections )
-import Yaifl.Logger ( warn, Log )
-import Yaifl.Objects.Object ( objData, Room )
-import Yaifl.Objects.ObjectData ( MapConnections(MapConnections), Connection(..), ConnectionExplicitness(..), roomMapConnections )
-import Yaifl.Objects.Query
+import Yaifl.Core.Common ( Entity, HasID(getID), Metadata, WMDirections, whenConstructingM )
+import Yaifl.Core.Directions ( HasOpposite(opposite), WithDirections )
+import Yaifl.Core.Logger ( warn, Log )
+import Yaifl.Core.Objects.Object ( objData, Room )
+import Yaifl.Core.Objects.ObjectData ( MapConnections(MapConnections), Connection(..), ConnectionExplicitness(..), roomMapConnections )
+import Yaifl.Core.Objects.Query
 
 hasSpecificConnectionTo ::
-  ObjectQuery wm :> es
+  ObjectQuery wm es
   => State (Metadata wm) :> es
   => ObjectLike wm o
   => WithDirections wm
@@ -65,14 +65,14 @@ connectionLens dir = objData % roomMapConnections % coercedTo @(Map.Map (WMDirec
 makeConnection :: 
   WithDirections wm
   => ConnectionExplicitness
-  -> WMDirections wm 
-  -> Room wm 
+  -> WMDirections wm
+  -> Room wm
   -> (Room wm -> Room wm)
 makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r)
 
 addDirectionFrom ::
   (ObjectLike wm o1, ObjectLike wm o2)
-  => ObjectQuery wm :> es
+  => ObjectQuery wm es
   => State (Metadata wm) :> es
   => Log :> es
   => WithDirections wm
@@ -84,7 +84,8 @@ addDirectionFrom = isDirectionFromInternal True
 
 addDirectionFromOneWay ::
   (ObjectLike wm o1, ObjectLike wm o2)
-  => '[ObjectQuery wm, State (Metadata wm), Log] :>> es
+  => '[State (Metadata wm), Log] :>> es
+  => ObjectQuery wm es
   => WithDirections wm
   => WMDirections wm
   -> o1
@@ -94,10 +95,12 @@ addDirectionFromOneWay = isDirectionFromInternal False
 
 isDirectionFromInternal ::
   (ObjectLike wm o1, ObjectLike wm o2)
-  => '[ObjectQuery wm, State (Metadata wm), Log] :>> es
+  => '[State (Metadata wm), Log] :>> es
+  => ObjectQuery wm es
   => WithDirections wm
   => Bool
   -> WMDirections wm
+
   -> o1
   -> o2
   -> Eff es Entity
