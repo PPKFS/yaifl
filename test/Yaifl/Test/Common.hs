@@ -13,10 +13,10 @@ import Yaifl.Core.Say
 --import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Logger
 import Cleff.State (runState, get)
-import Test.Syd
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Run
+import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.Actions.Action
 
@@ -63,9 +63,8 @@ testHarness ::
   => Text
   -> Game wm a
   -> [Text]
-  -> [Text]
-  -> IO ()
-testHarness fullTitle initWorld actionsToDo expected = do
+  -> IO Text
+testHarness fullTitle initWorld actionsToDo = do
   let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
   (w2 :: World wm) <- liftIO $ runGame shortName (do
     newWorld
@@ -83,9 +82,10 @@ testHarness fullTitle initWorld actionsToDo expected = do
         msgList <- use (messageBuffer % msgBufBuffer % reversed)
         return $ (mconcat . map show) msgList
   let (x, _) = flushBufferToText w2
-      buildExpected = mconcat (expectTitle t : expected )
   putStrLn . T.unpack $ x
-  x `shouldBe` buildExpected
+  return x
+
+--buildExpected = mconcat (expectTitle t : expected )
 {-
 foreachObject ::
   MonadWorld s m
@@ -105,7 +105,7 @@ expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"
 
 expectTitle :: Text -> Text
-expectTitle = id . id -- introText
+expectTitle = introText
 
 expectYouCanSee :: [Text] -> Text
 expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")

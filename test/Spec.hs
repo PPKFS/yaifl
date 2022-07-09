@@ -8,16 +8,53 @@ import Yaifl.Core.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.Core.ObjectLookup
 -}
-import Solitude
+{-
+import Yaifl
+import Test.Hspec
+import qualified Data.Text as T
+import Yaifl.Core.Prelude
+import Yaifl.Core.Activities
+import qualified Data.EnumMap as DEM
+import Yaifl.Core.ObjectLookup
+-}
+import Solitude hiding (map)
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Test.Syd
+import Data.Map ((!), unions, map)
+import System.FilePath (takeBaseName)
+import Test.Syd.OptParse
+    ( Settings(settingGoldenReset), getSettings )
+import Data.Text (unpack)
+import qualified Data.Text as T
+import Yaifl.Test.Common (expectTitle)
 
 main :: IO ()
-main = sydTest $ do
-  Chapter3.spec
-  scenarioDirRecur "test" $ \fp -> do
-    it "has a test" $
-      5 `shouldBe` 4
+main = do
+  s <- getSettings
+  let gr = settingGoldenReset s
+  sydTestWith (s { settingGoldenReset = False }) $ do
+    scenarioDirRecur "test/testcases" $ \fp -> do
+      let t = T.pack (takeBaseName fp)
+      if gr
+        then do
+          print $ "Doing" <> t
+          writeFile fp . unpack . unlines $ collectGoldens ! (unpack t) $ t
+        else
+          it "Runs" $ goldenTextFile fp $ collectExamples ! takeBaseName fp
+
+collectGoldens :: Map String (Text -> [Text])
+collectGoldens = map (\v -> \t -> (expectTitle t :  v)) $ unions 
+  [ Chapter3.goldens
+
+  ]
+
+collectExamples :: Map String (IO Text)
+collectExamples = unions 
+  [ Chapter3.examples
+
+  ]
+
+
 
 {-
 consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
