@@ -7,7 +7,6 @@ import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Common ( isThing, HasID, getID )
 import Yaifl.Core.Objects.Object ( objData, objSpecifics )
 import Yaifl.Core.Objects.ObjectData ( roomEnclosing )
-import Yaifl.Core.Objects.Specifics ( ObjectSpecifics )
 import Cleff.Error (note, Error)
 
 getPropertyOrThrow :: 
@@ -21,7 +20,6 @@ getPropertyOrThrow t o = note $ MissingObject ("Could not find " <> t) (getID o)
 
 defaultPropertySetter :: 
   NoMissingObjects wm es
-  => HasProperty ObjectSpecifics v
   => WMHasProperty wm v
   => ObjectLike wm o
   => o
@@ -31,7 +29,6 @@ defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
 
 defaultPropertyGetter :: 
   NoMissingObjects wm es
-  => HasProperty ObjectSpecifics v
   => WMHasProperty wm v
   => ObjectLike wm o
   => o
@@ -39,6 +36,20 @@ defaultPropertyGetter ::
 defaultPropertyGetter e = do
   o <- getObject e
   return $ preview (objSpecifics % propertyL) o
+
+
+modifyProperty :: 
+  (o -> Eff es (Maybe p))
+  -> (o -> p -> Eff es ())
+  -> o
+  -> (p -> p)
+  -> Eff es ()
+modifyProperty g s o f = do
+  e <- g o
+  when (isNothing e) (do
+    --logVerbose "Trying to modify a property of an object which does not exist"
+    pass)
+  whenJust e (s o . f)
 
 getEnclosing :: 
   NoMissingObjects wm es

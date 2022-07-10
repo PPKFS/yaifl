@@ -41,7 +41,7 @@ import Yaifl.Core.Rulebooks.Rule
 
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
-  { runParseArguments :: forall es. (State (Metadata wm) :> es, Log :> es, ObjectLookup wm :> es) => ia -> Eff es (Maybe v)
+  { runParseArguments :: forall es. (State (Metadata wm) :> es, Log :> es, NoMissingObjects wm es, Refreshable wm v) => ia -> Eff es (Maybe v)
   }
 
 -- | A 'Rulebook' is a computation (ia -> m (Maybe r)) built out of an initialisation (ia -> Maybe v), a default `Maybe r`,

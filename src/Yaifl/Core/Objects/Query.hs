@@ -212,5 +212,6 @@ anyModifyToRoom ::
   (AnyObject s -> AnyObject s)
   -> (Room s -> Room s)
 anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
+
 -- ~\~ end
 -- ~\~ end

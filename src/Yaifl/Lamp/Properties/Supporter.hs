@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+
 module Yaifl.Lamp.Properties.Supporter
   ( isSupporter
   ) where

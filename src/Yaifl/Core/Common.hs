@@ -26,6 +26,8 @@ module Yaifl.Core.Common
   , errorLog
   , noteError
   , typeDAG
+  , darknessWitnessed
+  , roomDescriptions
 
   , ActionHandler(..)
   , parseAction
@@ -207,8 +209,7 @@ getGlobalTime ::
 getGlobalTime = use globalTime
 
 tickGlobalTime ::
-  State (Metadata wm) :> es 
-  => Bool
+  Bool
   -> Eff es ()
 tickGlobalTime _ = pass
 
@@ -232,6 +233,5 @@ data ActionHandler :: Effect where
   ParseAction :: Text -> ActionHandler m (Either Text Bool)
 
 makeEffect ''ActionHandler
-
 -- ~\~ end
 -- ~\~ end

@@ -6,25 +6,21 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
-
-
-module Yaifl.Core.Activities.DescribingLocale
+module Yaifl.Lamp.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
 
 import qualified Data.EnumMap.Strict as DEM
-import Yaifl.Core.Activities.PrintingNameOfSomething
+import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Core.Common
 import Data.List (groupBy)
 import qualified Data.EnumSet as DES
 import Yaifl.Core.Properties.Property
-import Yaifl.Core.Activities.Activity
+import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Properties.Container
-import Yaifl.Core.Properties.Openable
+import Yaifl.Lamp.Properties.Container
+import Yaifl.Lamp.Properties.Openable
 import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Objects.Missing
-import Yaifl.Core.WorldInfo
 import Yaifl.Core.Objects.Object
 
 import Yaifl.Core.Say
@@ -33,6 +29,7 @@ import Yaifl.Core.Logger
 import Yaifl.Core.Objects.Move
 import Yaifl.Core.Objects.ObjectData
 import Yaifl.Core.Objects.Query
+import Yaifl.Core.Rulebooks.Rule
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing
@@ -76,12 +73,11 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     return (newP, Nothing))
 
 sayDomain ::
-  NoMissingObjects m
-  => MonadWorld s m
+  NoMissingObjects wm es
   => ObjectLike s o
   => Text
   -> o
-  -> m ()
+  -> Eff es ()
 sayDomain x e = do
   say x
   printNameEx e (SayOptions Definite Uncapitalised)
@@ -193,13 +189,12 @@ data GroupingProperties s = GroupingProperties
   }
 
 getGroupingProperties ::
-  NoMissingObjects m
+  NoMissingObjects wm es
   => WMHasProperty s Enclosing
   => WMHasProperty s Container
   => WMHasProperty s Openable
-  => MonadWorld s m
   => AnyObject s
-  -> m (GroupingProperties s)
+  -> Eff es (GroupingProperties s)
 getGroupingProperties o = do
   n <- objectName o
   hc <- hasChildren o
@@ -210,39 +205,37 @@ getGroupingProperties o = do
   return $ GroupingProperties o n hc wr gwb ((Lit==) <$?> gtl) op ic
 
 hasChildren
-  :: NoMissingObjects m
-  => WMHasProperty s Enclosing
-  => MonadWorld s m
-  => ObjectLike s o
+  :: NoMissingObjects wm es
+  => WMHasProperty wm Enclosing
+  => ObjectLike wm o
   => o
-  -> m Bool
+  -> Eff es Bool
 hasChildren e = maybe False (\e' -> DES.size (_enclosingContains e') == 0) <$> getEnclosing e
 
 willRecurse ::
-  NoMissingObjects m
-  => WMHasProperty s Container
-  => MonadWorld s m
-  => ObjectLike s o
+  NoMissingObjects wm es
+  => WMHasProperty wm Container
+  => ObjectLike wm o
   => o
-  -> m Bool
+  -> Eff es Bool
 willRecurse e = do
-  isSup <- e `isType` ObjType "supporter"
+  o <- getObject e
+  isSup <- (_objType o) `isType` "supporter"
   cont <- getContainer e
   return $ isSup || maybe False (\c -> _containerOpacity c == Transparent || _containerOpenable c == Open) cont
 
 paragraphBreak ::
-  MonadWorld s m
-  => m ()
+  Saying :> es
+  => Eff es ()
 paragraphBreak = say ".\n\n"
 
 --p2275 of the complete program, in B/lwt
 getContainerProps ::
-  NoMissingObjects m
-  => WMHasProperty s Openable
-  => MonadWorld s m
-  => ObjectLike s o1
+  NoMissingObjects wm es
+  => WMHasProperty wm Openable
+  => ObjectLike wm o1
   => o1
-  -> m (Maybe Openable, Bool)
+  -> Eff es (Maybe Openable, Bool)
 getContainerProps e1 = do
   o <- getOpenable e1
   o1c <- e1 `isType` ObjType "container"

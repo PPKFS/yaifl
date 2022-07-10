@@ -24,19 +24,22 @@ import Yaifl.Core.Common
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Logger
 import Yaifl.Core.Say
+import Yaifl.Core.Rulebooks.Args
+import {-# SOURCE #-} Yaifl.Core.Actions.Activity
 
 type RuleEffects wm es = (
   State (Metadata wm) :> es
   , Log :> es
   , NoMissingObjects wm es
   , Saying :> es
-  , ActionHandler :> es)
+  , ActionHandler :> es
+  , State (ActivityCollection wm) :> es)
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule wm v r = Rule
   { _ruleName :: Text
-  , _runRule :: forall es. (RuleEffects wm es) => v -> Eff es (Maybe v, Maybe r)
+  , _runRule :: forall es. (RuleEffects wm es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
 
 -- | A helper for rules which are not implemented and therefore blank.

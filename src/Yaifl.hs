@@ -35,6 +35,11 @@ import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Actions.Parser
 import Yaifl.Lamp.Actions.Looking
+import Prelude hiding (Reader, runReader)
+import Yaifl.Core.Actions.Activity
+import qualified Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
+import qualified Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
+import qualified Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
 --import Yaifl.Core.Objects.Create
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.ActivityCollection
@@ -54,14 +59,24 @@ blankWorld = World
   , _worldStores = blankStores
   , _worldActions = blankActions
   , _messageBuffer = blankMessageBuffer
+  , _worldActivities = blankActivityCollection
   }
 
 blankActions :: HasProperty (WMObjSpecifics s) Enclosing => WorldActions s
 blankActions = WorldActions
   { _actions = DM.empty
-  , _activities = ()--_wb
   , _whenPlayBegins = whenPlayBeginsRules
   , _actionProcessing = actionProcessingRules
+  }
+
+blankActivityCollection :: ActivityCollection wm
+blankActivityCollection = ActivityCollection
+  { printingNameOfADarkRoom = printingNameOfADarkRoomImpl
+  , printingNameOfSomething = printingNameOfSomethingImpl
+  , printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
+  , choosingNotableLocaleObjects = error ""
+  , printingLocaleParagraphAbout = error ""
+  , describingLocale = error ""
   }
 
 blankStores :: WorldStores s
@@ -95,6 +110,7 @@ type family (xs :: [(* -> *) -> * -> *]) :++: (ys :: [(* -> *) -> * -> *]) :: [(
 type EffStack wm = EffStackNoIO wm :++: '[IOE]
 type EffStackNoIO wm = '[
   ActionHandler
+  , State (ActivityCollection wm)
   , Log
   , Reader [Text]
   , ObjectUpdate wm
@@ -110,7 +126,7 @@ type Game wm = Eff (EffStack wm)
 type UnderlyingEffStack wm = '[State (World wm), IOE] 
 
 newWorld :: 
-  WMHasProperty wm Enclosing
+  HasLookingProperties wm
   => Eff (EffStack wm) ()
 newWorld = do
   addBaseObjects
@@ -128,6 +144,7 @@ convertToUnderlyingStack =
   . runReader []
   . runTraceStderr
   . runLoggingAsTrace
+  . (zoom worldActivities)
   . runActionHandlerAsWorldActions
   . raiseUnderN @(State (World wm)) @(EffStackNoIO wm) @('[IOE])
 
@@ -202,7 +219,8 @@ runGame _ f = do
   return w
 
 addBaseActions :: 
-  State (WorldActions wm) :> es
+  HasLookingProperties wm
+  => State (WorldActions wm) :> es
   => Eff es ()
 addBaseActions = do
   addAction lookingAction

@@ -17,7 +17,7 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 , Capitalisation(..)
 ) where
 
-import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Actions.Activity ( Activity, makeActivity, doActivity, ActivityCollection )
 import Yaifl.Core.Say
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Query
@@ -25,6 +25,7 @@ import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Logger
 import Yaifl.Core.Common
 import Cleff.State
+import qualified Yaifl.Core.Actions.Activity as Ac
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -55,7 +56,7 @@ printNameEx ::
   -> Eff es ()
 printNameEx o p = do
   e <- getObject o
-  let pr = doActivity printingNameOfSomething e
+  let pr = doActivity Ac.printingNameOfSomething e
   case p of
     NoOptions -> pr
     SayOptions Indefinite Capitalised -> do say "A "; pr

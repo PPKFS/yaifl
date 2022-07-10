@@ -1,8 +1,8 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Objects/Specifics.hs
--- ~\~ begin <<lit/worldmodel/objects/specifics.md|src/Yaifl/Core/Objects/Specifics.hs>>[0] project://lit/worldmodel/objects/specifics.md:6
+-- ~\~ language=Haskell filename=src/Yaifl/Lamp/ObjectSpecifics.hs
+-- ~\~ begin <<lit/worldmodel/objects/specifics.md|src/Yaifl/Lamp/ObjectSpecifics.hs>>[0] project://lit/worldmodel/objects/specifics.md:6
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Core.Objects.Specifics
+module Yaifl.Lamp.ObjectSpecifics
   ( -- * Specifics
   ObjectSpecifics(..)
   ) where

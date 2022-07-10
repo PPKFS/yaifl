@@ -17,6 +17,7 @@ import qualified Data.Map as Map
 import Yaifl.Core.Logger hiding ( Error )
 import Display
 import Yaifl.Core.Say
+import Yaifl.Core.Actions.Activity
 
 {-
 NoMissingObjects wm es
@@ -26,7 +27,7 @@ NoMissingObjects wm es
 
 runActionHandlerAsWorldActions :: 
   forall es wm. 
-  '[Log, State (WorldActions wm), Saying, ObjectLookup wm, ObjectUpdate wm, State (Metadata wm)] :>> es
+  '[Log, State (WorldActions wm), Saying, ObjectLookup wm, ObjectUpdate wm, State (Metadata wm), State (ActivityCollection wm)] :>> es
   => Eff (ActionHandler : es)
   ~> Eff es
 runActionHandlerAsWorldActions = interpret $ \case
@@ -52,7 +53,7 @@ findVerb cmd = do
 
 findSubjects :: 
   (ActionHandler :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State (Metadata wm) :> es)
-  => '[Log, State (WorldActions wm), Saying] :>> es
+  => '[Log, State (WorldActions wm), State (ActivityCollection wm), Saying] :>> es
   => Text
   -> Action wm
   -> Eff es (Either Text Bool)
@@ -65,7 +66,7 @@ findSubjects _ _ = return $ Left "not implemented"
 -- Note that this does require the arguments to be parsed out.
 tryAction :: 
   (NoMissingObjects wm es, ActionHandler :> es)
-  => '[Log, State (WorldActions wm), Saying] :>> es
+  => '[Log, State (WorldActions wm), State (ActivityCollection wm), Saying] :>> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool

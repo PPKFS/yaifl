@@ -99,7 +99,7 @@ library
     Yaifl.Core.Objects.ObjectData
     Yaifl.Core.Objects.Query
     Yaifl.Core.Objects.Room
-    Yaifl.Core.Objects.Specifics
+    
     Yaifl.Core.Properties.Enclosing
     Yaifl.Core.Properties.Property
     Yaifl.Core.Properties.Query
@@ -117,7 +117,8 @@ library
 
     Yaifl.Lamp.Properties.Openable
     Yaifl.Lamp.Properties.Container
-    --Yaifl.Properties.Supporter
+    Yaifl.Lamp.Properties.Supporter
+    Yaifl.Lamp.ObjectSpecifics
 
     --Yaifl.ActivityCollection
     --Yaifl.Actions.Going

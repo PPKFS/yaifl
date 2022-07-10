@@ -8,14 +8,13 @@ Stability   : No
 -}
 
 
-module Yaifl.Core.Activities.PrintingDescriptionOfADarkRoom
-(
-    printingDescriptionOfADarkRoomImpl
+module Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
+( printingDescriptionOfADarkRoomImpl
 ) where
 
-import Yaifl.Core.Activities.Activity
-import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
 import Yaifl.Core.Say
+import Yaifl.Core.Rulebooks.Rule
 
 
 printingDescriptionOfADarkRoomImpl :: Activity o () ()

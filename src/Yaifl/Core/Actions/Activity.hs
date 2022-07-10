@@ -15,10 +15,14 @@ module Yaifl.Core.Actions.Activity
   ( Activity(..)
   , ActivityCollection(..)
   , makeActivity
-  , doActivity
   , LocaleVariables(..)
   , LocaleInfo(..)
   , LocalePriorities
+
+  , doActivity
+  , doActivity'
+
+  
     -- * Lenses
   , localePriorities
   , localeDomain
@@ -33,6 +37,8 @@ import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
 import Cleff.State (gets, State)
+import Yaifl.Core.Rulebooks.Args ( Refreshable )
+
 
 data Activity wm v r = Activity
     { _activityName :: !Text
@@ -77,8 +83,8 @@ makeActivity n r = Activity n Nothing
   (blankRulebook ("After " <> n))
 
 doActivity ::
-  State (ActivityCollection wm) :> es
-  => RuleEffects wm es
+  RuleEffects wm es
+  => Refreshable wm v
   => (ActivityCollection wm -> Activity wm v r)
   -> v
   -> Eff es (Maybe r)
@@ -86,6 +92,7 @@ doActivity = (. flip doActivity') . (>>=) . gets
 
 doActivity' :: 
   RuleEffects wm es
+  => Refreshable wm v
   => Activity wm v r
   -> v
   -> Eff es (Maybe r)

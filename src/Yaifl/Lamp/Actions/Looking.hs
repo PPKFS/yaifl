@@ -29,6 +29,8 @@ import Yaifl.Core.Actions.Activity
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.Text as T
 import Yaifl.Core.Rulebooks.Args
+import Yaifl.Core.Rulebooks.Rule
+import Cleff.State
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm = 
@@ -78,6 +80,8 @@ lookingAction = Action
 -- 100 up.
 lookingActionSet ::
   HasLookingProperties wm
+  => NoMissingObjects wm es
+  => Log :> es
   => UnverifiedArgs wm
   -> Eff es (Maybe (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
@@ -85,10 +89,12 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   loc <- getObject (_argsSource ^. objData % thingContainedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent _argsSource
-  return $ Just $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking") (handleMissingObject "Failed to set the variables for looking" $ return Nothing)
+  return $ Just $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking") 
+    (handleMissingObject "Failed to set the variables for looking" $ return Nothing)
 
 getVisibilityLevels :: 
   NoMissingObjects wm es
+  => Log :> es
   => HasLookingProperties wm
   => AnyObject wm
   -> Eff es [AnyObject wm]
@@ -101,6 +107,7 @@ getVisibilityLevels e = do
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder ::
   NoMissingObjects wm es
+  => Log :> es
   => HasLookingProperties wm
   => CanBeAny wm o
   => ObjectLike wm o
@@ -121,7 +128,7 @@ findVisibilityHolder e' = do
     do
       --get its container; we know it's a thing at this stage
       t <- getThing e'
-      getObject (t ^. containedBy)
+      getObject (t ^. objData % thingContainedBy)
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -131,13 +138,15 @@ findVisibilityHolder e' = do
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent :: 
   NoMissingObjects wm es
+  => Log :> es
   => HasLookingProperties wm
   => ObjectLike wm o
   => o
-  -> m Int
+  -> Eff es Int
 recalculateLightOfParent e = do
-  (parent :: Maybe Entity) <- view containedBy <$$> getThingMaybe e
+  (parent :: Maybe Entity) <- view (objData % thingContainedBy) <$$> getThingMaybe e
   case parent of
+    --it's a room.
     Nothing -> return 0
     Just p -> do
       ol <- offersLight p
@@ -152,16 +161,17 @@ recalculateLightOfParent e = do
 -- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
 -- - it contains a thing that has light
--- - it is see-through and its parent offers light
+-- - it is see-through (an object) and its parent offers light
 -- this goes DOWN the object tree; the light goes to its contents
 offersLight :: 
   NoMissingObjects wm es
+  => Log :> es
   => HasLookingProperties wm
   => ObjectLike wm o
   => o
-  -> m Bool
+  -> Eff es Bool
 offersLight e = do
-  let parentOffersLight o = offersLight (o ^. containedBy)
+  let parentOffersLight o = offersLight (o ^. objData % thingContainedBy)
       seeThruWithParent = maybe (return False) (\o' -> isSeeThrough o' &&^ parentOffersLight o')
   o <- getThingMaybe e
 
@@ -172,14 +182,15 @@ offersLight e = do
 -- | an object is see through if...
 isSeeThrough :: 
   NoMissingObjects wm es
+  => Log :> es
   => HasLookingProperties wm
   => Thing wm
-  -> m Bool
+  -> Eff es Bool
 isSeeThrough e = do
   c <- getContainer e
   en <- getEnterable e
   s <- isSupporter e
-  isContainer <- isType e (ObjType "container")
+  isContainer <- isType (_objType e) "container"
   let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer
@@ -189,10 +200,12 @@ isSeeThrough e = do
       || isOpenContainer -- it's an open container
 
 containsLitObj :: 
-  HasLookingProperties s
-  => ObjectLike s o
+  NoMissingObjects wm es
+  => Log :> es
+  => HasLookingProperties wm
+  => ObjectLike wm o
   => o -- ^ the object
-  -> m Bool
+  -> Eff es Bool
 containsLitObj e = do
   enc <- getEnclosing e
   case enc of
@@ -207,9 +220,9 @@ containsLitObj e = do
 -}
 objectItselfHasLight :: 
   NoMissingObjects wm es
-  => ObjectLike s o
+  => ObjectLike wm o
   => o -- ^ the object
-  -> m Bool
+  -> Eff es Bool
 objectItselfHasLight e = asThingOrRoom e
   (\x -> x ^. objData % thingLit == Lit)
   (\x -> x ^. objData % roomDarkness == Lighted)
@@ -223,10 +236,11 @@ objectItselfHasLight e = asThingOrRoom e
 -}
 hasLight :: 
   NoMissingObjects wm es
-  => HasLookingProperties s
-  => ObjectLike s o
+  => Log :> es
+  => HasLookingProperties wm
+  => ObjectLike wm o
   => o
-  -> m Bool
+  -> Eff es Bool
 hasLight e = do
   ts <- getThingMaybe e
   objectItselfHasLight e
@@ -237,7 +251,7 @@ carryOutLookingRules :: ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   makeRule "room description heading rule"
     (\rb -> do
-      setSayStyle (Just PPTTY.bold)
+      setStyle (Just PPTTY.bold)
       let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
       debug $ TLB.fromString $ displayString $ _argsVariables rb
@@ -255,7 +269,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
           traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
       mapM_ foreachVisibilityHolder (drop 1 lvls)
       sayLn "\n"
-      setSayStyle Nothing
+      setStyle Nothing
       --TODO: "run paragraph on with special look spacing"?
       return Nothing),
   makeRule "room description body rule"
@@ -288,8 +302,12 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
 
 foreachVisibilityHolder :: 
   NoMissingObjects wm es
-  => AnyObject s
-  -> m ()
+  => Log :> es
+  => Saying :> es
+  => State (ActivityCollection wm) :> es
+  => ActionHandler :> es
+  => AnyObject wm
+  -> Eff es ()
 foreachVisibilityHolder e = do
   ifM (isSupporter e) (say "(on ") (say "(in ")
   printName e

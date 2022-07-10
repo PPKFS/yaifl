@@ -26,7 +26,6 @@ module Yaifl.Core.Objects.Object (
 
 import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity, typeDAG, Metadata, noteError )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
-import Yaifl.Core.Objects.Specifics ( ObjectSpecifics )
 import Cleff.State
 import Data.Set (member)
 
@@ -67,7 +66,7 @@ data Object wm objData = Object
   , _objID :: !Entity
   , _objType :: !ObjType
   , _objCreationTime :: !Timestamp
-  , _objSpecifics :: !(Either ObjectSpecifics (WMObjSpecifics wm))
+  , _objSpecifics :: !(Maybe (WMObjSpecifics wm))
   , _objData :: !objData
   } deriving stock (Generic)
 

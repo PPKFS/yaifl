@@ -27,8 +27,14 @@ deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 class Refreshable wm av where
   refreshVariables :: forall es. (NoMissingObjects wm es) => av -> Eff es av
 
-instance Refreshable wm () where
+instance {-# OVERLAPPABLE #-} Refreshable wm av where
   refreshVariables = pure
+
+instance Refreshable wm v => Refreshable wm (Args wm v) where
+  refreshVariables av = do
+    v <- refreshVariables (_argsVariables av)
+    o <- getThing (getID $ _argsSource av)
+    return $ av { _argsSource = o, _argsVariables = v }
 
 data ArgSubject wm = 
   RegularSubject Entity -- GET LAMP
@@ -46,6 +52,9 @@ deriving stock instance (WMRead wm) => Read (ArgSubject wm)
 newtype UnverifiedArgs wm = UnverifiedArgs
   { unArgs :: Args wm [ArgSubject wm]
   } deriving newtype (Generic)
+
+instance Refreshable wm (UnverifiedArgs wm) where
+  refreshVariables = return
 
 deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
 deriving stock instance (WMShow wm) => Show (UnverifiedArgs wm)

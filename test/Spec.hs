@@ -17,7 +17,6 @@ import Yaifl.Core.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.Core.ObjectLookup
 -}
- hiding (map)
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Test.Syd
 import Data.Map ((!), unions, map)
@@ -50,7 +49,7 @@ main = do
 
 
 collectGoldens :: Map String (Text -> [Text])
-collectGoldens = map (\v -> \t -> (expectTitle t :  v)) $ unions 
+collectGoldens = Data.Map.map (\v -> \t -> (expectTitle t :  v)) $ unions 
   [ Chapter3.goldens
 
   ]

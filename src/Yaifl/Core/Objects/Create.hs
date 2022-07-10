@@ -23,8 +23,7 @@ import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object) )
 import Yaifl.Core.Objects.ObjectData
-import Yaifl.Core.Objects.Query ( ObjectQuery, ObjectUpdate )
-import Yaifl.Core.Objects.Specifics ( ObjectSpecifics(NoSpecifics) )
+import Yaifl.Core.Objects.Query ( ObjectUpdate )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Property ( WMHasProperty )
 import Yaifl.Core.Objects.Query (ObjectLookup)
@@ -47,7 +46,7 @@ makeObject ::
   -> Text -- ^ Description.
   -> ObjType
   -> Bool
-  -> Either ObjectSpecifics (WMObjSpecifics wm) -- ^ Object details.
+  -> Maybe (WMObjSpecifics wm) -- ^ Object details.
   -> d
   -> Maybe (ObjectUpdateFunc wm d) -- ^ 'Nothing' for a static object, 'Just f' for a dynamic object.
   -> Eff es (Entity, AbstractObject wm d)
@@ -65,7 +64,7 @@ addObject ::
   -> Text
   -> ObjType
   -> Bool
-  -> Either ObjectSpecifics (WMObjSpecifics wm)
+  -> Maybe (WMObjSpecifics wm)
   -> d
   -> Maybe (ObjectUpdateFunc wm d)
   -> Eff es Entity
@@ -90,12 +89,12 @@ addThing ::
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
-  -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
+  -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ Static/Dynamic.
   -> Eff es Entity
 addThing name desc objtype specifics details = addObject addAbstractThing name desc objtype
-  True (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankThingData details)
+  True specifics (fromMaybe blankThingData details)
 
 addThing' :: 
   WMHasProperty wm Enclosing
@@ -113,13 +112,12 @@ addRoom ::
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType -- ^ Type.
-  -> Maybe (Either ObjectSpecifics (WMObjSpecifics wm))
+  -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
   -> Maybe (ObjectUpdateFunc wm (RoomData wm))  -- ^
   -> Eff es Entity
 addRoom name desc objtype specifics details upd = do
-  e <- addObject addAbstractRoom name desc objtype False
-        (fromMaybe (Left NoSpecifics) specifics) (fromMaybe blankRoomData details) upd
+  e <- addObject addAbstractRoom name desc objtype False specifics (fromMaybe blankRoomData details) upd
   md <- get
   when (isVoid $ md ^. firstRoom) (firstRoom .= e)
   return e

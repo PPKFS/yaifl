@@ -20,5 +20,14 @@ class HasProperty o v where
 instance (HasProperty a v, HasProperty b v) => HasProperty (Either a b) v where
   propertyL = propertyL `eitherJoin` propertyL
 
+instance HasProperty a v => HasProperty (Maybe a) v where
+  propertyL = atraversal (\case
+    Nothing -> Left Nothing
+    Just x -> case x ^? propertyL of 
+      Nothing -> Left $ Just x
+      Just y -> Right y)
+    (\case
+      Nothing -> const Nothing
+      Just a -> \v -> Just $ a & propertyL .~ v)
 instance HasProperty () a
 -- ~\~ end
