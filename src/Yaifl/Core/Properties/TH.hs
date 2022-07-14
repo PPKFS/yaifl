@@ -40,11 +40,11 @@ makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
   return $ (case sf of
     GetX -> replaceTH 
-      "getXSUBHERE :: ('[ObjectLookup wm, Log] :>> es, NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> Eff es (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+      "getXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> Eff es (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
     SetX -> replaceTH 
-      "setXSUBHERE :: ('[ObjectUpdate wm] :>> es, NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
+      "setXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
     ModifyX -> replaceTH 
-      "modifyXSUBHERE :: ('[ObjectLookup wm, Log] :>> es, NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> (XSUBHERE -> XSUBHERE) -> Eff es ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
+      "modifyXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> (XSUBHERE -> XSUBHERE) -> Eff es ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
     ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]
@@ -54,8 +54,8 @@ makeDirections :: Bool -> [Text] -> Q [Dec]
 makeDirections std dirs = do
   v <- mapM (\n -> do
     let replaceTH' y x = if std then replaceTH (replace "XSUBHERE2" "(injectDirection XSUBHERE)" y) x else replaceTH (replace "XSUBHERE2" "XSUBHERE" y) x
-        r1 = replaceTH' "isXSUBHEREOf :: MonadWorld wm m => WMStdDirections wm => m Entity -> Entity -> m Entity\nisXSUBHEREOf = isDirectionFrom XSUBHERE2" n
-        r2 = replaceTH' "isXSUBHEREOfOneWay :: MonadWorld wm m => WMStdDirections wm => m Entity -> Entity -> m Entity\nisXSUBHEREOfOneWay = isDirectionFromOneWay XSUBHERE2" n
+        r1 = replaceTH' "isXSUBHEREOf :: (Log :> es, ObjectQuery wm es, State (Metadata wm) :> es) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
+        r2 = replaceTH' "isXSUBHEREOfOneWay :: (Log :> es, ObjectQuery wm es, State (Metadata wm) :> es) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
     return $ r1 <> r2
     ) dirs
   return $ join v

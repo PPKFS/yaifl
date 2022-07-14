@@ -11,7 +11,6 @@
     - "-XTupleSections"
     - "-XTypeApplications"
     - "-XViewPatterns"
-    - "-fplugin=Cleff.Plugin"
 - ignore:
     name: Use head
 - ignore:
@@ -1372,45 +1371,10 @@
     note: "'fromLabel' is already exported from Relude"
     rhs: fromLabel
 - warn:
-    lhs: GHC.Stack.CallStack
-    name: "Use 'CallStack' from Relude"
-    note: "'CallStack' is already exported from Relude"
-    rhs: CallStack
-- warn:
-    lhs: GHC.Stack.HasCallStack
-    name: "Use 'HasCallStack' from Relude"
-    note: "'HasCallStack' is already exported from Relude"
-    rhs: HasCallStack
-- warn:
-    lhs: GHC.Stack.callStack
-    name: "Use 'callStack' from Relude"
-    note: "'callStack' is already exported from Relude"
-    rhs: callStack
-- warn:
-    lhs: GHC.Stack.currentCallStack
-    name: "Use 'currentCallStack' from Relude"
-    note: "'currentCallStack' is already exported from Relude"
-    rhs: currentCallStack
-- warn:
-    lhs: GHC.Stack.getCallStack
-    name: "Use 'getCallStack' from Relude"
-    note: "'getCallStack' is already exported from Relude"
-    rhs: getCallStack
-- warn:
-    lhs: GHC.Stack.prettyCallStack
-    name: "Use 'prettyCallStack' from Relude"
-    note: "'prettyCallStack' is already exported from Relude"
-    rhs: prettyCallStack
-- warn:
     lhs: GHC.Stack.prettySrcLoc
     name: "Use 'prettySrcLoc' from Relude"
     note: "'prettySrcLoc' is already exported from Relude"
     rhs: prettySrcLoc
-- warn:
-    lhs: GHC.Stack.withFrozenCallStack
-    name: "Use 'withFrozenCallStack' from Relude"
-    note: "'withFrozenCallStack' is already exported from Relude"
-    rhs: withFrozenCallStack
 - warn:
     lhs: Data.Bifoldable.Bifoldable
     name: "Use 'Bifoldable' from Relude"

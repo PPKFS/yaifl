@@ -82,7 +82,6 @@ text substitutions in.
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Cleff.Plugin
   default-language:   Haskell2010
   default-extensions:
     NoImplicitPrelude

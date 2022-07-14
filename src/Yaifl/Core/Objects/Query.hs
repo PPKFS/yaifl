@@ -10,11 +10,14 @@ module Yaifl.Core.Objects.Query
   , ObjectQuery
   , ObjectLookup(..)
   , ObjectUpdate(..)
+  , ObjectTraverse(..)
   -- * Missing Objects
-  , withoutMissingObjects 
+  , withoutMissingObjects
   , failHorriblyIfMissing
   , handleMissingObject
   , NoMissingObjects
+  , NoMissingObject
+  , NoMissingRead
   -- * Get
   , lookupThing
   , lookupRoom
@@ -22,6 +25,7 @@ module Yaifl.Core.Objects.Query
   , getThingMaybe
   , getRoomMaybe
   , asThingOrRoom
+  , getLocation
   -- * Modify
   , modifyObject
   , modifyThing
@@ -29,28 +33,37 @@ module Yaifl.Core.Objects.Query
   -- * Set
   , setThing
   , setRoom
+  , traverseRooms
+  , traverseThings
+
+  , refreshRoom
+  , refreshThing
+
+  ,getCurrentPlayer
   ) where
 
 import Cleff.Error ( Error, fromEither, runError, throwError )
 import Cleff.State ( State )
-import qualified Data.Text.Lazy.Builder as TLB
 
-
-
-import Yaifl.Core.Common ( Metadata, WorldModel, HasID(..), Entity, isThing )
+import Yaifl.Core.Common ( Metadata, WorldModel, HasID(..), Entity, isThing, traceGuard, AnalysisLevel (..), noteError, currentPlayer, isRoom )
 import Yaifl.Core.Logger ( Log, err )
-import Yaifl.Core.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing )
+import Yaifl.Core.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing, objData )
+import Yaifl.Core.Objects.ObjectData
+import Text.Interpolation.Nyan
+import Yaifl.Core.Say
 
 -- ~\~ begin <<lit/worldmodel/objects/query.md|missing-object>>[0] project://lit/worldmodel/objects/query.md:61
-data MissingObject = MissingObject 
+data MissingObject = MissingObject
   { _moExpected :: Text
   , _moEntity :: Entity
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
+type NoMissingObject = Error MissingObject
+
 makeLenses ''MissingObject
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|handle-missing-objects>>[0] project://lit/worldmodel/objects/query.md:70
-withoutMissingObjects :: 
+withoutMissingObjects ::
   (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
   -> (HasCallStack => MissingObject -> Eff es a)  -- ^ the handler
   -> Eff es a
@@ -60,52 +73,56 @@ withoutMissingObjects f def = do
     Left err' -> def err'
     Right x -> return x
 
-handleMissingObject :: 
-  HasCallStack
-  => Log :> es
-  => TLB.Builder 
-  -> Eff es a 
+handleMissingObject ::
+  Log :> es
+  => State (Metadata wm) :> es
+  => Text
+  -> a
   -> MissingObject
   -> Eff es a
 handleMissingObject msg def (MissingObject t o) = do
-  err (msg <> bformat (stext %! "; Object ID: " %! stext) t (show o))
-  def
+  noteError (const def) [int|t|When #{msg}, the object with ID #{o} could not be found because #{t}.|]
 
 failHorriblyIfMissing ::
   Log :> es
-  => (HasCallStack => Eff (Error MissingObject ': es) a)
+  => (HasCallStack => Eff (NoMissingObject ': es) a)
   -> Eff es a
 failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
-  let msg = "Failing horribly and erroring out because we can't recover"
-      emsg = msg <> bformat (stext %! "; Object ID: " %! stext) t (show o)
-  err emsg
-  error $ show emsg)
+  let msg = [int|t|The object with ID #{o} could not be found because #{t}. We are failing horribly and erroring out because we can't recover.|]
+  err msg
+  error msg)
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|object-query-effect>>[0] project://lit/worldmodel/objects/query.md:107
 data ObjectLookup (wm :: WorldModel) :: Effect where
-  LookupThing :: HasID o => o -> ObjectLookup wm m (Either Text (Thing wm))
-  LookupRoom :: HasID o => o -> ObjectLookup wm m (Either Text (Room wm))
+  LookupThing :: (HasCallStack, HasID o) => o -> ObjectLookup wm m (Either Text (Thing wm))
+  LookupRoom :: (HasCallStack, HasID o) => o -> ObjectLookup wm m (Either Text (Room wm))
 
 data ObjectUpdate (wm :: WorldModel) :: Effect where
   SetRoom :: Room wm -> ObjectUpdate wm m ()
   SetThing :: Thing wm -> ObjectUpdate wm m ()
 
+data ObjectTraverse (wm :: WorldModel) :: Effect where
+  TraverseThings :: (Thing wm -> m (Maybe (Thing wm))) -> ObjectTraverse wm m ()
+  TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectTraverse wm m ()
+
 makeEffect ''ObjectLookup
 makeEffect ''ObjectUpdate
+makeEffect ''ObjectTraverse
 
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
-
-type NoMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm es, State (Metadata wm) :> es) 
+type NoMissingObjects wm es = (NoMissingObject :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State (Metadata wm) :> es)
+type NoMissingRead wm es = (NoMissingObject :> es, ObjectLookup wm :> es, State (Metadata wm) :> es)
+type ObjectRead wm es = (ObjectLookup wm :> es, State (Metadata wm) :> es)
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike>>[0] project://lit/worldmodel/objects/query.md:127
 class HasID o => ObjectLike wm o where
-  getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
-  default getRoom :: NoMissingObjects wm es => o -> Eff es (Room wm)
-  getRoom o = throwError $ MissingObject "Called getRoom on an object with no instance."  (getID o)
+  getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
+  default getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
+  getRoom o = throwError $ MissingObject "called getRoom on an object with no instance"  (getID o)
 
-  getThing :: NoMissingObjects wm es => o -> Eff es (Thing wm)
-  default getThing :: (NoMissingObjects wm es) => o -> Eff es (Thing wm)
-  getThing o = throwError $ MissingObject "Called getThing on an object with no instance."  (getID o)
+  getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
+  default getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
+  getThing o = throwError $ MissingObject "called getThing on an object with no instance"  (getID o)
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike-instances>>[0] project://lit/worldmodel/objects/query.md:140
 instance ObjectLike wm (Thing wm) where
@@ -128,31 +145,35 @@ instance ObjectLike wm Entity where
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|get-objects>>[0] project://lit/worldmodel/objects/query.md:166
 getObject ::
-  NoMissingObjects wm es
+  NoMissingRead wm es
   => ObjectLike wm o
   => o
   -> Eff es (AnyObject wm)
 getObject e = if isThing e
-  then (review _Thing <$> getThing e)
-  else (review _Room <$> getRoom e)
+  then review _Thing <$> getThing e
+  else review _Room <$> getRoom e
 
-getThingMaybe :: 
-  ObjectQuery wm es
-  => State (Metadata wm) :> es
+getThingMaybe ::
+  ObjectRead wm es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
-getThingMaybe o = withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
+getThingMaybe o =
+  if isThing (getID o)
+  then withoutMissingObjects (getThing o <&> Just) (const (return Nothing))
+  else return Nothing
 
 getRoomMaybe ::
-  ObjectQuery wm es
-  => State (Metadata wm) :> es
+  ObjectRead wm es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))
-getRoomMaybe o = withoutMissingObjects (getRoom o <&> Just) (const (return Nothing))
+getRoomMaybe o = 
+  if isRoom (getID o)
+  then withoutMissingObjects (getRoom o <&> Just) (const (return Nothing))
+  else return Nothing
 
-asThingOrRoom :: 
+asThingOrRoom ::
   NoMissingObjects wm es
   => ObjectLike wm o
   => o
@@ -165,7 +186,7 @@ asThingOrRoom o tf rf =
   else rf <$> getRoom o
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|modify-objects>>[0] project://lit/worldmodel/objects/query.md:209
-modifyObjectFrom :: 
+modifyObjectFrom ::
   (o -> Eff es (Object wm any))
   -> (Object wm any -> Eff es ())
   -> o
@@ -176,13 +197,13 @@ modifyObjectFrom g s o u = do
   s (u obj)
   pass
 
-modifyThing :: 
+modifyThing ::
   NoMissingObjects wm es
   => ObjectLike wm o
   => o
   -> (Thing wm -> Thing wm)
   -> Eff es ()
-modifyThing = modifyObjectFrom getThing setThing 
+modifyThing = modifyObjectFrom getThing setThing
 
 modifyRoom ::
   NoMissingObjects wm es
@@ -198,20 +219,64 @@ modifyObject ::
   => o
   -> (AnyObject wm -> AnyObject wm)
   -> Eff es ()
-modifyObject e s = 
+modifyObject e s =
   if isThing e
   then modifyThing e (anyModifyToThing s)
   else modifyRoom e (anyModifyToRoom s)
 
-anyModifyToThing :: 
+anyModifyToThing ::
   (AnyObject s -> AnyObject s)
   -> (Thing s -> Thing s)
 anyModifyToThing f t = fromMaybe t (preview _Thing $ f (review _Thing t))
 
-anyModifyToRoom :: 
+anyModifyToRoom ::
   (AnyObject s -> AnyObject s)
   -> (Room s -> Room s)
 anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
 
+getLocation ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> Eff es (Room wm)
+getLocation t = do
+  t' <- getThing t
+  let tcb = t' ^. objData % thingContainedBy
+  o <- getObject tcb
+  join $ asThingOrRoom o getLocation return
+
+-- TODO: I'd like this to flag up an error if, somehow, it's not a no-op.
+refreshRoom ::
+  NoMissingObjects wm es
+  => Room wm
+  -> Eff es (Room wm)
+refreshRoom r = do
+  ifM (traceGuard Medium)
+    (do
+      r' <- getRoom $ _objID r
+      when (r' /= r) $
+        error "" --noteError $ "Refreshed room " <> " and found an outdated object; compare the two here: "  -- <> show r' <> show r
+      return r)
+    (pure r)
+
+refreshThing ::
+  NoMissingObjects wm es
+  => Log :> es
+  => Thing wm
+  -> Eff es (Thing wm)
+refreshThing r = do
+  ifM (traceGuard Medium)
+    (do
+      r' <- getThing $ _objID r
+      when (r' /= r) $ noteError (const ()) [int|t|Refreshed thing with ID #{_objID r} and found an outdated object|]
+      return r)
+    (pure r)
+
+getCurrentPlayer ::
+  Log :> es
+  => ObjectLookup wm :> es
+  => State (Metadata wm) :> es
+  => Eff es (Thing wm)
+getCurrentPlayer = failHorriblyIfMissing $ use currentPlayer >>= getThing
 -- ~\~ end
 -- ~\~ end

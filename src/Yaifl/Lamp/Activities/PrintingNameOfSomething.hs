@@ -41,7 +41,11 @@ capitalThe = SayOptions Definite Capitalised
 
 printName :: 
   NoMissingObjects wm es
-  => '[Log, Saying, ActionHandler, State (ActivityCollection wm)] :>> es
+  => Log :> es
+  => Saying :> es
+  => ActionHandler :> es
+  => ObjectTraverse wm :> es
+  => State (ActivityCollection wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es ()
@@ -49,7 +53,11 @@ printName o = printNameEx o noSayOptions
 
 printNameEx :: 
   NoMissingObjects wm es
-  => '[Log, Saying, ActionHandler, State (ActivityCollection wm)] :>> es
+  => Log :> es
+  => Saying :> es
+  => ActionHandler :> es
+  => State (ActivityCollection wm) :> es
+  => ObjectTraverse wm :> es
   => ObjectLike wm o
   => o
   -> SayOptions

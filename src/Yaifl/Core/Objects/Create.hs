@@ -13,6 +13,8 @@ module Yaifl.Core.Objects.Create
   , addThing'
   , addRoom'
   , addBaseObjects
+  , reifyRoom
+  , reifyThing
   ) where
 
 import Cleff.State ( State, get, runState )
@@ -21,25 +23,62 @@ import Yaifl.Core.Common
 import Yaifl.Core.Logger ( debug, Log )
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Objects.Move ( move )
-import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object) )
+import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object), Room, Thing )
 import Yaifl.Core.Objects.ObjectData
-import Yaifl.Core.Objects.Query ( ObjectUpdate )
+import Yaifl.Core.Objects.Query ( ObjectUpdate, ObjectLookup, getThing, failHorriblyIfMissing )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Property ( WMHasProperty )
-import Yaifl.Core.Objects.Query (ObjectLookup)
+import Text.Interpolation.Nyan
 
 -- ~\~ begin <<lit/worldmodel/objects/creation.md|creation-effect>>[0] project://lit/worldmodel/objects/creation.md:40
 data ObjectCreation wm :: Effect where
-  GenerateEntity :: Bool -> ObjectCreation wm m Entity 
+  GenerateEntity :: Bool -> ObjectCreation wm m Entity
   AddAbstractThing :: AbstractThing wm -> ObjectCreation wm m ()
   AddAbstractRoom :: AbstractRoom wm -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 
-type AddObjects wm es = '[ObjectCreation wm, State (Metadata wm), Log, ObjectUpdate wm, ObjectLookup wm] :>> es
+type AddObjects wm es = (ObjectCreation wm :> es, State (Metadata wm) :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
+
+
+-- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
+reifyObject ::
+  State (Metadata wm) :> es
+  => (AbstractObject wm d -> Eff es ())
+  -> AbstractObject wm d
+  -> Eff es (Object wm d)
+reifyObject _ (StaticObject v) = return v
+reifyObject setFunc (DynamicObject ts) = do
+  let co = _tsCachedObject ts
+  now <- getGlobalTime
+  if
+    _tsCacheStamp ts == now
+  then
+    return co
+  else
+    do
+      -- update the object
+      updatedObj <- runObjectUpdate (_tsUpdateFunc ts) co
+      t <- getGlobalTime
+      setFunc (DynamicObject $ TimestampedObject updatedObj t (_tsUpdateFunc ts))
+      return updatedObj
+
+reifyRoom :: 
+  State (Metadata wm) :> es
+  => (ObjectCreation wm :> es)
+  => AbstractRoom wm
+  -> Eff es (Room wm)
+reifyRoom = reifyObject addAbstractRoom
+
+reifyThing :: 
+  State (Metadata wm) :> es
+  => (ObjectCreation wm :> es)
+  => AbstractThing wm
+  -> Eff es (Thing wm)
+reifyThing = reifyObject addAbstractThing
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/creation.md|make-object>>[0] project://lit/worldmodel/objects/creation.md:51
-makeObject :: 
+makeObject ::
   ObjectCreation wm :> es
   => State (Metadata wm) :> es
   => Text -- ^ Name.
@@ -56,10 +95,11 @@ makeObject n d ty isT specifics details upd = do
   let obj = Object n d e ty t specifics details
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
-addObject :: 
+addObject ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => (AbstractObject wm d -> Eff es ())
+  => (AbstractObject wm d -> Eff es (Object wm d))
+  -> (AbstractObject wm d -> Eff es ())
   -> Text
   -> Text
   -> ObjType
@@ -67,20 +107,20 @@ addObject ::
   -> Maybe (WMObjSpecifics wm)
   -> d
   -> Maybe (ObjectUpdateFunc wm d)
-  -> Eff es Entity
-addObject updWorld n d ty isT specifics details updateFunc = do
+  -> Eff es (Object wm d)
+addObject rf updWorld n d ty isT specifics details updateFunc = do
   (e, obj) <- makeObject n d ty isT specifics details updateFunc
-  debug $ bformat ("Made a new " %! stext %! " called " %! stext %! " with ID " %! int)
-    (if isThing obj then "thing" else "room") n e
+  let (n' :: Text) = if isThing obj then "thing" else "room"
+  debug [int|t| Made a new #{n'} called #{n} with ID #{e} |]
   updWorld obj
   lastRoom <- use previousRoom
   if
-     isRoom e 
+     isRoom e
   then
     previousRoom .= e
   else
-    move e lastRoom >> pass -- move it if we're still 
-  return e
+    failHorriblyIfMissing $ getThing e >>= flip move lastRoom >> pass -- move it if we're still 
+  rf obj
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/creation.md|add-objects>>[0] project://lit/worldmodel/objects/creation.md:104
 addThing ::
@@ -92,21 +132,21 @@ addThing ::
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ Static/Dynamic.
-  -> Eff es Entity
-addThing name desc objtype specifics details = addObject addAbstractThing name desc objtype
+  -> Eff es (Thing wm)
+addThing name desc objtype specifics details = addObject reifyThing addAbstractThing name desc objtype
   True specifics (fromMaybe blankThingData details)
 
-addThing' :: 
+addThing' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
-  -> Eff es Entity
+  -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
     Nothing (Just $ snd $ runPure $ runState blankThingData stateUpdate) Nothing
 
-addRoom :: 
+addRoom ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => Text -- ^ Name.
@@ -115,23 +155,23 @@ addRoom ::
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
   -> Maybe (ObjectUpdateFunc wm (RoomData wm))  -- ^
-  -> Eff es Entity
+  -> Eff es (Room wm)
 addRoom name desc objtype specifics details upd = do
-  e <- addObject addAbstractRoom name desc objtype False specifics (fromMaybe blankRoomData details) upd
+  e <- addObject reifyRoom addAbstractRoom name desc objtype False specifics (fromMaybe blankRoomData details) upd
   md <- get
-  when (isVoid $ md ^. firstRoom) (firstRoom .= e)
+  when (isVoid $ md ^. firstRoom) (firstRoom .= getID e)
   return e
 
 isVoid :: Entity -> Bool
 isVoid = (defaultVoidID ==)
 
-addRoom' :: 
+addRoom' ::
  WMHasProperty wm Enclosing
   => AddObjects wm es
   => Text
   -> Text
   -> Eff '[State (RoomData wm)] v
-  -> Eff es Entity
+  -> Eff es (Room wm)
 addRoom' n d rd = addRoom n d (ObjType "room")
   Nothing (Just $ snd $ runPure $ runState blankRoomData rd) Nothing
 -- ~\~ end

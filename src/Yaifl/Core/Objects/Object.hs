@@ -6,7 +6,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Objects.Object ( 
+module Yaifl.Core.Objects.Object (
   -- * Types
   ObjType(..)
   , Object(..)
@@ -35,23 +35,29 @@ newtype ObjType = ObjType
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsList, IsString, Monoid, Semigroup)
 
-isType :: 
+isType ::
+  forall wm es d.
   State (Metadata wm) :> es
-  => ObjType 
-  -> Text 
+  => Object wm d
+  -> Text
   -> Eff es Bool
-isType (ObjType o) e = do
-  td <- use $ typeDAG % at o
-  case td of
-    Nothing -> noteError ("Found no type entry for " <> o) >> return False
-    Just iv -> 
-      if 
-        e `member` iv || o == e
-      then
-        return True
-      else 
-        anyM (\x -> ((ObjType x) `isType` e)) iv
-
+isType o = isTypeInternal (unObjType $ _objType o)
+  where
+    isTypeInternal ::
+      Text
+      -> Text
+      -> Eff es Bool
+    isTypeInternal obj e' = do
+      td <- use $ typeDAG % at obj
+      case td of
+        Nothing -> error "" -- noteError ("Found no type entry for " <> obj) >> return False
+        Just iv ->
+          if
+            e' `member` iv || obj == e'
+          then
+            return True
+          else
+            anyM (`isTypeInternal` e') iv
 
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|thing-room-anyobject>>[0] project://lit/worldmodel/objects/objects.md:147
@@ -78,7 +84,7 @@ instance HasID (Object wm d) where
   getID = _objID
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-eq>>[0] project://lit/worldmodel/objects/objects.md:88
-objectEquals :: 
+objectEquals ::
   Object wm d
   -> Object wm d'
   -> Bool
@@ -94,24 +100,24 @@ instance Ord (Object wm d) where
 makeLenses ''Object
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-functor>>[0] project://lit/worldmodel/objects/objects.md:105
 instance Functor (Object wm) where
-  fmap :: 
+  fmap ::
     (a -> b)
     -> Object wm a
     -> Object wm b
   fmap f = objData %~ f
 
 instance Foldable (Object wm) where
-  foldMap :: 
+  foldMap ::
     (a -> m)
-    -> Object wm a 
+    -> Object wm a
     -> m
   foldMap f = f . _objData
 
 instance Traversable (Object wm) where
-  traverse :: 
-    Applicative f 
-    => (a -> f b) 
-    -> Object wm a 
+  traverse ::
+    Applicative f
+    => (a -> f b)
+    -> Object wm a
     -> f (Object wm b)
   traverse f o = (\v -> o {_objData = v}) <$> f (_objData o)
 -- ~\~ end

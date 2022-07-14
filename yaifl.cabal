@@ -26,14 +26,15 @@ common common-options
     , containers
     , template-haskell
     , text
-    , text-display
     , solitude
     , cleff
     , cleff-plugin
     , time
 -- ~\~ end
 -- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:55
-    , display
+    , nyan-interpolation
+    , formatting
+    , pretty-simple
     , prettyprinter
     , prettyprinter-ansi-terminal
 -- ~\~ end
@@ -76,6 +77,7 @@ common common-options
     GADTs
     TypeOperators
     DerivingVia
+    QuasiQuotes
   mixins: base hiding (Prelude)
           , solitude (Solitude as Prelude)
 -- ~\~ end
@@ -120,15 +122,13 @@ library
     Yaifl.Lamp.Properties.Supporter
     Yaifl.Lamp.ObjectSpecifics
 
-    --Yaifl.ActivityCollection
-    --Yaifl.Actions.Going
+    Yaifl.Lamp.Actions.Going
     Yaifl.Lamp.Actions.Looking
-    --Yaifl.Activities.Activity
-    --Yaifl.Activities.ChoosingNotableLocaleObjects
-    --Yaifl.Activities.DescribingLocale
-    --Yaifl.Activities.PrintingADarkRoom
-    --Yaifl.Activities.PrintingDescriptionOfADarkRoom
-    --Yaifl.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Lamp.Activities.DescribingLocale
+    Yaifl.Lamp.Activities.PrintingNameOfADarkRoom
+    Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
+    Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
     Yaifl.Lamp.Activities.PrintingNameOfSomething
 -- ~\~ end
 -- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:179
@@ -150,6 +150,6 @@ test-suite yaifl-test
   other-modules:
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
-    --Yaifl.Test.Chapter3.Verbosity
+    Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common
 -- ~\~ end

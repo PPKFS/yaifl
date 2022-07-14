@@ -1,7 +1,7 @@
 -- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/Run.hs
 -- ~\~ begin <<lit/rulebooks/running.md|src/Yaifl/Core/Rulebooks/Run.hs>>[0] project://lit/rulebooks/running.md:4
 {-# LANGUAGE RecordWildCards #-}
-module Yaifl.Core.Rulebooks.Run 
+module Yaifl.Core.Rulebooks.Run
   ( runRulebook
   , runRulebookAndReturnVariables
   , failRuleWithError
@@ -12,9 +12,11 @@ import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
 import qualified Data.Text as T
 import Yaifl.Core.Logger ( Log, err, debug, withContext )
 import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
+import Yaifl.Core.Common
+import Text.Interpolation.Nyan
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
-runRulebook :: 
+runRulebook ::
   Refreshable wm v
   => RuleEffects wm es
   => Rulebook wm ia v re
@@ -26,7 +28,7 @@ runRulebook rb ia = runRulebookAndReturnVariables rb ia >>= (\mvre -> return $ m
 -- Nothing -> the rulebook arguments were not parsed correctly
 -- Just (v, Nothing) -> the rulebook ran successfully, but had no definite outcome
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
-runRulebookAndReturnVariables :: 
+runRulebookAndReturnVariables ::
   Refreshable wm v
   => RuleEffects wm es
   => Rulebook wm ia v re
@@ -34,19 +36,18 @@ runRulebookAndReturnVariables ::
   -> Eff es (Maybe (v, Maybe re))
 runRulebookAndReturnVariables Rulebook{..} args = do
   -- ignore empty rulebooks to avoid logging spam
-  unless (null _rbRules) $ debug $ bformat ("Running the " %! stext %! " rulebook") _rbName
+  unless (null _rbRules) $ debug [int|t|Running the #{_rbName} rulebook|]
   withContext _rbName $ do
     runParseArguments _rbParseArguments args >>= \case
-      Nothing -> 
-        err (bformat ("Failed to parse rulebook arguments for " %! stext %! " rulebook") _rbName) >> return Nothing
-      Just a -> do
+      Left err' -> noteError (const Nothing) err' 
+      Right a -> do
         -- run the actual rules
         res <- (fmap Just . processRuleList _rbRules) a
         return $ res >>= (\(v, r1) -> Just (v, r1 <|> _rbDefaultOutcome))
 
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
-processRuleList :: 
+processRuleList ::
   Refreshable wm v
   => RuleEffects wm es
   => [Rule wm v re]
@@ -61,15 +62,15 @@ processRuleList (Rule{..} : xs) args = do
     Nothing -> processRuleList xs newArgs
     Just r -> do
       unless (T.empty == _ruleName)
-        $ debug (bformat ("Succeeded after following the " %! stext %! " rule") _ruleName)
+        $ debug [int|t|Succeeded after following the #{_ruleName} rule|]
       return (newArgs, Just r)
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.
-failRuleWithError :: 
+failRuleWithError ::
   Log :> es
   => Text -- ^ Error message.
   -> Eff es (Maybe Bool)
-failRuleWithError t = err (bformat stext t) >> (return $ Just False)
+failRuleWithError t = err t >> return (Just False)
 
 -- ~\~ end

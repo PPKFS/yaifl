@@ -21,26 +21,25 @@ import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Logger
-import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule (makeRule)
+import Text.Interpolation.Nyan
 
 
 choosingNotableLocaleObjectsImpl :: 
-  WMHasProperty s Enclosing
-  => Activity s (AnyObject s) (LocalePriorities s)
+  WMHasProperty wm Enclosing
+  => Activity wm (AnyObject wm) (LocalePriorities wm)
 choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" $ makeRule "" 
   (\v -> do
     e' <- getEnclosing v 
     case e' of
       Nothing -> (do
-        warn $ bformat ("Tried to choose notable locale objects from " 
-          %! stext %! " which that doesn't enclose ") (_objName v)
+        warn [int|t|Tried to choose notable locale objects from #{_objName v} which doesn't enclose.|]
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do
           x' <- getObject x
-          debug $ bformat ("Found a " %! stext) (_objName x')
+          debug $ "Found a " <> _objName x'
           return x') (DES.toList (_enclosingContains encl))
         return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))
   )

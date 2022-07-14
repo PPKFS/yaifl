@@ -5,17 +5,18 @@ module Yaifl.Core.Objects.Move
   ) where
 import Cleff.State ( State )
 import qualified Data.EnumSet as ES
-import Display ( displayText )
 
 
 import Yaifl.Core.Common ( HasID(..), tickGlobalTime, Metadata (..) )
 import Yaifl.Core.Logger ( debug, Log )
-import Yaifl.Core.Objects.Object ( objData, objName )
+import Yaifl.Core.Objects.Object ( objData, objName, Thing )
 import Yaifl.Core.Objects.ObjectData ( thingContainedBy )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Enclosing ( enclosingContains, Enclosing )
 import Yaifl.Core.Properties.Property ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
+import Text.Interpolation.Nyan ( int, rmode' )
+import Yaifl.Core.Say
 
 -- ~\~ begin <<lit/worldmodel/objects/move.md|move-func>>[0] project://lit/worldmodel/objects/move.md:27
 move :: 
@@ -23,20 +24,19 @@ move ::
   => Log :> es
   => ObjectQuery wm es
   => WMHasProperty wm Enclosing
-  => ObjectLike wm o1
-  => ObjectLike wm o2
-  => o1
-  -> o2
+  => ObjectLike wm o
+  => Thing wm
+  -> o
   -> Eff es Bool
 move oObj oLoc = withoutMissingObjects moveBlock moveHandler 
   where
     moveBlock = do
       -- ~\~ begin <<lit/worldmodel/objects/move.md|lookup-move>>[0] project://lit/worldmodel/objects/move.md:51
-      o' <- getThing oObj
+      o' <- refreshThing oObj
       loc <- getPropertyOrThrow "enclosing part of new location" oLoc =<< getEnclosing oLoc
       let c = o' ^. objData % thingContainedBy
       oldLocEnc <- getPropertyOrThrow "enclosing part of old location" c =<< getEnclosing c
-      debug $ bformat ("Moving " %! stext %! " from " %! stext %! " to " %! stext) (o' ^. objName) (displayText c) (displayText (getID oLoc))
+      debug [int|t| Moving #{o' ^. objName} from #{c} to #{getID oLoc}|]
       -- ~\~ end
       -- ~\~ begin <<lit/worldmodel/objects/move.md|move-thing>>[0] project://lit/worldmodel/objects/move.md:59
       let moveObjects newId t oldLoc newLocEncl = let (newLoc', t') = nowContains newId newLocEncl t in (t', oldLoc `noLongerContains` t, newLoc')
@@ -47,12 +47,12 @@ move oObj oLoc = withoutMissingObjects moveBlock moveHandler
 
       -- ~\~ begin <<lit/worldmodel/objects/move.md|update-move>>[0] project://lit/worldmodel/objects/move.md:66
       setThing movedObj
-      mapM (uncurry setEnclosing) [(c, oldLocation), (getID oLoc, newLocation)] 
+      mapM_ (uncurry setEnclosing) [(c, oldLocation), (getID oLoc, newLocation)] 
       tickGlobalTime True
       -- ~\~ end
       --at this point we know it's a success
-      return $ True
+      return True
     moveHandler = handleMissingObject 
-      (bformat ("Failed to move ObjectID " %! int %! " to ObjectID " %! int ) (getID oObj) (getID oLoc)) $ return False
+      [int|t| Failed to move #{getID oObj} to #{getID oLoc}|] False
 -- ~\~ end
 -- ~\~ end

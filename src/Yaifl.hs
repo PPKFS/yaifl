@@ -1,6 +1,5 @@
 -- ~\~ language=Haskell filename=src/Yaifl.hs
 -- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0] project://lit/construction.md:6
-
 module Yaifl
   (
   newWorld
@@ -28,18 +27,21 @@ import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.WhenPlayBegins
 import Yaifl.Core.Actions.Action
-import Display
 import Yaifl.Core.Rulebooks.ActionProcessing
 import Cleff.Trace (runTraceStderr)
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Actions.Parser
 import Yaifl.Lamp.Actions.Looking
-import Prelude hiding (Reader, runReader)
+import Prelude hiding (int, Reader, runReader)
 import Yaifl.Core.Actions.Activity
-import qualified Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
-import qualified Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
-import qualified Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
+import Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
+import Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
+import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
+import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Lamp.Activities.DescribingLocale
+import Text.Interpolation.Nyan
 --import Yaifl.Core.Objects.Create
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.ActivityCollection
@@ -53,7 +55,7 @@ type HasStandardProperties s = (
   , WMHasProperty s Enterable
   , WMHasProperty s Openable)
 
-blankWorld :: HasProperty (WMObjSpecifics s) Enclosing => World (s :: WorldModel)
+blankWorld :: HasStandardProperties wm => World (wm :: WorldModel)
 blankWorld = World
   { _worldMetadata = blankMetadata
   , _worldStores = blankStores
@@ -69,14 +71,16 @@ blankActions = WorldActions
   , _actionProcessing = actionProcessingRules
   }
 
-blankActivityCollection :: ActivityCollection wm
+blankActivityCollection ::
+  HasStandardProperties wm
+  => ActivityCollection wm
 blankActivityCollection = ActivityCollection
   { printingNameOfADarkRoom = printingNameOfADarkRoomImpl
   , printingNameOfSomething = printingNameOfSomethingImpl
   , printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
-  , choosingNotableLocaleObjects = error ""
-  , printingLocaleParagraphAbout = error ""
-  , describingLocale = error ""
+  , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
+  , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
+  , describingLocale = describingLocaleImpl
   }
 
 blankStores :: WorldStores s
@@ -89,7 +93,7 @@ blankStores = WorldStores
   }
 
 blankMetadata :: Metadata s
-blankMetadata = Metadata 
+blankMetadata = Metadata
   { _title = "Untitled"
   , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
   , _dirtyTime = False
@@ -101,9 +105,10 @@ blankMetadata = Metadata
   , _firstRoom = defaultVoidID
   , _errorLog = []
   , _typeDAG = makeTypeDAG
+  , _traceAnalysisLevel = Maximal
   }
 
-type family (xs :: [(* -> *) -> * -> *]) :++: (ys :: [(* -> *) -> * -> *]) :: [(* -> *) -> * -> *] where
+type family (xs :: [(Type -> Type) -> Type -> Type]) :++: (ys :: [(Type -> Type) -> Type -> Type]) :: [(Type -> Type) -> Type -> Type] where
   '[]       :++: ys = ys
   (x ': xs) :++: ys = x ': (xs :++: ys)
 
@@ -111,88 +116,116 @@ type EffStack wm = EffStackNoIO wm :++: '[IOE]
 type EffStackNoIO wm = '[
   ActionHandler
   , State (ActivityCollection wm)
-  , Log
-  , Reader [Text]
+  , ObjectTraverse wm  
   , ObjectUpdate wm
   , ObjectLookup wm
+  , Log
+  , Reader [Text]
   , State (Metadata wm)
   , State (WorldActions wm)
   , ObjectCreation wm
   , Saying
   ]
 
-type Game wm = Eff (EffStack wm) 
+type Game wm = Eff (EffStack wm)
 
-type UnderlyingEffStack wm = '[State (World wm), IOE] 
+type UnderlyingEffStack wm = '[State (World wm), IOE]
 
-newWorld :: 
+newWorld ::
   HasLookingProperties wm
   => Eff (EffStack wm) ()
 newWorld = do
   addBaseObjects
   addBaseActions
 
-convertToUnderlyingStack :: 
+convertToUnderlyingStack ::
   forall wm. Eff (EffStack wm)
-  ~> Eff (UnderlyingEffStack wm) 
-convertToUnderlyingStack = 
+  ~> Eff (UnderlyingEffStack wm)
+convertToUnderlyingStack =
   runSayPure
   . runCreationAsLookup
-  . (zoom worldActions)
-  . (zoom worldMetadata)
-  . runQueryAsLookup
+  . zoom worldActions
+  . zoom worldMetadata
   . runReader []
   . runTraceStderr
   . runLoggingAsTrace
-  . (zoom worldActivities)
+  . runQueryAsLookup
+  . runTraverseAsLookup
+  . zoom worldActivities
   . runActionHandlerAsWorldActions
-  . raiseUnderN @(State (World wm)) @(EffStackNoIO wm) @('[IOE])
+  . raiseUnderN @(State (World wm)) @(EffStackNoIO wm) @'[IOE]
 
-runCreationAsLookup :: 
+-- TODO: there's probably a much nicer way to make these traverse lens nicely
+runTraverseAsLookup ::
+  '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State (Metadata wm)] :>> es
+  => Eff (ObjectTraverse wm : es)
+  ~> Eff es
+runTraverseAsLookup = interpret \case
+  TraverseThings f -> do
+    m <- use $ worldStores % things
+    mapM_ (\aT -> do
+      r <- reifyThing aT >>= (toEff . f)
+      whenJust r setThing) m
+  TraverseRooms f -> do
+    m <- use $ worldStores % rooms
+    mapM_ (\aT -> do
+      r <- reifyRoom aT >>= (toEff . f)
+      whenJust r setRoom) m
+
+runCreationAsLookup ::
   State (World wm) :> es
-  => Eff (ObjectCreation wm : es) 
+  => Eff (ObjectCreation wm : es)
   ~> Eff es
 runCreationAsLookup = interpret \case
-  GenerateEntity bThing -> if bThing then 
-    ((worldStores % entityCounter % _1) <<%= (+1)) else ((worldStores % entityCounter % _2) <<%= (\x -> x-1))
+  GenerateEntity bThing -> if bThing then
+    (worldStores % entityCounter % _1) <<%= (+1) else (worldStores % entityCounter % _2) <<%= (\x -> x-1)
   AddAbstractRoom aRoom -> worldStores % rooms % at (getID aRoom) ?= aRoom
   AddAbstractThing aThing -> worldStores % things % at (getID aThing) ?= aThing
 
-runQueryAsLookup :: 
-  State (World wm) :> es
+runQueryAsLookup ::
+  HasCallStack
+  => Log :> es
+  => State (World wm) :> es
   => (ObjectCreation wm :> es)
   => (State (Metadata wm) :> es)
-  => Eff (ObjectUpdate wm : ObjectLookup wm : es) 
+  => Eff (ObjectUpdate wm : ObjectLookup wm : es)
   ~> Eff es
 runQueryAsLookup = interpretLookup  . interpretUpdate
 
 interpretLookup ::
-  State (World wm) :> es
+  forall wm es. 
+  HasCallStack
+  => Log :> es
+  => State (World wm) :> es
   => (ObjectCreation wm :> es)
   => (State (Metadata wm) :> es)
-  => Eff (ObjectLookup wm : es) 
+  => Eff (ObjectLookup wm : es)
   ~> Eff es
-interpretLookup = interpret \case
-  LookupThing e -> do
-    mbObj <- use $ worldStores % things % at (getID e)
-    case mbObj of
-      Nothing -> return 
-        if isRoom e 
-          then 
-            Left $ "Tried to lookup a room as a thing " <> displayText (getID e) 
-          else 
-            Left $ "Could not find " <> displayText (getID e)
-      Just ao -> withoutMissingObjects (Right <$> reifyThing ao) (\mo -> return $ Left $ "Failed to reify " <> displayText mo)
-  LookupRoom e -> do
-    mbObj <- use $ worldStores % rooms % at (getID e)
-    case mbObj of
-      Nothing -> return 
-        if isThing e 
-          then 
-            Left $ "Tried to lookup a thing as a room " <> displayText (getID e) 
-          else 
-            Left $ "Could not find " <> displayText (getID e)
-      Just ao -> withoutMissingObjects (Right <$> reifyRoom ao) (\mo -> return $ Left $ "Failed to reify " <> displayText mo)
+interpretLookup = do
+  let lookupHelper :: 
+        Entity 
+        -> Lens' (WorldStores wm) (Store (AbstractObject wm d))
+        -> (AbstractObject wm d -> Eff (NoMissingObject : es) (Object wm d))
+        -> Lens' (WorldStores wm) (Store (AbstractObject wm e))
+        -> Text
+        -> Text
+        -> Eff es (Either Text (Object wm d))
+      lookupHelper e l reify l' expected errTy = do
+            let i = getID e
+            mbObj <- use $ worldStores % l % at i
+            case mbObj of
+              Nothing -> do
+                mbRoom <- use $ worldStores % l' % at i
+                let (cs :: Text) = show callStack
+                noteError Left $ case mbRoom of
+                  Nothing -> [int|t|Could not find the object #s{i} as either a thing or room (Queried as a #{expected}).|]
+                  Just a -> [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |] :: Text
+              Just ao -> 
+                withoutMissingObjects (Right <$> reify ao)
+                  (\mo -> noteError Left [int|t|Failed to reify #{mo}.|])
+  interpret \case
+    LookupThing e -> lookupHelper (getID e) things reifyThing rooms "thing" "room"
+    LookupRoom e -> lookupHelper (getID e) rooms reifyRoom things "room" "thing"
 
 interpretUpdate ::
   State (World wm) :> es
@@ -209,16 +242,16 @@ updateIt ts newObj mbExisting = case mbExisting of
   Just (StaticObject _) -> Just (StaticObject newObj)
   Just (DynamicObject (TimestampedObject _ _ f)) -> Just (DynamicObject (TimestampedObject newObj ts f))
 
-runGame :: 
-  HasProperty (WMObjSpecifics wm) Enclosing 
-  => Text 
+runGame ::
+  HasStandardProperties wm
+  => Text
   -> Eff (EffStack wm) a
   -> IO (World wm)
 runGame _ f = do
   (_, w) <- runIOE $ runState blankWorld $ convertToUnderlyingStack f
   return w
 
-addBaseActions :: 
+addBaseActions ::
   HasLookingProperties wm
   => State (WorldActions wm) :> es
   => Eff es ()
@@ -227,12 +260,12 @@ addBaseActions = do
   --addAction goingActionImpl
 
 makeTypeDAG :: Map Text (Set Text)
-makeTypeDAG = fromList 
+makeTypeDAG = fromList
   [ ("object", fromList [])
   , ("thing", fromList ["object"])
   , ("room", fromList ["object"])
   , ("container", fromList ["thing"])
-  , ("supporter", fromList ["thing"])  
+  , ("supporter", fromList ["thing"])
   ]
 
 -- ~\~ end

@@ -26,7 +26,6 @@ import Yaifl.Core.Objects.Object
 import Yaifl.Core.Say
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Logger
-import Yaifl.Core.Objects.Move
 import Yaifl.Core.Objects.ObjectData
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
@@ -51,7 +50,7 @@ findNotable = Rule "Find notable objects" (\v ->
   do
     -- by default, pick every object in the domain and assign them '5'
     o <- doActivity choosingNotableLocaleObjects (v ^. localeDomain)
-    return (maybe v (\x -> v & localePriorities .~ x) o, Nothing))
+    return ((\x -> set localePriorities x v) <$> o, Nothing))
 
 interestingLocale :: Rule s (LocaleVariables s) r
 interestingLocale = Rule "Interesting locale paragraphs" (\v ->
@@ -70,11 +69,12 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
         return $ fromMaybe v' r) v sorted
     debug $ "After handing off to printingLocaleParagraphAbout, we still have "
       <> fromString (show $ length (unStore $ _localePriorities newP)) <> " potentially interesting things"
-    return (newP, Nothing))
+    return (Just newP, Nothing))
 
 sayDomain ::
   NoMissingObjects wm es
-  => ObjectLike s o
+  => RuleEffects wm es
+  => ObjectLike wm o
   => Text
   -> o
   -> Eff es ()
@@ -99,8 +99,8 @@ alsoSee = Rule "You can also see" (\v ->
     unless (null lp) $ do
       let (LocaleVariables prior dom p) = v
       plID <- use currentPlayer
-      isASupporter <- dom `isType` ObjType "supporter"
-      isAnAnimal <- dom `isType` ObjType "animal"
+      isASupporter <- dom `isType` "supporter"
+      isAnAnimal <- dom `isType` "animal"
       playerLocE <- getLocation plID
       plRoom <- getRoomMaybe playerLocE
       let isInLoc = maybe False (dom `objectEquals`) plRoom
@@ -147,7 +147,7 @@ alsoSee = Rule "You can also see" (\v ->
         $ zip groupedList [0 ..]
       when isInLoc (say " here")
       paragraphBreak
-    return (v, Nothing))
+    return (Nothing, Nothing))
 
 --something about having omit contents from listing here
 --are identically named TODO??? about matching containers???
@@ -190,19 +190,19 @@ data GroupingProperties s = GroupingProperties
 
 getGroupingProperties ::
   NoMissingObjects wm es
-  => WMHasProperty s Enclosing
-  => WMHasProperty s Container
-  => WMHasProperty s Openable
-  => AnyObject s
-  -> Eff es (GroupingProperties s)
+  => WMHasProperty wm Enclosing
+  => WMHasProperty wm Container
+  => WMHasProperty wm Openable
+  => AnyObject wm
+  -> Eff es (GroupingProperties wm)
 getGroupingProperties o = do
-  n <- objectName o
   hc <- hasChildren o
   wr <- willRecurse o
-  gwb <- getWornBy o
-  gtl <- getThingLit o
+  mbThing <- getThingMaybe o
+  let gwb = join $ mbThing ^? _Just % objData % thingWearable % _Wearable
+      gtl = mbThing ^? _Just % objData % thingLit
   (ic, op) <- getContainerProps o
-  return $ GroupingProperties o n hc wr gwb ((Lit==) <$?> gtl) op ic
+  return $ GroupingProperties o (_objName o) hc wr gwb (Just Lit == gtl) op ic
 
 hasChildren
   :: NoMissingObjects wm es
@@ -220,7 +220,7 @@ willRecurse ::
   -> Eff es Bool
 willRecurse e = do
   o <- getObject e
-  isSup <- (_objType o) `isType` "supporter"
+  isSup <- o `isType` "supporter"
   cont <- getContainer e
   return $ isSup || maybe False (\c -> _containerOpacity c == Transparent || _containerOpenable c == Open) cont
 
@@ -232,13 +232,13 @@ paragraphBreak = say ".\n\n"
 --p2275 of the complete program, in B/lwt
 getContainerProps ::
   NoMissingObjects wm es
+  => ObjectLike wm (Object wm d)
   => WMHasProperty wm Openable
-  => ObjectLike wm o1
-  => o1
+  => Object wm d
   -> Eff es (Maybe Openable, Bool)
 getContainerProps e1 = do
   o <- getOpenable e1
-  o1c <- e1 `isType` ObjType "container"
+  o1c <- e1 `isType` "container"
   return (o, o1c)
 
 {-}

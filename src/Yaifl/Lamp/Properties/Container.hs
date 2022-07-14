@@ -29,11 +29,11 @@ module Yaifl.Lamp.Properties.Container
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Lamp.Properties.Openable ( Openable(..) )
 import Yaifl.Core.Properties.TH
-import Yaifl.Core.Logger
+
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Property
 import Yaifl.Core.Properties.Query
-import Yaifl.Core.Common
+
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent 

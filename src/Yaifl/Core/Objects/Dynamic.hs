@@ -20,6 +20,7 @@ module Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Common ( WorldModel, Timestamp, HasID(..) )
 import Yaifl.Core.Objects.Object ( Object )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
+import Formatting.Buildable (Buildable(..))
 
 -- ~\~ begin <<lit/worldmodel/objects/dynamic.md|timestamped-object>>[0] project://lit/worldmodel/objects/dynamic.md:37
 data TimestampedObject wm d = TimestampedObject
@@ -41,6 +42,8 @@ data AbstractObject wm d
   = DynamicObject (TimestampedObject wm d)
   | StaticObject (Object wm d)
 
+instance Buildable (AbstractObject wm d) where
+  build = const "blah"
 instance HasID (AbstractObject wm d) where
   getID (StaticObject o) = getID o
   getID (DynamicObject ts) = getID ts
@@ -50,5 +53,6 @@ type AbstractRoom wm = AbstractObject wm (RoomData wm)
 type AnyAbstractObject wm = AbstractObject wm (Either ThingData (RoomData wm))
 
 makeLenses ''TimestampedObject
+
 -- ~\~ end
 -- ~\~ end

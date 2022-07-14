@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Yaifl.Lamp.Properties.Supporter
   ( isSupporter
   ) where
@@ -12,4 +10,4 @@ isSupporter ::
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isSupporter o = getObject o >>= \Object{_objType} -> (_objType `isType` "supporter")
+isSupporter o = getObject o >>= (`isType` "supporter")

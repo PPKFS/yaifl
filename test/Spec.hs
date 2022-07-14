@@ -23,8 +23,6 @@ import Data.Map ((!), unions, map)
 import System.FilePath (takeBaseName)
 import Test.Syd.OptParse
     ( Settings(settingGoldenReset), getSettings )
-import Data.Text (unpack)
-import qualified Data.Text as T
 import Yaifl.Test.Common (expectTitle)
 
 
@@ -34,28 +32,28 @@ main = do
   let gr = settingGoldenReset s
   sydTestWith (s { settingGoldenReset = False }) $ do
     scenarioDirRecur "test/testcases" $ \fp -> do
-      let t = T.pack (takeBaseName fp)
+      let t = toText (takeBaseName fp)
       if gr
         then do
           print $ "Doing" <> t
-          writeFile fp . unpack . unlines $ collectGoldens ! (unpack t) $ t
+          writeFile fp . toString . mconcat $ collectGoldens ! toString t $ t
         else
-          let ce = collectExamples ! takeBaseName fp in            
-            it "Runs" $ do         
+          let ce = collectExamples ! takeBaseName fp in
+            it "Runs" $ do
               goldenTextFile fp ce
-            
+
 
 
 
 
 collectGoldens :: Map String (Text -> [Text])
-collectGoldens = Data.Map.map (\v -> \t -> (expectTitle t :  v)) $ unions 
+collectGoldens = Data.Map.map (\ v t -> expectTitle t :  v) $ unions
   [ Chapter3.goldens
 
   ]
 
 collectExamples :: Map String (IO Text)
-collectExamples = unions 
+collectExamples = unions
   [ Chapter3.examples
 
   ]

@@ -22,7 +22,6 @@ module Yaifl.Core.Actions.Activity
   , doActivity
   , doActivity'
 
-  
     -- * Lenses
   , localePriorities
   , localeDomain
@@ -36,7 +35,7 @@ import Yaifl.Core.Common ( Store )
 import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
-import Cleff.State (gets, State)
+import Cleff.State ( gets )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
 
 
@@ -100,7 +99,7 @@ doActivity' ac c = withoutMissingObjects (do
   x <- runRulebookAndReturnVariables (_activityBeforeRules ac) c
   mr <- runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
   _ <- runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
-  return $ snd =<< mr) (handleMissingObject "" $ return Nothing)
+  return $ snd =<< mr) (handleMissingObject "running an activity" Nothing)
 
 makeLenses ''LocaleVariables
 makeLenses ''LocaleInfo

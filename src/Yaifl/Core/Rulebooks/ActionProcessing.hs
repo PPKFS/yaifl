@@ -39,5 +39,5 @@ actionProcessingRules = ActionProcessing $ \Action{..} u -> withoutMissingObject
   , notImplementedRule "investigate player awareness after rule"
   , notImplementedRule "report stage rule"
   , notImplementedRule "clean actions rule"
-  ]) u) (handleMissingObject "" (return $ Just False))
+  ]) u) (handleMissingObject "" (Just False))
 -- ~\~ end

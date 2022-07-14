@@ -4,6 +4,8 @@
 module Yaifl.Lamp.Actions.Looking
   ( lookingAction
   , HasLookingProperties
+  , getVisibilityLevels
+  , recalculateLightOfParent
   ) where
 
 
@@ -20,7 +22,6 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, pri
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Core.Objects.Object
-import Display
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Logger
 import Yaifl.Lamp.Properties.Openable
@@ -31,6 +32,8 @@ import qualified Data.Text as T
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
 import Cleff.State
+import Formatting.Buildable (Buildable(..))
+import Text.Interpolation.Nyan
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm = 
@@ -47,8 +50,8 @@ data LookingActionVariables wm = LookingActionVariables
 deriving stock instance (WMShow wm) => Show (LookingActionVariables wm)
 deriving stock instance (WMRead wm, WMOrd wm) => Read (LookingActionVariables wm)
 
-instance Display (LookingActionVariables s) where
-  display (LookingActionVariables fr _ lvls _) = "Looking from "
+instance Buildable (LookingActionVariables s) where
+  build (LookingActionVariables fr _ lvls _) = "Looking from "
     <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
 
 instance Refreshable wm (LookingActionVariables wm) where
@@ -83,14 +86,14 @@ lookingActionSet ::
   => NoMissingObjects wm es
   => Log :> es
   => UnverifiedArgs wm
-  -> Eff es (Maybe (LookingActionVariables wm))
+  -> Eff es (ArgumentParseResult (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   -- loc may be a thing (a container) or a room (the more likely case)
   loc <- getObject (_argsSource ^. objData % thingContainedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent _argsSource
-  return $ Just $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking") 
-    (handleMissingObject "Failed to set the variables for looking" $ return Nothing)
+  return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking") 
+    (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
 getVisibilityLevels :: 
   NoMissingObjects wm es
@@ -101,7 +104,7 @@ getVisibilityLevels ::
 getVisibilityLevels e = do
   vh <- findVisibilityHolder e
   if vh `objectEquals` e
-      then return [e]
+      then err "moo" >> return [e]
       else (vh :) <$> getVisibilityLevels vh
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
@@ -121,7 +124,7 @@ findVisibilityHolder e' = do
     isRoom e' || isOpaqueClosedContainer <$?> mCont
   then
     do
-      debug $ bformat ("The visibility holder of " %! stext %! " is itself ") n
+      debug [int|t|The visibility holder of #{n} is itself|]
       --return it
       return (toAny e')
   else
@@ -182,20 +185,17 @@ offersLight e = do
 -- | an object is see through if...
 isSeeThrough :: 
   NoMissingObjects wm es
-  => Log :> es
   => HasLookingProperties wm
   => Thing wm
   -> Eff es Bool
 isSeeThrough e = do
-  c <- getContainer e
-  en <- getEnterable e
-  s <- isSupporter e
-  isContainer <- isType (_objType e) "container"
+  (c, en, s) <- (,,) <$> getContainer e <*> getEnterable e <*> isSupporter e
+  isContainer <- isType e "container"
   let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer
   return $ s --if it's a supporter
-      || isTransparent -- it's transparent=
+      || isTransparent -- it's transparent
       || isEnterableNotContainer -- it's enterable but not a container
       || isOpenContainer -- it's an open container
 
@@ -208,10 +208,7 @@ containsLitObj ::
   -> Eff es Bool
 containsLitObj e = do
   enc <- getEnclosing e
-  case enc of
-    Nothing -> return False
-    Just encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains)
-
+  enc & maybe (return False) (\encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains))
 
 {- | (4) An object itself has light if:  
   (a) it's a room with the lighted property,  
@@ -224,8 +221,8 @@ objectItselfHasLight ::
   => o -- ^ the object
   -> Eff es Bool
 objectItselfHasLight e = asThingOrRoom e
-  (\x -> x ^. objData % thingLit == Lit)
-  (\x -> x ^. objData % roomDarkness == Lighted)
+  ((Lit ==) . view (objData % thingLit))
+  ((Lighted ==) . view (objData % roomDarkness))
 
 {- | (4) An object has light if:  
   (a) it itself has the light attribute set, or  
@@ -254,11 +251,8 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       setStyle (Just PPTTY.bold)
       let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
-      debug $ TLB.fromString $ displayString $ _argsVariables rb
-      debug (bformat
-        ("Printing room description heading with visibility ceiling " %! stext %! " and visibility count " %! int)
-        "" --todo: replace the vis ceiling log here
-        cnt)
+      debug $ "todo: fix"--show $ _argsVariables rb
+      debug [int|t|"Printing room description heading with visibility ceiling TODO and visibility count #{cnt}|]
       if
         | cnt == 0 -> do
           doActivity printingNameOfADarkRoom ()
@@ -304,6 +298,7 @@ foreachVisibilityHolder ::
   NoMissingObjects wm es
   => Log :> es
   => Saying :> es
+  => ObjectTraverse wm :> es
   => State (ActivityCollection wm) :> es
   => ActionHandler :> es
   => AnyObject wm

@@ -10,9 +10,6 @@ module Yaifl.Core.Actions.Action
   , ActionProcessing(..)
 
   , WorldActions(..)
-
-  
-
   , actions
 
   , whenPlayBegins
@@ -25,9 +22,9 @@ module Yaifl.Core.Actions.Action
 
 
 import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Common
-import Yaifl.Core.Rulebooks.Rule
-import Cleff.State
+import Yaifl.Core.Common ( WorldModel )
+import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
+import Cleff.State ( State )
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
@@ -60,8 +57,7 @@ makeActionRulebook ::
   Text
   -> [Rule o (Args o v) Bool]
   -> ActionRulebook o v
-makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Just x)
-
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Right x)
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Action wm))
@@ -83,7 +79,7 @@ runAction args act = do
   let (ActionProcessing ap) = w
   ap act args
 
--- | Lookup an action from the world. TODO: handle "did you mean", synonyms, etc.
+-- | Lookup an action from the world. TODO: handle did you mean, synonyms, etc.
 getAction :: 
   State (WorldActions wm) :> es
   => Text

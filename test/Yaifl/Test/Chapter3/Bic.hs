@@ -9,6 +9,12 @@ import Yaifl.Test.Common
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 import qualified Data.Text as T
 import Yaifl.Core.Common
+import Yaifl.Core.World
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Objects.Query
+import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Core.Say
+import Yaifl.Core.Objects.Object
 
 isBlankDescription :: Text -> Bool
 isBlankDescription d = T.empty == d
@@ -21,14 +27,14 @@ ex2World = do
   addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
   addThing' "napkin" "Slightly crumpled." pass
   pass
-  {-addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
+  addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
     do
-      foreachObject things (\t -> do
-        when (isBlankDescription (_objDescription t)) (do
+      traverseThings (\t -> do
+        when (isBlankDescription (t ^. objDescription )) (do
           printName t
           sayLn " has no description.")
         return Nothing)
-      return Nothing-}
+      return Nothing
 
 ex2Test :: [Text]
 ex2Test = 

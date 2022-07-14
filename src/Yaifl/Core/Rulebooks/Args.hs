@@ -39,7 +39,7 @@ instance Refreshable wm v => Refreshable wm (Args wm v) where
 data ArgSubject wm = 
   RegularSubject Entity -- GET LAMP
   | ConceptSubject Text -- TALK TO BOB ABOUT *PHILOSOPHY*
-  | DirectionSubject (WMDirections wm)
+  | DirectionSubject (WMDirections wm) -- GO WEST
   | MatchedSubject Text Entity -- GO *THROUGH DOOR*
   deriving stock (Generic)
 

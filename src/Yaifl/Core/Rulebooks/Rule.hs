@@ -26,6 +26,7 @@ import Yaifl.Core.Logger
 import Yaifl.Core.Say
 import Yaifl.Core.Rulebooks.Args
 import {-# SOURCE #-} Yaifl.Core.Actions.Activity
+import Text.Interpolation.Nyan
 
 type RuleEffects wm es = (
   State (Metadata wm) :> es
@@ -33,6 +34,7 @@ type RuleEffects wm es = (
   , NoMissingObjects wm es
   , Saying :> es
   , ActionHandler :> es
+  , ObjectTraverse wm :> es
   , State (ActivityCollection wm) :> es)
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
@@ -46,9 +48,7 @@ data Rule wm v r = Rule
 notImplementedRule ::
   Text
   -> Rule wm v r
-notImplementedRule n = makeRule' n (do
-    warn $ bformat (stext %! " needs implementing") n
-    return Nothing)
+notImplementedRule n = makeRule' n (warn [int|t| #{n} needs implementing|] >> return Nothing)
 
 -- | Make a rule that does not modify the action arguments.
 makeRule :: 

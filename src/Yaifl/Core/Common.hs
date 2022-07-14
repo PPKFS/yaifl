@@ -15,11 +15,13 @@ module Yaifl.Core.Common
   -- * Metadata
   , Metadata(..)
   , CurrentStage(..)
+  , AnalysisLevel(..)
   , getGlobalTime
   , tickGlobalTime
   , previousRoom
   , firstRoom
   , whenConstructingM
+  , whenConstructing
   , currentPlayer
   , title
   , setTitle
@@ -28,6 +30,9 @@ module Yaifl.Core.Common
   , typeDAG
   , darknessWitnessed
   , roomDescriptions
+  , traceAnalysisLevel
+  , traceGuard
+  , isRuntime
 
   , ActionHandler(..)
   , parseAction
@@ -55,12 +60,15 @@ where
 import Cleff.State ( State )
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
-import Display ( Display(..) )
+import Text.Pretty.Simple (pStringOpt, defaultOutputOptionsNoColor)
+import Formatting.Buildable (Buildable(..))
+import Prelude hiding (build)
+import Data.Text.Lazy.Builder (toLazyText, fromText)
+import Yaifl.Core.Say
+import Yaifl.Core.Logger
 
-
-
-instance {-# OVERLAPPABLE #-} Display a where
-  display = const "No display instance"
+instance {-# OVERLAPPABLE #-} Buildable a where
+  build = const "No display instance"
 
 -- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|entity-def>>[0] project://lit/worldmodel/objects/entities-stores.md:7
 newtype Entity = Entity
@@ -88,9 +96,8 @@ class HasID n where
 instance HasID Entity where
   getID = id
 
-instance Display Entity where
-  display (Entity i) = "ID: " <> show i
-
+instance Buildable Entity where
+  build (Entity i) = "(ID: " <> show i <> ")"
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|base-ids>>[0] project://lit/worldmodel/objects/entities-stores.md:48
 defaultVoidID :: Entity
@@ -101,16 +108,23 @@ defaultNothingID = Entity 0
 
 defaultPlayerID :: Entity
 defaultPlayerID = Entity 1
+
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|store-def>>[0] project://lit/worldmodel/objects/entities-stores.md:63
 -- import qualified Data.EnumMap.Strict as EM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   } deriving stock   (Show, Generic)
-    deriving newtype (Eq, Ord, Read)
+    deriving newtype (Eq, Ord, Read, Foldable)
 
 emptyStore :: Store a
 emptyStore = Store EM.empty
+
+pShowNice :: Buildable a => a -> Text
+pShowNice = toStrict . pStringOpt defaultOutputOptionsNoColor . toString . toLazyText . build
+
+instance Buildable (Store a) where
+  build (Store s) = fromText $ pShowNice s
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/entities-stores.md|alter-store>>[0] project://lit/worldmodel/objects/entities-stores.md:80
 alterEMF :: 
@@ -189,19 +203,28 @@ data Metadata (wm :: WorldModel) = Metadata
   , _firstRoom :: Entity
   , _errorLog :: [Text]
   , _typeDAG :: Map Text (Set Text)
+  , _traceAnalysisLevel :: AnalysisLevel
   -- more to come I guess
   }
 
 data CurrentStage = Construction | Verification | Runtime
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
+data AnalysisLevel = None | Low | Medium | High | Maximal
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
 makeLenses ''Metadata
 
 noteError :: 
   State (Metadata wm) :> es 
-  => Text 
-  -> Eff es ()
-noteError t = errorLog %= (t:)
+  => Log :> es
+  => (Text -> a)
+  -> Text 
+  -> Eff es a
+noteError f t = do
+  errorLog %= (t:)
+  err t
+  pure $ f t
 
 getGlobalTime :: 
   State (Metadata wm) :> es 
@@ -219,6 +242,11 @@ setTitle ::
   -> Eff es ()
 setTitle = (title .=)
 
+isRuntime :: 
+  State (Metadata wm) :> es
+  => Eff es Bool
+isRuntime = (Runtime ==) <$> use currentStage
+
 whenConstructingM :: 
   State (Metadata wm) :> es
   => Eff es Bool 
@@ -229,6 +257,21 @@ whenConstructingM cond =
     cs <- use currentStage
     return $ cs == Construction, cond])
 
+whenConstructing :: 
+  State (Metadata wm) :> es
+  => Bool
+  -> Eff es () 
+  -> Eff es ()
+whenConstructing cond = 
+  whenM (andM [do
+    cs <- use currentStage
+    return $ cs == Construction, pure cond])
+
+traceGuard ::
+  State (Metadata wm) :> es
+  => AnalysisLevel
+  -> Eff es Bool
+traceGuard lvl = ((lvl <=) <$> use traceAnalysisLevel) ||^ (not <$> isRuntime)
 data ActionHandler :: Effect where
   ParseAction :: Text -> ActionHandler m (Either Text Bool)
 

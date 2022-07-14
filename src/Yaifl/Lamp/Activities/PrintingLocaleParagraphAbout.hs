@@ -7,14 +7,15 @@ Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
 
-module Yaifl.Core.Activities.PrintingLocaleParagraphAbout where
+module Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout where
 
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Objects.Query (getThingMaybe)
 import Yaifl.Core.Objects.Object
 
-import Yaifl.Core.Activities.Activity
 import Yaifl.Core.Objects.ObjectData
+import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Rulebooks.Rule
 
 printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing

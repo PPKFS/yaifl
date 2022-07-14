@@ -18,6 +18,7 @@ import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Run
 import Yaifl.Core.Common
 import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
+import Text.Interpolation.Nyan
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.Actions.Action
 
@@ -64,19 +65,22 @@ testHarness ::
   => Text
   -> Game wm a
   -> [Text]
-  -> IO (Text)
+  -> IO Text
 testHarness fullTitle initWorld actionsToDo = do
-  let (t, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
+  let (_, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
   (w2 :: World wm) <- liftIO $ runGame shortName (do
     newWorld
-    info $ bformat ("Building world " %! stext %! "...") shortName
+    info $ [int|t|Building world #{shortName}...|] 
     initWorld
-    info $ bformat "World construction finished, beginning game..."
+    info $ "World construction finished, beginning game..."
     wa <- get @(WorldActions wm)
     --when I write a proper game loop, this is where it needs to go
-    withoutMissingObjects (runRulebook (wa ^. whenPlayBegins) ()) (handleMissingObject "Failed when beginning" (return $ Just False)))
+    withoutMissingObjects (runRulebook (wa ^. whenPlayBegins) ()) (handleMissingObject "Failed when beginning" (Just False))
+    mapM_ parseAction actionsToDo
+    pass
+    )
     --do the commands...
-   -- rs <- mapM parseAction actionsToDo
+    
   --  print rs
   let flushBufferToText w = runPure $ runState w $ do
         -- take it down and flip it around
