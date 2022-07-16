@@ -29,5 +29,4 @@ instance HasProperty a v => HasProperty (Maybe a) v where
     (\case
       Nothing -> const Nothing
       Just a -> \v -> Just $ a & propertyL .~ v)
-instance HasProperty () a
 -- ~\~ end

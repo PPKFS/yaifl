@@ -1,3 +1,5 @@
+{-# LANGUAGE Strict #-}
+
 module Main ( main ) where
 {-
 import Yaifl
@@ -18,58 +20,52 @@ import qualified Data.EnumMap as DEM
 import Yaifl.Core.ObjectLookup
 -}
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
-import Test.Syd
-import Data.Map ((!), unions, map)
-import System.FilePath (takeBaseName)
-import Test.Syd.OptParse
-    ( Settings(settingGoldenReset), getSettings )
-import Yaifl.Test.Common (expectTitle)
+import Test.Sandwich
+    ( runSandwich,
+      defaultOptions,
+      describe,
+      Options(optionsFormatters, optionsProjectRoot,
+              optionsTestArtifactsDirectory),
+      SomeFormatter(SomeFormatter),
+      TestArtifactsDirectory(TestArtifactsGeneratedDirectory) )
+import Yaifl.Test.Common (DiffException (..))
+import Test.Sandwich.Formatters.TerminalUI
+    ( defaultTerminalUIFormatter,
+      CustomTUIException(CustomTUIExceptionBrick),
+      terminalUICustomExceptionFormatters )
+import Graphics.Vty
+    ( Attr(attrForeColor), MaybeDefault(SetTo), green, red )
+import Brick ( modifyDefAttr, txtWrap, vBox, Widget )
+import Data.Algorithm.Diff
+    ( getGroupedDiff, Diff, PolyDiff(First, Both, Second) )
+import Data.Time ( getCurrentTime )
 
+
+formatDiff :: SomeException -> Maybe CustomTUIException
+formatDiff e = case fromException e of
+  Just (DiffException amendedOutput ex) -> Just $ CustomTUIExceptionBrick
+    $ vBox $ map diffBlockToWidget $ getGroupedDiff (lines amendedOutput) (lines ex)
+  Nothing -> Nothing
+
+diffBlockToWidget :: Diff [Text] -> Widget n
+diffBlockToWidget (Both a _) = txtWrap $ unlines a
+diffBlockToWidget (Data.Algorithm.Diff.Second a) = modifyDefAttr (\x -> x { attrForeColor = SetTo red }) $ txtWrap $ "-" <> unlines a
+diffBlockToWidget (Data.Algorithm.Diff.First a) = modifyDefAttr (\x -> x { attrForeColor = SetTo green }) $ txtWrap $ "+" <> unlines a
+
+testOptions :: Options
+testOptions = defaultOptions {
+  optionsFormatters = [SomeFormatter $ defaultTerminalUIFormatter {
+      terminalUICustomExceptionFormatters = [formatDiff]
+      }]
+  , optionsProjectRoot = Just "testfol"
+  , optionsTestArtifactsDirectory = TestArtifactsGeneratedDirectory "test_runs" (show <$> getCurrentTime)
+}
 
 main :: IO ()
-main = do
-  s <- getSettings
-  let gr = settingGoldenReset s
-  sydTestWith (s { settingGoldenReset = False }) $ do
-    scenarioDirRecur "test/testcases" $ \fp -> do
-      let t = toText (takeBaseName fp)
-      if gr
-        then do
-          print $ "Doing" <> t
-          writeFile fp . toString . mconcat $ collectGoldens ! toString t $ t
-        else
-          let ce = collectExamples ! takeBaseName fp in
-            it "Runs" $ do
-              goldenTextFile fp ce
-
-
-
-
-
-collectGoldens :: Map String (Text -> [Text])
-collectGoldens = Data.Map.map (\ v t -> expectTitle t :  v) $ unions
-  [ Chapter3.goldens
-
-  ]
-
-collectExamples :: Map String (IO Text)
-collectExamples = unions
-  [ Chapter3.examples
-
-  ]
-
-
-
+main = runSandwich testOptions $ do
+  describe "Examples" $ do
+    Chapter3.spec
 {-
-consumeBlankRoomDescription :: Text -> Text -> Either Assertion Text
-consumeBlankRoomDescription t1 = consumeLine (mconcat ["It's ", t1, "."])
--}
-
-
-      --die "you FAIL miette? you fail her tests like weakly typed language? oh! oh! jail for mother! jail for mother for One Thousand Years!!!"
-{-
-
-
 isWestOf :: RoomObject w -> State (RoomObject w) a0
 isWestOf = error "not implemented"
 

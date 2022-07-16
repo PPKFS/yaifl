@@ -16,7 +16,6 @@ import Yaifl.Core.Properties.Enclosing ( enclosingContains, Enclosing )
 import Yaifl.Core.Properties.Property ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing, getPropertyOrThrow, setEnclosing )
 import Text.Interpolation.Nyan ( int, rmode' )
-import Yaifl.Core.Say
 
 -- ~\~ begin <<lit/worldmodel/objects/move.md|move-func>>[0] project://lit/worldmodel/objects/move.md:27
 move :: 

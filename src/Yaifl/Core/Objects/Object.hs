@@ -24,7 +24,7 @@ module Yaifl.Core.Objects.Object (
   , _Room, _Thing ) where
 
 
-import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity, typeDAG, Metadata, noteError )
+import Yaifl.Core.Common ( WMObjSpecifics, Timestamp, HasID(..), Entity, typeDAG, Metadata )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
 import Cleff.State
 import Data.Set (member)

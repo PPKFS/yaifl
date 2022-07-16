@@ -17,7 +17,6 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say
-import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Lamp.Properties.Container
@@ -32,7 +31,6 @@ import qualified Data.Text as T
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
 import Cleff.State
-import Formatting.Buildable (Buildable(..))
 import Text.Interpolation.Nyan
 
 -- | An easier way to describe the 3 requirements to look.
@@ -251,7 +249,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       setStyle (Just PPTTY.bold)
       let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
-      debug $ "todo: fix"--show $ _argsVariables rb
+      debug "todo: fix"--show $ _argsVariables rb
       debug [int|t|"Printing room description heading with visibility ceiling TODO and visibility count #{cnt}|]
       if
         | cnt == 0 -> do
@@ -282,7 +280,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= lookingActionName)) $ do
             let desc = _objDescription loc
-            unless (desc == T.empty)
+            when (desc /= T.empty)
               (sayLn (_objDescription loc))
         | otherwise -> pass
       return Nothing),

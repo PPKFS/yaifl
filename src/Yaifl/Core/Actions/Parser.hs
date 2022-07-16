@@ -25,7 +25,8 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler : es)
   ~> Eff es
 runActionHandlerAsWorldActions = interpret $ \case
-  ParseAction t -> do
+  ParseAction actionOpts t -> do
+    unless (silently actionOpts) $ sayLn $ "> " <> t
     --find the verb, which will be the first N words
     possVerbs <- findVerb t
     ac <- case possVerbs of

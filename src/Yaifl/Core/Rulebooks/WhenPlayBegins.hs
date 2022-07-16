@@ -17,7 +17,7 @@ import Yaifl.Core.Say ( Saying, say, setStyle )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
 import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass )
-import Yaifl.Core.Common ( firstRoom, parseAction, title, ActionHandler, Metadata )
+import Yaifl.Core.Common ( firstRoom, parseAction, title, ActionHandler, Metadata, ActionOptions (..) )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
 import Yaifl.Core.Logger ( Log, err )
 import Cleff.State ( State )
@@ -67,7 +67,7 @@ initRoomDescription ::
   => ActionHandler :> es
   => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction "looking" >>= (\case
+  parseAction (ActionOptions True) "looking" >>= (\case
      Left txt -> err txt
      Right True -> pass
      Right False -> error "") -- noteError "Somehow, looking when play begins failed")

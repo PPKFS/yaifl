@@ -11,6 +11,7 @@ module Yaifl.Core.Common
   , Timestamp(..)
   , WorldModel(..)
   , RoomDescriptions(..)
+  , ActionOptions(..)
 
   -- * Metadata
   , Metadata(..)
@@ -64,8 +65,7 @@ import Text.Pretty.Simple (pStringOpt, defaultOutputOptionsNoColor)
 import Formatting.Buildable (Buildable(..))
 import Prelude hiding (build)
 import Data.Text.Lazy.Builder (toLazyText, fromText)
-import Yaifl.Core.Say
-import Yaifl.Core.Logger
+import Yaifl.Core.Logger ( Log, err )
 
 instance {-# OVERLAPPABLE #-} Buildable a where
   build = const "No display instance"
@@ -181,6 +181,7 @@ type family WMDirections (wm :: WorldModel) :: Type where
 
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v) = o
+
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/typefamilies.md|world-model-constraints>>[0] project://lit/worldmodel/typefamilies.md:88
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirections wm))
@@ -273,8 +274,12 @@ traceGuard ::
   -> Eff es Bool
 traceGuard lvl = ((lvl <=) <$> use traceAnalysisLevel) ||^ (not <$> isRuntime)
 data ActionHandler :: Effect where
-  ParseAction :: Text -> ActionHandler m (Either Text Bool)
+  ParseAction :: ActionOptions -> Text -> ActionHandler m (Either Text Bool)
 
+newtype ActionOptions = ActionOptions  
+  { silently :: Bool
+
+  }
 makeEffect ''ActionHandler
 -- ~\~ end
 -- ~\~ end

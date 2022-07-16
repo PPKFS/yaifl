@@ -20,7 +20,6 @@ module Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Common ( WorldModel, Timestamp, HasID(..) )
 import Yaifl.Core.Objects.Object ( Object )
 import Yaifl.Core.Objects.ObjectData ( RoomData, ThingData )
-import Formatting.Buildable (Buildable(..))
 
 -- ~\~ begin <<lit/worldmodel/objects/dynamic.md|timestamped-object>>[0] project://lit/worldmodel/objects/dynamic.md:37
 data TimestampedObject wm d = TimestampedObject

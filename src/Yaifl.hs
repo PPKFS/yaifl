@@ -28,12 +28,11 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.WhenPlayBegins
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.ActionProcessing
-import Cleff.Trace (runTraceStderr)
+import Cleff.Trace (ignoreTrace)
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Actions.Parser
 import Yaifl.Lamp.Actions.Looking
-import Prelude hiding (int, Reader, runReader)
 import Yaifl.Core.Actions.Activity
 import Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
@@ -42,18 +41,24 @@ import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.Activities.DescribingLocale
 import Text.Interpolation.Nyan
+import Yaifl.Lamp.ObjectSpecifics
+import Yaifl.Lamp.Actions.Going
+import Yaifl.Lamp.Properties.Door
 --import Yaifl.Core.Objects.Create
 --import Yaifl.Core.Rulebooks.WhenPlayBegins
 --import Yaifl.Core.ActivityCollection
 --import Yaifl.Core.Directions
 
-type PlainWorldModel = 'WorldModel () Direction () ()
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
   , WMHasProperty s Container
   , WMHasProperty s Enterable
-  , WMHasProperty s Openable)
+  , WMHasProperty s Openable
+  , HasLookingProperties s
+  , WMStdDirections s
+  , WMHasProperty s Door)
 
 blankWorld :: HasStandardProperties wm => World (wm :: WorldModel)
 blankWorld = World
@@ -120,7 +125,7 @@ type EffStackNoIO wm = '[
   , ObjectUpdate wm
   , ObjectLookup wm
   , Log
-  , Reader [Text]
+  , Cleff.Reader.Reader [Text]
   , State (Metadata wm)
   , State (WorldActions wm)
   , ObjectCreation wm
@@ -133,6 +138,8 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 newWorld ::
   HasLookingProperties wm
+  => WMStdDirections wm
+  => WMHasProperty wm Door
   => Eff (EffStack wm) ()
 newWorld = do
   addBaseObjects
@@ -146,8 +153,8 @@ convertToUnderlyingStack =
   . runCreationAsLookup
   . zoom worldActions
   . zoom worldMetadata
-  . runReader []
-  . runTraceStderr
+  . Cleff.Reader.runReader []
+  . ignoreTrace
   . runLoggingAsTrace
   . runQueryAsLookup
   . runTraverseAsLookup
@@ -219,7 +226,7 @@ interpretLookup = do
                 let (cs :: Text) = show callStack
                 noteError Left $ case mbRoom of
                   Nothing -> [int|t|Could not find the object #s{i} as either a thing or room (Queried as a #{expected}).|]
-                  Just a -> [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |] :: Text
+                  Just _ -> [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |] :: Text
               Just ao -> 
                 withoutMissingObjects (Right <$> reify ao)
                   (\mo -> noteError Left [int|t|Failed to reify #{mo}.|])
@@ -243,21 +250,23 @@ updateIt ts newObj mbExisting = case mbExisting of
   Just (DynamicObject (TimestampedObject _ _ f)) -> Just (DynamicObject (TimestampedObject newObj ts f))
 
 runGame ::
-  HasStandardProperties wm
-  => Text
+  World wm
+  -> Text
   -> Eff (EffStack wm) a
   -> IO (World wm)
-runGame _ f = do
-  (_, w) <- runIOE $ runState blankWorld $ convertToUnderlyingStack f
+runGame wo _ f = do
+  (_, w) <- runIOE $ runState wo $ convertToUnderlyingStack f
   return w
 
 addBaseActions ::
   HasLookingProperties wm
+  => WMStdDirections wm
+  => WMHasProperty wm Door
   => State (WorldActions wm) :> es
   => Eff es ()
 addBaseActions = do
   addAction lookingAction
-  --addAction goingActionImpl
+  addAction goingAction
 
 makeTypeDAG :: Map Text (Set Text)
 makeTypeDAG = fromList

@@ -9,8 +9,6 @@ import Language.Haskell.TH
 import Data.Char (isSpace)
 import Yaifl.Core.World
 import Yaifl.Core.Say
---import Yaifl.Core.Objects.Missing
---import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Logger
 import Cleff.State (runState, get)
 import Yaifl.Core.Objects.Query
@@ -19,8 +17,10 @@ import Yaifl.Core.Rulebooks.Run
 import Yaifl.Core.Common
 import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
 import Text.Interpolation.Nyan
---import Yaifl.Core.Rulebooks.WhenPlayBegins
---import Yaifl.Core.Actions.Action
+import Test.Sandwich ( timeAction, it, HasBaseContext, SpecFree )
+import Control.Monad.Catch ( MonadMask )
+import Control.Exception (throwIO)
+import Prelude hiding (force)
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -58,57 +58,50 @@ newlinesToWrap = foldl' (\acc -> \case
   "" -> acc <> "\n" <> (if fmap snd (unsnoc acc) == Just '\n' then "" else "\n")
   x -> acc <> x) "" . lines
 
+data DiffException = DiffException Text Text
+  deriving stock Show
+instance Exception DiffException
+
+force :: NFData a => a -> a
+force a = deepseq a a
 testHarness ::
-  forall wm a. 
-  HasStandardProperties wm
+  forall wm a context m.
+  MonadIO m
+  => MonadMask m
+  => HasBaseContext context
+  => HasStandardProperties wm
   => HasCallStack
   => Text
   -> Game wm a
   -> [Text]
-  -> IO Text
-testHarness fullTitle initWorld actionsToDo = do
-  let (_, shortName) = first (T.dropEnd 3) $ T.breakOnEnd " - " fullTitle
-  (w2 :: World wm) <- liftIO $ runGame shortName (do
-    newWorld
-    info $ [int|t|Building world #{shortName}...|] 
-    initWorld
-    info $ "World construction finished, beginning game..."
-    wa <- get @(WorldActions wm)
-    --when I write a proper game loop, this is where it needs to go
-    withoutMissingObjects (runRulebook (wa ^. whenPlayBegins) ()) (handleMissingObject "Failed when beginning" (Just False))
-    mapM_ parseAction actionsToDo
-    pass
-    )
-    --do the commands...
-    
-  --  print rs
-  let flushBufferToText w = runPure $ runState w $ do
-        -- take it down and flip it around
-        msgList <- use (messageBuffer % msgBufBuffer % reversed)
-        return $ (mconcat . map show) msgList
-  let (x, _) = flushBufferToText w2
-  putStrLn . T.unpack $ x
-  let errs = w2 ^. worldMetadata % errorLog
-  case errs of
-    [] -> return x
-    xs -> return $ x <> "\nEncountered the following errors:  \n" <> unlines xs
+  -> [Text]
+  -> SpecFree context m ()
+testHarness fullTitle initWorld actionsToDo expected = do
+  it (toString $ "Runs " <> fullTitle) $ do
+    (!w :: World wm) <- timeAction "Worldbuilding" $ liftIO $ runGame blankWorld fullTitle (do
+        newWorld
+        info [int|t|Building world #{fullTitle}...|]
+        initWorld
+        info "World construction finished, beginning game..."
+        )
+    (!w2 :: World wm) <- timeAction "Running" $ liftIO $ runGame w fullTitle $ do
+      wa <- get @(WorldActions wm)
+      --when I write a proper game loop, this is where it needs to go
+      failHorriblyIfMissing (runRulebook (wa ^. whenPlayBegins) ())
+      mapM_ (parseAction (ActionOptions False)) actionsToDo
+      pass
+    --  print rs
+    let flushBufferToText w' = runPure $ runState w' $ do
+          -- take it down and flip it around
+          msgList <- use (messageBuffer % msgBufBuffer % reversed)
+          return $ (mconcat . map show) msgList
+    let (x, _) = flushBufferToText w2
+        amendedOutput = case w2 ^. worldMetadata % errorLog of
+          [] -> x
+          xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
+    let ex = mconcat (expectTitle fullTitle : expected )
+    unless (amendedOutput == ex) (liftIO $ throwIO $ DiffException amendedOutput ex)
 
---buildExpected = mconcat (expectTitle t : expected )
-{-
-foreachObject ::
-  MonadWorld s m
-  => StoreLens' s d
-  -> (Object s d -> m (Maybe (Object s d)))
-  -> m ()
-foreachObject sl f = do
-  store <- use sl
-  DEM.traverseWithKey (\_ o -> do
-    robj <- reifyObject sl o
-    updObj <- f robj
-    whenJust updObj (setObjectFrom sl)
-    ) (unStore store)
-  pass
--}
 expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"
 
@@ -123,4 +116,8 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
                 (if v == length t1 - 2 then "and " else "")) t1 [0..]
 
 expectLooking :: Text -> Text -> Text
-expectLooking t d = expectLine t <> expectLine d
+expectLooking t "" = expectLine t <> expectLine ""
+expectLooking t d = expectLine t <> expectLine "" <> expectLine d 
+
+expectAction :: Text -> Text
+expectAction a = expectLine $ "> " <> a <> "\n"

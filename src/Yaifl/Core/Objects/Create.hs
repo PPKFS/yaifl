@@ -5,12 +5,14 @@
 module Yaifl.Core.Objects.Create
   ( -- * Effect
   ObjectCreation(..)
+  , AddObjects
   , generateEntity
   , addAbstractThing
   , addAbstractRoom
   , addThing
   , addRoom
   , addThing'
+  , addObject
   , addRoom'
   , addBaseObjects
   , reifyRoom
@@ -23,7 +25,7 @@ import Yaifl.Core.Common
 import Yaifl.Core.Logger ( debug, Log )
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Objects.Move ( move )
-import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object), Room, Thing )
+import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object), Room, Thing, objData )
 import Yaifl.Core.Objects.ObjectData
 import Yaifl.Core.Objects.Query ( ObjectUpdate, ObjectLookup, getThing, failHorriblyIfMissing )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
@@ -63,14 +65,14 @@ reifyObject setFunc (DynamicObject ts) = do
       setFunc (DynamicObject $ TimestampedObject updatedObj t (_tsUpdateFunc ts))
       return updatedObj
 
-reifyRoom :: 
+reifyRoom ::
   State (Metadata wm) :> es
   => (ObjectCreation wm :> es)
   => AbstractRoom wm
   -> Eff es (Room wm)
 reifyRoom = reifyObject addAbstractRoom
 
-reifyThing :: 
+reifyThing ::
   State (Metadata wm) :> es
   => (ObjectCreation wm :> es)
   => AbstractThing wm
@@ -119,7 +121,10 @@ addObject rf updWorld n d ty isT specifics details updateFunc = do
   then
     previousRoom .= e
   else
-    failHorriblyIfMissing $ getThing e >>= flip move lastRoom >> pass -- move it if we're still 
+    failHorriblyIfMissing $ do
+      t <- getThing e
+      when (t ^. objData % thingContainedBy == defaultVoidID)
+        (move t lastRoom >> pass)
   rf obj
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/creation.md|add-objects>>[0] project://lit/worldmodel/objects/creation.md:104

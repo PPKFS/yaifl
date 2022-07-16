@@ -25,6 +25,7 @@ module Yaifl.Core.Objects.Query
   , getThingMaybe
   , getRoomMaybe
   , asThingOrRoom
+  , asThingOrRoomM
   , getLocation
   -- * Modify
   , modifyObject
@@ -50,7 +51,6 @@ import Yaifl.Core.Logger ( Log, err )
 import Yaifl.Core.Objects.Object ( _Room, _Thing, AnyObject, Object(_objID), Room, Thing, objData )
 import Yaifl.Core.Objects.ObjectData
 import Text.Interpolation.Nyan
-import Yaifl.Core.Say
 
 -- ~\~ begin <<lit/worldmodel/objects/query.md|missing-object>>[0] project://lit/worldmodel/objects/query.md:61
 data MissingObject = MissingObject
@@ -184,6 +184,18 @@ asThingOrRoom o tf rf =
   if isThing o
   then tf <$> getThing o
   else rf <$> getRoom o
+
+asThingOrRoomM ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> (Thing wm -> Eff es a)
+  -> (Room wm -> Eff es a)
+  -> Eff es a
+asThingOrRoomM o tf rf =
+  if isThing o
+  then getThing o >>= tf
+  else getRoom o >>= rf
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|modify-objects>>[0] project://lit/worldmodel/objects/query.md:209
 modifyObjectFrom ::

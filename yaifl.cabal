@@ -120,6 +120,7 @@ library
     Yaifl.Lamp.Properties.Openable
     Yaifl.Lamp.Properties.Container
     Yaifl.Lamp.Properties.Supporter
+    Yaifl.Lamp.Properties.Door
     Yaifl.Lamp.ObjectSpecifics
 
     Yaifl.Lamp.Actions.Going
@@ -138,9 +139,14 @@ test-suite yaifl-test
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , sydtest
+    , sandwich
+    , exceptions
     , yaifl
     , filepath
+    , vty
+    , brick
+    , pretty
+    , Diff
     , bytestring
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:

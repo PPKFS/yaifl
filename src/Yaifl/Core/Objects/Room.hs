@@ -10,7 +10,6 @@ module Yaifl.Core.Objects.Room
 
 import Cleff.State ( State )
 import qualified Data.Map as Map
-import qualified Data.Text.Lazy.Builder as TLB
 
 import Yaifl.Core.Common ( Entity, HasID(getID), Metadata, WMDirections, whenConstructing )
 import Yaifl.Core.Directions
