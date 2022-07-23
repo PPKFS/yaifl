@@ -28,7 +28,6 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.WhenPlayBegins
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Rulebooks.ActionProcessing
-import Cleff.Trace (ignoreTrace)
 import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Actions.Parser
@@ -44,10 +43,8 @@ import Text.Interpolation.Nyan
 import Yaifl.Lamp.ObjectSpecifics
 import Yaifl.Lamp.Actions.Going
 import Yaifl.Lamp.Properties.Door
---import Yaifl.Core.Objects.Create
---import Yaifl.Core.Rulebooks.WhenPlayBegins
---import Yaifl.Core.ActivityCollection
---import Yaifl.Core.Directions
+import qualified Data.Text as T
+import Yaifl.Core.Rulebooks.Rule (ActionHandler)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
@@ -58,7 +55,8 @@ type HasStandardProperties s = (
   , WMHasProperty s Openable
   , HasLookingProperties s
   , WMStdDirections s
-  , WMHasProperty s Door)
+  , WMHasProperty s Door
+  , WMParseableDirections s)
 
 blankWorld :: HasStandardProperties wm => World (wm :: WorldModel)
 blankWorld = World
@@ -66,6 +64,7 @@ blankWorld = World
   , _worldStores = blankStores
   , _worldActions = blankActions
   , _messageBuffer = blankMessageBuffer
+  , _worldLogs = LB []
   , _worldActivities = blankActivityCollection
   }
 
@@ -97,7 +96,7 @@ blankStores = WorldStores
   , _concepts = ()
   }
 
-blankMetadata :: Metadata s
+blankMetadata :: Metadata
 blankMetadata = Metadata
   { _title = "Untitled"
   , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
@@ -119,14 +118,14 @@ type family (xs :: [(Type -> Type) -> Type -> Type]) :++: (ys :: [(Type -> Type)
 
 type EffStack wm = EffStackNoIO wm :++: '[IOE]
 type EffStackNoIO wm = '[
-  ActionHandler
+  ActionHandler wm
   , State (ActivityCollection wm)
-  , ObjectTraverse wm  
+  , ObjectTraverse wm
   , ObjectUpdate wm
   , ObjectLookup wm
   , Log
   , Cleff.Reader.Reader [Text]
-  , State (Metadata wm)
+  , State Metadata
   , State (WorldActions wm)
   , ObjectCreation wm
   , Saying
@@ -138,6 +137,7 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 newWorld ::
   HasLookingProperties wm
+  
   => WMStdDirections wm
   => WMHasProperty wm Door
   => Eff (EffStack wm) ()
@@ -146,7 +146,9 @@ newWorld = do
   addBaseActions
 
 convertToUnderlyingStack ::
-  forall wm. Eff (EffStack wm)
+  forall wm. 
+  (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm)
+  => Eff (EffStack wm)
   ~> Eff (UnderlyingEffStack wm)
 convertToUnderlyingStack =
   runSayPure
@@ -154,8 +156,7 @@ convertToUnderlyingStack =
   . zoom worldActions
   . zoom worldMetadata
   . Cleff.Reader.runReader []
-  . ignoreTrace
-  . runLoggingAsTrace
+  . runLoggingInternal @(World wm)
   . runQueryAsLookup
   . runTraverseAsLookup
   . zoom worldActivities
@@ -164,7 +165,7 @@ convertToUnderlyingStack =
 
 -- TODO: there's probably a much nicer way to make these traverse lens nicely
 runTraverseAsLookup ::
-  '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State (Metadata wm)] :>> es
+  '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State (Metadata)] :>> es
   => Eff (ObjectTraverse wm : es)
   ~> Eff es
 runTraverseAsLookup = interpret \case
@@ -194,23 +195,23 @@ runQueryAsLookup ::
   => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
-  => (State (Metadata wm) :> es)
+  => (State (Metadata) :> es)
   => Eff (ObjectUpdate wm : ObjectLookup wm : es)
   ~> Eff es
 runQueryAsLookup = interpretLookup  . interpretUpdate
 
 interpretLookup ::
-  forall wm es. 
+  forall wm es.
   HasCallStack
   => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
-  => (State (Metadata wm) :> es)
+  => (State Metadata :> es)
   => Eff (ObjectLookup wm : es)
   ~> Eff es
 interpretLookup = do
-  let lookupHelper :: 
-        Entity 
+  let lookupHelper ::
+        Entity
         -> Lens' (WorldStores wm) (Store (AbstractObject wm d))
         -> (AbstractObject wm d -> Eff (NoMissingObject : es) (Object wm d))
         -> Lens' (WorldStores wm) (Store (AbstractObject wm e))
@@ -227,7 +228,7 @@ interpretLookup = do
                 noteError Left $ case mbRoom of
                   Nothing -> [int|t|Could not find the object #s{i} as either a thing or room (Queried as a #{expected}).|]
                   Just _ -> [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |] :: Text
-              Just ao -> 
+              Just ao ->
                 withoutMissingObjects (Right <$> reify ao)
                   (\mo -> noteError Left [int|t|Failed to reify #{mo}.|])
   interpret \case
@@ -236,7 +237,7 @@ interpretLookup = do
 
 interpretUpdate ::
   State (World wm) :> es
-  => (State (Metadata wm) :> es)
+  => (State (Metadata) :> es)
   => Eff (ObjectUpdate wm : es)
   ~> Eff es
 interpretUpdate = interpret \case
@@ -250,7 +251,8 @@ updateIt ts newObj mbExisting = case mbExisting of
   Just (DynamicObject (TimestampedObject _ _ f)) -> Just (DynamicObject (TimestampedObject newObj ts f))
 
 runGame ::
-  World wm
+  (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm) 
+  => World wm
   -> Text
   -> Eff (EffStack wm) a
   -> IO (World wm)
@@ -259,7 +261,7 @@ runGame wo _ f = do
   return w
 
 addBaseActions ::
-  HasLookingProperties wm
+  (HasLookingProperties wm)
   => WMStdDirections wm
   => WMHasProperty wm Door
   => State (WorldActions wm) :> es
@@ -267,6 +269,18 @@ addBaseActions ::
 addBaseActions = do
   addAction lookingAction
   addAction goingAction
+  addGoingSynonyms
+
+addGoingSynonyms ::
+  forall wm es.
+  (State (WorldActions wm) :> es, Bounded (WMDirections wm), Enum (WMDirections wm), Show (WMDirections wm))
+  => Eff es ()
+addGoingSynonyms = do
+  let (allDirs :: [WMDirections wm]) = universe
+  forM_ allDirs $ \dir ->
+    let dirN = (T.toLower . fromString . show) dir in
+    actions % at dirN ?= Left (InterpretAs ("go " <> dirN))
+  pass
 
 makeTypeDAG :: Map Text (Set Text)
 makeTypeDAG = fromList

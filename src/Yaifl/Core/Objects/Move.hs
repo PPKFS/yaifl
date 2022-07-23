@@ -19,7 +19,7 @@ import Text.Interpolation.Nyan ( int, rmode' )
 
 -- ~\~ begin <<lit/worldmodel/objects/move.md|move-func>>[0] project://lit/worldmodel/objects/move.md:27
 move :: 
-  State (Metadata wm) :> es
+  State Metadata :> es
   => Log :> es
   => ObjectQuery wm es
   => WMHasProperty wm Enclosing

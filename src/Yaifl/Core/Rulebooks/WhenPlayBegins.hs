@@ -16,8 +16,8 @@ import qualified Data.Text as T
 import Yaifl.Core.Say ( Saying, say, setStyle )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
-import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass )
-import Yaifl.Core.Common ( firstRoom, parseAction, title, ActionHandler, Metadata, ActionOptions (..) )
+import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
+import Yaifl.Core.Common ( firstRoom, title,  Metadata )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
 import Yaifl.Core.Logger ( Log, err )
 import Cleff.State ( State )
@@ -39,7 +39,7 @@ whenPlayBeginsRules = Rulebook
     ]
 
 sayIntroText ::
-  State (Metadata wm) :> es
+  State (Metadata) :> es
   => Saying :> es
   => Eff es ()
 sayIntroText = do
@@ -64,10 +64,10 @@ introText w = fold
 
 initRoomDescription ::
   Log :> es
-  => ActionHandler :> es
+  => ActionHandler wm :> es
   => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction (ActionOptions True) "looking" >>= (\case
+  parseAction (ActionOptions True Nothing) "look" >>= (\case
      Left txt -> err txt
      Right True -> pass
      Right False -> error "") -- noteError "Somehow, looking when play begins failed")

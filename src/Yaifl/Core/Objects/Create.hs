@@ -40,12 +40,12 @@ data ObjectCreation wm :: Effect where
 
 makeEffect ''ObjectCreation
 
-type AddObjects wm es = (ObjectCreation wm :> es, State (Metadata wm) :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
+type AddObjects wm es = (ObjectCreation wm :> es, State (Metadata) :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
-  State (Metadata wm) :> es
+  State (Metadata) :> es
   => (AbstractObject wm d -> Eff es ())
   -> AbstractObject wm d
   -> Eff es (Object wm d)
@@ -66,14 +66,14 @@ reifyObject setFunc (DynamicObject ts) = do
       return updatedObj
 
 reifyRoom ::
-  State (Metadata wm) :> es
+  State Metadata :> es
   => (ObjectCreation wm :> es)
   => AbstractRoom wm
   -> Eff es (Room wm)
 reifyRoom = reifyObject addAbstractRoom
 
 reifyThing ::
-  State (Metadata wm) :> es
+  State Metadata :> es
   => (ObjectCreation wm :> es)
   => AbstractThing wm
   -> Eff es (Thing wm)
@@ -82,7 +82,7 @@ reifyThing = reifyObject addAbstractThing
 -- ~\~ begin <<lit/worldmodel/objects/creation.md|make-object>>[0] project://lit/worldmodel/objects/creation.md:51
 makeObject ::
   ObjectCreation wm :> es
-  => State (Metadata wm) :> es
+  => State Metadata :> es
   => Text -- ^ Name.
   -> Text -- ^ Description.
   -> ObjType
@@ -94,7 +94,7 @@ makeObject ::
 makeObject n d ty isT specifics details upd = do
   e <- generateEntity isT
   t <- getGlobalTime
-  let obj = Object n d e ty t specifics details
+  let obj = Object (StaticText n) (StaticText d) e ty t specifics details
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 addObject ::

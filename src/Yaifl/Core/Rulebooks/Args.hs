@@ -18,8 +18,8 @@ data Args wm v = Args
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
-deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
-deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
+--deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
+--deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 
 
 -- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the 
@@ -57,9 +57,9 @@ instance Refreshable wm (UnverifiedArgs wm) where
   refreshVariables = return
 
 deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
-deriving stock instance (WMShow wm) => Show (UnverifiedArgs wm)
+--deriving stock instance (WMShow wm) => Show (UnverifiedArgs wm)
 deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
-deriving newtype instance (WMRead wm, WMOrd wm) => Read (UnverifiedArgs wm)
+--deriving newtype instance (WMRead wm, WMOrd wm) => Read (UnverifiedArgs wm)
 
 makeLenses ''Args
 

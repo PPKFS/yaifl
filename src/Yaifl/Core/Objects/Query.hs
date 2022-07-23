@@ -40,7 +40,8 @@ module Yaifl.Core.Objects.Query
   , refreshRoom
   , refreshThing
 
-  ,getCurrentPlayer
+  , getCurrentPlayer
+  , isPlayer
   ) where
 
 import Cleff.Error ( Error, fromEither, runError, throwError )
@@ -75,7 +76,7 @@ withoutMissingObjects f def = do
 
 handleMissingObject ::
   Log :> es
-  => State (Metadata wm) :> es
+  => State (Metadata) :> es
   => Text
   -> a
   -> MissingObject
@@ -110,9 +111,9 @@ makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
 
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
-type NoMissingObjects wm es = (NoMissingObject :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State (Metadata wm) :> es)
-type NoMissingRead wm es = (NoMissingObject :> es, ObjectLookup wm :> es, State (Metadata wm) :> es)
-type ObjectRead wm es = (ObjectLookup wm :> es, State (Metadata wm) :> es)
+type NoMissingObjects wm es = (NoMissingObject :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State (Metadata) :> es)
+type NoMissingRead wm es = (NoMissingObject :> es, ObjectLookup wm :> es, State (Metadata) :> es)
+type ObjectRead wm es = (ObjectLookup wm :> es, State (Metadata) :> es)
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/query.md|objectlike>>[0] project://lit/worldmodel/objects/query.md:127
 class HasID o => ObjectLike wm o where
@@ -287,8 +288,15 @@ refreshThing r = do
 getCurrentPlayer ::
   Log :> es
   => ObjectLookup wm :> es
-  => State (Metadata wm) :> es
+  => State (Metadata) :> es
   => Eff es (Thing wm)
 getCurrentPlayer = failHorriblyIfMissing $ use currentPlayer >>= getThing
+
+isPlayer ::
+  HasID o
+  => State (Metadata) :> es
+  => o
+  -> Eff es Bool
+isPlayer o = (getID o ==) <$> use currentPlayer
 -- ~\~ end
 -- ~\~ end

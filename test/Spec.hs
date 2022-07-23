@@ -21,13 +21,6 @@ import Yaifl.Core.ObjectLookup
 -}
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Test.Sandwich
-    ( runSandwich,
-      defaultOptions,
-      describe,
-      Options(optionsFormatters, optionsProjectRoot,
-              optionsTestArtifactsDirectory),
-      SomeFormatter(SomeFormatter),
-      TestArtifactsDirectory(TestArtifactsGeneratedDirectory) )
 import Yaifl.Test.Common (DiffException (..))
 import Test.Sandwich.Formatters.TerminalUI
     ( defaultTerminalUIFormatter,

@@ -14,6 +14,8 @@ import qualified Data.Aeson as A
 import qualified Data.Text as T
 import Katip.Format.Time ( formatAsLogTime )
 import Prelude hiding (Reader, asks, trace, local)
+import Yaifl.Core.Say
+import Cleff.State (modify)
 
 -- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:34
 data MsgSeverity = Debug | Info | Warning | Error
@@ -22,6 +24,8 @@ data MsgSeverity = Debug | Info | Warning | Error
 data Log :: Effect where
   LogMsg :: Maybe Loc -> MsgSeverity -> Text -> Log m ()
   WithContext :: Text -> m a -> Log m a
+
+newtype LogBuffer = LB [([Text], UTCTime, Maybe Loc, MsgSeverity, Text)]
 
 makeEffect ''Log
 -- ~\~ end
@@ -32,6 +36,20 @@ runAndIgnoreLogging ::
 runAndIgnoreLogging = interpret \case
   LogMsg{} -> pass
   WithContext _ m -> toEff m
+
+runLoggingInternal ::
+  forall s es. 
+  Reader [Text] :> es
+  => IOE :> es
+  => PartialState s LogBuffer es
+  => Eff (Log : es)
+  ~> Eff es
+runLoggingInternal = zoom (buf @s @LogBuffer) . reinterpret \case
+  LogMsg mbLoc sev msg -> do
+    now <- liftIO getCurrentTime
+    cxt <- asks reverse
+    modify (\(LB a) -> LB ((cxt, now, mbLoc, sev, msg):a))
+  WithContext cxt m -> local (cxt:) (toEff m)
 
 runLoggingAsTrace ::
   Reader [Text] :> es

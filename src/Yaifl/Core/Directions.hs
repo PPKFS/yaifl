@@ -4,6 +4,7 @@ module Yaifl.Core.Directions
   ( WithStandardDirections(..)
   , HasOpposite(..)
   , Direction(..)
+  , WMParseableDirections(..)
   , WithDirections
   , WMStdDirections
   ) where
@@ -19,10 +20,10 @@ class HasOpposite d where
   opposite :: d -> d
 
 type WithDirections (wm :: WorldModel) = (Ord (WMDirections wm), HasOpposite (WMDirections wm))
-type WMStdDirections (wm :: WorldModel) = (WithStandardDirections (WMDirections wm), WithDirections wm)
+type WMStdDirections (wm :: WorldModel) = (WithStandardDirections (WMDirections wm), WithDirections wm, Bounded (WMDirections wm), Enum (WMDirections wm), Show (WMDirections wm))
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/directions.md|stock-directions>>[0] project://lit/worldmodel/directions.md:31
-data Direction = 
+data Direction =
   North
   | South
   | East
@@ -54,5 +55,26 @@ instance HasOpposite Direction where
     Out -> In
     Up -> Down
     Down -> Up
+
+parseStandardDirections :: Text -> Maybe Direction
+parseStandardDirections = readMaybe . toString
+
+class WMParseableDirections (wm :: WorldModel) where
+  toTextDir :: Proxy wm -> WMDirections wm -> [Text]
+
+instance WMParseableDirections ('WorldModel s Direction b c) where
+  toTextDir _ = \case
+    North -> ["n", "north"]
+    South -> ["s", "south"]
+    West -> ["w", "west"]
+    East -> ["e", "east"]
+    NorthWest -> ["nw", "northwest", "north-west", "north west"]
+    NorthEast -> ["ne", "northeast", "north-east", "north east"]
+    SouthEast -> ["se", "southeast", "south-east", "south east"]
+    SouthWest -> ["sw", "southwest", "south-west", "south west"]
+    In -> ["nw", "northwest", "north-west", "north west"]
+    Out -> ["nw", "northwest", "north-west", "north west"]
+    Up -> ["nw", "northwest", "north-west", "north west"]
+    Down -> ["nw", "northwest", "north-west", "north west"]
 -- ~\~ end
 -- ~\~ end

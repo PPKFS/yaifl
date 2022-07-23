@@ -10,6 +10,7 @@ Stability   : No
 module Yaifl.Lamp.Activities.PrintingNameOfSomething
 ( printNameEx
 , printName
+, printNameDefiniteUncapitalised
 , capitalThe
 , printingNameOfSomethingImpl
 , SayOptions(..)
@@ -23,9 +24,9 @@ import Yaifl.Core.Objects.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Logger
-import Yaifl.Core.Common
 import Cleff.State
 import qualified Yaifl.Core.Actions.Activity as Ac
+import Yaifl.Core.Common
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -43,26 +44,37 @@ printName ::
   NoMissingObjects wm es
   => Log :> es
   => Saying :> es
-  => ActionHandler :> es
+  => ActionHandler wm :> es
   => ObjectTraverse wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectLike wm o
   => o
   -> Eff es ()
-printName o = printNameEx o noSayOptions
+printName = printNameEx noSayOptions
 
+printNameDefiniteUncapitalised ::
+  NoMissingObjects wm es
+  => Log :> es
+  => Saying :> es
+  => ActionHandler wm :> es
+  => State (ActivityCollection wm) :> es
+  => ObjectTraverse wm :> es
+  => ObjectLike wm o
+  => o 
+  -> Eff es ()
+printNameDefiniteUncapitalised = printNameEx (SayOptions Definite Uncapitalised)
 printNameEx :: 
   NoMissingObjects wm es
   => Log :> es
   => Saying :> es
-  => ActionHandler :> es
+  => ActionHandler wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
-  => o
-  -> SayOptions
+  => SayOptions
+  -> o 
   -> Eff es ()
-printNameEx o p = do
+printNameEx p o = do
   e <- getObject o
   let pr = doActivity Ac.printingNameOfSomething e
   case p of
@@ -75,4 +87,4 @@ printNameEx o p = do
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    (makeRule "" (\o -> say (_objName o) >> return (Just ())))
+    (makeRule "" (\o -> evalText (_objName o) o >>= say >> return (Just ())))

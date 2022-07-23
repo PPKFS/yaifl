@@ -7,6 +7,7 @@ module Yaifl.Core.Say
     MessageBuffer (..)
   , Saying(..)
   , Has(..)
+  , PartialState
   -- * Smart constructors
   , blankMessageBuffer
   -- * Buffer modification

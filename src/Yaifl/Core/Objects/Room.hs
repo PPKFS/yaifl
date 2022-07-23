@@ -62,7 +62,7 @@ makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r)
 
 addDirectionFrom ::
   ObjectQuery wm es
-  => State (Metadata wm) :> es
+  => State (Metadata) :> es
   => Log :> es
   => WithDirections wm
   => WMDirections wm
@@ -72,7 +72,7 @@ addDirectionFrom ::
 addDirectionFrom = isDirectionFromInternal True
 
 addDirectionFromOneWay ::
-  State (Metadata wm) :> es
+  State (Metadata) :> es
   => Log :> es
   => ObjectQuery wm es
   => WithDirections wm
@@ -83,7 +83,7 @@ addDirectionFromOneWay ::
 addDirectionFromOneWay = isDirectionFromInternal False
 
 isDirectionFromInternal ::
-  State (Metadata wm) :> es
+  State (Metadata) :> es
   => Log :> es
   => ObjectQuery wm es
   => WithDirections wm

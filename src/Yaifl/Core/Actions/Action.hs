@@ -4,17 +4,15 @@
 
 module Yaifl.Core.Actions.Action 
   ( Action(..)
-  --, parseAction
   , ActionParseArguments
   , ActionRulebook
   , ActionProcessing(..)
-
+  , InterpretAs(..)
   , WorldActions(..)
   , actions
 
   , whenPlayBegins
-  --, getAction
-  --, tryAction
+  , actionUnderstandAs
   , addAction
   , runAction
   , makeActionRulebook
@@ -46,11 +44,12 @@ data Action (wm :: WorldModel) where
     , _actionCarryOutRules :: !(ActionRulebook wm v)
     , _actionReportRules :: !(ActionRulebook wm v)
     } -> Action wm
-
-
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
 type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
+makeLenses ''Action
+
+newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
 -- | Helper function to make a rulebook of an action.
 makeActionRulebook :: 
@@ -60,7 +59,7 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Right x)
 
 data WorldActions (wm :: WorldModel) = WorldActions
-  { _actions :: !(Map Text (Action wm))
+  { _actions :: !(Map Text (Either InterpretAs (Action wm)))
   , _whenPlayBegins :: !(Rulebook wm () () Bool)
   , _actionProcessing :: ActionProcessing wm
   }
@@ -79,20 +78,12 @@ runAction args act = do
   let (ActionProcessing ap) = w
   ap act args
 
--- | Lookup an action from the world. TODO: handle did you mean, synonyms, etc.
-getAction :: 
-  State (WorldActions wm) :> es
-  => Text
-  -> UnverifiedArgs wm
-  -> Eff es (Maybe (Action wm))
-getAction n _ = use $ actions % at n
-
 -- | Add an action to the registry.
 addAction :: 
   State (WorldActions wm) :> es
   => Action wm 
   -> Eff es ()
 addAction ac =
-  actions % at (_actionName ac) ?= ac
+  actions % at (_actionName ac) ?= Right ac
 
 -- ~\~ end

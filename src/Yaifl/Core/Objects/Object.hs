@@ -37,7 +37,7 @@ newtype ObjType = ObjType
 
 isType ::
   forall wm es d.
-  State (Metadata wm) :> es
+  State Metadata :> es
   => Object wm d
   -> Text
   -> Eff es Bool
@@ -76,8 +76,8 @@ data Object wm objData = Object
   , _objData :: !objData
   } deriving stock (Generic)
 
-deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
-deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
+--deriving stock instance (Show (WMObjSpecifics wm), Show d) => Show (Object wm d)
+--deriving stock instance (Read (WMObjSpecifics wm), Read d) => Read (Object wm d)
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/objects/objects.md|obj-hasid>>[0] project://lit/worldmodel/objects/objects.md:81
 instance HasID (Object wm d) where

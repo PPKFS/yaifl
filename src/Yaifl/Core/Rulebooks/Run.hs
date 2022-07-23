@@ -8,12 +8,13 @@ module Yaifl.Core.Rulebooks.Run
   ) where
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
 
-import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
+import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
 import qualified Data.Text as T
 import Yaifl.Core.Logger ( Log, err, debug, withContext )
 import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
 import Yaifl.Core.Common
 import Text.Interpolation.Nyan
+import Cleff.Error
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::
@@ -55,15 +56,19 @@ processRuleList ::
   -> Eff es (v, Maybe re)
 processRuleList [] v = return (v, Nothing)
 processRuleList (Rule{..} : xs) args = do
-  (v, res) <- _runRule args
-  newArgs <- refreshVariables $ fromMaybe args v
+  mbRes <- runError @RuleCondition $ _runRule args
+  case mbRes of
+    Left _ -> processRuleList xs args
+    Right (v, res) -> do
+      newArgs <- refreshVariables $ fromMaybe args v
+      case res of
+        Nothing -> processRuleList xs newArgs
+        Just r -> do
+          unless (T.empty == _ruleName) $ debug [int|t|Succeeded after following the #{_ruleName} rule|]
+          return (newArgs, Just r)
+  
   -- if we hit nothing, continue; otherwise return
-  case res of
-    Nothing -> processRuleList xs newArgs
-    Just r -> do
-      unless (T.empty == _ruleName)
-        $ debug [int|t|Succeeded after following the #{_ruleName} rule|]
-      return (newArgs, Just r)
+  
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.

@@ -15,9 +15,10 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Core.Say
 import Yaifl.Core.Objects.Object
+import Cleff.State
 
-isBlankDescription :: Text -> Bool
-isBlankDescription d = T.empty == d
+isBlankDescription :: State Metadata :> es => Thing wm -> Eff es Bool
+isBlankDescription d = (T.empty ==) <$> evalDesc d
 
 ex2World :: Game PlainWorldModel ()
 ex2World = do
@@ -30,7 +31,7 @@ ex2World = do
   addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
     do
       traverseThings (\t -> do
-        when (isBlankDescription (t ^. objDescription )) (do
+        whenM (isBlankDescription t) (do
           printName t
           sayLn " has no description.")
         return Nothing)

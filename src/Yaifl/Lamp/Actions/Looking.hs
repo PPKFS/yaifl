@@ -45,9 +45,6 @@ data LookingActionVariables wm = LookingActionVariables
   }
   deriving stock (Eq, Generic)
 
-deriving stock instance (WMShow wm) => Show (LookingActionVariables wm)
-deriving stock instance (WMRead wm, WMOrd wm) => Read (LookingActionVariables wm)
-
 instance Buildable (LookingActionVariables s) where
   build (LookingActionVariables fr _ lvls _) = "Looking from "
     <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
@@ -66,8 +63,8 @@ lookingAction ::
   => Action wm
 lookingAction = Action
   lookingActionName
-  [] --todo: add "at => examine"
   ["look", "looking"]
+  [] --todo: add "at => examine"
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
@@ -102,7 +99,7 @@ getVisibilityLevels ::
 getVisibilityLevels e = do
   vh <- findVisibilityHolder e
   if vh `objectEquals` e
-      then err "moo" >> return [e]
+      then return [e]
       else (vh :) <$> getVisibilityLevels vh
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
@@ -258,7 +255,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
         | (getID <$> visCeil) == Just (getID loc) ->
           traverse_ printName visCeil --if the ceiling is the location, then print [the location]
         | True ->
-          traverse_ (`printNameEx` capitalThe) visCeil --otherwise print [The visibility ceiling]
+          traverse_ (printNameEx capitalThe) visCeil --otherwise print [The visibility ceiling]
       mapM_ foreachVisibilityHolder (drop 1 lvls)
       sayLn "\n"
       setStyle Nothing
@@ -279,9 +276,9 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
             pass
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= lookingActionName)) $ do
-            let desc = _objDescription loc
+            desc <- evalDesc loc
             when (desc /= T.empty)
-              (sayLn (_objDescription loc))
+              (sayLn desc)
         | otherwise -> pass
       return Nothing),
   makeRule "room description paragraphs about objects rule"
@@ -293,12 +290,11 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
   ]
 
 foreachVisibilityHolder :: 
-  NoMissingObjects wm es
+  (NoMissingObjects wm es, ActionHandler wm :> es)
   => Log :> es
   => Saying :> es
   => ObjectTraverse wm :> es
   => State (ActivityCollection wm) :> es
-  => ActionHandler :> es
   => AnyObject wm
   -> Eff es ()
 foreachVisibilityHolder e = do

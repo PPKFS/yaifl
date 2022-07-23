@@ -80,7 +80,7 @@ sayDomain ::
   -> Eff es ()
 sayDomain x e = do
   say x
-  printNameEx e (SayOptions Definite Uncapitalised)
+  printNameEx (SayOptions Definite Uncapitalised) e 
   say " you "
 
 alsoSee ::
@@ -135,11 +135,11 @@ alsoSee = Rule "You can also see" (\v ->
             case objGrp of
               [] -> pass -- nothing to print
               [e'] -> do
-                printNameEx (grpObj e') (SayOptions Indefinite Uncapitalised)
+                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e') 
                 pass
               e' : _ -> do
                 say $ show $ length objGrp
-                printNameEx (grpObj e') (SayOptions Indefinite Uncapitalised)
+                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e') 
                 pass
             when (num < length groupedList - 1) (say ", ")
             when (num == length groupedList - 2) (say "and ")
@@ -202,7 +202,8 @@ getGroupingProperties o = do
   let gwb = join $ mbThing ^? _Just % objData % thingWearable % _Wearable
       gtl = mbThing ^? _Just % objData % thingLit
   (ic, op) <- getContainerProps o
-  return $ GroupingProperties o (_objName o) hc wr gwb (Just Lit == gtl) op ic
+  n <- evalName o
+  return $ GroupingProperties o n hc wr gwb (Just Lit == gtl) op ic
 
 hasChildren
   :: NoMissingObjects wm es

@@ -11,7 +11,9 @@ module Yaifl.Core.Common
   , Timestamp(..)
   , WorldModel(..)
   , RoomDescriptions(..)
-  , ActionOptions(..)
+  , DynamicText(..)
+  , DynamicText'
+  , evalText
 
   -- * Metadata
   , Metadata(..)
@@ -35,9 +37,6 @@ module Yaifl.Core.Common
   , traceGuard
   , isRuntime
 
-  , ActionHandler(..)
-  , parseAction
-
   -- * Some defaults
   , defaultVoidID
   , defaultPlayerID
@@ -58,7 +57,7 @@ module Yaifl.Core.Common
   )
 where
 
-import Cleff.State ( State )
+import Cleff.State ( State, get )
 import qualified Data.EnumMap.Strict as EM
 import qualified Data.IntMap.Strict as IM
 import Text.Pretty.Simple (pStringOpt, defaultOutputOptionsNoColor)
@@ -192,7 +191,7 @@ type WMEq wm = WMConstr Eq wm
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/state.md|world-metadata>>[0] project://lit/worldmodel/state.md:46
 
-data Metadata (wm :: WorldModel) = Metadata
+data Metadata = Metadata
   { _title :: Text
   , _roomDescriptions :: RoomDescriptions
   , _dirtyTime :: Bool
@@ -214,10 +213,28 @@ data CurrentStage = Construction | Verification | Runtime
 data AnalysisLevel = None | Low | Medium | High | Maximal
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
+data DynamicText domain = StaticText Text | DynamicText (domain -> Metadata -> Text)
+type DynamicText' = DynamicText ()
+
+evalText :: 
+  State Metadata :> es
+  => DynamicText d
+  -> d
+  -> Eff es Text
+evalText (StaticText t) _ = pure t
+evalText (DynamicText f) d = f d <$> get
+
+evalText' :: 
+  State Metadata :> es
+  => DynamicText'
+  -> Eff es Text
+evalText' (StaticText t) = pure t
+evalText' (DynamicText f) = f () <$> get
+
 makeLenses ''Metadata
 
 noteError :: 
-  State (Metadata wm) :> es 
+  State Metadata :> es 
   => Log :> es
   => (Text -> a)
   -> Text 
@@ -228,7 +245,7 @@ noteError f t = do
   pure $ f t
 
 getGlobalTime :: 
-  State (Metadata wm) :> es 
+  State Metadata :> es 
   => Eff es Timestamp
 getGlobalTime = use globalTime
 
@@ -238,18 +255,18 @@ tickGlobalTime ::
 tickGlobalTime _ = pass
 
 setTitle :: 
-  State (Metadata wm) :> es 
+  State Metadata :> es 
   => Text -- ^ New title.
   -> Eff es ()
 setTitle = (title .=)
 
 isRuntime :: 
-  State (Metadata wm) :> es
+  State Metadata :> es
   => Eff es Bool
 isRuntime = (Runtime ==) <$> use currentStage
 
 whenConstructingM :: 
-  State (Metadata wm) :> es
+  State Metadata :> es
   => Eff es Bool 
   -> Eff es () 
   -> Eff es ()
@@ -259,7 +276,7 @@ whenConstructingM cond =
     return $ cs == Construction, cond])
 
 whenConstructing :: 
-  State (Metadata wm) :> es
+  State Metadata :> es
   => Bool
   -> Eff es () 
   -> Eff es ()
@@ -269,17 +286,9 @@ whenConstructing cond =
     return $ cs == Construction, pure cond])
 
 traceGuard ::
-  State (Metadata wm) :> es
+  State Metadata :> es
   => AnalysisLevel
   -> Eff es Bool
 traceGuard lvl = ((lvl <=) <$> use traceAnalysisLevel) ||^ (not <$> isRuntime)
-data ActionHandler :: Effect where
-  ParseAction :: ActionOptions -> Text -> ActionHandler m (Either Text Bool)
-
-newtype ActionOptions = ActionOptions  
-  { silently :: Bool
-
-  }
-makeEffect ''ActionHandler
 -- ~\~ end
 -- ~\~ end

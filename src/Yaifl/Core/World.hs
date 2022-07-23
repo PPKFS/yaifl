@@ -12,13 +12,15 @@ import Cleff.State ( State )
 import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
 import Yaifl.Core.Rulebooks.Rule ( Rule )
 import Yaifl.Core.Actions.Activity ( ActivityCollection )
+import Yaifl.Core.Logger
 
 data World (wm :: WorldModel) = World
-  { _worldMetadata :: Metadata wm
+  { _worldMetadata :: Metadata
   , _worldStores :: WorldStores wm
   , _worldActions :: WorldActions wm
   , _worldActivities :: ActivityCollection wm
   , _messageBuffer :: MessageBuffer
+  , _worldLogs :: LogBuffer
   }
 
 -- ~\~ begin <<lit/worldmodel/state.md|world-stores>>[0] project://lit/worldmodel/state.md:115
@@ -37,6 +39,9 @@ makeLenses ''WorldStores
 
 instance Has (World wm) MessageBuffer where
   buf = messageBuffer
+
+instance Has (World wm) LogBuffer where
+  buf = worldLogs
 -- ~\~ end
 -- ~\~ begin <<lit/worldmodel/state.md|world-other>>[0] project://lit/worldmodel/state.md:155
 
