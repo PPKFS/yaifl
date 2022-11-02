@@ -1,1 +1,0 @@
-# Objects, Things and Rooms

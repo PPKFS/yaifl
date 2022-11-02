@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/Rulebook.hs
--- ~\~ begin <<lit/rulebooks/rules-rulebooks.md|src/Yaifl/Core/Rulebooks/Rulebook.hs>>[0] project://lit/rulebooks/rules-rulebooks.md:70
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -35,13 +33,15 @@ module Yaifl.Core.Rulebooks.Rulebook
 
 
 import Yaifl.Core.Logger
-import Cleff.State
-import Yaifl.Core.Common
+import Yaifl.Core.Metadata
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
+import Solitude
+import Effectful.State.Static.Shared
+import Effectful
 
-type ParseArgumentEffects wm es = (State (Metadata) :> es, Log :> es, NoMissingObjects wm es)
+type ParseArgumentEffects wm es = (State Metadata :> es, Log :> es, NoMissingObjects wm es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ArgumentParseResult v)
@@ -57,9 +57,9 @@ data Rulebook wm ia v r = Rulebook
   , _rbRules :: [Rule wm v r]
   }
 
-blankRulebook :: 
-  Text 
-  -> Rulebook wm v v r 
+blankRulebook ::
+  Text
+  -> Rulebook wm v v r
 blankRulebook n = Rulebook n Nothing (ParseArguments (return . Right)) []
 
 -- | A `StandardRulebook` is one which expects to verify its own arguments.
@@ -68,21 +68,21 @@ type StandardRulebook wm v r = Rulebook wm (UnverifiedArgs wm) v r
 makeLenses ''Rulebook
 
 -- | Add a rule to a rulebook last.
-addRuleLast :: 
+addRuleLast ::
   Rule wm v r
   -> Rulebook wm ia v r
   -> Rulebook wm ia v r
 addRuleLast r = rbRules %~ (++ [r])
 
 -- | Add a rule to a rulebook first.
-addRuleFirst :: 
+addRuleFirst ::
   Rule wm v r
   -> Rulebook wm ia v r
   -> Rulebook wm ia v r
 addRuleFirst r = rbRules %~ (r :)
 
 -- | Remove any unwanted return values from a `Rule`.
-rulePass :: 
+rulePass ::
   Monad m
   => m (Maybe a)
 rulePass = return Nothing
@@ -129,4 +129,3 @@ positionPlayer = do
       "No rooms have been made, so cannot place the player."
     Just fr' -> do      m <- move pl fr'
 -}
--- ~\~ end

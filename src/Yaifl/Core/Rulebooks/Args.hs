@@ -1,13 +1,17 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/Args.hs
--- ~\~ begin <<lit/rulebooks/args.md|src/Yaifl/Core/Rulebooks/Args.hs>>[0] project://lit/rulebooks/args.md:6
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Rulebooks.Args where
 
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Common
+import Effectful
+import Solitude
+
+import Yaifl.Core.Entity ( HasID(..), Entity )
+import Yaifl.Core.Metadata ( Timestamp, currentPlayer )
+import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
+import Yaifl.Core.WorldModel
+import Effectful.Optics
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
@@ -18,11 +22,8 @@ data Args wm v = Args
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
---deriving stock instance (WMShow wm, Show v) => Show (Args wm v)
---deriving stock instance (WMRead wm, WMOrd wm, Read v) => Read (Args wm v)
 
-
--- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the 
+-- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the
 -- refreshVariables function is called to replace and update the objects
 class Refreshable wm av where
   refreshVariables :: forall es. (NoMissingObjects wm es) => av -> Eff es av
@@ -36,10 +37,10 @@ instance Refreshable wm v => Refreshable wm (Args wm v) where
     o <- getThing (getID $ _argsSource av)
     return $ av { _argsSource = o, _argsVariables = v }
 
-data ArgSubject wm = 
+data ArgSubject wm =
   RegularSubject Entity -- GET LAMP
   | ConceptSubject Text -- TALK TO BOB ABOUT *PHILOSOPHY*
-  | DirectionSubject (WMDirections wm) -- GO WEST
+  | DirectionSubject (WMDirection wm) -- GO WEST
   | MatchedSubject Text Entity -- GO *THROUGH DOOR*
   deriving stock (Generic)
 
@@ -57,20 +58,18 @@ instance Refreshable wm (UnverifiedArgs wm) where
   refreshVariables = return
 
 deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
---deriving stock instance (WMShow wm) => Show (UnverifiedArgs wm)
 deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
---deriving newtype instance (WMRead wm, WMOrd wm) => Read (UnverifiedArgs wm)
 
 makeLenses ''Args
 
-withPlayerSource :: 
+withPlayerSource ::
   NoMissingObjects wm es
   => (Thing wm -> UnverifiedArgs wm)
   -> Eff es (UnverifiedArgs wm)
 withPlayerSource = flip fmap getPlayer
 
 -- | This should be moved somewhere else I guess TODO
-getPlayer :: 
+getPlayer ::
   NoMissingObjects wm es
   => Eff es (Thing wm)
 getPlayer = use currentPlayer >>= getThing
@@ -84,7 +83,7 @@ playerNoArgs = do
   ua <- withPlayerSource blankArgs
   return (\ts -> ua & coercedTo @(Args wm [ArgSubject wm]) % argsTimestamp .~ ts)
 
-blankArgs :: 
+blankArgs ::
   Thing wm
   -> UnverifiedArgs wm
 blankArgs o = UnverifiedArgs $ Args o [] 0
@@ -93,4 +92,3 @@ instance Functor (Args wm) where
   fmap f = argsVariables %~ f
 
 makePrisms ''ArgSubject
--- ~\~ end

@@ -1,6 +1,5 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/Run.hs
--- ~\~ begin <<lit/rulebooks/running.md|src/Yaifl/Core/Rulebooks/Run.hs>>[0] project://lit/rulebooks/running.md:4
 {-# LANGUAGE RecordWildCards #-}
+
 module Yaifl.Core.Rulebooks.Run
   ( runRulebook
   , runRulebookAndReturnVariables
@@ -12,9 +11,10 @@ import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
 import qualified Data.Text as T
 import Yaifl.Core.Logger ( Log, err, debug, withContext )
 import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
-import Yaifl.Core.Common
-import Text.Interpolation.Nyan
-import Cleff.Error
+import Yaifl.Core.Metadata
+import Effectful
+import Solitude
+import Effectful.Error.Static
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::
@@ -40,7 +40,7 @@ runRulebookAndReturnVariables Rulebook{..} args = do
   unless (null _rbRules) $ debug [int|t|Running the #{_rbName} rulebook|]
   withContext _rbName $ do
     runParseArguments _rbParseArguments args >>= \case
-      Left err' -> noteError (const Nothing) err' 
+      Left err' -> noteError (const Nothing) err'
       Right a -> do
         -- run the actual rules
         res <- (fmap Just . processRuleList _rbRules) a
@@ -66,9 +66,9 @@ processRuleList (Rule{..} : xs) args = do
         Just r -> do
           unless (T.empty == _ruleName) $ debug [int|t|Succeeded after following the #{_ruleName} rule|]
           return (newArgs, Just r)
-  
+
   -- if we hit nothing, continue; otherwise return
-  
+
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.
@@ -77,5 +77,3 @@ failRuleWithError ::
   => Text -- ^ Error message.
   -> Eff es (Maybe Bool)
 failRuleWithError t = err t >> return (Just False)
-
--- ~\~ end

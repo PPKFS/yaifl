@@ -16,6 +16,7 @@ import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
 
 import Yaifl.Core.Say
 import Yaifl.Core.Rulebooks.Rule (rulePass, makeRule')
+import Solitude
 
 printingNameOfADarkRoomImpl :: Activity o () ()
 printingNameOfADarkRoomImpl = makeActivity "Printing name of a dark room"

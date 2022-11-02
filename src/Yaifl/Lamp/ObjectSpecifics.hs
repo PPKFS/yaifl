@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Lamp/ObjectSpecifics.hs
--- ~\~ begin <<lit/worldmodel/objects/specifics.md|src/Yaifl/Lamp/ObjectSpecifics.hs>>[0] project://lit/worldmodel/objects/specifics.md:6
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Lamp.ObjectSpecifics
@@ -8,18 +6,21 @@ module Yaifl.Lamp.ObjectSpecifics
   , WMHasObjSpecifics(..)
   ) where
 
-
+import Yaifl.Core.Entity ( HasID(getID) )
+import Yaifl.Core.Object ( Object(_objID), Room, Thing, AdaptiveObjectText )
+import Yaifl.Core.Objects.Create ( AddObjects, addThing )
+import Yaifl.Core.Objects.Dynamic ( ObjectUpdateFunc )
+import Yaifl.Core.Objects.ThingData ( ThingData )
+import Yaifl.Core.Properties.Enclosing ( Enclosing )
+import Yaifl.Core.Properties.Has ( HasProperty(..), WMHasProperty )
+import Yaifl.Core.WorldModel ( WMObjSpecifics, WorldModel(..) )
 import Yaifl.Lamp.Properties.Container
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Lamp.Properties.Openable
-import Yaifl.Core.Properties.Property ( HasProperty(..), WMHasProperty )
-import Yaifl.Lamp.Properties.Door
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Objects.Dynamic
-import Yaifl.Core.Objects.ObjectData
-import Cleff.State
-import Yaifl.Core.Common
-import Yaifl.Core.Objects.Create
+import Yaifl.Lamp.Properties.Door ( Door, blankDoor )
+import Yaifl.Lamp.Properties.Openable ( Openable )
+import Yaifl.Core.Metadata (previousRoom, ObjType (..))
+import Solitude
+import Effectful.State.Static.Shared
+import Effectful
 
 data ObjectSpecifics =
   NoSpecifics
@@ -51,7 +52,7 @@ instance HasProperty ObjectSpecifics Openable where
 
 instance HasProperty ObjectSpecifics Door where
   propertyL = castOptic _DoorSpecifics
-  
+
 localST ::
   State st :> es
   => (st -> st)
@@ -63,7 +64,7 @@ localST f l = do
   r <- l
   put b
   pure r
-  
+
 --TODO: I am only going to enforce implications as a quickcheck or hedgehog
 -- invariant, namely that the door type will have a smart ctr (addDoor) that makes sure
 -- it isn't portable on creation, and then the check will be whenever we modify an object
@@ -72,14 +73,13 @@ addDoor ::
   forall wm es. WMHasObjSpecifics wm
   => WMHasProperty wm Enclosing
   => AddObjects wm es
-  => Text -- ^ name
-  -> Maybe Text -- ^ description
+  => AdaptiveObjectText wm -- ^ name
+  -> Maybe (AdaptiveObjectText wm) -- ^ description
   -> Room wm
   -> Room wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ maybe some extra stuff
   -> Eff es (Thing wm)
 addDoor n mbDes fr ba mbD mbUpd = localST (previousRoom .~ _objID fr) $ do
-    addThing n (fromMaybe "" mbDes) (ObjType "door") 
-      (Just (inj (Proxy @wm) (DoorSpecifics (blankDoor (getID ba))))) mbD mbUpd 
--- ~\~ endccV
+    addThing n (fromMaybe "" mbDes) (ObjType "door")
+      (Just (inj (Proxy @wm) (DoorSpecifics (blankDoor (getID ba))))) mbD mbUpd

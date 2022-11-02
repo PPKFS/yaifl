@@ -1,24 +1,19 @@
 module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-
+import Yaifl.Core.Metadata
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Create
---import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Test.Common
---import Yaifl.Core.Activities.PrintingNameOfSomething
---import Yaifl.Core.Rulebooks.WhenPlayBegins
-import qualified Data.Text as T
-import Yaifl.Core.Common
-import Yaifl.Core.World
-import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Objects.Query
-import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Say
-import Yaifl.Core.Objects.Object
-import Cleff.State
+import Yaifl.Core.World
+import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Test.Common
+import qualified Data.Text as T
 
-isBlankDescription :: State Metadata :> es => Thing wm -> Eff es Bool
-isBlankDescription d = (T.empty ==) <$> evalDesc d
+isBlankDescription :: Thing wm -> Bool
+isBlankDescription d = T.empty == d ^. objDescription
 
 ex2World :: Game PlainWorldModel ()
 ex2World = do
@@ -31,14 +26,14 @@ ex2World = do
   addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
     do
       traverseThings (\t -> do
-        whenM (isBlankDescription t) (do
+        when (isBlankDescription t) (do
           printName t
           sayLn " has no description.")
         return Nothing)
       return Nothing
 
 ex2Test :: [Text]
-ex2Test = 
+ex2Test =
   [ expectLooking "The Staff Break Room" ""
   , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
   , expectLine "Bic pen has no description."

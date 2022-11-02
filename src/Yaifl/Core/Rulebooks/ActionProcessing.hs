@@ -1,10 +1,8 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/ActionProcessing.hs
--- ~\~ begin <<lit/actions/ap.md|src/Yaifl/Core/Rulebooks/ActionProcessing.hs>>[0] project://lit/actions/ap.md:4
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Rulebooks.ActionProcessing 
+module Yaifl.Core.Rulebooks.ActionProcessing
   ( actionProcessingRules
   ) where
 
@@ -13,6 +11,7 @@ import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Run
 import Yaifl.Core.Rulebooks.Rule
+import Solitude
 
 
 actionProcessingRules :: ActionProcessing wm
@@ -40,4 +39,3 @@ actionProcessingRules = ActionProcessing $ \Action{..} u -> withoutMissingObject
   , notImplementedRule "report stage rule"
   , notImplementedRule "clean actions rule"
   ]) u) (handleMissingObject "" (Just False))
--- ~\~ end

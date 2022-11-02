@@ -11,27 +11,26 @@ module Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
   ( choosingNotableLocaleObjectsImpl
   ) where
 
-import Yaifl.Core.Common
 import Yaifl.Core.Actions.Activity
-
-import Yaifl.Core.Properties.Property
+import Yaifl.Core.Entity ( Store(..), HasID(..) )
+import Yaifl.Core.Logger ( debug, warn )
+import Yaifl.Core.Object ( Object(..), AnyObject, objName )
+import Yaifl.Core.Objects.Query ( getObject )
+import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
+import Yaifl.Core.Properties.Has ( WMHasProperty )
+import Yaifl.Core.Properties.Query ( getEnclosing )
+import Yaifl.Core.Rulebooks.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Properties.Query
-import Yaifl.Core.Logger
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule (makeRule)
-import Text.Interpolation.Nyan
+import Solitude
+import Yaifl.Core.AdaptiveText.Eval
 
-
-choosingNotableLocaleObjectsImpl :: 
+choosingNotableLocaleObjectsImpl ::
   WMHasProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
-choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" $ makeRule "" 
+choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" $ makeRule ""
   (\v -> do
-    e' <- getEnclosing v 
+    e' <- getEnclosing v
     case e' of
       Nothing -> (do
         warn [int|t|Tried to choose notable locale objects from #{_objName v} which doesn't enclose.|]
@@ -39,8 +38,8 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
       Just encl -> (do
         l <- mapM (\x -> do
           x' <- getObject x
-          n <- evalName x'
-          debug $ "Found a " <> n
+          xn <- evalName x'
+          debug $ "Found a " <> xn
           return x') (DES.toList (_enclosingContains encl))
         return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))
   )

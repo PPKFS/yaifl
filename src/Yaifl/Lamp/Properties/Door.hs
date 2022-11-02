@@ -1,19 +1,21 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Lamp.Properties.Door 
+module Yaifl.Lamp.Properties.Door
   ( Door(..)
   , blankDoor
   , getDoor
   ) where
-    
+
 import Yaifl.Core.Properties.TH
 
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Properties.Property
+import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
-import Yaifl.Core.Common
+import Yaifl.Core.Entity
+import Solitude
+import Effectful
 
-data Door = Door 
+data Door = Door
   { _backSide :: Entity
   , _isOneWay :: Bool
   } deriving stock (Eq, Show, Read)

@@ -1,23 +1,23 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Logger.hs
--- ~\~ begin <<lit/effects/logging.md|src/Yaifl/Core/Logger.hs>>[0] project://lit/effects/logging.md:6
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 
 module Yaifl.Core.Logger where
 
 import Language.Haskell.TH ( Loc(..) )
-import Cleff.Trace ( trace, Trace )
-import Cleff.Reader ( Reader, asks, local )
 import GHC.Stack
 import Data.Time ( getCurrentTime, UTCTime )
 import qualified Data.Aeson as A
 import qualified Data.Text as T
-import Katip.Format.Time ( formatAsLogTime )
-import Prelude hiding (Reader, asks, trace, local)
-import Yaifl.Core.Say
-import Cleff.State (modify)
+--import Katip.Format.Time ( formatAsLogTime )
+import Yaifl.Core.Say ( Has(buf), PartialState )
+import Effectful
+import Effectful.TH
+import Solitude hiding (local, asks, Reader)
+import Effectful.Reader.Static
+import Effectful.Dispatch.Dynamic
+import Effectful.Optics
 
--- ~\~ begin <<lit/effects/logging.md|log-effect>>[0] project://lit/effects/logging.md:34
 data MsgSeverity = Debug | Info | Warning | Error
   deriving stock (Eq, Ord, Enum, Bounded, Show)
 
@@ -28,40 +28,39 @@ data Log :: Effect where
 newtype LogBuffer = LB [([Text], UTCTime, Maybe Loc, MsgSeverity, Text)]
 
 makeEffect ''Log
--- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-interpreters>>[0] project://lit/effects/logging.md:50
+
 runAndIgnoreLogging ::
-  Eff (Log : es)
-  ~> Eff es
-runAndIgnoreLogging = interpret \case
+  Eff (Log : es) a
+  -> Eff es a
+runAndIgnoreLogging = interpret $ \env -> \case
   LogMsg{} -> pass
-  WithContext _ m -> toEff m
+  WithContext _ m -> localSeqUnlift env $ \unlift -> unlift m
 
 runLoggingInternal ::
-  forall s es. 
+  forall s es a.
   Reader [Text] :> es
   => IOE :> es
   => PartialState s LogBuffer es
-  => Eff (Log : es)
-  ~> Eff es
-runLoggingInternal = zoom (buf @s @LogBuffer) . reinterpret \case
+  => Eff (Log : es) a
+  -> Eff es a
+runLoggingInternal = interpret $ \env -> \case
   LogMsg mbLoc sev msg -> do
     now <- liftIO getCurrentTime
     cxt <- asks reverse
-    modify (\(LB a) -> LB ((cxt, now, mbLoc, sev, msg):a))
-  WithContext cxt m -> local (cxt:) (toEff m)
+    buf %= (\(LB a) -> LB ((cxt, now, mbLoc, sev, msg):a))
+  WithContext cxt m -> localSeqUnlift env $ \unlift -> local (cxt:) (unlift m)
 
 runLoggingAsTrace ::
   Reader [Text] :> es
   => IOE :> es
-  => Eff (Log : es)
-  ~> Eff (Trace : es)
-runLoggingAsTrace = reinterpret \case
+  => Eff (Log : es) ()
+  -> Eff es ()
+runLoggingAsTrace = interpret $ \env -> \case
   LogMsg mbLoc sev msg -> do
     now <- liftIO getCurrentTime
     cxt <- asks reverse
-    trace $ makeJSONObject now cxt sev mbLoc msg
-  WithContext cxt m -> local (cxt:) (toEff m)
+    liftIO (trace (makeJSONObject now cxt sev mbLoc msg) pass)
+  WithContext cxt m -> localSeqUnlift env $ \unlift -> local (cxt:) (unlift m)
 
 makeJSONObject :: UTCTime -> [Text] -> MsgSeverity -> Maybe Loc -> Text -> String
 makeJSONObject now cxt sev mbLoc pl = decodeUtf8 $ A.encode $
@@ -72,8 +71,7 @@ makeJSONObject now cxt sev mbLoc pl = decodeUtf8 $ A.encode $
   , itemTime = now
   , itemContext = cxt
   }
--- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-functions>>[0] project://lit/effects/logging.md:102
+
 logInternal ::
   HasCallStack
   => Log :> es
@@ -109,8 +107,7 @@ err ::
   => Text
   -> Eff es ()
 err = logInternal Error
--- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|callstack-log>>[0] project://lit/effects/logging.md:84
+
 toLoc ::
   CallStack
   -> Maybe Loc
@@ -122,8 +119,6 @@ toLoc stk = (listToMaybe . reverse $ getCallStack stk) <&> \(_, loc) ->
       loc_start = (srcLocStartLine loc, srcLocStartCol loc),
       loc_end = (srcLocEndLine loc, srcLocEndCol loc)
     }
--- ~\~ end
--- ~\~ begin <<lit/effects/logging.md|log-item>>[0] project://lit/effects/logging.md:146
 
 reshapeFilename ::
   Loc
@@ -142,9 +137,7 @@ instance A.ToJSON YaiflItem where
     toJSON (YaiflItem{..}) = A.object
       [ "level" A..= itemSeverity
       , "message" A..= itemMessage
-      , "timestamp" A..= formatAsLogTime itemTime
+      , "timestamp" A..= show @Text itemTime
       , "ns" A..= let f = T.intercalate "➤" (filter (/= T.empty) itemContext) in if T.empty == f then "" else "❬"<>f<>"❭"
       , "loc" A..= fmap reshapeFilename itemLoc
       ]
--- ~\~ end
--- ~\~ end

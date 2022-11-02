@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Properties/TH.hs
--- ~\~ begin <<lit/properties/getsetmodify.md|src/Yaifl/Core/Properties/TH.hs>>[0] project://lit/properties/getsetmodify.md:5
 {-# LANGUAGE DataKinds #-}
 
 module Yaifl.Core.Properties.TH
@@ -10,11 +8,11 @@ module Yaifl.Core.Properties.TH
   , makeDirections
 ) where
 
-
-import Language.Haskell.Meta hiding (myDefaultParseMode)
+import Solitude
+import Language.Haskell.Meta ( parseDecsWithMode )
 import Data.Text (replace)
-import Language.Haskell.Exts.Parser
-import Language.Haskell.Exts.Extension
+import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
+import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.TH (Name, Q, Dec, nameBase)
 
 data SpecificsFunctions =
@@ -22,7 +20,6 @@ data SpecificsFunctions =
   | SetX
   | ModifyX
   deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
-
 
 myDefaultParseMode :: ParseMode
 myDefaultParseMode = defaultParseMode
@@ -39,11 +36,11 @@ makeSpecificsWithout l prop = do
 makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
   return $ (case sf of
-    GetX -> replaceTH 
+    GetX -> replaceTH
       "getXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> Eff es (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
-    SetX -> replaceTH 
+    SetX -> replaceTH
       "setXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
-    ModifyX -> replaceTH 
+    ModifyX -> replaceTH
       "modifyXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> (XSUBHERE -> XSUBHERE) -> Eff es ()\nmodifyXSUBHERE = modifyProperty getXSUBHERE setXSUBHERE"
     ) (toText $ nameBase n)
 
@@ -59,4 +56,3 @@ makeDirections std dirs = do
     return $ r1 <> r2
     ) dirs
   return $ join v
--- ~\~ end

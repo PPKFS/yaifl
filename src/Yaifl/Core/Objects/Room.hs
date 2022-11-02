@@ -1,6 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Objects/Room.hs
--- ~\~ begin <<lit/worldmodel/connections.md|src/Yaifl/Core/Objects/Room.hs>>[0] project://lit/worldmodel/connections.md:4
-
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Core.Objects.Room
@@ -8,87 +5,91 @@ module Yaifl.Core.Objects.Room
   , getMapConnection
   ) where
 
-import Cleff.State ( State )
 import qualified Data.Map as Map
 
-import Yaifl.Core.Common ( Entity, HasID(getID), Metadata, WMDirections, whenConstructing )
-import Yaifl.Core.Directions
-import Yaifl.Core.Logger ( warn, Log )
-import Yaifl.Core.Objects.Object ( objData, Room )
-import Yaifl.Core.Objects.ObjectData ( MapConnections(MapConnections), Connection(..), ConnectionExplicitness(..), roomMapConnections )
+import Solitude
+import Effectful
+
+import Yaifl.Core.Direction
+import Yaifl.Core.Entity (HasID(..), Entity)
+import Yaifl.Core.Logger (warn, Log)
+import Yaifl.Core.Metadata (Metadata, whenConstructing)
+import Yaifl.Core.Object (objData, Room)
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Properties.TH
+import Yaifl.Core.Objects.RoomData
+import Yaifl.Core.Properties.TH (makeDirections)
+import Yaifl.Core.WorldModel (WMDirection)
+import Effectful.State.Static.Shared ( State )
 
 hasSpecificConnectionTo ::
-  WithDirections wm
+  WMStdDirections wm
   => Maybe ConnectionExplicitness
   -> Room wm
-  -> WMDirections wm
+  -> WMDirection wm
   -> Maybe Entity
-hasSpecificConnectionTo mbExpl r dir = let v = getConnectionInDirection dir r in
-  case v of
+hasSpecificConnectionTo mbExpl r dir = case getConnectionInDirection dir r of
     Just (Connection ex' e)
       | maybe True (ex' ==) mbExpl -> Just e
     _ -> Nothing
 
 getMapConnection ::
-  WithDirections wm
-  => WMDirections wm
+  WMStdDirections wm
+  => WMDirection wm
   -> Room wm
   -> Maybe Entity
-getMapConnection dir o = _connectionRoom <$> getConnectionInDirection dir o
+getMapConnection dir o = _connectionDestination <$> getConnectionInDirection dir o
 
 getConnectionInDirection ::
-  WithDirections wm
-  => WMDirections wm
+  WMStdDirections wm
+  => WMDirection wm
   -> Room wm
   -> Maybe Connection
 getConnectionInDirection dir = preview (connectionLens dir % _Just)
 
 connectionLens ::
   forall wm.
-  WithDirections wm
-  => WMDirections wm
+  WMStdDirections wm
+  => WMDirection wm
   -> Lens' (Room wm) (Maybe Connection)
-connectionLens dir = objData % roomMapConnections % coercedTo @(Map.Map (WMDirections wm) Connection ) % at dir
+connectionLens dir = objData % roomMapConnections % coercedTo @(Map.Map (WMDirection wm) Connection ) % at dir
 
 makeConnection ::
-  WithDirections wm
+  WMStdDirections wm
   => ConnectionExplicitness
-  -> WMDirections wm
+  -> WMDirection wm
   -> Room wm
   -> (Room wm -> Room wm)
 makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r)
 
 addDirectionFrom ::
   ObjectQuery wm es
-  => State (Metadata) :> es
+  => State Metadata :> es
   => Log :> es
-  => WithDirections wm
-  => WMDirections wm
+  => WMStdDirections wm
+  => WMDirection wm
   -> Room wm
   -> Room wm
   -> Eff es ()
 addDirectionFrom = isDirectionFromInternal True
 
 addDirectionFromOneWay ::
-  State (Metadata) :> es
+  ObjectQuery wm es
+  => State Metadata :> es
   => Log :> es
-  => ObjectQuery wm es
-  => WithDirections wm
-  => WMDirections wm
+  => WMStdDirections wm
+  => WMDirection wm
   -> Room wm
   -> Room wm
   -> Eff es ()
 addDirectionFromOneWay = isDirectionFromInternal False
 
 isDirectionFromInternal ::
-  State (Metadata) :> es
+  State Metadata :> es
   => Log :> es
+  => WMStdDirections wm
   => ObjectQuery wm es
-  => WithDirections wm
   => Bool
-  -> WMDirections wm
+  -> WMDirection wm
   -> Room wm
   -> Room wm
   -> Eff es ()
@@ -116,5 +117,3 @@ isDirectionFromInternal mkRev dir r1' r2' = withoutMissingObjects (do
     pass) (handleMissingObject "failed to make direction" ())
 
 makeDirections True ["West"]
-
--- ~\~ end

@@ -1,28 +1,24 @@
 module Yaifl.Test.Common where
 
-
-
-import Yaifl
-import qualified Data.Text as T
-import Language.Haskell.TH.Quote hiding (quoteExp)
-import Language.Haskell.TH
-import Data.Char (isSpace)
-import Yaifl.Core.World
-import Yaifl.Core.Say
-import Yaifl.Core.Logger
-import Cleff.State (runState, get)
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Actions.Action
-import Yaifl.Core.Rulebooks.Run
-import Yaifl.Core.Common
-import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
-import Text.Interpolation.Nyan
-import Test.Sandwich ( timeAction, it, HasBaseContext, SpecFree )
-import qualified Test.Sandwich as S
-import Control.Monad.Catch ( MonadMask )
 import Control.Exception (throwIO)
+import Control.Monad.Catch ( MonadMask )
+import Data.Char (isSpace)
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote hiding (quoteExp)
 import Prelude hiding (force)
+import Test.Sandwich ( timeAction, it, HasBaseContext, SpecFree )
+import Yaifl
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Logger
+import Yaifl.Core.Metadata
+import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rulebooks.Run
+import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
+import Yaifl.Core.Say
+import Yaifl.Core.World
+import qualified Data.Text as T
+import qualified Test.Sandwich as S
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -110,7 +106,7 @@ testHarness fullTitle initWorld actionsToDo expected = do
             Debug -> S.debug
             Warning -> S.warn
             Error -> S.logError
-    
+
       logTy (cxt' <> txt)
       )
     unless (amendedOutput == ex) (liftIO $ throwIO $ DiffException amendedOutput ex)
@@ -130,7 +126,7 @@ listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " 
 
 expectLooking :: Text -> Text -> Text
 expectLooking t "" = expectLine t <> expectLine ""
-expectLooking t d = expectLine t <> expectLine "" <> expectLine d 
+expectLooking t d = expectLine t <> expectLine "" <> expectLine d
 
 expectAction :: Text -> Text
 expectAction a = expectLine $ "> " <> a <> "\n"

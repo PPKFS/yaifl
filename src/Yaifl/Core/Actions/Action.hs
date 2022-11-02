@@ -1,8 +1,6 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Actions/Action.hs
--- ~\~ begin <<lit/actions/action.md|src/Yaifl/Core/Actions/Action.hs>>[0] project://lit/actions/action.md:4
 {-# LANGUAGE TemplateHaskell #-}
 
-module Yaifl.Core.Actions.Action 
+module Yaifl.Core.Actions.Action
   ( Action(..)
   , ActionParseArguments
   , ActionRulebook
@@ -18,11 +16,13 @@ module Yaifl.Core.Actions.Action
   , makeActionRulebook
   ) where
 
-
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Common ( WorldModel )
 import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
-import Cleff.State ( State )
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.WorldModel ( WorldModel )
+import Solitude
+import Effectful
+import Effectful.State.Static.Shared
+import Effectful.Optics
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
@@ -52,7 +52,7 @@ makeLenses ''Action
 newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
 -- | Helper function to make a rulebook of an action.
-makeActionRulebook :: 
+makeActionRulebook ::
   Text
   -> [Rule o (Args o v) Bool]
   -> ActionRulebook o v
@@ -67,11 +67,11 @@ data WorldActions (wm :: WorldModel) = WorldActions
 makeLenses ''WorldActions
 
 -- | Run an action. This assumes that all parsing has been completed.
-runAction :: 
+runAction ::
   State (WorldActions wm) :> es
   => RuleEffects wm es
   => UnverifiedArgs wm
-  -> Action wm 
+  -> Action wm
   -> Eff es (Maybe Bool)
 runAction args act = do
   w <- use actionProcessing
@@ -79,11 +79,9 @@ runAction args act = do
   ap act args
 
 -- | Add an action to the registry.
-addAction :: 
+addAction ::
   State (WorldActions wm) :> es
-  => Action wm 
+  => Action wm
   -> Eff es ()
 addAction ac =
   actions % at (_actionName ac) ?= Right ac
-
--- ~\~ end

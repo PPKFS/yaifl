@@ -12,25 +12,28 @@ Stability   : No
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+
 module Yaifl.Lamp.Actions.Going
   (goingAction) where
 
+import Solitude
+import Effectful
 
 import Yaifl.Core.Actions.Action ( makeActionRulebook, Action(Action), ActionRulebook )
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Common ( Entity, HasID(getID), noteError )
-import Yaifl.Core.Objects.Object ( Thing, Room, objData, isType, objectEquals )
+import Yaifl.Core.Direction ( WMStdDirections )
+import Yaifl.Core.Entity ( Entity, HasID(..) )
+import Yaifl.Core.Metadata (noteError, isPlayer)
+import Yaifl.Core.Object ( Thing, Room, objData, isType, objectEquals )
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
 import Yaifl.Core.Objects.Room ( getMapConnection )
-import Yaifl.Core.Directions ( WMStdDirections )
-import Text.Interpolation.Nyan ( int )
-import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
-import Yaifl.Core.Properties.Property ( WMHasProperty )
+import Yaifl.Core.Objects.ThingData (thingContainedBy)
+import Yaifl.Core.Properties.Has ( WMHasProperty )
+import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
 import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say (say, sayLn)
-import Yaifl.Core.Objects.ObjectData (thingContainedBy)
-import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Lamp.Activities.PrintingNameOfSomething ( printNameDefiniteUncapitalised )
+import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -73,7 +76,7 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
   roomFrom <- getRoom =<< getLocation _argsSource
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
   vehicleGoneBy <- actorInEnterableVehicle _argsSource
-  {-     
+  {-
     if we are going in a direction, then we want to find the door or room in D from the current room
     if we are going to a door (my add: or through a door), then choose the door
     after this, if there is a door in the way then we are clearly going through the door and our target is through the door

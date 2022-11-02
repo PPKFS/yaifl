@@ -1,6 +1,4 @@
-cabal-version:   3.0
--- ~\~ language=Cabal filename=yaifl.cabal
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[0] project://lit/foundations/cabal.md:12
+cabal-version:   3.6
 name:            yaifl
 version:         0.0.0.1
 synopsis:        Yet another interactive fiction library.
@@ -13,108 +11,113 @@ maintainer:      Avery <thecommunistduck@hotmail.co.uk>
 copyright:       2022 Avery
 category:        Game Development
 build-type:      Simple
-tested-with: GHC == 9.0.2
+tested-with: GHC == 9.2.4
 
 source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[1] project://lit/foundations/cabal.md:37
+
 common common-options
   build-depends:
       base
-    , containers
-    , template-haskell
-    , text
     , solitude
-    , cleff
-    , cleff-plugin
-    , time
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[2] project://lit/foundations/cabal.md:55
-    , nyan-interpolation
+
+    , aeson
+    , containers
+    , effectful
+    , effectful-core
+    , effectful-plugin
+    , effectful-th
+    , enummapset
     , formatting
-    , pretty-simple
+    , megaparsec
     , prettyprinter
     , prettyprinter-ansi-terminal
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[3] project://lit/foundations/cabal.md:63
-    , aeson
-    , katip
-    , enummapset
+    , replace-megaparsec
+    , template-haskell
+    , text
+    , time
+
+    --, pretty-simple
+    --,
+
+    --, katip
+
     , haskell-src-meta
     , haskell-src-exts
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[4] project://lit/foundations/cabal.md:79
   ghc-options:
-    -Wall -Wcompat -Widentities -Wredundant-constraints 
+    -Wall -Wcompat -Widentities -Wredundant-constraints
     -fhide-source-paths -Wno-unused-top-binds
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Cleff.Plugin
+    -fplugin=Effectful.Plugin
   default-language:   Haskell2010
   default-extensions:
-    BlockArguments
+    BangPatterns
+    ConstraintKinds
     DataKinds
+    DeriveGeneric
     DerivingStrategies
+    FlexibleContexts
+    FlexibleInstances
     FunctionalDependencies
+    GADTs
+    GeneralizedNewtypeDeriving
     LambdaCase
     MultiWayIf
     OverloadedStrings
-    TypeFamilies
-    TypeApplications
-    ConstraintKinds
-    FlexibleInstances
-    FlexibleContexts
-    GeneralisedNewtypeDeriving
-    DeriveGeneric
-    DeriveTraversable
-    StandaloneDeriving
+    QuasiQuotes
     RankNTypes
     ScopedTypeVariables
-    BangPatterns
-    GADTs
+    StandaloneDeriving
+    TypeApplications
+    TypeFamilies
     TypeOperators
-    DerivingVia
-    QuasiQuotes
-  mixins: base hiding (Prelude)
-          , solitude (Solitude as Prelude)
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[5] project://lit/foundations/cabal.md:121
+    NoImplicitPrelude
+
 library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules:
+    Effectful.Optics
+
     Yaifl
+
+    Yaifl.Core.AdaptiveText
+    Yaifl.Core.AdaptiveText.Eval
+    Yaifl.Core.Direction
+    Yaifl.Core.Entity
+    Yaifl.Core.Logger
+    Yaifl.Core.Metadata
+    Yaifl.Core.Object
+    Yaifl.Core.Say
+    Yaifl.Core.WorldModel
+
+    Yaifl.Core.Objects.Create
+    Yaifl.Core.Objects.Dynamic
+    Yaifl.Core.Objects.Move
+    Yaifl.Core.Objects.Query
+    Yaifl.Core.Objects.Room
+    Yaifl.Core.Objects.RoomData
+    Yaifl.Core.Objects.ThingData
+
+    Yaifl.Core.Properties.Enclosing
+    Yaifl.Core.Properties.Has
+    Yaifl.Core.Properties.Query
+    Yaifl.Core.Properties.TH
 
     Yaifl.Core.Actions.Action
     Yaifl.Core.Actions.Activity
     Yaifl.Core.Actions.Parser
-    Yaifl.Core.Common
-    Yaifl.Core.Directions
-    Yaifl.Core.Logger
-    Yaifl.Core.Objects.Create
-    Yaifl.Core.Objects.Dynamic
-    Yaifl.Core.Objects.Move
-    Yaifl.Core.Objects.Object
-    Yaifl.Core.Objects.ObjectData
-    Yaifl.Core.Objects.Query
-    Yaifl.Core.Objects.Room
-    
-    Yaifl.Core.Properties.Enclosing
-    Yaifl.Core.Properties.Property
-    Yaifl.Core.Properties.Query
-    Yaifl.Core.Properties.TH
 
     Yaifl.Core.Rulebooks.ActionProcessing
     Yaifl.Core.Rulebooks.Args
-    Yaifl.Core.Rulebooks.Run
     Yaifl.Core.Rulebooks.Rule
     Yaifl.Core.Rulebooks.Rulebook
+    Yaifl.Core.Rulebooks.Run
     Yaifl.Core.Rulebooks.WhenPlayBegins
 
-    Yaifl.Core.Say
     Yaifl.Core.World
 
     Yaifl.Lamp.Properties.Openable
@@ -131,8 +134,9 @@ library
     Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
     Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
     Yaifl.Lamp.Activities.PrintingNameOfSomething
--- ~\~ end
--- ~\~ begin <<lit/foundations/cabal.md|yaifl.cabal>>[6] project://lit/foundations/cabal.md:179
+
+    Yaifl.Lamp.Visibility
+
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0
@@ -158,4 +162,3 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common
--- ~\~ end

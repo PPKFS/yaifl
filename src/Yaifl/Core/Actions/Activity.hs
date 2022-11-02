@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Actions/Activity.hs
--- ~\~ begin <<lit/actions/activity.md|src/Yaifl/Core/Actions/Activity.hs>>[0] project://lit/actions/activity.md:4
 {-|
 Module      : Yaifl.Activities.Activity
 Description : An activity is a modular function.
@@ -28,16 +26,16 @@ module Yaifl.Core.Actions.Activity
   , priority
   ) where
 
-
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(_rbRules), blankRulebook )
-import Yaifl.Core.Objects.Object ( AnyObject )
-import Yaifl.Core.Common ( Store )
-import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
+import Yaifl.Core.Entity ( Store )
+import Yaifl.Core.Object ( AnyObject )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject )
-import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
-import Cleff.State ( gets )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
-
+import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
+import Solitude
+import Effectful
+import Effectful.State.Static.Shared
 
 data Activity wm v r = Activity
     { _activityName :: !Text
@@ -54,7 +52,7 @@ data LocaleVariables wm = LocaleVariables
   , _localeParagraphCount :: Int
   }
 
--- | Locale priorities 
+-- | Locale priorities
 type LocalePriorities wm = Store (LocaleInfo wm)
 
 data LocaleInfo wm = LocaleInfo
@@ -72,7 +70,7 @@ data ActivityCollection wm = ActivityCollection
   , describingLocale :: !(Activity wm (LocaleVariables wm) ())
   }
 
-makeActivity :: 
+makeActivity ::
   Text
   -> Rule wm v r
   -> Activity wm v r
@@ -89,7 +87,7 @@ doActivity ::
   -> Eff es (Maybe r)
 doActivity = (. flip doActivity') . (>>=) . gets
 
-doActivity' :: 
+doActivity' ::
   RuleEffects wm es
   => Refreshable wm v
   => Activity wm v r
@@ -103,5 +101,3 @@ doActivity' ac c = withoutMissingObjects (do
 
 makeLenses ''LocaleVariables
 makeLenses ''LocaleInfo
-
--- ~\~ end

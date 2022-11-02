@@ -1,35 +1,44 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Actions/Parser.hs
--- ~\~ begin <<lit/actions/parsing.md|src/Yaifl/Core/Actions/Parser.hs>>[0] project://lit/actions/parsing.md:4
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
+
 module Yaifl.Core.Actions.Parser
   ( runActionHandlerAsWorldActions
-
   ) where
 
-import Cleff.State ( State )
 import Yaifl.Core.Actions.Action
-import qualified Data.Text as T
-import Yaifl.Core.Common
-import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
-import Yaifl.Core.Objects.Query
-import qualified Data.Map as Map
+import Yaifl.Core.Actions.Activity ( ActivityCollection )
+import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Logger ( debug, Log, warn )
-import Yaifl.Core.Say
-import Yaifl.Core.Actions.Activity
-import Text.Interpolation.Nyan
-import Yaifl.Core.Directions
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
+import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction )
+import Yaifl.Core.Say ( Saying, sayLn )
+import Yaifl.Core.WorldModel ( WMDirection )
 
+import qualified Data.Map as Map
+import qualified Data.Text as T
+import Solitude
+import Effectful
+
+import Effectful.State.Static.Shared
+import Effectful.Dispatch.Dynamic
+import Effectful.Optics
 
 runActionHandlerAsWorldActions ::
-  forall es wm.
-  '[Log, State (WorldActions wm), Saying, ObjectLookup wm, ObjectUpdate wm, State (Metadata), State (ActivityCollection wm)] :>> es
+  forall es wm a.
+  Log :> es
+  => State (WorldActions wm) :> es
+  => Saying :> es
+  => ObjectLookup wm :> es
+  => ObjectUpdate wm :> es
+  => State Metadata :> es
+  => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
-  => (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm) 
-  => Eff (ActionHandler wm : es)
-  ~> Eff es
-runActionHandlerAsWorldActions = interpret $ \case
+  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Eff (ActionHandler wm : es) a
+  -> Eff es a
+runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts t -> do
     -- print the prompt
     unless (silently actionOpts) $ sayLn $ "> " <> t
@@ -69,9 +78,16 @@ findVerb cmd = do
 
 findSubjects ::
   forall wm es.
-  (ActionHandler wm :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State Metadata :> es)
-  => '[Log, State (WorldActions wm), State (ActivityCollection wm), Saying,ObjectTraverse wm] :>> es
-  => (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm) 
+  ActionHandler wm :> es
+  => ObjectUpdate wm :> es
+  => State Metadata :> es
+  => Log :> es
+  => State (WorldActions wm) :> es
+  => Saying :> es
+  => ObjectLookup wm :> es
+  => State (ActivityCollection wm) :> es
+  => ObjectTraverse wm :> es
+  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Text
   -> Action wm
   -> Eff es (Either Text Bool)
@@ -81,7 +97,7 @@ findSubjects "" a = failHorriblyIfMissing $ do
 findSubjects cmd a = failHorriblyIfMissing $ do
   --TODO: handle other actors doing things
   --we attempt to either match some matching word from the action (e.g. go through <door>)
-  --otherwise, we try to find a match of objects with increasingly large radii 
+  --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
   case parseDirection (Proxy @wm) cmd of
@@ -90,12 +106,12 @@ findSubjects cmd a = failHorriblyIfMissing $ do
       ua <- playerNoArgs
       Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { _argsVariables = [DirectionSubject x]})
 
-parseDirection :: 
+parseDirection ::
   forall wm.
-  (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm) 
-  => Proxy wm 
-  -> Text 
-  -> Maybe (WMDirections wm)
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Proxy wm
+  -> Text
+  -> Maybe (WMDirection wm)
 parseDirection p cmd =
   let allDirs = universe
       cleanedCmd = T.toLower $ T.strip cmd
@@ -105,8 +121,12 @@ parseDirection p cmd =
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
-  (NoMissingObjects wm es, ActionHandler wm :> es, ObjectTraverse wm :> es)
-  => '[Log, State (WorldActions wm), State (ActivityCollection wm), Saying] :>> es
+  NoMissingObjects wm es
+  => ActionHandler wm :> es
+  => ObjectTraverse wm :> es
+  => State (WorldActions wm) :> es
+  => State (ActivityCollection wm) :> es
+  => Saying :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool
@@ -115,5 +135,3 @@ tryAction an f = do
   debug [int|t|Trying to do the action '#{_actionName an}'|]
   let uva = f ta
   fromMaybe False <$> runAction uva an
-
--- ~\~ end

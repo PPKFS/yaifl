@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Say.hs
--- ~\~ begin <<lit/effects/say.md|src/Yaifl/Core/Say.hs>>[0] project://lit/effects/say.md:6
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Core.Say
@@ -23,9 +21,15 @@ module Yaifl.Core.Say
   )
 where
 
-import Cleff.State ( State, get, modify )
+import Solitude
+
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Effectful
+import Effectful.TH
+import Effectful.State.Static.Shared
+import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Optics (use, (.=))
 
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
@@ -40,27 +44,25 @@ data MessageBuffer = MessageBuffer
   , _msgBufContext :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   }
 
--- ~\~ begin <<lit/effects/say.md|say-helpers>>[0] project://lit/effects/say.md:50
 blankMessageBuffer :: MessageBuffer
 blankMessageBuffer = MessageBuffer [] Nothing []
 
 makeEffect ''Saying
 makeLenses ''MessageBuffer
--- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say>>[0] project://lit/effects/say.md:62
+
 processDoc ::
-  State MessageBuffer :> es
+  forall s es.
+  PartialState s MessageBuffer es
   => StyledDoc
   -> Eff es StyledDoc
 processDoc msg = do
-  (MessageBuffer _ style cxt) <- get
+  (MessageBuffer _ style cxt) <- use @s buf
   -- if we have no context, we just monoid it.
   let joinOp = case cxt of
         [] -> (<>)
         _ -> (PP.<+>)
   return $ PP.hcat cxt `joinOp` maybe id PP.annotate style msg
 
--- ~\~ begin <<lit/effects/say.md|interpret-say-pure>>[0] project://lit/effects/say.md:81
 class Has s t where
   buf :: Lens' s t
 
@@ -70,49 +72,45 @@ instance Has s s where
   buf = castOptic simple
 
 runSayPure ::
-  forall s es. 
+  forall s es a. 
   PartialState s MessageBuffer es
-  => Eff (Saying : es)
-  ~> Eff es
-runSayPure = zoom (buf @s @MessageBuffer) . reinterpret \case
+  => Eff (Saying : es) a
+  -> Eff es a
+runSayPure = interpret $ \_ -> \case
   SayDoc doc -> do
     r <- processDoc doc
-    modify (\s -> s & msgBufBuffer %~ (r:))
+    modify (\s -> s & buf % msgBufBuffer %~ (r:))
   SetStyle mbStyle -> setStyle' mbStyle
 
--- ~\~ end
--- ~\~ begin <<lit/effects/say.md|interpret-say-io>>[0] project://lit/effects/say.md:101
 runSayIO ::
+  forall s es a.
   IOE :> es
   => PartialState s MessageBuffer es
-  => Eff (Saying : es)
-  ~> Eff es
-runSayIO = zoom (buf @_ @MessageBuffer) . reinterpret \case
+  => Eff (Saying : es) a
+  -> Eff es a
+runSayIO = interpret $ \_ -> \case
   SayDoc doc -> do
     r <- processDoc doc
     print r
   SetStyle mbStyle -> setStyle' mbStyle
--- ~\~ end
--- ~\~ end
 
--- ~\~ begin <<lit/effects/say.md|say-functions>>[0] project://lit/effects/say.md:117
 -- | Say a string (well, Text).
-say :: 
-  Saying :> es 
+say ::
+  Saying :> es
   => Text -- ^ Message.
   -> Eff es ()
 say = sayDoc . PP.pretty
 
 -- | Say @message@ with a newline.
-sayLn :: 
-  Saying :> es 
+sayLn ::
+  Saying :> es
   => Text -- ^ Message.
   -> Eff es ()
 sayLn a = say (a <> "\n")
 
 -- | Conditionally say @message@.
-sayIf :: 
-  Saying :> es 
+sayIf ::
+  Saying :> es
   => Bool -- ^ Condition to evaluate.
   -> Text -- ^ Message.
   -> Eff es ()
@@ -121,28 +119,8 @@ sayIf False = const pass
 
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
-setStyle' :: 
-  forall s es. 
+setStyle' ::
   PartialState s MessageBuffer es
   => Maybe PPTTY.AnsiStyle -- ^ The updated style.
   -> Eff es ()
-setStyle' s = buf @s @MessageBuffer % msgBufStyle .= s
-
-{-
--- | Clear a message buffer and return the container (with a clean buffer)
--- with all formatting (e.g. ANSI colour codes) *included*.
-flushBufferToStdOut :: 
-  MonadIO m
-  => HasBuffer w p 
-  => Proxy p
-  -> w
-  -> m w
-flushBufferToStdOut prox w = do
-  let output' = (PPTTY.putDoc (comboBuffer w prox), w & bufferL prox % msgBufBuffer .~ [])
-  liftIO $ fst output'
-  return (snd output')
-  where
-    comboBuffer d' p' = PP.hcat $ reverse $ d' ^. bufferL p' % msgBufBuffer
--}
--- ~\~ end
--- ~\~ end
+setStyle' s = buf % msgBufStyle .= s

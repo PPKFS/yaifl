@@ -19,14 +19,15 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 ) where
 
 import Yaifl.Core.Actions.Activity ( Activity, makeActivity, doActivity, ActivityCollection )
-import Yaifl.Core.Say
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Logger
-import Cleff.State
+import Yaifl.Core.Object ( Object(..), AnyObject )
+import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, getObject )
+import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
+import Yaifl.Core.Say ( Saying, say )
 import qualified Yaifl.Core.Actions.Activity as Ac
-import Yaifl.Core.Common
+import Effectful.State.Static.Shared
+import Effectful
+import Solitude
+import Yaifl.Core.AdaptiveText.Eval
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -40,9 +41,8 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
-printName :: 
+printName ::
   NoMissingObjects wm es
-  => Log :> es
   => Saying :> es
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
@@ -54,25 +54,24 @@ printName = printNameEx noSayOptions
 
 printNameDefiniteUncapitalised ::
   NoMissingObjects wm es
-  => Log :> es
   => Saying :> es
   => ActionHandler wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
-  => o 
+  => o
   -> Eff es ()
 printNameDefiniteUncapitalised = printNameEx (SayOptions Definite Uncapitalised)
-printNameEx :: 
+
+printNameEx ::
   NoMissingObjects wm es
-  => Log :> es
   => Saying :> es
   => ActionHandler wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
   => SayOptions
-  -> o 
+  -> o
   -> Eff es ()
 printNameEx p o = do
   e <- getObject o
@@ -87,4 +86,4 @@ printNameEx p o = do
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    (makeRule "" (\o -> evalText (_objName o) o >>= say >> return (Just ())))
+    (makeRule "" (\o -> sayAdaptive (_objName o) o >> return (Just ())))

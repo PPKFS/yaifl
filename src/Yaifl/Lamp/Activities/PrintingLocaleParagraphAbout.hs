@@ -9,13 +9,14 @@ Stability   : No
 
 module Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout where
 
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Objects.Query (getThingMaybe)
-import Yaifl.Core.Objects.Object
 
-import Yaifl.Core.Objects.ObjectData
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Object ( Object(..), AnyObject, objData )
+import Yaifl.Core.Objects.Query (getThingMaybe)
+import Yaifl.Core.Objects.ThingData ( ThingDescribed(..), thingDescribed )
+import Yaifl.Core.Rulebooks.Rule ( Rule, makeRule )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
+import Solitude
 
 printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing
@@ -26,7 +27,7 @@ printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about s
       ]
       {- [ dontMentionSupporter
       , dontMentionScenery
-      , 
+      ,
       , offerItems
       , useInitialAppearance
       , describeOnScenery
@@ -47,14 +48,14 @@ dontMentionUndescribed = makeRule "don’t mention undescribed items in room des
             return Nothing
         )
 
-setLocalePriority :: 
+setLocalePriority ::
   AnyObject s
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
 setLocalePriority e lv i = lv & localePriorities % at (_objID e) % _Just % priority .~ i
 
-removeFromLocale :: 
+removeFromLocale ::
   AnyObject s
   -> LocaleVariables v
   -> LocaleVariables v

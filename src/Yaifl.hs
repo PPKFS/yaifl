@@ -1,7 +1,4 @@
--- ~\~ language=Haskell filename=src/Yaifl.hs
--- ~\~ begin <<lit/construction.md|src/Yaifl.hs>>[0] project://lit/construction.md:6
-module Yaifl
-  (
+module Yaifl (
   newWorld
   , blankWorld
   , HasStandardProperties
@@ -10,41 +7,46 @@ module Yaifl
   , runGame
   ) where
 
-import Yaifl.Core.World
-import qualified Data.Map as DM
-import Yaifl.Core.Common
-import Yaifl.Core.Say
---import Yaifl.Core.Rulebooks.ActionProcessing
-import Yaifl.Core.Properties.Property
-import Yaifl.Lamp.Properties.Openable
-import Yaifl.Lamp.Properties.Container
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Directions
-import Yaifl.Core.Logger
-import Cleff.State hiding ( zoom )
-import Cleff.Reader
-import Yaifl.Core.Objects.Create
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.WhenPlayBegins
 import Yaifl.Core.Actions.Action
-import Yaifl.Core.Rulebooks.ActionProcessing
-import Yaifl.Core.Objects.Object
-import Yaifl.Core.Objects.Dynamic
-import Yaifl.Core.Actions.Parser
-import Yaifl.Lamp.Actions.Looking
 import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Actions.Parser
+import Yaifl.Core.Direction
+import Yaifl.Core.Entity
+import Yaifl.Core.Logger
+import Yaifl.Core.Metadata
+import Yaifl.Core.Object
+import Yaifl.Core.Objects.Create
+import Yaifl.Core.Objects.Dynamic
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Properties.Enclosing
+import Yaifl.Core.Properties.Has
+import Yaifl.Core.Rulebooks.ActionProcessing
+import Yaifl.Core.Rulebooks.Rule (ActionHandler)
+import Yaifl.Core.Rulebooks.WhenPlayBegins
+import Yaifl.Core.Say
+import Yaifl.Core.World
+import Yaifl.Core.WorldModel
+import Yaifl.Lamp.Actions.Going
+import Yaifl.Lamp.Actions.Looking
+import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Lamp.Activities.DescribingLocale
+import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
+import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
-import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
-import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Lamp.Activities.DescribingLocale
-import Text.Interpolation.Nyan
 import Yaifl.Lamp.ObjectSpecifics
-import Yaifl.Lamp.Actions.Going
+import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Door
+import Yaifl.Lamp.Properties.Openable
+import Yaifl.Lamp.Visibility
+import qualified Data.Map as DM
 import qualified Data.Text as T
-import Yaifl.Core.Rulebooks.Rule (ActionHandler)
+import Solitude hiding ( Reader, runReader )
+import Effectful
+import Effectful.State.Static.Shared
+import Effectful.Reader.Static
+import Effectful.Dispatch.Dynamic
+import Effectful.Optics
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
@@ -56,7 +58,7 @@ type HasStandardProperties s = (
   , HasLookingProperties s
   , WMStdDirections s
   , WMHasProperty s Door
-  , WMParseableDirections s)
+  , HasDirectionalTerms s)
 
 blankWorld :: HasStandardProperties wm => World (wm :: WorldModel)
 blankWorld = World
@@ -105,8 +107,8 @@ blankMetadata = Metadata
   , _darknessWitnessed = False
   , _currentPlayer = Entity 1
   , _currentStage = Construction
-  , _previousRoom = defaultVoidID
-  , _firstRoom = defaultVoidID
+  , _previousRoom = voidID
+  , _firstRoom = voidID
   , _errorLog = []
   , _typeDAG = makeTypeDAG
   , _traceAnalysisLevel = Maximal
@@ -124,7 +126,7 @@ type EffStackNoIO wm = '[
   , ObjectUpdate wm
   , ObjectLookup wm
   , Log
-  , Cleff.Reader.Reader [Text]
+  , Reader [Text]
   , State Metadata
   , State (WorldActions wm)
   , ObjectCreation wm
@@ -137,7 +139,7 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 newWorld ::
   HasLookingProperties wm
-  
+
   => WMStdDirections wm
   => WMHasProperty wm Door
   => Eff (EffStack wm) ()
@@ -146,16 +148,16 @@ newWorld = do
   addBaseActions
 
 convertToUnderlyingStack ::
-  forall wm. 
-  (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm)
-  => Eff (EffStack wm)
-  ~> Eff (UnderlyingEffStack wm)
+  forall wm a.
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Eff (EffStack wm) a
+  -> Eff (UnderlyingEffStack wm) a
 convertToUnderlyingStack =
   runSayPure
   . runCreationAsLookup
   . zoom worldActions
   . zoom worldMetadata
-  . Cleff.Reader.runReader []
+  . runReader []
   . runLoggingInternal @(World wm)
   . runQueryAsLookup
   . runTraverseAsLookup
@@ -165,26 +167,26 @@ convertToUnderlyingStack =
 
 -- TODO: there's probably a much nicer way to make these traverse lens nicely
 runTraverseAsLookup ::
-  '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State (Metadata)] :>> es
-  => Eff (ObjectTraverse wm : es)
-  ~> Eff es
-runTraverseAsLookup = interpret \case
+  '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State Metadata] :>> es
+  => Eff (ObjectTraverse wm : es) a
+  -> Eff es a
+runTraverseAsLookup = interpret $ \_ -> \case
   TraverseThings f -> do
     m <- use $ worldStores % things
     mapM_ (\aT -> do
-      r <- reifyThing aT >>= (toEff . f)
+      r <- reifyThing aT >>= toEff . f
       whenJust r setThing) m
   TraverseRooms f -> do
     m <- use $ worldStores % rooms
     mapM_ (\aT -> do
-      r <- reifyRoom aT >>= (toEff . f)
+      r <- reifyRoom aT >>= toEff . f
       whenJust r setRoom) m
 
 runCreationAsLookup ::
   State (World wm) :> es
-  => Eff (ObjectCreation wm : es)
-  ~> Eff es
-runCreationAsLookup = interpret \case
+  => Eff (ObjectCreation wm : es) a
+  -> Eff es a
+runCreationAsLookup = interpret $ \_ -> \case
   GenerateEntity bThing -> if bThing then
     (worldStores % entityCounter % _1) <<%= (+1) else (worldStores % entityCounter % _2) <<%= (\x -> x-1)
   AddAbstractRoom aRoom -> worldStores % rooms % at (getID aRoom) ?= aRoom
@@ -195,20 +197,20 @@ runQueryAsLookup ::
   => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
-  => (State (Metadata) :> es)
-  => Eff (ObjectUpdate wm : ObjectLookup wm : es)
-  ~> Eff es
+  => (State Metadata :> es)
+  => Eff (ObjectUpdate wm : ObjectLookup wm : es) a
+  -> Eff es a
 runQueryAsLookup = interpretLookup  . interpretUpdate
 
 interpretLookup ::
-  forall wm es.
+  forall wm es a.
   HasCallStack
   => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
   => (State Metadata :> es)
-  => Eff (ObjectLookup wm : es)
-  ~> Eff es
+  => Eff (ObjectLookup wm : es) a
+  -> Eff es a
 interpretLookup = do
   let lookupHelper ::
         Entity
@@ -230,17 +232,17 @@ interpretLookup = do
                   Just _ -> [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |] :: Text
               Just ao ->
                 withoutMissingObjects (Right <$> reify ao)
-                  (\mo -> noteError Left [int|t|Failed to reify #{mo}.|])
-  interpret \case
+                  (\mo -> noteError Left [int|t|Failed to reify #s{mo}.|])
+  interpret $ \_ -> \case
     LookupThing e -> lookupHelper (getID e) things reifyThing rooms "thing" "room"
     LookupRoom e -> lookupHelper (getID e) rooms reifyRoom things "room" "thing"
 
 interpretUpdate ::
   State (World wm) :> es
-  => (State (Metadata) :> es)
-  => Eff (ObjectUpdate wm : es)
-  ~> Eff es
-interpretUpdate = interpret \case
+  => (State Metadata :> es)
+  => Eff (ObjectUpdate wm : es) a
+  -> Eff es a
+interpretUpdate = interpret $ \_ -> \case
   SetRoom r -> getGlobalTime >>= \ts -> worldStores % rooms % at (getID r) %= updateIt ts r
   SetThing t -> getGlobalTime >>= \ts -> worldStores % things % at (getID t) %= updateIt ts t
 
@@ -251,13 +253,13 @@ updateIt ts newObj mbExisting = case mbExisting of
   Just (DynamicObject (TimestampedObject _ _ f)) -> Just (DynamicObject (TimestampedObject newObj ts f))
 
 runGame ::
-  (Enum (WMDirections wm), Bounded (WMDirections wm), WMParseableDirections wm) 
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => World wm
   -> Text
   -> Eff (EffStack wm) a
   -> IO (World wm)
 runGame wo _ f = do
-  (_, w) <- runIOE $ runState wo $ convertToUnderlyingStack f
+  (_, w) <- runEff $ runState wo $ convertToUnderlyingStack f
   return w
 
 addBaseActions ::
@@ -273,16 +275,13 @@ addBaseActions = do
 
 addGoingSynonyms ::
   forall wm es.
-  (State (WorldActions wm) :> es, Bounded (WMDirections wm), Enum (WMDirections wm), Show (WMDirections wm))
+  (State (WorldActions wm) :> es, Bounded (WMDirection wm), Enum (WMDirection wm), Show (WMDirection wm))
   => Eff es ()
-addGoingSynonyms = do
-  let (allDirs :: [WMDirections wm]) = universe
-  forM_ allDirs $ \dir ->
+addGoingSynonyms = forM_ (universe @(WMDirection wm)) $ \dir ->
     let dirN = (T.toLower . fromString . show) dir in
     actions % at dirN ?= Left (InterpretAs ("go " <> dirN))
-  pass
 
-makeTypeDAG :: Map Text (Set Text)
+makeTypeDAG :: Map ObjType (Set ObjType)
 makeTypeDAG = fromList
   [ ("object", fromList [])
   , ("thing", fromList ["object"])
@@ -290,5 +289,3 @@ makeTypeDAG = fromList
   , ("container", fromList ["thing"])
   , ("supporter", fromList ["thing"])
   ]
-
--- ~\~ end

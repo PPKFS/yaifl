@@ -1,5 +1,3 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Objects/Create.hs
--- ~\~ begin <<lit/worldmodel/objects/creation.md|src/Yaifl/Core/Objects/Create.hs>>[0] project://lit/worldmodel/objects/creation.md:4
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Core.Objects.Create
@@ -19,33 +17,37 @@ module Yaifl.Core.Objects.Create
   , reifyThing
   ) where
 
-import Cleff.State ( State, get, runState )
-
-import Yaifl.Core.Common
+import Yaifl.Core.Entity
 import Yaifl.Core.Logger ( debug, Log )
+import Yaifl.Core.Metadata
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Objects.Move ( move )
-import Yaifl.Core.Objects.Object ( ObjType(ObjType), Object(Object), Room, Thing, objData )
-import Yaifl.Core.Objects.ObjectData
 import Yaifl.Core.Objects.Query ( ObjectUpdate, ObjectLookup, getThing, failHorriblyIfMissing )
+import Yaifl.Core.Objects.RoomData ( RoomData, blankRoomData )
+import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
-import Yaifl.Core.Properties.Property ( WMHasProperty )
-import Text.Interpolation.Nyan
+import Yaifl.Core.Properties.Has ( WMHasProperty )
+import Yaifl.Core.WorldModel ( WMObjSpecifics )
+import Effectful
+import Effectful.TH
+import Solitude
+import Effectful.State.Static.Shared
+import Effectful.Optics
+import Yaifl.Core.AdaptiveText
 
--- ~\~ begin <<lit/worldmodel/objects/creation.md|creation-effect>>[0] project://lit/worldmodel/objects/creation.md:40
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddAbstractThing :: AbstractThing wm -> ObjectCreation wm m ()
-  AddAbstractRoom :: AbstractRoom wm -> ObjectCreation wm m ()
+  AddAbstractThing :: AbstractObject wm ThingData -> ObjectCreation wm m ()
+  AddAbstractRoom :: AbstractObject wm (RoomData wm) -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 
-type AddObjects wm es = (ObjectCreation wm :> es, State (Metadata) :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
-
+type AddObjects wm es = (ObjectCreation wm :> es, State Metadata :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
-  State (Metadata) :> es
+  State Metadata :> es
   => (AbstractObject wm d -> Eff es ())
   -> AbstractObject wm d
   -> Eff es (Object wm d)
@@ -68,23 +70,22 @@ reifyObject setFunc (DynamicObject ts) = do
 reifyRoom ::
   State Metadata :> es
   => (ObjectCreation wm :> es)
-  => AbstractRoom wm
+  => AbstractObject wm (RoomData wm)
   -> Eff es (Room wm)
 reifyRoom = reifyObject addAbstractRoom
 
 reifyThing ::
   State Metadata :> es
   => (ObjectCreation wm :> es)
-  => AbstractThing wm
+  => AbstractObject wm ThingData
   -> Eff es (Thing wm)
 reifyThing = reifyObject addAbstractThing
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/creation.md|make-object>>[0] project://lit/worldmodel/objects/creation.md:51
+
 makeObject ::
   ObjectCreation wm :> es
   => State Metadata :> es
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
+  => AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> ObjType
   -> Bool
   -> Maybe (WMObjSpecifics wm) -- ^ Object details.
@@ -94,7 +95,7 @@ makeObject ::
 makeObject n d ty isT specifics details upd = do
   e <- generateEntity isT
   t <- getGlobalTime
-  let obj = Object (StaticText n) (StaticText d) e ty t specifics details
+  let obj = Object n d e ty t specifics details
   return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
 
 addObject ::
@@ -102,8 +103,8 @@ addObject ::
   => AddObjects wm es
   => (AbstractObject wm d -> Eff es (Object wm d))
   -> (AbstractObject wm d -> Eff es ())
-  -> Text
-  -> Text
+  -> AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> ObjType
   -> Bool
   -> Maybe (WMObjSpecifics wm)
@@ -112,7 +113,7 @@ addObject ::
   -> Eff es (Object wm d)
 addObject rf updWorld n d ty isT specifics details updateFunc = do
   (e, obj) <- makeObject n d ty isT specifics details updateFunc
-  let (n' :: Text) = if isThing obj then "thing" else "room"
+  let (n' :: Text) = if isThing e then "thing" else "room"
   debug [int|t| Made a new #{n'} called #{n} with ID #{e} |]
   updWorld obj
   lastRoom <- use previousRoom
@@ -123,16 +124,15 @@ addObject rf updWorld n d ty isT specifics details updateFunc = do
   else
     failHorriblyIfMissing $ do
       t <- getThing e
-      when (t ^. objData % thingContainedBy == defaultVoidID)
+      when (t ^. objData % thingContainedBy == voidID)
         (move t lastRoom >> pass)
   rf obj
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/creation.md|add-objects>>[0] project://lit/worldmodel/objects/creation.md:104
+
 addThing ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
+  => AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> ObjType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
@@ -144,18 +144,18 @@ addThing name desc objtype specifics details = addObject reifyThing addAbstractT
 addThing' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
+  => AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
-    Nothing (Just $ snd $ runPure $ runState blankThingData stateUpdate) Nothing
+    Nothing (Just $ snd $ runPureEff $ runState blankThingData stateUpdate) Nothing
 
 addRoom ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => Text -- ^ Name.
-  -> Text -- ^ Description.
+  => AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> ObjType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
@@ -168,19 +168,18 @@ addRoom name desc objtype specifics details upd = do
   return e
 
 isVoid :: Entity -> Bool
-isVoid = (defaultVoidID ==)
+isVoid = (voidID ==)
 
 addRoom' ::
  WMHasProperty wm Enclosing
   => AddObjects wm es
-  => Text
-  -> Text
+  => AdaptiveText (ObjectDomain wm) -- ^ Name.
+  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es (Room wm)
 addRoom' n d rd = addRoom n d (ObjType "room")
-  Nothing (Just $ snd $ runPure $ runState blankRoomData rd) Nothing
--- ~\~ end
--- ~\~ begin <<lit/worldmodel/objects/creation.md|base-objects>>[0] project://lit/worldmodel/objects/creation.md:159
+  Nothing (Just $ snd $ runPureEff $ runState blankRoomData rd) Nothing
+
 addBaseObjects ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
@@ -188,6 +187,4 @@ addBaseObjects ::
 addBaseObjects = do
   addRoom' "The Void" "If you're seeing this, you did something wrong." pass
   addThing' "player" "It's you, looking handsome as always" (thingDescribed .= Undescribed)
-  firstRoom .= defaultVoidID
--- ~\~ end
--- ~\~ end
+  firstRoom .= voidID

@@ -15,6 +15,7 @@ module Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
 import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
 import Yaifl.Core.Say
 import Yaifl.Core.Rulebooks.Rule
+import Solitude
 
 
 printingDescriptionOfADarkRoomImpl :: Activity o () ()

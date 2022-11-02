@@ -2,8 +2,10 @@ module Yaifl.Lamp.Properties.Supporter
   ( isSupporter
   ) where
 
-import Yaifl.Core.Objects.Object
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
+import Solitude
+import Effectful
 
 isSupporter ::
   NoMissingObjects wm es

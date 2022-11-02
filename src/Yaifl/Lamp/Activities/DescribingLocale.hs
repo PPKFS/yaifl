@@ -6,29 +6,35 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 Stability   : No
 -}
+
 module Yaifl.Lamp.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
 
+import Data.List ( groupBy )
 import qualified Data.EnumMap.Strict as DEM
-import Yaifl.Lamp.Activities.PrintingNameOfSomething
-import Yaifl.Core.Common
-import Data.List (groupBy)
 import qualified Data.EnumSet as DES
-import Yaifl.Core.Properties.Property
-import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Lamp.Properties.Container
-import Yaifl.Lamp.Properties.Openable
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Objects.Object
 
-import Yaifl.Core.Say
-import Yaifl.Core.Properties.Query
-import Yaifl.Core.Logger
-import Yaifl.Core.Objects.ObjectData
+import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Entity ( Store(unStore), Entity )
+import Yaifl.Core.Logger ( debug )
+import Yaifl.Core.Metadata (currentPlayer)
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Objects.ThingData
+import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
+import Yaifl.Core.Properties.Has ( WMHasProperty )
+import Yaifl.Core.Properties.Query ( getEnclosing )
+import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Core.Say ( Saying, say )
+import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Lamp.Properties.Container
+import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
+import Solitude
+import Effectful
+import Effectful.Optics
+import Yaifl.Core.AdaptiveText.Eval
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing
@@ -62,7 +68,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     --then it is either no longer needed to be written about (Just Mentioned)
     --mentioned, but still hanging around (Just Unmentioned)
     --or ignored (Nothing)
-    -- update: so now the printing a locale paragraph activity will instead modify 
+    -- update: so now the printing a locale paragraph activity will instead modify
     --the locale variables and pass those through
     newP <- foldlM (\v' li -> do
         r <- doActivity printingLocaleParagraphAbout (v', li)
@@ -80,7 +86,7 @@ sayDomain ::
   -> Eff es ()
 sayDomain x e = do
   say x
-  printNameEx (SayOptions Definite Uncapitalised) e 
+  printNameEx (SayOptions Definite Uncapitalised) e
   say " you "
 
 alsoSee ::
@@ -135,11 +141,11 @@ alsoSee = Rule "You can also see" (\v ->
             case objGrp of
               [] -> pass -- nothing to print
               [e'] -> do
-                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e') 
+                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
                 pass
               e' : _ -> do
                 say $ show $ length objGrp
-                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e') 
+                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
                 pass
             when (num < length groupedList - 1) (say ", ")
             when (num == length groupedList - 2) (say "and ")

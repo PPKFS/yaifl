@@ -1,26 +1,25 @@
--- ~\~ language=Haskell filename=src/Yaifl/Core/Rulebooks/WhenPlayBegins.hs
--- ~\~ begin <<lit/rulebooks/whenplaybegins.md|src/Yaifl/Core/Rulebooks/WhenPlayBegins.hs>>[0] project://lit/rulebooks/whenplaybegins.md:4
-
 module Yaifl.Core.Rulebooks.WhenPlayBegins
   ( whenPlayBeginsName
   , whenPlayBeginsRules
   , introText
   ) where
 
-
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
-import Yaifl.Core.Properties.Property ( WMHasProperty )
+import Yaifl.Core.Properties.Has ( WMHasProperty )
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import qualified Data.Text as T
 import Yaifl.Core.Say ( Saying, say, setStyle )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
 import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
-import Yaifl.Core.Common ( firstRoom, title,  Metadata )
+import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
 import Yaifl.Core.Logger ( Log, err )
-import Cleff.State ( State )
+import Solitude
+import Effectful
+import Effectful.State.Static.Shared (State)
+import Effectful.Optics
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -39,7 +38,7 @@ whenPlayBeginsRules = Rulebook
     ]
 
 sayIntroText ::
-  State (Metadata) :> es
+  State Metadata :> es
   => Saying :> es
   => Eff es ()
 sayIntroText = do
@@ -70,12 +69,11 @@ initRoomDescription = do
   parseAction (ActionOptions True Nothing) "look" >>= (\case
      Left txt -> err txt
      Right True -> pass
-     Right False -> error "") -- noteError "Somehow, looking when play begins failed")
+     Right False -> error "aaaa")
   rulePass
 
 positionPlayer ::
-  Log :> es
-  => NoMissingObjects wm es
+  NoMissingObjects wm es
   => WMHasProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do
@@ -83,5 +81,3 @@ positionPlayer = do
   pl <- getCurrentPlayer
   m <- move pl fr
   if m then return Nothing else failRuleWithError "Failed to move the player."
-
--- ~\~ end
