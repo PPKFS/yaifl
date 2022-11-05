@@ -32,14 +32,13 @@ module Yaifl.Core.Rulebooks.Rulebook
   ) where
 
 
-import Yaifl.Core.Logger
-import Yaifl.Core.Metadata
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule
 import Solitude
-import Effectful.State.Static.Shared
-import Effectful
+
+import Yaifl.Core.Logger ( Log )
+import Yaifl.Core.Metadata ( Metadata )
+import Yaifl.Core.Objects.Query ( NoMissingObjects )
+import Yaifl.Core.Rulebooks.Args
+import Yaifl.Core.Rulebooks.Rule ( Rule, ruleName, runRule )
 
 type ParseArgumentEffects wm es = (State Metadata :> es, Log :> es, NoMissingObjects wm es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.

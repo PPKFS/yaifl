@@ -5,6 +5,11 @@ module Yaifl.Core.Actions.Parser
   ( runActionHandlerAsWorldActions
   ) where
 
+import Solitude
+
+import Effectful.Dispatch.Dynamic ( interpret )
+import Effectful.Optics ( use )
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity ( ActivityCollection )
 import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
@@ -18,12 +23,6 @@ import Yaifl.Core.WorldModel ( WMDirection )
 
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import Solitude
-import Effectful
-
-import Effectful.State.Static.Shared
-import Effectful.Dispatch.Dynamic
-import Effectful.Optics
 
 runActionHandlerAsWorldActions ::
   forall es wm a.

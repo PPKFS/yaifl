@@ -5,6 +5,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Room
 import Yaifl.Test.Common
+import Solitude
 
 wmrwN :: Text
 wmrwN = "The Wilkie Memorial Research Wing"
@@ -34,8 +35,8 @@ ex3World = do
     -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
     --roomDescriptions .= SometimesAbbreviatedRoomDescriptions
     -- addThing' "Bic pen" "" pass
-    w <- addRoom' wmrwN wmrwDesc pass
-    tmr <- addRoom' tmrN tmrDesc pass
+    w <- addRoom' (fromString . show $ wmrwN) (fromString . show $ wmrwDesc) pass
+    tmr <- addRoom' (fromString . show $ tmrN) (fromString . show $ tmrDesc) pass
     tmr `isWestOf` w
     pass
 

@@ -1,6 +1,8 @@
+{-# LANGUAGE InstanceSigs #-}
 module Yaifl.Core.AdaptiveText
   ( AdaptiveText(..)
   , AdaptiveTextDomain
+  , rawAdaptiveText
   ) where
 
 import Replace.Megaparsec ( splitCap )
@@ -12,7 +14,15 @@ data AdaptiveText domain = StaticText Text | AdaptiveText [Text] [Text]
 
 type family AdaptiveTextDomain a
 
+rawAdaptiveText ::
+  AdaptiveText domain
+  -> Text
+rawAdaptiveText (StaticText t) = t
+-- TODO
+rawAdaptiveText (AdaptiveText subs main) = mconcat main
+
 instance IsString (AdaptiveText domain) where
+  fromString :: String -> AdaptiveText domain
   fromString s = let
     subMatcher :: Parsec Void String String
     subMatcher = single '[' >> manyTill anySingle (single ']')
@@ -20,7 +30,7 @@ instance IsString (AdaptiveText domain) where
     (ls, rs) = partitionEithers splitter
     in
     case (ls, rs) of
-      ([l], []) -> StaticText (toText l)
+      (l, []) -> StaticText (toText $ mconcat l)
       (ls', rs') -> AdaptiveText (map toText ls') (map (toText . fst) rs')
 
 instance Buildable (AdaptiveText domain) where

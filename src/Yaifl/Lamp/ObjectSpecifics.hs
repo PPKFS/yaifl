@@ -6,7 +6,10 @@ module Yaifl.Lamp.ObjectSpecifics
   , WMHasObjSpecifics(..)
   ) where
 
+import Solitude
+
 import Yaifl.Core.Entity ( HasID(getID) )
+import Yaifl.Core.Metadata (previousRoom, ObjType (..))
 import Yaifl.Core.Object ( Object(_objID), Room, Thing, AdaptiveObjectText )
 import Yaifl.Core.Objects.Create ( AddObjects, addThing )
 import Yaifl.Core.Objects.Dynamic ( ObjectUpdateFunc )
@@ -17,10 +20,6 @@ import Yaifl.Core.WorldModel ( WMObjSpecifics, WorldModel(..) )
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Door ( Door, blankDoor )
 import Yaifl.Lamp.Properties.Openable ( Openable )
-import Yaifl.Core.Metadata (previousRoom, ObjType (..))
-import Solitude
-import Effectful.State.Static.Shared
-import Effectful
 
 data ObjectSpecifics =
   NoSpecifics

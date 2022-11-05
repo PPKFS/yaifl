@@ -1,18 +1,20 @@
-module Yaifl.Test.Chapter3.Common ( spec ) where
+module Yaifl.Test.Chapter3.Common where
 
 import Yaifl.Test.Common
 
+import Solitude
 import Yaifl.Test.Chapter3.Bic
 import Yaifl.Test.Chapter3.Verbosity
-import Test.Sandwich
 import Control.Monad.Catch
+import qualified Data.Map as M
 --import Yaifl.Core.Test.Chapter3.Verbosity
 
-spec :: (MonadIO m, MonadMask m, HasBaseContext context) => SpecFree context m ()
-spec = describe "Chapter 3" $ do
-  testHarness "Bic" ex2World [] ex2Test
-  testHarness "Verbosity" ex3World ex3TestMeWith ex3Test
+spec :: Map String (IO Text)
+spec = M.fromList
+  [ ("Bic", testHarness "Bic" [] ex2World)
+  , ("Verbosity", testHarness "Verbosity" ex3TestMeWith ex3World)
+  ]
 
-{-  it "runs chapter 3.1.3" $ 
+{-  it "runs chapter 3.1.3" $
     testHarness "Verbosity - 3.1.3" ex3World ex3TestMeWith ex3Test
 -}

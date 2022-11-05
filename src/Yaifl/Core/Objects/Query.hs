@@ -43,17 +43,16 @@ module Yaifl.Core.Objects.Query
 
 import Solitude
 
+import Effectful.Error.Static ( runError, throwError, Error )
+import Effectful.Optics ( use )
+import Effectful.TH ( makeEffect )
+
 import Yaifl.Core.Entity ( HasID(..), Entity)
-import Yaifl.Core.Logger ( Log, err )
+import Yaifl.Core.Logger ( Log, err, warn )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.ThingData (thingContainedBy)
 import Yaifl.Core.WorldModel (WorldModel)
-import Effectful.Error.Static
-import Effectful
-import Effectful.TH
-import Effectful.State.Static.Shared
-import Effectful.Optics
 
 
 data MissingObject = MissingObject
@@ -167,7 +166,7 @@ getRoomMaybe ::
   => o
   -> Eff es (Maybe (Room wm))
 getRoomMaybe e = do
-  if isThing (getID e)
+  if isRoom (getID e)
     then withoutMissingObjects (getRoom e <&> Just) (const (return Nothing))
   else return Nothing
 
@@ -251,6 +250,7 @@ getLocation ::
 getLocation t = do
   t' <- getThing t
   let tcb = t' ^. objData % thingContainedBy
+  warn $ show tcb <> show (getID t')
   o <- getObject tcb
   join $ asThingOrRoom o getLocation return
 

@@ -1,5 +1,7 @@
 module Yaifl.Lamp.Visibility where
 
+import Solitude
+
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Entity
 import Yaifl.Core.Logger
@@ -18,9 +20,6 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
-import Solitude
-import Effectful
-import Effectful.State.Static.Shared
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =

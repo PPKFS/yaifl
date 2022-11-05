@@ -23,17 +23,15 @@ module Yaifl.Core.Rulebooks.Rule
 
 import Solitude
 
-import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
-import Yaifl.Core.Logger ( Log, warn )
-import Yaifl.Core.Say ( Saying )
-import Yaifl.Core.Rulebooks.Args ( Refreshable )
-import {-# SOURCE #-} Yaifl.Core.Actions.Activity ( ActivityCollection )
-import Yaifl.Core.Object ( Thing )
-import Effectful ( (:>), Effect, Eff )
-import Effectful.TH ( makeEffect )
-import Effectful.State.Static.Shared ( State )
 import Effectful.Error.Static ( Error, throwError )
+import Effectful.TH ( makeEffect )
+import Yaifl.Core.Logger ( Log, warn )
+import Yaifl.Core.Metadata ( Metadata )
+import Yaifl.Core.Object ( Thing )
+import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
+import Yaifl.Core.Rulebooks.Args ( Refreshable )
+import Yaifl.Core.Say ( Saying )
+import {-# SOURCE #-} Yaifl.Core.Actions.Activity ( ActivityCollection )
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)

@@ -7,6 +7,11 @@ module Yaifl (
   , runGame
   ) where
 
+import Solitude hiding ( Reader, runReader )
+import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
+import Effectful.Optics ( (?=), (%=), use, (<<%=) )
+import Effectful.Reader.Static ( runReader, Reader )
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Actions.Parser
@@ -41,12 +46,6 @@ import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Visibility
 import qualified Data.Map as DM
 import qualified Data.Text as T
-import Solitude hiding ( Reader, runReader )
-import Effectful
-import Effectful.State.Static.Shared
-import Effectful.Reader.Static
-import Effectful.Dispatch.Dynamic
-import Effectful.Optics
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
@@ -114,12 +113,7 @@ blankMetadata = Metadata
   , _traceAnalysisLevel = Maximal
   }
 
-type family (xs :: [(Type -> Type) -> Type -> Type]) :++: (ys :: [(Type -> Type) -> Type -> Type]) :: [(Type -> Type) -> Type -> Type] where
-  '[]       :++: ys = ys
-  (x ': xs) :++: ys = x ': (xs :++: ys)
-
-type EffStack wm = EffStackNoIO wm :++: '[IOE]
-type EffStackNoIO wm = '[
+type EffStack wm = '[
   ActionHandler wm
   , State (ActivityCollection wm)
   , ObjectTraverse wm
@@ -131,6 +125,8 @@ type EffStackNoIO wm = '[
   , State (WorldActions wm)
   , ObjectCreation wm
   , Saying
+  , State (World wm)
+  , IOE
   ]
 
 type Game wm = Eff (EffStack wm)
@@ -147,39 +143,55 @@ newWorld = do
   addBaseObjects
   addBaseActions
 
+zoomState ::
+  (State whole :> es)
+  => Lens' whole sub
+  -> (Eff (State sub ': es)) a
+  -> Eff es a
+zoomState l = interpret $ \env -> \case
+  Get      -> gets (view l)
+  Put s    -> modify (set l s)
+  State f  -> state (\s -> second (\x -> s & l .~ x) $ f (s ^. l))
+  StateM f -> localSeqUnlift env $ \unlift -> stateM
+    (\s -> do
+      newSub <- unlift $ f (s ^. l)
+      pure $ second (\x -> s & l .~ x) newSub )
+
 convertToUnderlyingStack ::
-  forall wm a.
+  forall wm.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => Eff (EffStack wm) a
-  -> Eff (UnderlyingEffStack wm) a
-convertToUnderlyingStack =
-  runSayPure
+  => World wm
+  -> Eff (EffStack wm) ()
+  -> IO ((), World wm)
+convertToUnderlyingStack w =
+  runEff
+  . runStateShared w
+  . runSayPure @(World wm)
   . runCreationAsLookup
-  . zoom worldActions
-  . zoom worldMetadata
+  . zoomState worldActions
+  . zoomState worldMetadata
   . runReader []
   . runLoggingInternal @(World wm)
   . runQueryAsLookup
   . runTraverseAsLookup
-  . zoom worldActivities
+  . zoomState worldActivities
   . runActionHandlerAsWorldActions
-  . raiseUnderN @(State (World wm)) @(EffStackNoIO wm) @'[IOE]
 
 -- TODO: there's probably a much nicer way to make these traverse lens nicely
 runTraverseAsLookup ::
   '[State (World wm), ObjectUpdate wm, ObjectCreation wm, State Metadata] :>> es
   => Eff (ObjectTraverse wm : es) a
   -> Eff es a
-runTraverseAsLookup = interpret $ \_ -> \case
+runTraverseAsLookup = interpret $ \env -> \case
   TraverseThings f -> do
     m <- use $ worldStores % things
     mapM_ (\aT -> do
-      r <- reifyThing aT >>= toEff . f
+      r <- reifyThing aT >>= (\r -> localSeqUnlift env $ \unlift -> unlift $ f r)
       whenJust r setThing) m
   TraverseRooms f -> do
     m <- use $ worldStores % rooms
     mapM_ (\aT -> do
-      r <- reifyRoom aT >>= toEff . f
+      r <- reifyRoom aT >>= (\r -> localSeqUnlift env $ \unlift -> unlift $ f r)
       whenJust r setRoom) m
 
 runCreationAsLookup ::
@@ -256,10 +268,10 @@ runGame ::
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => World wm
   -> Text
-  -> Eff (EffStack wm) a
+  -> Eff (EffStack wm) ()
   -> IO (World wm)
 runGame wo _ f = do
-  (_, w) <- runEff $ runState wo $ convertToUnderlyingStack f
+  (_, w) <- convertToUnderlyingStack wo f
   return w
 
 addBaseActions ::

@@ -5,17 +5,19 @@ module Yaifl.Core.AdaptiveText.Eval
   , evalDescription
   ) where
 
-import Yaifl.Core.AdaptiveText
 import Solitude
-import Effectful
-import Yaifl.Core.Say
+
+import Yaifl.Core.AdaptiveText
 import Yaifl.Core.Object
+import Yaifl.Core.Say ( Saying, say )
 
 evaluateAdaptiveText ::
   AdaptiveText domain
   -> AdaptiveTextDomain domain
   -> Eff es Text
-evaluateAdaptiveText = error ""
+evaluateAdaptiveText (StaticText t) _ = pure t
+evaluateAdaptiveText (AdaptiveText ls rs) _ = error $ "not supporting adaptive text yet" <> show ls <> show rs
+
 sayAdaptive ::
   Saying :> es
   => AdaptiveText domain

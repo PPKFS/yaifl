@@ -25,9 +25,7 @@ import Solitude
 
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Effectful
-import Effectful.TH
-import Effectful.State.Static.Shared
+import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Optics (use, (.=))
 
@@ -72,7 +70,7 @@ instance Has s s where
   buf = castOptic simple
 
 runSayPure ::
-  forall s es a. 
+  forall s es a.
   PartialState s MessageBuffer es
   => Eff (Saying : es) a
   -> Eff es a

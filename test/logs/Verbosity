@@ -1,0 +1,78 @@
+2022-11-05 18:08:38.42919361 UTC[Debug] Made a new room called StaticText "The Void" with ID (ID: -1) 
+2022-11-05 18:08:38.42920966 UTC[Debug] Made a new thing called StaticText "player" with ID (ID: 1) 
+2022-11-05 18:08:38.42931066 UTC[Debug] Moving StaticText "player" from (ID: -1) to (ID: -1)
+2022-11-05 18:08:38.42932933 UTC[Info]Building world Verbosity...
+2022-11-05 18:08:38.42933101 UTC[Debug] Made a new room called StaticText "\"The Wilkie Memorial Research Wing\"" with ID (ID: -2) 
+2022-11-05 18:08:38.42933583 UTC[Debug] Made a new room called StaticText "\"The Men's Restroom\"" with ID (ID: -3) 
+2022-11-05 18:08:38.431708549 UTC[Info]World construction finished, beginning game...
+2022-11-05 18:08:38.431731029 UTC[Debug]Running the when play begins rulebook
+2022-11-05 18:08:38.432676752 UTC[Debug]<when play begins> Moving StaticText "player" from (ID: -1) to (ID: -2)
+2022-11-05 18:08:38.432684482 UTC[Warn]<when play begins>Action parse was successful; going with the verb looking after matching look
+2022-11-05 18:08:38.432687442 UTC[Debug]<when play begins>Trying to do the action 'looking'
+2022-11-05 18:08:38.432688492 UTC[Debug]<when play begins>Running the action processing rulebook
+2022-11-05 18:08:38.432691132 UTC[Debug]<when play begins|action processing>The visibility holder of StaticText "\"The Wilkie Memorial Research Wing\"" is itself
+2022-11-05 18:08:38.432693192 UTC[Warn]<when play begins|action processing> Before stage rule needs implementing
+2022-11-05 18:08:38.432694682 UTC[Warn]<when play begins|action processing> carrying requirements rule needs implementing
+2022-11-05 18:08:38.432695942 UTC[Warn]<when play begins|action processing> basic visibility rule needs implementing
+2022-11-05 18:08:38.432697132 UTC[Warn]<when play begins|action processing> instead stage rule needs implementing
+2022-11-05 18:08:38.432698182 UTC[Warn]<when play begins|action processing> requested actions require persuasion rule needs implementing
+2022-11-05 18:08:38.432699202 UTC[Warn]<when play begins|action processing> carry out requested actions rule needs implementing
+2022-11-05 18:08:38.432700192 UTC[Warn]<when play begins|action processing> investigate player awareness rule needs implementing
+2022-11-05 18:08:38.432701312 UTC[Warn]<when play begins|action processing> check stage rule needs implementing
+2022-11-05 18:08:38.432702542 UTC[Debug]<when play begins|action processing>Running the Carry Out Looking rulebook
+2022-11-05 18:08:38.432703922 UTC[Debug]<when play begins|action processing|Carry Out Looking>todo: fix
+2022-11-05 18:08:38.432704202 UTC[Debug]<when play begins|action processing|Carry Out Looking>"Printing room description heading with visibility ceiling TODO and visibility count 1
+2022-11-05 18:08:38.432708752 UTC[Debug]<when play begins|action processing|Carry Out Looking>Running the Carry Out Printing the name of something rulebook
+2022-11-05 18:08:38.432722812 UTC[Debug]<when play begins|action processing|Carry Out Looking>Running the Carry out describing locale rulebook
+2022-11-05 18:08:38.432724332 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry Out Choosing notable locale objects rulebook
+2022-11-05 18:08:38.432726602 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry Out Choosing notable locale objects>Found a player
+2022-11-05 18:08:38.432727782 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Found a total of 1 potentially interesting things
+2022-11-05 18:08:38.432729572 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry out printing a locale paragraph rulebook
+2022-11-05 18:08:38.432730942 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry out printing a locale paragraph>Succeeded after following the don’t mention undescribed items in room descriptions rule rule
+2022-11-05 18:08:38.432731472 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>After handing off to printingLocaleParagraphAbout, we still have 0 potentially interesting things
+2022-11-05 18:08:38.432735082 UTC[Warn]<when play begins|action processing> after stage rule needs implementing
+2022-11-05 18:08:38.432736342 UTC[Warn]<when play begins|action processing> investigate player awareness after rule needs implementing
+2022-11-05 18:08:38.432737572 UTC[Warn]<when play begins|action processing> report stage rule needs implementing
+2022-11-05 18:08:38.432738772 UTC[Warn]<when play begins|action processing> clean actions rule needs implementing
+2022-11-05 18:08:38.432742622 UTC[Debug]Matched west and interpreting this as go west.
+2022-11-05 18:08:38.432745472 UTC[Warn]Action parse was successful; going with the verb going after matching go
+2022-11-05 18:08:38.432751003 UTC[Debug]Trying to do the action 'going'
+2022-11-05 18:08:38.432751853 UTC[Debug]Running the action processing rulebook
+2022-11-05 18:08:38.432753033 UTC[Warn]<action processing>Entity {unID = -2}Entity {unID = 1}
+2022-11-05 18:08:38.432756813 UTC[Warn]<action processing> Before stage rule needs implementing
+2022-11-05 18:08:38.432758203 UTC[Warn]<action processing> carrying requirements rule needs implementing
+2022-11-05 18:08:38.432759413 UTC[Warn]<action processing> basic visibility rule needs implementing
+2022-11-05 18:08:38.432760583 UTC[Warn]<action processing> instead stage rule needs implementing
+2022-11-05 18:08:38.432761823 UTC[Warn]<action processing> requested actions require persuasion rule needs implementing
+2022-11-05 18:08:38.432762973 UTC[Warn]<action processing> carry out requested actions rule needs implementing
+2022-11-05 18:08:38.432764103 UTC[Warn]<action processing> investigate player awareness rule needs implementing
+2022-11-05 18:08:38.432765123 UTC[Warn]<action processing> check stage rule needs implementing
+2022-11-05 18:08:38.432767663 UTC[Warn]<action processing> after stage rule needs implementing
+2022-11-05 18:08:38.432768813 UTC[Warn]<action processing> investigate player awareness after rule needs implementing
+2022-11-05 18:08:38.432769833 UTC[Warn]<action processing> report stage rule needs implementing
+2022-11-05 18:08:38.432770773 UTC[Warn]<action processing> clean actions rule needs implementing
+2022-11-05 18:08:38.432774233 UTC[Debug]Matched east and interpreting this as go east.
+2022-11-05 18:08:38.432776623 UTC[Warn]Action parse was successful; going with the verb going after matching go
+2022-11-05 18:08:38.432779253 UTC[Debug]Trying to do the action 'going'
+2022-11-05 18:08:38.432780113 UTC[Debug]Running the action processing rulebook
+2022-11-05 18:08:38.432780763 UTC[Warn]<action processing>Entity {unID = -2}Entity {unID = 1}
+2022-11-05 18:08:38.432782773 UTC[Error]<action processing>I have no idea where you wanted to go.
+2022-11-05 18:08:38.432783423 UTC[Error]<action processing>I have no idea where you wanted to go.
+2022-11-05 18:08:38.432786113 UTC[Error]Failed to parse the command verbose because I have no idea what you meant by 'verbose'..
+2022-11-05 18:08:38.442474478 UTC[Debug]Matched west and interpreting this as go west.
+2022-11-05 18:08:38.442479078 UTC[Warn]Action parse was successful; going with the verb going after matching go
+2022-11-05 18:08:38.442483948 UTC[Debug]Trying to do the action 'going'
+2022-11-05 18:08:38.442484748 UTC[Debug]Running the action processing rulebook
+2022-11-05 18:08:38.442485608 UTC[Warn]<action processing>Entity {unID = -2}Entity {unID = 1}
+2022-11-05 18:08:38.442488068 UTC[Warn]<action processing> Before stage rule needs implementing
+2022-11-05 18:08:38.442489438 UTC[Warn]<action processing> carrying requirements rule needs implementing
+2022-11-05 18:08:38.442490338 UTC[Warn]<action processing> basic visibility rule needs implementing
+2022-11-05 18:08:38.442491138 UTC[Warn]<action processing> instead stage rule needs implementing
+2022-11-05 18:08:38.442491878 UTC[Warn]<action processing> requested actions require persuasion rule needs implementing
+2022-11-05 18:08:38.442492688 UTC[Warn]<action processing> carry out requested actions rule needs implementing
+2022-11-05 18:08:38.442493498 UTC[Warn]<action processing> investigate player awareness rule needs implementing
+2022-11-05 18:08:38.442494268 UTC[Warn]<action processing> check stage rule needs implementing
+2022-11-05 18:08:38.442496278 UTC[Warn]<action processing> after stage rule needs implementing
+2022-11-05 18:08:38.442497178 UTC[Warn]<action processing> investigate player awareness after rule needs implementing
+2022-11-05 18:08:38.442497978 UTC[Warn]<action processing> report stage rule needs implementing
+2022-11-05 18:08:38.442498718 UTC[Warn]<action processing> clean actions rule needs implementing

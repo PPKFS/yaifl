@@ -2,22 +2,22 @@
 
 module Yaifl.Core.World where
 
-import Yaifl.Core.Say ( Has(..), MessageBuffer )
-import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
-import Yaifl.Core.Objects.Dynamic (AbstractObject)
-import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
-import Yaifl.Core.Rulebooks.Rule ( Rule )
-import Yaifl.Core.Actions.Activity ( ActivityCollection )
-import Yaifl.Core.Logger ( LogBuffer )
-import Yaifl.Core.WorldModel ( WMValues, WorldModel )
-import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.Entity ( Store, Entity )
-import Yaifl.Core.Objects.ThingData ( ThingData )
-import Yaifl.Core.Objects.RoomData ( RoomData )
 import Solitude
-import Effectful.State.Static.Shared
-import Effectful
-import Effectful.Optics
+
+import Effectful.Optics ( (%=) )
+
+import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
+import Yaifl.Core.Actions.Activity ( ActivityCollection )
+import Yaifl.Core.Entity ( Store, Entity )
+import Yaifl.Core.Logger ( LogBuffer )
+import Yaifl.Core.Metadata ( Metadata )
+import Yaifl.Core.Objects.Dynamic (AbstractObject)
+import Yaifl.Core.Objects.RoomData ( RoomData )
+import Yaifl.Core.Objects.ThingData ( ThingData )
+import Yaifl.Core.Rulebooks.Rule ( Rule )
+import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
+import Yaifl.Core.Say ( Has(..), MessageBuffer )
+import Yaifl.Core.WorldModel ( WMValues, WorldModel )
 
 data World (wm :: WorldModel) = World
   { _worldMetadata :: Metadata

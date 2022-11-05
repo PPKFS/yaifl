@@ -2,6 +2,8 @@ module Yaifl.Core.Objects.Move
   ( move
   ) where
 
+import Solitude
+import qualified Data.EnumSet as ES
 
 import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Logger ( debug, Log )
@@ -12,10 +14,6 @@ import Yaifl.Core.Objects.ThingData ( thingContainedBy )
 import Yaifl.Core.Properties.Enclosing (enclosingContains, Enclosing)
 import Yaifl.Core.Properties.Has (WMHasProperty)
 import Yaifl.Core.Properties.Query (getEnclosing, getPropertyOrThrow, setEnclosing)
-import qualified Data.EnumSet as ES
-import Solitude
-import Effectful.State.Static.Shared
-import Effectful
 
 move ::
   State Metadata :> es

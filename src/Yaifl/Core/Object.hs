@@ -42,18 +42,17 @@ module Yaifl.Core.Object (
   ) where
 
 import Solitude
-import Effectful
 
 import Data.Set (member)
-import Yaifl.Core.Metadata ( ObjType, Metadata, noteError, typeDAG, Timestamp )
-import Yaifl.Core.Objects.ThingData (ThingData)
-import Yaifl.Core.Objects.RoomData (RoomData)
-import Yaifl.Core.Entity (Entity (..), HasID (..))
-import Yaifl.Core.WorldModel (WMObjSpecifics, WorldModel (..))
-import Yaifl.Core.Logger (Log)
+import Effectful.Optics ( use )
+
 import Yaifl.Core.AdaptiveText ( AdaptiveText, AdaptiveTextDomain )
-import Effectful.State.Static.Shared
-import Effectful.Optics
+import Yaifl.Core.Entity (Entity (..), HasID (..))
+import Yaifl.Core.Logger (Log)
+import Yaifl.Core.Metadata ( ObjType, Metadata, noteError, typeDAG, Timestamp )
+import Yaifl.Core.Objects.RoomData (RoomData)
+import Yaifl.Core.Objects.ThingData (ThingData)
+import Yaifl.Core.WorldModel (WMObjSpecifics, WorldModel (..))
 
 -- | Determine whether an object is of a certain type.
 isType ::

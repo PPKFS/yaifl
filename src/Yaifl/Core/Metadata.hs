@@ -46,11 +46,10 @@ module Yaifl.Core.Metadata (
   ) where
 
 import Solitude
+import Effectful.Optics ( (.=), (%=), use )
+
 import Yaifl.Core.Entity ( Entity, HasID (..) )
 import Yaifl.Core.Logger ( Log, err )
-import Effectful.State.Static.Shared
-import Effectful
-import Effectful.Optics
 
 -- | Copy of Inform7's room description verbosity.
 data RoomDescriptions =

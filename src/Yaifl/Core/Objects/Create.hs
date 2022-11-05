@@ -17,7 +17,13 @@ module Yaifl.Core.Objects.Create
   , reifyThing
   ) where
 
-import Yaifl.Core.Entity
+import Solitude
+
+import Effectful.Optics ( (.=), use )
+import Effectful.TH ( makeEffect )
+
+import Yaifl.Core.AdaptiveText ( AdaptiveText )
+import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
 import Yaifl.Core.Logger ( debug, Log )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
@@ -29,12 +35,6 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.WorldModel ( WMObjSpecifics )
-import Effectful
-import Effectful.TH
-import Solitude
-import Effectful.State.Static.Shared
-import Effectful.Optics
-import Yaifl.Core.AdaptiveText
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
@@ -149,7 +149,7 @@ addThing' ::
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThing n d (ObjType "thing")
-    Nothing (Just $ snd $ runPureEff $ runState blankThingData stateUpdate) Nothing
+    Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate) Nothing
 
 addRoom ::
   WMHasProperty wm Enclosing
@@ -171,14 +171,14 @@ isVoid :: Entity -> Bool
 isVoid = (voidID ==)
 
 addRoom' ::
- WMHasProperty wm Enclosing
+  WMHasProperty wm Enclosing
   => AddObjects wm es
   => AdaptiveText (ObjectDomain wm) -- ^ Name.
   -> AdaptiveText (ObjectDomain wm) -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es (Room wm)
 addRoom' n d rd = addRoom n d (ObjType "room")
-  Nothing (Just $ snd $ runPureEff $ runState blankRoomData rd) Nothing
+  Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd) Nothing
 
 addBaseObjects ::
   WMHasProperty wm Enclosing

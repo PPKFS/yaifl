@@ -19,46 +19,41 @@ import Yaifl.Core.Activities
 import qualified Data.EnumMap as DEM
 import Yaifl.Core.ObjectLookup
 -}
+import Solitude
+import Yaifl.Test.Common
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
-import Test.Sandwich
-import Yaifl.Test.Common (DiffException (..))
-import Test.Sandwich.Formatters.TerminalUI
-    ( defaultTerminalUIFormatter,
-      CustomTUIException(CustomTUIExceptionBrick),
-      terminalUICustomExceptionFormatters )
-import Graphics.Vty
-    ( Attr(attrForeColor), MaybeDefault(SetTo), green, red )
-import Brick ( modifyDefAttr, txtWrap, vBox, Widget )
 import Data.Algorithm.Diff
     ( getGroupedDiff, Diff, PolyDiff(First, Both, Second) )
 import Data.Time ( getCurrentTime )
-
-
-formatDiff :: SomeException -> Maybe CustomTUIException
-formatDiff e = case fromException e of
-  Just (DiffException amendedOutput ex) -> Just $ CustomTUIExceptionBrick
-    $ vBox $ map diffBlockToWidget $ getGroupedDiff (lines amendedOutput) (lines ex)
-  Nothing -> Nothing
-
-diffBlockToWidget :: Diff [Text] -> Widget n
-diffBlockToWidget (Both a _) = txtWrap $ unlines a
-diffBlockToWidget (Data.Algorithm.Diff.Second a) = modifyDefAttr (\x -> x { attrForeColor = SetTo red }) $ txtWrap $ "-" <> unlines a
-diffBlockToWidget (Data.Algorithm.Diff.First a) = modifyDefAttr (\x -> x { attrForeColor = SetTo green }) $ txtWrap $ "+" <> unlines a
-
-testOptions :: Options
-testOptions = defaultOptions {
-  optionsFormatters = [SomeFormatter $ defaultTerminalUIFormatter {
-      terminalUICustomExceptionFormatters = [formatDiff]
-      }]
-  , optionsProjectRoot = Just "testfol"
-  , optionsTestArtifactsDirectory = TestArtifactsGeneratedDirectory "test_runs" (show <$> getCurrentTime)
-}
+import Test.Tasty
+import qualified Data.Map as M
+import Test.Tasty.Golden
+import Yaifl
 
 main :: IO ()
-main = runSandwich testOptions $ do
-  describe "Examples" $ do
-    Chapter3.spec
+main = defaultMain =<< goldenTests
+
+makeExampleMap :: Map String (IO Text)
+makeExampleMap = unionsWithPrefixes [
+  ("Chapter 3", Chapter3.spec)
+  ]
+
+unionsWithPrefixes ::
+  [(String, Map String v)]
+  -> Map String v
+unionsWithPrefixes = M.unions . map (\(k, v) -> M.mapKeys (\k1 -> k <> "/" <> k1) v)
+
+goldenTests :: IO TestTree
+goldenTests = do
+  let allExamples = makeExampleMap
+  return $ testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsString
+      k -- test name
+      ("test/testcases/" <> k) -- golden file path
+      (encodeUtf8 <$> v))  -- action whose result is tested
+      allExamples
+
 {-
+
 isWestOf :: RoomObject w -> State (RoomObject w) a0
 isWestOf = error "not implemented"
 
@@ -68,9 +63,9 @@ ex4World = do
 
     a <- makeRoom "Awning" [r|A tan awning is stretched on tent poles over the dig-site, providing a little shade to the workers here; you are at the bottom of a square twenty feet on a side, marked out with pegs and lines of string. Uncovered in the south face of this square is an awkward opening into the earth.|] pass
 
-    {- makeRoom "Slightly Wrong Chamber" (dynamicDescription (\e -> do
+     makeRoom "Slightly Wrong Chamber" (dynamicDescription (\e -> do
         whenM (isVisited e) (append [r|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls.|])
-        append [r|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|])) (isSouthOf a) -}
+        append [r|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|])) (isSouthOf a)
     pass
     --testMe ["look", "s", "look"]
 
@@ -121,6 +116,7 @@ isInsideFrom :: t0 -> State (RoomObject w) a2
 isInsideFrom = error "not implemented"
 
 isAbove :: RoomObject w -> State (RoomObject w) a3
-isAbove = error "not implemented"
--}
+isAbove = error "not implemented
 
+
+-}

@@ -16,8 +16,8 @@ import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Entity ( Store(unStore), Entity )
-import Yaifl.Core.Logger ( debug )
+import Yaifl.Core.Entity ( Store(unStore), Entity, HasID (..) )
+import Yaifl.Core.Logger ( debug, warn )
 import Yaifl.Core.Metadata (currentPlayer)
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query

@@ -4,22 +4,21 @@ module Yaifl.Core.Rulebooks.WhenPlayBegins
   , introText
   ) where
 
-import Yaifl.Core.Properties.Enclosing ( Enclosing )
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
-import Yaifl.Core.Properties.Has ( WMHasProperty )
-import qualified Prettyprinter.Render.Terminal as PPTTY
+import Solitude
+import Effectful.Optics
 import qualified Data.Text as T
-import Yaifl.Core.Say ( Saying, say, setStyle )
+import qualified Prettyprinter.Render.Terminal as PPTTY
+
+import Yaifl.Core.Logger ( Log, err )
+import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
+import Yaifl.Core.Properties.Enclosing ( Enclosing )
+import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
-import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
-import Yaifl.Core.Logger ( Log, err )
-import Solitude
-import Effectful
-import Effectful.State.Static.Shared (State)
-import Effectful.Optics
+import Yaifl.Core.Say ( Saying, say, setStyle )
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

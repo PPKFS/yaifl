@@ -26,6 +26,8 @@ module Yaifl.Core.Actions.Activity
   , priority
   ) where
 
+import Solitude
+
 import Yaifl.Core.Entity ( Store )
 import Yaifl.Core.Object ( AnyObject )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject )
@@ -33,9 +35,6 @@ import Yaifl.Core.Rulebooks.Args ( Refreshable )
 import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
-import Solitude
-import Effectful
-import Effectful.State.Static.Shared
 
 data Activity wm v r = Activity
     { _activityName :: !Text

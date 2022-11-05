@@ -16,13 +16,13 @@ module Yaifl.Core.Actions.Action
   , makeActionRulebook
   ) where
 
+import Solitude
+
+import Effectful.Optics ( (?=), use )
+
 import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.WorldModel ( WorldModel )
-import Solitude
-import Effectful
-import Effectful.State.Static.Shared
-import Effectful.Optics
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
@@ -83,5 +83,4 @@ addAction ::
   State (WorldActions wm) :> es
   => Action wm
   -> Eff es ()
-addAction ac =
-  actions % at (_actionName ac) ?= Right ac
+addAction ac = actions % at (_actionName ac) ?= Right ac

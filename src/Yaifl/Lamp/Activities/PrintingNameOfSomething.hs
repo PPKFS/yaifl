@@ -18,16 +18,15 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 , Capitalisation(..)
 ) where
 
+import Solitude
+
 import Yaifl.Core.Actions.Activity ( Activity, makeActivity, doActivity, ActivityCollection )
+import Yaifl.Core.AdaptiveText.Eval ( sayAdaptive )
 import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, getObject )
 import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
 import Yaifl.Core.Say ( Saying, say )
 import qualified Yaifl.Core.Actions.Activity as Ac
-import Effectful.State.Static.Shared
-import Effectful
-import Solitude
-import Yaifl.Core.AdaptiveText.Eval
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 

@@ -1,12 +1,11 @@
 module Yaifl.Test.Common where
 
+import Solitude
 import Control.Exception (throwIO)
 import Control.Monad.Catch ( MonadMask )
 import Data.Char (isSpace)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
-import Prelude hiding (force)
-import Test.Sandwich ( timeAction, it, HasBaseContext, SpecFree )
 import Yaifl
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Logger
@@ -18,7 +17,7 @@ import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
 import Yaifl.Core.Say
 import Yaifl.Core.World
 import qualified Data.Text as T
-import qualified Test.Sandwich as S
+import Test.Tasty
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -56,60 +55,52 @@ newlinesToWrap = foldl' (\acc -> \case
   "" -> acc <> "\n" <> (if fmap snd (unsnoc acc) == Just '\n' then "" else "\n")
   x -> acc <> x) "" . lines
 
-data DiffException = DiffException Text Text
-  deriving stock Show
-instance Exception DiffException
-
 force :: NFData a => a -> a
 force a = deepseq a a
+
 testHarness ::
-  forall wm a context m.
-  MonadIO m
-  => MonadMask m
-  => HasBaseContext context
-  => HasStandardProperties wm
+  forall wm a.
+  HasStandardProperties wm
   => HasCallStack
   => Text
+  -> [Text]
   -> Game wm a
-  -> [Text]
-  -> [Text]
-  -> SpecFree context m ()
-testHarness fullTitle initWorld actionsToDo expected = do
-  it (toString $ "Runs " <> fullTitle) $ do
-    (!w :: World wm) <- timeAction "Worldbuilding" $ liftIO $ runGame blankWorld fullTitle (do
+  -> IO Text
+testHarness fullTitle actionsToDo initWorld = do
+  (!w :: World wm) <- runGame blankWorld fullTitle (do
         newWorld
         Yaifl.Core.Logger.info [int|t|Building world #{fullTitle}...|]
         initWorld
         Yaifl.Core.Logger.info "World construction finished, beginning game..."
         )
-    (!w2 :: World wm) <- timeAction "Running" $ liftIO $ runGame w fullTitle $ do
+  (!w2 :: World wm) <- runGame w fullTitle $ do
       wa <- get @(WorldActions wm)
       --when I write a proper game loop, this is where it needs to go
       failHorriblyIfMissing (runRulebook (wa ^. whenPlayBegins) ())
       mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
       pass
     --  print rs
-    let flushBufferToText w' = runPure $ runState w' $ do
+  let flushBufferToText w' = runPureEff $ runStateShared w' $ do
           -- take it down and flip it around
-          msgList <- use (messageBuffer % msgBufBuffer % reversed)
+          msgList <- gets (view $ messageBuffer % msgBufBuffer % reversed)
           return $ (mconcat . map show) msgList
-    let (x, _) = flushBufferToText w2
-        amendedOutput = case w2 ^. worldMetadata % errorLog of
-          [] -> x
-          xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
-        (LB logs) = w2 ^. worldLogs
-    let ex = mconcat (expectTitle fullTitle : expected )
-    forM_ logs $ (\(txts, _, _, ms, txt) -> do
-      let cxt' = let f = T.intercalate "➤" (filter (/= T.empty) txts) in if T.empty == f then "" else "❬"<>f<>"❭"
-          logTy = case ms of
-            Info -> S.info
-            Debug -> S.debug
-            Warning -> S.warn
-            Error -> S.logError
-
-      logTy (cxt' <> txt)
-      )
-    unless (amendedOutput == ex) (liftIO $ throwIO $ DiffException amendedOutput ex)
+  let (x, _) = flushBufferToText w2
+      amendedOutput = case w2 ^. worldMetadata % errorLog of
+        [] -> x
+        xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
+      (LB logs) = w2 ^. worldLogs
+      finalisedLogs = reverse $ map (\(txts, ts, _, ms, txt) ->
+        let cxt' = (let f = T.intercalate "|" (filter (/= T.empty) txts) in if T.empty == f then "" else "<"<>f<>">")
+            logTy = case ms of
+              Info -> "[Info]"
+              Debug -> "[Debug]"
+              Warning -> "[Warn]"
+              Error -> "[Error]"
+        in
+        show ts <> logTy <> cxt' <> txt
+        ) logs
+  writeFile (toString $ "test/logs/" <> fullTitle) (toString $ unlines finalisedLogs)
+  pure amendedOutput
 
 expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"

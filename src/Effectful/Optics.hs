@@ -3,11 +3,15 @@ module Effectful.Optics
   , (%=)
   , (?=)
   , use
+  , (%%=)
+  , (<<%=)
   ) where
 
-import Effectful.State.Static.Shared (modify, State, gets)
+import Effectful.State.Dynamic (modify, State, gets)
 import Effectful
 import Solitude
+import qualified Effectful.State.Dynamic as State
+import Optics.State.Operators ( PermeableOptic(..) )
 
 (.=)
   :: Is k A_Setter
@@ -39,3 +43,20 @@ use ::
   => Optic' k is s a
   -> Eff es a
 use o = gets (view o)
+
+infix 4 %%=
+(%%=)
+  :: (PermeableOptic k r, State s :> es)
+  => Optic k is s s a b
+  -> (a -> (r, b))
+  -> Eff es (ViewResult k r)
+o %%= f = State.state (passthrough o f)
+{-# INLINE (%%=) #-}
+
+(<<%=)
+  :: (PermeableOptic k a, State s :> es)
+  => Optic k is s s a b
+  -> (a -> b)
+  -> Eff es (ViewResult k a)
+o <<%= f = o %%= toSnd f
+{-# INLINE (<<%=) #-}

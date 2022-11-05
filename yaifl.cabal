@@ -31,6 +31,7 @@ common common-options
     , enummapset
     , formatting
     , megaparsec
+    , optics-extra
     , prettyprinter
     , prettyprinter-ansi-terminal
     , replace-megaparsec
@@ -143,7 +144,8 @@ test-suite yaifl-test
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , sandwich
+    , tasty
+    , tasty-golden
     , exceptions
     , yaifl
     , filepath
@@ -152,10 +154,12 @@ test-suite yaifl-test
     , pretty
     , Diff
     , bytestring
+    , solitude
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:
     QuasiQuotes
     TemplateHaskell
+    NoImplicitPrelude
 
   other-modules:
     Yaifl.Test.Chapter3.Bic

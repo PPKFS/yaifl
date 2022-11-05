@@ -2,4 +2,15 @@
 ------ Verbosity ------
 -----------------------
 
-aaa
+"The Wilkie Memorial Research Wing"
+
+"The research wing was built onto the science building in 1967, when the college's finances weregood but its aesthetic standards at a local minimum. A dull brown corridor recedes both northand south; drab olive doors open onto the laboratories of individual faculty members. Thetwitchy fluorescent lighting makes the whole thing flicker, as though it might wink out ofexistence at any moment.\n\nThe Men's Restroom is immediately west of this point."
+> west
+> east
+> verbose
+> west
+
+Encountered the following errors:  
+Failed to parse the command verbose because I have no idea what you meant by 'verbose'..
+I have no idea where you wanted to go.
+I have no idea where you wanted to go.

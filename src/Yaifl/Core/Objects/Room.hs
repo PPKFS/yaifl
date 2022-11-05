@@ -8,7 +8,6 @@ module Yaifl.Core.Objects.Room
 import qualified Data.Map as Map
 
 import Solitude
-import Effectful
 
 import Yaifl.Core.Direction
 import Yaifl.Core.Entity (HasID(..), Entity)
@@ -19,7 +18,6 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.TH (makeDirections)
 import Yaifl.Core.WorldModel (WMDirection)
-import Effectful.State.Static.Shared ( State )
 
 hasSpecificConnectionTo ::
   WMStdDirections wm

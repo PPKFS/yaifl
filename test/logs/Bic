@@ -1,0 +1,52 @@
+2022-11-05 18:08:38.42919359 UTC[Debug] Made a new room called StaticText "The Void" with ID (ID: -1) 
+2022-11-05 18:08:38.42920966 UTC[Debug] Made a new thing called StaticText "player" with ID (ID: 1) 
+2022-11-05 18:08:38.42931142 UTC[Debug] Moving StaticText "player" from (ID: -1) to (ID: -1)
+2022-11-05 18:08:38.42932914 UTC[Info]Building world Bic...
+2022-11-05 18:08:38.42933154 UTC[Debug] Made a new room called StaticText "The Staff Break Room" with ID (ID: -2) 
+2022-11-05 18:08:38.42933599 UTC[Debug] Made a new thing called StaticText "Bic pen" with ID (ID: 2) 
+2022-11-05 18:08:38.42936021 UTC[Debug] Moving StaticText "Bic pen" from (ID: -1) to (ID: -2)
+2022-11-05 18:08:38.42936647 UTC[Debug] Made a new thing called StaticText "orange" with ID (ID: 3) 
+2022-11-05 18:08:38.42940792 UTC[Debug] Moving StaticText "orange" from (ID: -1) to (ID: -2)
+2022-11-05 18:08:38.42941275 UTC[Debug] Made a new thing called StaticText "napkin" with ID (ID: 4) 
+2022-11-05 18:08:38.42942964 UTC[Debug] Moving StaticText "napkin" from (ID: -1) to (ID: -2)
+2022-11-05 18:08:38.431630728 UTC[Info]World construction finished, beginning game...
+2022-11-05 18:08:38.431676619 UTC[Debug]Running the when play begins rulebook
+2022-11-05 18:08:38.431690599 UTC[Debug]<when play begins> Moving StaticText "player" from (ID: -1) to (ID: -2)
+2022-11-05 18:08:38.431705839 UTC[Warn]<when play begins>Action parse was successful; going with the verb looking after matching look
+2022-11-05 18:08:38.431708829 UTC[Debug]<when play begins>Trying to do the action 'looking'
+2022-11-05 18:08:38.431712799 UTC[Debug]<when play begins>Running the action processing rulebook
+2022-11-05 18:08:38.431718879 UTC[Debug]<when play begins|action processing>The visibility holder of StaticText "The Staff Break Room" is itself
+2022-11-05 18:08:38.431722289 UTC[Warn]<when play begins|action processing> Before stage rule needs implementing
+2022-11-05 18:08:38.431724129 UTC[Warn]<when play begins|action processing> carrying requirements rule needs implementing
+2022-11-05 18:08:38.431725309 UTC[Warn]<when play begins|action processing> basic visibility rule needs implementing
+2022-11-05 18:08:38.431726399 UTC[Warn]<when play begins|action processing> instead stage rule needs implementing
+2022-11-05 18:08:38.431727489 UTC[Warn]<when play begins|action processing> requested actions require persuasion rule needs implementing
+2022-11-05 18:08:38.431728619 UTC[Warn]<when play begins|action processing> carry out requested actions rule needs implementing
+2022-11-05 18:08:38.431729689 UTC[Warn]<when play begins|action processing> investigate player awareness rule needs implementing
+2022-11-05 18:08:38.431730739 UTC[Warn]<when play begins|action processing> check stage rule needs implementing
+2022-11-05 18:08:38.431731919 UTC[Debug]<when play begins|action processing>Running the Carry Out Looking rulebook
+2022-11-05 18:08:38.431733559 UTC[Debug]<when play begins|action processing|Carry Out Looking>todo: fix
+2022-11-05 18:08:38.431733769 UTC[Debug]<when play begins|action processing|Carry Out Looking>"Printing room description heading with visibility ceiling TODO and visibility count 1
+2022-11-05 18:08:38.432686302 UTC[Debug]<when play begins|action processing|Carry Out Looking>Running the Carry Out Printing the name of something rulebook
+2022-11-05 18:08:38.432695602 UTC[Debug]<when play begins|action processing|Carry Out Looking>Running the Carry out describing locale rulebook
+2022-11-05 18:08:38.432699372 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry Out Choosing notable locale objects rulebook
+2022-11-05 18:08:38.432702602 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry Out Choosing notable locale objects>Found a player
+2022-11-05 18:08:38.432703432 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry Out Choosing notable locale objects>Found a Bic pen
+2022-11-05 18:08:38.432704272 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry Out Choosing notable locale objects>Found a orange
+2022-11-05 18:08:38.432705032 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry Out Choosing notable locale objects>Found a napkin
+2022-11-05 18:08:38.432706882 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Found a total of 4 potentially interesting things
+2022-11-05 18:08:38.432710912 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry out printing a locale paragraph rulebook
+2022-11-05 18:08:38.432712802 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale|Carry out printing a locale paragraph>Succeeded after following the don’t mention undescribed items in room descriptions rule rule
+2022-11-05 18:08:38.432713852 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry out printing a locale paragraph rulebook
+2022-11-05 18:08:38.432715782 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry out printing a locale paragraph rulebook
+2022-11-05 18:08:38.432718092 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry out printing a locale paragraph rulebook
+2022-11-05 18:08:38.432718992 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>After handing off to printingLocaleParagraphAbout, we still have 3 potentially interesting things
+2022-11-05 18:08:38.432727412 UTC[Warn]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Entity {unID = -2}Entity {unID = 1}
+2022-11-05 18:08:38.432738202 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry Out Printing the name of something rulebook
+2022-11-05 18:08:38.432742032 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry Out Printing the name of something rulebook
+2022-11-05 18:08:38.432745212 UTC[Debug]<when play begins|action processing|Carry Out Looking|Carry out describing locale>Running the Carry Out Printing the name of something rulebook
+2022-11-05 18:08:38.432749193 UTC[Warn]<when play begins|action processing> after stage rule needs implementing
+2022-11-05 18:08:38.432750433 UTC[Warn]<when play begins|action processing> investigate player awareness after rule needs implementing
+2022-11-05 18:08:38.432751453 UTC[Warn]<when play begins|action processing> report stage rule needs implementing
+2022-11-05 18:08:38.432752543 UTC[Warn]<when play begins|action processing> clean actions rule needs implementing
+2022-11-05 18:08:38.432756743 UTC[Debug]<when play begins>Running the Carry Out Printing the name of something rulebook
