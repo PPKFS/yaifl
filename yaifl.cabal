@@ -38,6 +38,8 @@ common common-options
     , template-haskell
     , text
     , time
+    , tracing
+    , tracing-effectful
 
     --, pretty-simple
     --,
@@ -149,8 +151,6 @@ test-suite yaifl-test
     , exceptions
     , yaifl
     , filepath
-    , vty
-    , brick
     , pretty
     , Diff
     , bytestring
