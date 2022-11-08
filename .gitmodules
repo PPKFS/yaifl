@@ -2,3 +2,6 @@
 	path = solitude
 	url = https://github.com/PPKFS/solitude.git
 	branch = main
+[submodule "tracing-effectful"]
+	path = tracing-effectful
+	url = https://github.com/scrive/tracing-effectful

@@ -32,7 +32,6 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
 import Solitude
-import Effectful
 import Effectful.Optics
 import Yaifl.Core.AdaptiveText.Eval
 

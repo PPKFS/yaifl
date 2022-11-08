@@ -20,6 +20,8 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
+import Formatting.Buildable (build)
+import Breadcrumbs
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
@@ -47,6 +49,7 @@ foreachVisibilityHolder ::
   (NoMissingObjects wm es, ActionHandler wm :> es)
   => Saying :> es
   => ObjectTraverse wm :> es
+  => Breadcrumbs :> es
   => State (ActivityCollection wm) :> es
   => AnyObject wm
   -> Eff es ()
@@ -54,7 +57,6 @@ foreachVisibilityHolder e = do
   ifM (isSupporter e) (say "(on ") (say "(in ")
   printName e
   say ")"
-
 
 getVisibilityLevels ::
   NoMissingObjects wm es

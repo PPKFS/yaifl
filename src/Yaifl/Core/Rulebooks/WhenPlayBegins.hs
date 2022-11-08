@@ -19,6 +19,7 @@ import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOpt
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
 import Yaifl.Core.Say ( Saying, say, setStyle )
+import Breadcrumbs ( Breadcrumbs )
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -73,6 +74,7 @@ initRoomDescription = do
 
 positionPlayer ::
   NoMissingObjects wm es
+  => Breadcrumbs :> es
   => WMHasProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do

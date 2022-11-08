@@ -27,6 +27,7 @@ import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, 
 import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
 import Yaifl.Core.Say ( Saying, say )
 import qualified Yaifl.Core.Actions.Activity as Ac
+import Breadcrumbs
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -44,6 +45,7 @@ printName ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
+  => Breadcrumbs :> es
   => ObjectTraverse wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectLike wm o
@@ -55,6 +57,7 @@ printNameDefiniteUncapitalised ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
+  => Breadcrumbs :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
@@ -68,6 +71,7 @@ printNameEx ::
   => ActionHandler wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
+  => Breadcrumbs :> es
   => ObjectLike wm o
   => SayOptions
   -> o

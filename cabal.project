@@ -11,3 +11,4 @@ source-repository-package
 packages:
   ./yaifl.cabal
   solitude/solitude.cabal
+  breadcrumbs/breadcrumbs.cabal

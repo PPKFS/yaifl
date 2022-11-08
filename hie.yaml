@@ -8,3 +8,6 @@ cradle:
 
     - path: "solitude"
       component: "lib:solitude"
+
+    - path: "breadcrumbs"
+      component: "lib:breadcrumbs"

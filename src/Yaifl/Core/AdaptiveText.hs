@@ -8,6 +8,7 @@ module Yaifl.Core.AdaptiveText
 import Replace.Megaparsec ( splitCap )
 import Text.Megaparsec ( match, anySingle, manyTill, single, Parsec )
 import Solitude
+import Formatting.Buildable (build)
 
 data AdaptiveText domain = StaticText Text | AdaptiveText [Text] [Text]
   deriving stock (Eq, Generic, Ord, Show)

@@ -46,6 +46,7 @@ import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Visibility
 import qualified Data.Map as DM
 import qualified Data.Text as T
+import Breadcrumbs
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
@@ -126,6 +127,7 @@ type EffStack wm = '[
   , ObjectCreation wm
   , Saying
   , State (World wm)
+  , Breadcrumbs
   , IOE
   ]
 
@@ -135,7 +137,6 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 newWorld ::
   HasLookingProperties wm
-
   => WMStdDirections wm
   => WMHasProperty wm Door
   => Eff (EffStack wm) ()
@@ -158,13 +159,15 @@ zoomState l = interpret $ \env -> \case
       pure $ second (\x -> s & l .~ x) newSub )
 
 convertToUnderlyingStack ::
-  forall wm.
+  forall wm a.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => World wm
-  -> Eff (EffStack wm) ()
-  -> IO ((), World wm)
-convertToUnderlyingStack w =
+  => TraceID
+  -> World wm
+  -> Eff (EffStack wm) a
+  -> IO (a, World wm)
+convertToUnderlyingStack tId w =
   runEff
+  . runBreadcrumbs (Just tId)
   . runStateShared w
   . runSayPure @(World wm)
   . runCreationAsLookup
@@ -266,13 +269,11 @@ updateIt ts newObj mbExisting = case mbExisting of
 
 runGame ::
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => World wm
-  -> Text
-  -> Eff (EffStack wm) ()
-  -> IO (World wm)
-runGame wo _ f = do
-  (_, w) <- convertToUnderlyingStack wo f
-  return w
+  => TraceID
+  -> World wm
+  -> Eff (EffStack wm) a
+  -> IO (a, World wm)
+runGame = convertToUnderlyingStack
 
 addBaseActions ::
   (HasLookingProperties wm)

@@ -21,6 +21,7 @@ import Yaifl.Core.Object (Object)
 import Yaifl.Core.WorldModel (WorldModel)
 import Solitude
 import Effectful
+import Formatting.Buildable (build)
 
 -- | An object that has been cached at time `_tsCacheStamp`.
 data TimestampedObject wm d = TimestampedObject

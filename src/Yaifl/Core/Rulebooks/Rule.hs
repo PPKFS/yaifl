@@ -32,6 +32,7 @@ import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
 import Yaifl.Core.Say ( Saying )
 import {-# SOURCE #-} Yaifl.Core.Actions.Activity ( ActivityCollection )
+import Breadcrumbs
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
@@ -48,6 +49,7 @@ data RuleCondition = RuleCondition
 type RuleEffects wm es = (
   State Metadata :> es
   , Log :> es
+  , Breadcrumbs :> es
   , NoMissingObjects wm es
   , Saying :> es
   , ActionHandler wm :> es

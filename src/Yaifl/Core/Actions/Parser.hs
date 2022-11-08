@@ -23,6 +23,7 @@ import Yaifl.Core.WorldModel ( WMDirection )
 
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import Breadcrumbs
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
@@ -35,6 +36,7 @@ runActionHandlerAsWorldActions ::
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Breadcrumbs :> es
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
@@ -87,6 +89,7 @@ findSubjects ::
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Breadcrumbs :> es
   => Text
   -> Action wm
   -> Eff es (Either Text Bool)
@@ -125,6 +128,7 @@ tryAction ::
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
   => State (ActivityCollection wm) :> es
+  => Breadcrumbs :> es
   => Saying :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp

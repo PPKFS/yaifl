@@ -29,9 +29,49 @@ import Test.Tasty
 import qualified Data.Map as M
 import Test.Tasty.Golden
 import Yaifl
+import Control.Exception
+import Breadcrumbs
+import System.IO ( hPutStrLn )
+import Test.Tasty.Ingredients
+import Test.Tasty.Runners
+import System.Directory
+import Data.Aeson ( decodeFileStrict, encodeFile )
 
+-- this is a rip of tasty's main, but hooking my own global `TraceID` through it for
+-- better Zipkin traces.
 main :: IO ()
-main = defaultMain =<< goldenTests
+main = runEff
+  . runBreadcrumbs Nothing $
+    do
+      (testTree, opts) <- liftIO $ do
+        testTree <- goldenTests
+        installSignalHandlers
+        opts <- parseOptions defaultIngredients testTree
+        pure (testTree, opts)
+      case tryIngredients defaultIngredients opts testTree of
+        Nothing -> liftIO $ do
+          hPutStrLn stderr
+            "No ingredients agreed to run. Something is wrong either with your ingredient set or the options."
+          exitFailure
+        Just act -> do
+          runNo <- liftIO getAndIncrementRunNumber
+          ok <- withSpan "Test Suite" ("Run #" <> show runNo) $ do
+            (TraceID s) <- getTraceId
+            liftIO $ do
+              writeFileBS "traceid.temp" s
+              o <- liftIO act
+              removeFile "traceid.temp"
+              pure o
+          flush
+          liftIO $ if ok then exitSuccess else exitFailure
+
+getAndIncrementRunNumber :: IO Int
+getAndIncrementRunNumber = do
+  ex <- doesFileExist "run_no"
+  (fc :: Maybe Int) <- (if ex then decodeFileStrict "run_no" else pure Nothing)
+  let fc' = fromMaybe 1 fc
+  encodeFile "run_no" (fc' + 1)
+  pure fc'
 
 makeExampleMap :: Map String (IO Text)
 makeExampleMap = unionsWithPrefixes [
@@ -54,9 +94,6 @@ goldenTests = do
 
 {-
 
-isWestOf :: RoomObject w -> State (RoomObject w) a0
-isWestOf = error "not implemented"
-
 ex4World :: HasStandardWorld w => World w ()
 ex4World = do
     setTitle "Slightly Wrong"
@@ -68,16 +105,6 @@ ex4World = do
         append [r|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|])) (isSouthOf a)
     pass
     --testMe ["look", "s", "look"]
-
-
-isVisited :: t0 -> m0 Bool
-isVisited = error "not implemented"
-
-append :: t1 -> m0 ()
-append = error "not implemented"
-
-isSouthOf :: RoomObject w -> State (RoomObject w) a0
-isSouthOf = error "not implemented"
 
 -- Port Royal consists of examples 5,
 portRoyalWorld :: HasStandardWorld w => World w ()
@@ -108,15 +135,4 @@ portRoyalWorld = do
         isEastOf qsm)
 
     pass
-
-isEastOf :: RoomObject w -> State (RoomObject w) a1
-isEastOf = error "not implemented"
-
-isInsideFrom :: t0 -> State (RoomObject w) a2
-isInsideFrom = error "not implemented"
-
-isAbove :: RoomObject w -> State (RoomObject w) a3
-isAbove = error "not implemented
-
-
 -}

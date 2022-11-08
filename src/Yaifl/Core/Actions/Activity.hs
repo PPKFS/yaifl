@@ -81,6 +81,7 @@ makeActivity n r = Activity n Nothing
 doActivity ::
   RuleEffects wm es
   => Refreshable wm v
+  => Show v
   => (ActivityCollection wm -> Activity wm v r)
   -> v
   -> Eff es (Maybe r)
@@ -89,6 +90,7 @@ doActivity = (. flip doActivity') . (>>=) . gets
 doActivity' ::
   RuleEffects wm es
   => Refreshable wm v
+  => Show v
   => Activity wm v r
   -> v
   -> Eff es (Maybe r)

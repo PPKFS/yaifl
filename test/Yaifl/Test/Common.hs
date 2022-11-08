@@ -18,6 +18,7 @@ import Yaifl.Core.Say
 import Yaifl.Core.World
 import qualified Data.Text as T
 import Test.Tasty
+import Breadcrumbs
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -67,18 +68,19 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness fullTitle actionsToDo initWorld = do
-  (!w :: World wm) <- runGame blankWorld fullTitle (do
-        newWorld
-        Yaifl.Core.Logger.info [int|t|Building world #{fullTitle}...|]
-        initWorld
-        Yaifl.Core.Logger.info "World construction finished, beginning game..."
-        )
-  (!w2 :: World wm) <- runGame w fullTitle $ do
-      wa <- get @(WorldActions wm)
-      --when I write a proper game loop, this is where it needs to go
-      failHorriblyIfMissing (runRulebook (wa ^. whenPlayBegins) ())
-      mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
-      pass
+  tId <- readTraceId
+  (_, !w2 :: World wm) <- runGame tId blankWorld $ do
+      withSpan "test run" fullTitle $ do
+        withSpan "worldbuilding" fullTitle $ do
+          newWorld
+          initWorld
+        --withSpan "world verification" fullTitle $ do
+        withSpan "run" fullTitle $ do
+          wa <- get @(WorldActions wm)
+          --when I write a proper game loop, this is where it needs to go
+          failHorriblyIfMissing (runRulebook (wa ^. whenPlayBegins) ())
+          mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
+      flush
     --  print rs
   let flushBufferToText w' = runPureEff $ runStateShared w' $ do
           -- take it down and flip it around
@@ -88,7 +90,7 @@ testHarness fullTitle actionsToDo initWorld = do
       amendedOutput = case w2 ^. worldMetadata % errorLog of
         [] -> x
         xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
-      (LB logs) = w2 ^. worldLogs
+      {-(LB logs) = w2 ^. worldLogs
       finalisedLogs = reverse $ map (\(txts, ts, _, ms, txt) ->
         let cxt' = (let f = T.intercalate "|" (filter (/= T.empty) txts) in if T.empty == f then "" else "<"<>f<>">")
             logTy = case ms of
@@ -99,8 +101,12 @@ testHarness fullTitle actionsToDo initWorld = do
         in
         show ts <> logTy <> cxt' <> txt
         ) logs
-  writeFile (toString $ "test/logs/" <> fullTitle) (toString $ unlines finalisedLogs)
+  writeFile (toString $ "test/logs/" <> fullTitle) (toString $ unlines finalisedLogs)-}
+
   pure amendedOutput
+
+readTraceId :: IO TraceID
+readTraceId = TraceID <$> readFileBS "traceid.temp"
 
 expectLine :: Text -> Text
 expectLine t1 = t1 <> "\n"

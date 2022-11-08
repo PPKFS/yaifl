@@ -27,8 +27,9 @@ module Yaifl.Core.Entity
 import qualified Data.EnumMap as EM
 import qualified Data.IntMap as IM
 import Solitude
+import Formatting.Buildable (build)
 
--- | An object ID. If something has an ID of 0, it's an error. 
+-- | An object ID. If something has an ID of 0, it's an error.
 newtype Entity = Entity
   { unID :: Int
   } deriving stock   (Show, Generic)
@@ -72,15 +73,15 @@ newtype Store a = Store
 emptyStore :: Store a
 emptyStore = Store EM.empty
 
-alterEMF :: 
+alterEMF ::
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
   -> k
-  -> EM.EnumMap k a 
+  -> EM.EnumMap k a
   -> f (EM.EnumMap k a)
 alterEMF upd k m = EM.intMapToEnumMap <$> IM.alterF upd (fromEnum k) (EM.enumMapToIntMap m)
 
-alterNewtypeEMF :: 
+alterNewtypeEMF ::
   (Functor f, Enum k)
   => (Maybe a -> f (Maybe a))
   -> k
@@ -92,7 +93,7 @@ alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
-  
+
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity
 instance Ixed (Store a)
