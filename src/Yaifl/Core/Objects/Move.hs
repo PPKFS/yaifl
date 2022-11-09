@@ -6,7 +6,6 @@ import Solitude
 import qualified Data.EnumSet as ES
 
 import Yaifl.Core.Entity ( HasID(..) )
-import Yaifl.Core.Logger ( Log )
 import Yaifl.Core.Metadata (tickGlobalTime, Metadata (..))
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
@@ -19,7 +18,6 @@ import Breadcrumbs
 move ::
   Breadcrumbs :> es
   => State Metadata :> es
-  => Log :> es
   => ObjectQuery wm es
   => WMHasProperty wm Enclosing
   => ObjectLike wm o

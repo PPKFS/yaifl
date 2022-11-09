@@ -5,7 +5,6 @@ import Solitude
 import Breadcrumbs
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Entity
-import Yaifl.Core.Logger
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData
@@ -48,7 +47,6 @@ foreachVisibilityHolder ::
   (NoMissingObjects wm es, ActionHandler wm :> es)
   => Saying :> es
   => ObjectTraverse wm :> es
-  => Breadcrumbs :> es
   => State (ActivityCollection wm) :> es
   => AnyObject wm
   -> Eff es ()
@@ -84,7 +82,7 @@ findVisibilityHolder e' = do
     isRoom obj || isOpaqueClosedContainer <$?> mCont
   then
     do
-      debug [int|t|The visibility holder of #{n} is itself|]
+      addAnnotation [int|t|The visibility holder of #{n} is itself|]
       --return it
       return (toAny e')
   else

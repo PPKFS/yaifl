@@ -209,10 +209,10 @@ runCreationAsLookup = interpret $ \_ -> \case
 
 runQueryAsLookup ::
   HasCallStack
-  => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
   => (State Metadata :> es)
+  => Breadcrumbs :> es
   => Eff (ObjectUpdate wm : ObjectLookup wm : es) a
   -> Eff es a
 runQueryAsLookup = interpretLookup  . interpretUpdate
@@ -220,10 +220,10 @@ runQueryAsLookup = interpretLookup  . interpretUpdate
 interpretLookup ::
   forall wm es a.
   HasCallStack
-  => Log :> es
   => State (World wm) :> es
   => (ObjectCreation wm :> es)
   => (State Metadata :> es)
+  => Breadcrumbs :> es
   => Eff (ObjectLookup wm : es) a
   -> Eff es a
 interpretLookup = do

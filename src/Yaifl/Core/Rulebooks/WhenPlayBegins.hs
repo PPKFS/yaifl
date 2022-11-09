@@ -9,7 +9,7 @@ import Effectful.Optics
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
-import Breadcrumbs ( Breadcrumbs )
+import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Core.Logger ( Log, err )
 import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Objects.Move ( move )
@@ -62,12 +62,12 @@ introText w = fold
       (2 * T.length shortBorder + T.length w + 2) "-"
 
 initRoomDescription ::
-  Log :> es
+  Breadcrumbs :> es
   => ActionHandler wm :> es
   => Eff es (Maybe Bool)
 initRoomDescription = do
   parseAction (ActionOptions True Nothing) "look" >>= (\case
-     Left txt -> err txt
+     Left txt -> addAnnotation txt
      Right True -> pass
      Right False -> error "aaaa")
   rulePass

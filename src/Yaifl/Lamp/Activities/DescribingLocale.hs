@@ -18,7 +18,6 @@ import Effectful.Optics
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity ( Store(unStore), Entity )
-import Yaifl.Core.Logger ( debug )
 import Yaifl.Core.Metadata (currentPlayer)
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
@@ -34,6 +33,7 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
 import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
+import Breadcrumbs
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing
@@ -62,7 +62,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
   do
     let tb = v ^. localePriorities
         sorted = sortBy (compare `on` _priority) (toList $ unStore tb)
-    debug $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
+    addAnnotation $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
     --for each thing, we offer it to write a paragraph
     --then it is either no longer needed to be written about (Just Mentioned)
     --mentioned, but still hanging around (Just Unmentioned)
@@ -72,7 +72,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     newP <- foldlM (\v' li -> do
         r <- doActivity printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
-    debug $ "After handing off to printingLocaleParagraphAbout, we still have "
+    addAnnotation $ "After handing off to printingLocaleParagraphAbout, we still have "
       <> fromString (show $ length (unStore $ _localePriorities newP)) <> " potentially interesting things"
     return (Just newP, Nothing))
 

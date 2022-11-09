@@ -27,8 +27,7 @@ import Breadcrumbs
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
-  Log :> es
-  => State (WorldActions wm) :> es
+  State (WorldActions wm) :> es
   => Saying :> es
   => ObjectLookup wm :> es
   => ObjectUpdate wm :> es
@@ -49,10 +48,10 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
       xs:x:_ -> return $ Left $ "Did you mean " <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
       [(matched, r, Left (InterpretAs x))] -> do
-        debug [int|t|Matched #{matched} and interpreting this as #{x}.|]
+        addAnnotation [int|t|Matched #{matched} and interpreting this as #{x}.|]
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
       [(matched, r, Right x)] -> do
-        warn [int|t|Action parse was successful; going with the verb #{_actionName x} after matching #{matched}|]
+        addAnnotation [int|t|Action parse was successful; going with the verb #{_actionName x} after matching #{matched}|]
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
     whenLeft_ ac (\t' -> noteError (const ()) [int|t|Failed to parse the command #{t} because #{t'}.|])
@@ -82,7 +81,6 @@ findSubjects ::
   ActionHandler wm :> es
   => ObjectUpdate wm :> es
   => State Metadata :> es
-  => Log :> es
   => State (WorldActions wm) :> es
   => Saying :> es
   => ObjectLookup wm :> es
@@ -135,6 +133,6 @@ tryAction ::
   -> Eff es Bool
 tryAction an f = do
   ta <- getGlobalTime
-  debug [int|t|Trying to do the action '#{_actionName an}'|]
+  addAnnotation [int|t|Trying to do the action '#{_actionName an}'|]
   let uva = f ta
   fromMaybe False <$> runAction uva an

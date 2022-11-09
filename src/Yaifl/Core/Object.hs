@@ -48,16 +48,16 @@ import Effectful.Optics ( use )
 
 import Yaifl.Core.AdaptiveText ( AdaptiveText, AdaptiveTextDomain )
 import Yaifl.Core.Entity (Entity (..), HasID (..))
-import Yaifl.Core.Logger (Log)
 import Yaifl.Core.Metadata ( ObjType, Metadata, noteError, typeDAG, Timestamp )
 import Yaifl.Core.Objects.RoomData (RoomData)
 import Yaifl.Core.Objects.ThingData (ThingData)
 import Yaifl.Core.WorldModel (WMObjSpecifics, WorldModel (..))
+import Breadcrumbs
 
 -- | Determine whether an object is of a certain type.
 isType ::
   State Metadata :> es
-  => Log :> es
+  => Breadcrumbs :> es
   => Object wm d -- ^ The object.
   -> ObjType -- ^ The type.
   -> Eff es Bool

@@ -26,7 +26,6 @@ import Solitude
 import Breadcrumbs ( Breadcrumbs, ignoreSpan, addAnnotation )
 import Effectful.Error.Static ( Error, throwError )
 import Effectful.TH ( makeEffect )
-import Yaifl.Core.Logger ( Log )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
@@ -48,7 +47,6 @@ data RuleCondition = RuleCondition
 
 type RuleEffects wm es = (
   State Metadata :> es
-  , Log :> es
   , Breadcrumbs :> es
   , NoMissingObjects wm es
   , Saying :> es

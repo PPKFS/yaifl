@@ -11,13 +11,13 @@ import Solitude
 
 import Yaifl.Core.Direction
 import Yaifl.Core.Entity (HasID(..), Entity)
-import Yaifl.Core.Logger (warn, Log)
 import Yaifl.Core.Metadata (Metadata, whenConstructing)
 import Yaifl.Core.Object (objData, Room)
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.TH (makeDirections)
 import Yaifl.Core.WorldModel (WMDirection)
+import Breadcrumbs
 
 hasSpecificConnectionTo ::
   WMStdDirections wm
@@ -62,7 +62,7 @@ makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r)
 addDirectionFrom ::
   ObjectQuery wm es
   => State Metadata :> es
-  => Log :> es
+  => Breadcrumbs :> es
   => WMStdDirections wm
   => WMDirection wm
   -> Room wm
@@ -73,7 +73,7 @@ addDirectionFrom = isDirectionFromInternal True
 addDirectionFromOneWay ::
   ObjectQuery wm es
   => State Metadata :> es
-  => Log :> es
+  => Breadcrumbs :> es
   => WMStdDirections wm
   => WMDirection wm
   -> Room wm
@@ -83,7 +83,7 @@ addDirectionFromOneWay = isDirectionFromInternal False
 
 isDirectionFromInternal ::
   State Metadata :> es
-  => Log :> es
+  => Breadcrumbs :> es
   => WMStdDirections wm
   => ObjectQuery wm es
   => Bool
@@ -102,14 +102,14 @@ isDirectionFromInternal mkRev dir r1' r2' = withoutMissingObjects (do
     -- e.g. if r1 `isWestOf` r2, then r2 has an explicit west connection and r1 has an implicit east connection.
     whenConstructing (isJust $ hasSpecificConnectionTo (Just Explicit) r2 dir)
       -- TODO: this should be a nonblocking failure
-      (warn $ "Overriding an explicitly set map direction of room " <> "")--show r1)
+      (addAnnotation $ "Overriding an explicitly set map direction of room " <> "")--show r1)
     modifyRoom r2 (makeConnection Explicit dir r1)
     --only make the reverse if we want to
     when mkRev $ do
       -- something weird is happening if we're overriding an implicit direction with another implicit direction
       -- but I think in general we don't bother setting an implicit one
       whenConstructing (isJust $ hasSpecificConnectionTo (Just Implicit) r2 opp)
-        (warn $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show r1)
+        (addAnnotation $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show r1)
       -- and don't bother if there's any connection at all
       unless (isJust $ r1 ^? connectionLens opp) $ modifyRoom r1 (makeConnection Implicit dir r2)
     pass) (handleMissingObject "failed to make direction" ())

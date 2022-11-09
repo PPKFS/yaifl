@@ -48,11 +48,11 @@ import Effectful.Optics ( use )
 import Effectful.TH ( makeEffect )
 
 import Yaifl.Core.Entity ( HasID(..), Entity)
-import Yaifl.Core.Logger ( Log, err, warn )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.ThingData (thingContainedBy)
 import Yaifl.Core.WorldModel (WorldModel)
+import Breadcrumbs
 
 
 data MissingObject = MissingObject
@@ -74,7 +74,7 @@ withoutMissingObjects f def = do
     Right x -> return x
 
 handleMissingObject ::
-  Log :> es
+  Breadcrumbs :> es
   => State Metadata :> es
   => Text
   -> a
@@ -84,12 +84,12 @@ handleMissingObject msg def (MissingObject t o) =
   noteError (const def) [int|t|When #{msg}, the object with ID #{o} could not be found because #{t}.|]
 
 failHorriblyIfMissing ::
-  Log :> es
+  Breadcrumbs :> es
   => (HasCallStack => Eff (NoMissingObject ': es) a)
   -> Eff es a
 failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   let msg = [int|t|The object with ID #{o} could not be found because #{t}. We are failing horribly and erroring out because we can't recover.|]
-  err msg
+  addAnnotation msg
   error msg)
 
 data ObjectLookup (wm :: WorldModel) :: Effect where
@@ -109,7 +109,8 @@ makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
 
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
-type NoMissingObjects wm es = (NoMissingObject :> es, ObjectLookup wm :> es, ObjectUpdate wm :> es, State Metadata :> es, Log :> es)
+type NoMissingObjects wm es = (Breadcrumbs :> es, NoMissingObject :> es,
+  ObjectLookup wm :> es, ObjectUpdate wm :> es, State Metadata :> es)
 type NoMissingRead wm es = (NoMissingObject :> es, ObjectLookup wm :> es, State Metadata :> es)
 type ObjectRead wm es = (ObjectLookup wm :> es, State Metadata :> es)
 
@@ -250,7 +251,6 @@ getLocation ::
 getLocation t = do
   t' <- getThing t
   let tcb = t' ^. objData % thingContainedBy
-  warn $ show tcb <> show (getID t')
   o <- getObject tcb
   join $ asThingOrRoom o getLocation return
 
@@ -278,7 +278,7 @@ refreshThing r = ifM (traceGuard Medium)
   (pure r)
 
 getCurrentPlayer ::
-  Log :> es
+  Breadcrumbs :> es
   => ObjectLookup wm :> es
   => State Metadata :> es
   => Eff es (Thing wm)

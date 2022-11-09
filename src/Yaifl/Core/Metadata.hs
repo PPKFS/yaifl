@@ -49,7 +49,7 @@ import Solitude
 import Effectful.Optics ( (.=), (%=), use )
 
 import Yaifl.Core.Entity ( Entity, HasID (..) )
-import Yaifl.Core.Logger ( Log, err )
+import Breadcrumbs
 
 -- | Copy of Inform7's room description verbosity.
 data RoomDescriptions =
@@ -106,13 +106,13 @@ makeLenses ''Metadata
 -- | Take note of an error (to be reported later) but continue execution.
 noteError ::
   State Metadata :> es
-  => Log :> es
+  => Breadcrumbs :> es
   => (Text -> a) -- ^ How to recover.
   -> Text -- ^ Error message.
   -> Eff es a
 noteError f t = do
   errorLog %= (t:)
-  err t
+  addAnnotation t
   pure $ f t
 
 getGlobalTime ::

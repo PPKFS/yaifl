@@ -35,14 +35,13 @@ module Yaifl.Core.Rulebooks.Rulebook
 
 import Solitude
 
-import Yaifl.Core.Logger ( Log )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.Query ( NoMissingObjects )
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule ( Rule, ruleName, runRule )
 import Breadcrumbs
 
-type ParseArgumentEffects wm es = (State Metadata :> es, Log :> es, NoMissingObjects wm es, Breadcrumbs :> es)
+type ParseArgumentEffects wm es = (State Metadata :> es, NoMissingObjects wm es, Breadcrumbs :> es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ArgumentParseResult v)

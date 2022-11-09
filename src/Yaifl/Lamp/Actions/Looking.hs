@@ -11,7 +11,6 @@ import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity
-import Yaifl.Core.Logger
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
@@ -24,6 +23,7 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, pri
 import Yaifl.Lamp.Visibility
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Breadcrumbs
 
 lookingAction ::
   HasLookingProperties wm
@@ -63,8 +63,8 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       setStyle (Just PPTTY.bold)
       let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
-      debug "todo: fix"--show $ _argsVariables rb
-      debug [int|t|"Printing room description heading with visibility ceiling TODO and visibility count #{cnt}|]
+      addAnnotation "todo: fix"--show $ _argsVariables rb
+      addAnnotation [int|t|"Printing room description heading with visibility ceiling TODO and visibility count #{cnt}|]
       if
         | cnt == 0 -> do
           doActivity printingNameOfADarkRoom ()

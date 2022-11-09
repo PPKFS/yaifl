@@ -24,7 +24,6 @@ import Effectful.TH ( makeEffect )
 
 import Yaifl.Core.AdaptiveText ( AdaptiveText )
 import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
-import Yaifl.Core.Logger ( Log )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Dynamic
@@ -47,7 +46,6 @@ makeEffect ''ObjectCreation
 type AddObjects wm es = (
   ObjectCreation wm :> es
   , State Metadata :> es
-  , Log :> es
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
