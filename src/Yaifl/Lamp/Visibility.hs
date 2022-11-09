@@ -2,6 +2,7 @@ module Yaifl.Lamp.Visibility where
 
 import Solitude
 
+import Breadcrumbs
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Entity
 import Yaifl.Core.Logger
@@ -20,8 +21,6 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
-import Formatting.Buildable (build)
-import Breadcrumbs
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =

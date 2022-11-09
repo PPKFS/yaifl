@@ -59,3 +59,4 @@ test_runs
 .entangled
 
 .hlint.yaml
+zipkin.jar

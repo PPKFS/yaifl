@@ -22,14 +22,14 @@ module Yaifl.Lamp.Properties.Container
   , containerEnterable
   ) where
 
+import Solitude
+
 import Yaifl.Core.Objects.Query ( ObjectLike, NoMissingObjects )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Core.Properties.TH ( makeSpecificsWithout )
 import Yaifl.Lamp.Properties.Openable ( Openable(..) )
-import Solitude
-import Effectful
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent

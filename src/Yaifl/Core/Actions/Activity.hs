@@ -35,6 +35,7 @@ import Yaifl.Core.Rulebooks.Args ( Refreshable )
 import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
+import Breadcrumbs
 
 data Activity wm v r = Activity
     { _activityName :: !Text
@@ -51,14 +52,23 @@ data LocaleVariables wm = LocaleVariables
   , _localeParagraphCount :: Int
   }
 
+instance Display (LocaleVariables wm) where
+  displayBuilder = const "locale variables"
+
 -- | Locale priorities
 type LocalePriorities wm = Store (LocaleInfo wm)
+
+instance Display (LocalePriorities wm) where
+  displayBuilder = const "locale priorities"
 
 data LocaleInfo wm = LocaleInfo
   { _priority :: Int
   , _localeObject :: AnyObject wm
   , _isMentioned :: Bool
   }
+
+instance Display (LocaleInfo wm) where
+  displayBuilder = const "locale info"
 
 data ActivityCollection wm = ActivityCollection
   { printingNameOfADarkRoom :: !(Activity wm () ())
@@ -79,25 +89,23 @@ makeActivity n r = Activity n Nothing
   (blankRulebook ("After " <> n))
 
 doActivity ::
-  RuleEffects wm es
+  (RuleEffects wm es, Display r, Display v)
   => Refreshable wm v
-  => Show v
   => (ActivityCollection wm -> Activity wm v r)
   -> v
   -> Eff es (Maybe r)
 doActivity = (. flip doActivity') . (>>=) . gets
 
 doActivity' ::
-  RuleEffects wm es
+  (RuleEffects wm es, Display r, Display v)
   => Refreshable wm v
-  => Show v
   => Activity wm v r
   -> v
   -> Eff es (Maybe r)
-doActivity' ac c = withoutMissingObjects (do
-  x <- runRulebookAndReturnVariables (_activityBeforeRules ac) c
-  mr <- runRulebookAndReturnVariables (_activityCarryOutRules ac) (maybe c fst x)
-  _ <- runRulebookAndReturnVariables (_activityAfterRules ac) (maybe c fst mr)
+doActivity' ac c = withSpan "activity" (_activityName ac) $ \aSpan -> withoutMissingObjects (do
+  x <- runRulebookAndReturnVariables (Just aSpan) (_activityBeforeRules ac) c
+  mr <- runRulebookAndReturnVariables (Just aSpan) (_activityCarryOutRules ac) (maybe c fst x)
+  _ <- runRulebookAndReturnVariables (Just aSpan) (_activityAfterRules ac) (maybe c fst mr)
   return $ snd =<< mr) (handleMissingObject "running an activity" Nothing)
 
 makeLenses ''LocaleVariables

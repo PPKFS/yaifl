@@ -1,14 +1,13 @@
 module Yaifl.Test.Common where
 
 import Solitude
-import Control.Exception (throwIO)
-import Control.Monad.Catch ( MonadMask )
+
+import Breadcrumbs
 import Data.Char (isSpace)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
 import Yaifl.Core.Actions.Action
-import Yaifl.Core.Logger
 import Yaifl.Core.Metadata
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
@@ -17,8 +16,6 @@ import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
 import Yaifl.Core.Say
 import Yaifl.Core.World
 import qualified Data.Text as T
-import Test.Tasty
-import Breadcrumbs
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -70,15 +67,15 @@ testHarness ::
 testHarness fullTitle actionsToDo initWorld = do
   tId <- readTraceId
   (_, !w2 :: World wm) <- runGame tId blankWorld $ do
-      withSpan "test run" fullTitle $ do
-        withSpan "worldbuilding" fullTitle $ do
+      withSpan' "test run" fullTitle $ do
+        withSpan' "worldbuilding" fullTitle $ do
           newWorld
           initWorld
         --withSpan "world verification" fullTitle $ do
-        withSpan "run" fullTitle $ do
+        withSpan' "run" fullTitle $ do
           wa <- get @(WorldActions wm)
           --when I write a proper game loop, this is where it needs to go
-          failHorriblyIfMissing (runRulebook (wa ^. whenPlayBegins) ())
+          failHorriblyIfMissing (runRulebook Nothing (wa ^. whenPlayBegins) ())
           mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
       flush
     --  print rs

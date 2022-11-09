@@ -9,6 +9,7 @@ Stability   : No
 
 module Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout where
 
+import Solitude
 
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Object ( Object(..), AnyObject, objData )
@@ -16,7 +17,6 @@ import Yaifl.Core.Objects.Query (getThingMaybe)
 import Yaifl.Core.Objects.ThingData ( ThingDescribed(..), thingDescribed )
 import Yaifl.Core.Rulebooks.Rule ( Rule, makeRule )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
-import Solitude
 
 printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing

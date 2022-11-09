@@ -6,12 +6,13 @@ module Yaifl.Lamp.Properties.Openable
   , getOpenable
   ) where
 
-import Yaifl.Core.Properties.TH
+
+import Solitude
+
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
-import Solitude
-import Effectful
+import Yaifl.Core.Properties.TH
 
 -- | Whether the thing is open or not.
 data Openable = Open | Closed

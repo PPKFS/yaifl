@@ -6,14 +6,14 @@ module Yaifl.Lamp.Properties.Door
   , getDoor
   ) where
 
-import Yaifl.Core.Properties.TH
 
+import Solitude
+
+import Yaifl.Core.Entity
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
-import Yaifl.Core.Entity
-import Solitude
-import Effectful
+import Yaifl.Core.Properties.TH
 
 data Door = Door
   { _backSide :: Entity

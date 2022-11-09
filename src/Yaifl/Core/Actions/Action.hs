@@ -23,12 +23,14 @@ import Effectful.Optics ( (?=), use )
 import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.WorldModel ( WorldModel )
+import Breadcrumbs
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
 type ActionParseArguments wm v = ParseArguments wm (UnverifiedArgs wm) v
 
-newtype ActionProcessing wm = ActionProcessing (forall es. RuleEffects wm es => Action wm -> UnverifiedArgs wm -> Eff es (Maybe Bool))
+newtype ActionProcessing wm = ActionProcessing
+  (forall es. RuleEffects wm es => SpanID -> Action wm -> UnverifiedArgs wm -> Eff es (Maybe Bool))
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -56,7 +58,7 @@ makeActionRulebook ::
   Text
   -> [Rule o (Args o v) Bool]
   -> ActionRulebook o v
-makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> return $ Right x)
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> ignoreSpan >> pure (Right x))
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { _actions :: !(Map Text (Either InterpretAs (Action wm)))
@@ -73,10 +75,9 @@ runAction ::
   => UnverifiedArgs wm
   -> Action wm
   -> Eff es (Maybe Bool)
-runAction args act = do
-  w <- use actionProcessing
-  let (ActionProcessing ap) = w
-  ap act args
+runAction args act = withSpan "run action" (_actionName act) $ \aSpan -> do
+  (ActionProcessing ap) <- use actionProcessing
+  ap aSpan act args
 
 -- | Add an action to the registry.
 addAction ::

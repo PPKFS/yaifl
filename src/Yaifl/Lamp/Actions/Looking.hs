@@ -5,8 +5,11 @@ module Yaifl.Lamp.Actions.Looking
   ( lookingAction
   ) where
 
+import Solitude
+import Effectful.Optics
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
+import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity
 import Yaifl.Core.Logger
 import Yaifl.Core.Metadata
@@ -21,10 +24,6 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, pri
 import Yaifl.Lamp.Visibility
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Solitude
-import Effectful
-import Effectful.Optics
-import Yaifl.Core.AdaptiveText.Eval
 
 lookingAction ::
   HasLookingProperties wm

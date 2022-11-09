@@ -20,6 +20,7 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 
 import Solitude
 
+import Breadcrumbs ( Breadcrumbs )
 import Yaifl.Core.Actions.Activity ( Activity, makeActivity, doActivity, ActivityCollection )
 import Yaifl.Core.AdaptiveText.Eval ( sayAdaptive )
 import Yaifl.Core.Object ( Object(..), AnyObject )
@@ -27,7 +28,6 @@ import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, 
 import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
 import Yaifl.Core.Say ( Saying, say )
 import qualified Yaifl.Core.Actions.Activity as Ac
-import Breadcrumbs
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 

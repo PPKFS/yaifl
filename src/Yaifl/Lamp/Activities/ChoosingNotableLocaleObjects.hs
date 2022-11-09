@@ -11,10 +11,13 @@ module Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
   ( choosingNotableLocaleObjectsImpl
   ) where
 
+import Solitude
+
 import Yaifl.Core.Actions.Activity
+import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity ( Store(..), HasID(..) )
 import Yaifl.Core.Logger ( debug, warn )
-import Yaifl.Core.Object ( Object(..), AnyObject, objName )
+import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( getObject )
 import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
@@ -22,8 +25,6 @@ import Yaifl.Core.Properties.Query ( getEnclosing )
 import Yaifl.Core.Rulebooks.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Solitude
-import Yaifl.Core.AdaptiveText.Eval
 
 choosingNotableLocaleObjectsImpl ::
   WMHasProperty wm Enclosing

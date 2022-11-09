@@ -24,7 +24,7 @@ import Effectful.TH ( makeEffect )
 
 import Yaifl.Core.AdaptiveText ( AdaptiveText )
 import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
-import Yaifl.Core.Logger ( debug, Log )
+import Yaifl.Core.Logger ( Log )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Dynamic
@@ -35,6 +35,7 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.WorldModel ( WMObjSpecifics )
+import Breadcrumbs
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
@@ -43,7 +44,11 @@ data ObjectCreation wm :: Effect where
 
 makeEffect ''ObjectCreation
 
-type AddObjects wm es = (ObjectCreation wm :> es, State Metadata :> es, Log :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
+type AddObjects wm es = (
+  ObjectCreation wm :> es
+  , State Metadata :> es
+  , Log :> es
+  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 -- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
 reifyObject ::
@@ -111,22 +116,23 @@ addObject ::
   -> d
   -> Maybe (ObjectUpdateFunc wm d)
   -> Eff es (Object wm d)
-addObject rf updWorld n d ty isT specifics details updateFunc = do
-  (e, obj) <- makeObject n d ty isT specifics details updateFunc
-  let (n' :: Text) = if isThing e then "thing" else "room"
-  debug [int|t| Made a new #{n'} called #{n} with ID #{e} |]
-  updWorld obj
-  lastRoom <- use previousRoom
-  if
-     isRoom e
-  then
-    previousRoom .= e
-  else
-    failHorriblyIfMissing $ do
-      t <- getThing e
-      when (t ^. objData % thingContainedBy == voidID)
-        (move t lastRoom >> pass)
-  rf obj
+addObject rf updWorld n d ty isT specifics details updateFunc =
+  withSpan' ("new " <> if isT then "thing" else "room") (display n) $ do
+    (e, obj) <- makeObject n d ty isT specifics details updateFunc
+    addAnnotation "object created"
+    updWorld obj
+    addAnnotation "object added to world"
+    lastRoom <- use previousRoom
+    if
+      isRoom e
+    then
+      previousRoom .= e
+    else
+      failHorriblyIfMissing $ do
+        t <- getThing e
+        withoutSpan $ when (t ^. objData % thingContainedBy == voidID)
+          (move t lastRoom >> pass)
+    rf obj
 
 addThing ::
   WMHasProperty wm Enclosing

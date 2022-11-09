@@ -86,6 +86,9 @@ data Object wm objData = Object
   , _objData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
 
+instance Display (Object wm objData) where
+  displayBuilder = const "object"
+
 instance HasID (Object wm d) where
   getID = _objID
 

@@ -38,6 +38,7 @@ common common-options
     , replace-megaparsec
     , template-haskell
     , text
+    , text-display
     , time
     , haskell-src-meta
     , haskell-src-exts

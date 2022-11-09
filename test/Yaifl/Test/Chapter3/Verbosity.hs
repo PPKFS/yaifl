@@ -35,8 +35,8 @@ ex3World = do
     -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
     --roomDescriptions .= SometimesAbbreviatedRoomDescriptions
     -- addThing' "Bic pen" "" pass
-    w <- addRoom' (fromString . show $ wmrwN) (fromString . show $ wmrwDesc) pass
-    tmr <- addRoom' (fromString . show $ tmrN) (fromString . show $ tmrDesc) pass
+    w <- addRoom' (fromString wmrwN) (fromString wmrwDesc) pass
+    tmr <- addRoom' (fromString tmrN) (fromString tmrDesc) pass
     tmr `isWestOf` w
     pass
 

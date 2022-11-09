@@ -9,6 +9,7 @@ import Effectful.Optics
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
+import Breadcrumbs ( Breadcrumbs )
 import Yaifl.Core.Logger ( Log, err )
 import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Objects.Move ( move )
@@ -16,10 +17,9 @@ import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(..) )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), noRulebookArguments )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
 import Yaifl.Core.Say ( Saying, say, setStyle )
-import Breadcrumbs ( Breadcrumbs )
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -31,7 +31,7 @@ whenPlayBeginsRules ::
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
-    (ParseArguments (const $ return (Right ())) )
+    noRulebookArguments
     [ makeRule' "Display banner" $ sayIntroText >> rulePass
     , makeRule' "Position player in world" positionPlayer
     , makeRule' "Initial room description" initRoomDescription

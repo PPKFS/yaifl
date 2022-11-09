@@ -18,6 +18,7 @@ module Yaifl.Core.Rulebooks.Rulebook
   , addRuleFirst
   , addRuleLast
   , blankRulebook
+  , noRulebookArguments
 
     -- * Lenses
   , argsSource
@@ -39,8 +40,9 @@ import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.Query ( NoMissingObjects )
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule ( Rule, ruleName, runRule )
+import Breadcrumbs
 
-type ParseArgumentEffects wm es = (State Metadata :> es, Log :> es, NoMissingObjects wm es)
+type ParseArgumentEffects wm es = (State Metadata :> es, Log :> es, NoMissingObjects wm es, Breadcrumbs :> es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ArgumentParseResult v)
@@ -56,10 +58,13 @@ data Rulebook wm ia v r = Rulebook
   , _rbRules :: [Rule wm v r]
   }
 
+noRulebookArguments :: ParseArguments wm v v
+noRulebookArguments = ParseArguments (\x -> ignoreSpan >> return (Right x))
+
 blankRulebook ::
   Text
   -> Rulebook wm v v r
-blankRulebook n = Rulebook n Nothing (ParseArguments (return . Right)) []
+blankRulebook n = Rulebook n Nothing noRulebookArguments []
 
 -- | A `StandardRulebook` is one which expects to verify its own arguments.
 type StandardRulebook wm v r = Rulebook wm (UnverifiedArgs wm) v r

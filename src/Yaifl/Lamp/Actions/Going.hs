@@ -17,7 +17,6 @@ module Yaifl.Lamp.Actions.Going
   (goingAction) where
 
 import Solitude
-import Effectful
 
 import Yaifl.Core.Actions.Action ( makeActionRulebook, Action(Action), ActionRulebook )
 import Yaifl.Core.Direction ( WMStdDirections )
@@ -149,11 +148,11 @@ checkGoingRules = [
   ]
 
 cantGoThroughClosedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughClosedDoors = makeRule "stand up before going" $ \v -> do
+cantGoThroughClosedDoors = makeRule "stand up before going" $ \_v -> do
   return Nothing
 
 cantGoThroughUndescribedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughUndescribedDoors = makeRule "stand up before going" $ \v -> do
+cantGoThroughUndescribedDoors = makeRule "stand up before going" $ \_v -> do
   return Nothing
 
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
@@ -164,8 +163,8 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
   ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. argsSource) $ do
-    outAction <- ifM (nonVehicle `isType` "supporter") (pure "off") (pure "out of")
-    let dir = "[We] [would have] to get off [the nonvehicle] first."
+    _outAction <- ifM (nonVehicle `isType` "supporter") (pure ("off" :: String)) (pure "out of")
+   -- let dir = "[We] [would have] to get off [the nonvehicle] first."
     pass
   rulePass
 

@@ -29,7 +29,6 @@ import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Optics (use, (.=))
 
-
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
 data Saying :: Effect where

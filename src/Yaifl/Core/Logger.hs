@@ -4,19 +4,19 @@
 
 module Yaifl.Core.Logger where
 
-import Language.Haskell.TH ( Loc(..) )
-import GHC.Stack
-import Data.Time ( getCurrentTime, UTCTime )
-import qualified Data.Aeson as A
-import qualified Data.Text as T
---import Katip.Format.Time ( formatAsLogTime )
-import Yaifl.Core.Say ( Has(buf), PartialState )
-import Effectful
-import Effectful.TH
 import Solitude hiding (local, asks, Reader)
-import Effectful.Reader.Static
+
+import Data.Time ( getCurrentTime, UTCTime )
 import Effectful.Dispatch.Dynamic
 import Effectful.Optics
+import Effectful.Reader.Static
+import Effectful.TH
+import GHC.Stack
+import Language.Haskell.TH ( Loc(..) )
+
+import Yaifl.Core.Say ( Has(buf), PartialState )
+import qualified Data.Aeson as A
+import qualified Data.Text as T
 
 data MsgSeverity = Debug | Info | Warning | Error
   deriving stock (Eq, Ord, Enum, Bounded, Show)

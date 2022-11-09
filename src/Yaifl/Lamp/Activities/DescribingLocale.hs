@@ -11,13 +11,14 @@ module Yaifl.Lamp.Activities.DescribingLocale
 ( describingLocaleImpl
 ) where
 
-import Data.List ( groupBy )
-import qualified Data.EnumMap.Strict as DEM
-import qualified Data.EnumSet as DES
+import Solitude
 
+import Data.List ( groupBy )
+import Effectful.Optics
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Entity ( Store(unStore), Entity, HasID (..) )
-import Yaifl.Core.Logger ( debug, warn )
+import Yaifl.Core.AdaptiveText.Eval
+import Yaifl.Core.Entity ( Store(unStore), Entity )
+import Yaifl.Core.Logger ( debug )
 import Yaifl.Core.Metadata (currentPlayer)
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
@@ -31,9 +32,8 @@ import Yaifl.Core.Say ( Saying, say )
 import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
-import Solitude
-import Effectful.Optics
-import Yaifl.Core.AdaptiveText.Eval
+import qualified Data.EnumMap.Strict as DEM
+import qualified Data.EnumSet as DES
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing

@@ -6,22 +6,24 @@ module Yaifl.Core.Rulebooks.ActionProcessing
   ( actionProcessingRules
   ) where
 
-import Yaifl.Core.Actions.Action
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Run
-import Yaifl.Core.Rulebooks.Rule
 import Solitude
+
+import Breadcrumbs
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Rulebooks.Run
 
 
 actionProcessingRules :: ActionProcessing wm
-actionProcessingRules = ActionProcessing $ \Action{..} u -> withoutMissingObjects (runRulebook (Rulebook
+actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissingObjects (runRulebook (Just aSpan) (Rulebook
   "action processing"
   (Just True)
   -- I have no idea how this works
   -- coming back to it: nope, even less idea now
   -- a third go over: nope, still no idea
-  (ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> runParseArguments _actionParseArguments uv))
+  (ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments _actionParseArguments uv)))
   [ notImplementedRule "Before stage rule"
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
@@ -32,7 +34,8 @@ actionProcessingRules = ActionProcessing $ \Action{..} u -> withoutMissingObject
   , notImplementedRule "check stage rule"
   , Rule "carry out stage rule"
         ( \v -> do
-          r <- runRulebookAndReturnVariables _actionCarryOutRules v
+          ignoreSpan
+          r <- runRulebookAndReturnVariables (Just aSpan) _actionCarryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "after stage rule"
   , notImplementedRule "investigate player awareness after rule"

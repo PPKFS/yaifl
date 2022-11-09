@@ -17,6 +17,7 @@ module Yaifl.Core.WorldModel (
   , WMOrd
   , WMEq
   ) where
+
 import Solitude
 
 -- | All the various type parameters wrapped into a single type.
@@ -26,7 +27,7 @@ type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v) = objSpec
 
 type family WMDirection (wm :: WorldModel) :: Type where
-  WMDirection ('WorldModel objSpec dir o v) = dir 
+  WMDirection ('WorldModel objSpec dir o v) = dir
 
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v) = o

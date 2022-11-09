@@ -8,7 +8,8 @@ module Yaifl.Core.AdaptiveText
 import Replace.Megaparsec ( splitCap )
 import Text.Megaparsec ( match, anySingle, manyTill, single, Parsec )
 import Solitude
-import Formatting.Buildable (build)
+import Data.Text.Lazy.Builder
+
 
 data AdaptiveText domain = StaticText Text | AdaptiveText [Text] [Text]
   deriving stock (Eq, Generic, Ord, Show)
@@ -20,7 +21,7 @@ rawAdaptiveText ::
   -> Text
 rawAdaptiveText (StaticText t) = t
 -- TODO
-rawAdaptiveText (AdaptiveText subs main) = mconcat main
+rawAdaptiveText (AdaptiveText _subs main) = mconcat main
 
 instance IsString (AdaptiveText domain) where
   fromString :: String -> AdaptiveText domain
@@ -34,5 +35,8 @@ instance IsString (AdaptiveText domain) where
       (l, []) -> StaticText (toText $ mconcat l)
       (ls', rs') -> AdaptiveText (map toText ls') (map (toText . fst) rs')
 
+instance Display (AdaptiveText domain) where
+  displayBuilder = fromText . rawAdaptiveText
+
 instance Buildable (AdaptiveText domain) where
-  build = show
+  build = displayBuilder

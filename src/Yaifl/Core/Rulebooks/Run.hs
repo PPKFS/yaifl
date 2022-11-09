@@ -5,24 +5,26 @@ module Yaifl.Core.Rulebooks.Run
   , runRulebookAndReturnVariables
   , failRuleWithError
   ) where
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments), ArgumentParseResult )
 
-import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
-import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
-import Yaifl.Core.Metadata ( noteError )
 import Solitude
+
+import Breadcrumbs
 import Effectful.Error.Static ( runError )
-import Breadcrumbs ( Breadcrumbs, addTagTo, addAnnotation, withSpan, SpanID (SpanID), withSpan' )
+import Yaifl.Core.Metadata ( noteError )
+import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
+import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
+import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
+import qualified Data.Text as T
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::
-  Refreshable wm v
-  => Show v
+  (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
-  => Rulebook wm ia v re
+  => Maybe SpanID
+  -> Rulebook wm ia v re
   -> ia
   -> Eff es (Maybe re)
-runRulebook rb ia = runRulebookAndReturnVariables rb ia >>= (\mvre -> return $ mvre >>= snd)
+runRulebook mbSpanId rb ia = runRulebookAndReturnVariables mbSpanId rb ia >>= (\mvre -> return $ mvre >>= snd)
 
 -- | Run a rulebook and return possibly an outcome; the two levels of `Maybe` are for:
 -- Nothing -> the rulebook arguments were not parsed correctly
@@ -30,45 +32,53 @@ runRulebook rb ia = runRulebookAndReturnVariables rb ia >>= (\mvre -> return $ m
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
 runRulebookAndReturnVariables ::
   forall wm v es ia re.
-  Show v
-  => Refreshable wm v
+  (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
-  => Rulebook wm ia v re
+  => Maybe SpanID
+  -> Rulebook wm ia v re
   -> ia
   -> Eff es (Maybe (v, Maybe re))
-runRulebookAndReturnVariables Rulebook{..} args =
+runRulebookAndReturnVariables mbSpanId Rulebook{..} args =
   -- ignore empty rulebooks to avoid logging spam
   if null _rbRules
     then pure Nothing
-    else withSpan "rulebook" _rbName $ \rbSpan -> do
-      withSpan' "parse arguments" _rbName $ do
-        mbArgs <- runParseArguments _rbParseArguments args
-        addTagTo rbSpan "rulebook.arguments" (Just $ show @Text @(ArgumentParseResult v) mbArgs)
-        case mbArgs of
-          Left err' -> noteError (const Nothing) err'
-          Right a -> do
-            -- run the actual rules
-            res <- (fmap Just . processRuleList _rbRules) a
-            return $ res >>= (\(v, r1) -> Just (v, r1 <|> _rbDefaultOutcome))
+    else maybe (withSpan "rulebook" _rbName) (\f x -> x f) mbSpanId $ \rbSpan -> do
+      mbArgs <- withSpan' "parse arguments" _rbName $  runParseArguments _rbParseArguments args
+      whenJust (rightToMaybe mbArgs) (addTagToSpan rbSpan "arguments" . display)
+      case mbArgs of
+        Left err' -> noteError (const Nothing) err'
+        Right a -> do
+          -- run the actual rules
+          (v, r1) <- processRuleList rbSpan _rbRules a
+          let outcome = (v, r1 <|> _rbDefaultOutcome)
+          addTagTo (Just rbSpan) "outcome" (display $ snd outcome)
+          return (Just outcome)
 
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".
 processRuleList ::
-  Refreshable wm v
+  (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
-  => [Rule wm v re]
+  => SpanID
+  -> [Rule wm v re]
   -> v
   -> Eff es (v, Maybe re)
-processRuleList [] v = return (v, Nothing)
-processRuleList (Rule{..} : xs) args = do
-  mbRes <- withSpan' "rule" _ruleName $ runError @RuleCondition $ _runRule args
+processRuleList _ [] v = return (v, Nothing)
+processRuleList rbSpan (Rule{..} : xs) args = do
+  mbRes <- (if T.null _ruleName then id else withSpan' "rule" _ruleName) $ runError @RuleCondition $ _runRule args
   case mbRes of
-    Left _ -> processRuleList xs args
+    -- we failed the precondition
+    Left _ -> do
+      addAnnotationToSpan rbSpan $ "Failed precondition for rule " <> _ruleName
+      pure (args, Nothing)
     Right (v, res) -> do
+      whenJust v (\v' -> addAnnotationTo (Just rbSpan) $ "Updated rulebook variables to " <> display v')
       newArgs <- refreshVariables $ fromMaybe args v
       case res of
-        Nothing -> processRuleList xs newArgs
-        Just r -> return (newArgs, Just r)
+        Nothing -> processRuleList rbSpan xs newArgs
+        Just r -> do
+          addAnnotationTo (Just rbSpan) $ "Finished rulebook with result " <> display r
+          return (newArgs, Just r)
 
   -- if we hit nothing, continue; otherwise return
 

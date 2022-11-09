@@ -27,7 +27,6 @@ module Yaifl.Core.Entity
 import qualified Data.EnumMap as EM
 import qualified Data.IntMap as IM
 import Solitude
-import Formatting.Buildable (build)
 
 -- | An object ID. If something has an ID of 0, it's an error.
 newtype Entity = Entity
@@ -47,6 +46,9 @@ instance HasID Entity where
 -- | For pretty printing in logs.
 instance Buildable Entity where
   build (Entity i) = "(ID: " <> show i <> ")"
+
+instance Display Entity where
+  displayBuilder = build
 
 -- | A place where new `Yaifl.Core.Objects.Thing`s are placed by default, to avoid having locations be `Maybe`.
 voidID :: Entity

@@ -1,41 +1,23 @@
 {-# LANGUAGE Strict #-}
 
 module Main ( main ) where
-{-
-import Yaifl
-import Test.Hspec
-import qualified Data.Text as T
-import Yaifl.Core.Prelude
-import Yaifl.Core.Activities
-import qualified Data.EnumMap as DEM
-import Yaifl.Core.ObjectLookup
--}
-{-
-import Yaifl
-import Test.Hspec
-import qualified Data.Text as T
-import Yaifl.Core.Prelude
-import Yaifl.Core.Activities
-import qualified Data.EnumMap as DEM
-import Yaifl.Core.ObjectLookup
--}
+
 import Solitude
-import Yaifl.Test.Common
-import qualified Yaifl.Test.Chapter3.Common as Chapter3
+
+import Data.Aeson ( decodeFileStrict, encodeFile )
 import Data.Algorithm.Diff
-    ( getGroupedDiff, Diff, PolyDiff(First, Both, Second) )
 import Data.Time ( getCurrentTime )
-import Test.Tasty
-import qualified Data.Map as M
-import Test.Tasty.Golden
-import Yaifl
-import Control.Exception
 import Breadcrumbs
+import System.Directory
 import System.IO ( hPutStrLn )
+import Test.Tasty
+import Test.Tasty.Golden
 import Test.Tasty.Ingredients
 import Test.Tasty.Runners
-import System.Directory
-import Data.Aeson ( decodeFileStrict, encodeFile )
+import Yaifl
+import Yaifl.Test.Common
+import qualified Data.Map as M
+import qualified Yaifl.Test.Chapter3.Common as Chapter3
 
 -- this is a rip of tasty's main, but hooking my own global `TraceID` through it for
 -- better Zipkin traces.
@@ -55,7 +37,7 @@ main = runEff
           exitFailure
         Just act -> do
           runNo <- liftIO getAndIncrementRunNumber
-          ok <- withSpan "Test Suite" ("Run #" <> show runNo) $ do
+          ok <- withSpan' "Test Suite" ("Run #" <> show runNo) $ do
             (TraceID s) <- getTraceId
             liftIO $ do
               writeFileBS "traceid.temp" s

@@ -12,11 +12,11 @@ module Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
 ( printingDescriptionOfADarkRoomImpl
 ) where
 
-import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
-import Yaifl.Core.Say
-import Yaifl.Core.Rulebooks.Rule
 import Solitude
 
+import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Say
 
 printingDescriptionOfADarkRoomImpl :: Activity o () ()
 printingDescriptionOfADarkRoomImpl = makeActivity "Printing description of a dark room"

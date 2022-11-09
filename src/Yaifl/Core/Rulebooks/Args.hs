@@ -3,15 +3,14 @@
 
 module Yaifl.Core.Rulebooks.Args where
 
-import Effectful
 import Solitude
 
+import Effectful.Optics
 import Yaifl.Core.Entity ( HasID(..), Entity )
 import Yaifl.Core.Metadata ( Timestamp, currentPlayer )
 import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
 import Yaifl.Core.WorldModel
-import Effectful.Optics
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
@@ -22,6 +21,8 @@ data Args wm v = Args
   , _argsTimestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
+instance Display (Args wm v) where
+  displayBuilder = const "args"
 
 -- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the
 -- refreshVariables function is called to replace and update the objects

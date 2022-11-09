@@ -12,11 +12,11 @@ module Yaifl.Lamp.Activities.PrintingNameOfADarkRoom
   ( printingNameOfADarkRoomImpl
   ) where
 
-import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
+import Solitude ( ($), Monad((>>)) )
 
-import Yaifl.Core.Say
+import Yaifl.Core.Actions.Activity ( Activity, makeActivity )
 import Yaifl.Core.Rulebooks.Rule (rulePass, makeRule')
-import Solitude
+import Yaifl.Core.Say ( say )
 
 printingNameOfADarkRoomImpl :: Activity o () ()
 printingNameOfADarkRoomImpl = makeActivity "Printing name of a dark room"
