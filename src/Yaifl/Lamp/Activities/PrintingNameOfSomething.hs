@@ -45,7 +45,6 @@ printName ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
-  => Breadcrumbs :> es
   => ObjectTraverse wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectLike wm o
@@ -57,7 +56,6 @@ printNameDefiniteUncapitalised ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
-  => Breadcrumbs :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
@@ -71,7 +69,6 @@ printNameEx ::
   => ActionHandler wm :> es
   => State (ActivityCollection wm) :> es
   => ObjectTraverse wm :> es
-  => Breadcrumbs :> es
   => ObjectLike wm o
   => SayOptions
   -> o

@@ -58,6 +58,11 @@ data RoomDescriptions =
   | NoAbbreviatedRoomDescriptions -- ^ Always print full descriptions.
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
+instance Display RoomDescriptions where
+  displayBuilder SometimesAbbreviatedRoomDescriptions = "Sometimes abbreviated"
+  displayBuilder NoAbbreviatedRoomDescriptions = "Never abbreviated"
+  displayBuilder AbbreviatedRoomDescriptions = "Always abbreviated"
+
 -- | A `Timestamp` is used to date events or to keep track of when objects were last cached.
 -- This probably introduces more overhead in checks than saves, but oh well.
 newtype Timestamp = Timestamp

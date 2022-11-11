@@ -74,7 +74,6 @@ initRoomDescription = do
 
 positionPlayer ::
   NoMissingObjects wm es
-  => Breadcrumbs :> es
   => WMHasProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do

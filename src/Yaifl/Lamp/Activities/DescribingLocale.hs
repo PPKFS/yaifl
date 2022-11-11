@@ -13,6 +13,8 @@ module Yaifl.Lamp.Activities.DescribingLocale
 
 import Solitude
 
+import Breadcrumbs
+
 import Data.List ( groupBy )
 import Effectful.Optics
 import Yaifl.Core.Actions.Activity
@@ -33,7 +35,6 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
 import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
-import Breadcrumbs
 
 describingLocaleImpl ::
   WMHasProperty s Enclosing
@@ -62,7 +63,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
   do
     let tb = v ^. localePriorities
         sorted = sortBy (compare `on` _priority) (toList $ unStore tb)
-    addAnnotation $ "Found a total of " <> fromString (show $ length sorted) <> " potentially interesting things"
+    addTag "interesting things" (length sorted)
     --for each thing, we offer it to write a paragraph
     --then it is either no longer needed to be written about (Just Mentioned)
     --mentioned, but still hanging around (Just Unmentioned)
@@ -72,8 +73,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     newP <- foldlM (\v' li -> do
         r <- doActivity printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
-    addAnnotation $ "After handing off to printingLocaleParagraphAbout, we still have "
-      <> fromString (show $ length (unStore $ _localePriorities newP)) <> " potentially interesting things"
+    addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ _localePriorities newP))
     return (Just newP, Nothing))
 
 sayDomain ::
@@ -108,6 +108,7 @@ alsoSee = Rule "You can also see" (\v ->
       isAnAnimal <- dom `isType` "animal"
       playerLocE <- getLocation plID
       plRoom <- getRoomMaybe playerLocE
+      addTag "player location" plRoom
       let isInLoc = maybe False (dom `objectEquals`) plRoom
       if
         | isRoom dom ->
@@ -143,6 +144,7 @@ alsoSee = Rule "You can also see" (\v ->
                 printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
                 pass
               e' : _ -> do
+                addTag "Group of multiple objects: " (e', num)
                 say $ show $ length objGrp
                 printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
                 pass
@@ -192,6 +194,9 @@ data GroupingProperties s = GroupingProperties
   , grpIsContainer :: Bool
   , grpOpenable :: Maybe Openable
   }
+
+instance Display (GroupingProperties wm) where
+  displayBuilder = const "group properties"
 
 getGroupingProperties ::
   NoMissingObjects wm es

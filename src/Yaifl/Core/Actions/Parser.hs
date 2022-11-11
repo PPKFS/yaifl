@@ -13,7 +13,6 @@ import Effectful.Optics ( use )
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity ( ActivityCollection )
 import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
-import Yaifl.Core.Logger ( debug, Log, warn )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
@@ -126,7 +125,6 @@ tryAction ::
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
   => State (ActivityCollection wm) :> es
-  => Breadcrumbs :> es
   => Saying :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
