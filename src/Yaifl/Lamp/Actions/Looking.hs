@@ -66,10 +66,10 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       whenJust visCeil $ addTag "visibility ceiling" . display
       if
         | cnt == 0 -> do
-          -- for reasons that elude me, in I7 this doesn't actually /do/ anything.
-          -- possibly so if the user wants to override it, they can do so by
-          --
-          doActivity printingNameOfADarkRoom ()
+          beginActivity printingNameOfADarkRoom ()
+          whenHandling' printingNameOfADarkRoom $ do
+            say "Darkness"
+          endActivity printingNameOfADarkRoom
           pass --no light, print darkness
         | (getID <$> visCeil) == Just (getID loc) -> do
           addTag @Text "Ceiling is the location" ""

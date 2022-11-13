@@ -41,7 +41,7 @@ describingLocaleImpl ::
   => WMHasProperty s Container
   => WMHasProperty s Openable
   => Activity s (LocaleVariables s) ()
-describingLocaleImpl = Activity "Describing the locale of something" Nothing
+describingLocaleImpl = Activity "Describing the locale of something" Nothing Nothing
   (blankRulebook "Before describing locale")
   ((blankRulebook "Carry out describing locale")
     { _rbRules =

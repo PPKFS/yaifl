@@ -81,12 +81,12 @@ blankActivityCollection ::
   HasStandardProperties wm
   => ActivityCollection wm
 blankActivityCollection = ActivityCollection
-  { printingNameOfADarkRoom = printingNameOfADarkRoomImpl
-  , printingNameOfSomething = printingNameOfSomethingImpl
-  , printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
-  , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
-  , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
-  , describingLocale = describingLocaleImpl
+  { _printingNameOfADarkRoom = printingNameOfADarkRoomImpl
+  , _printingNameOfSomething = printingNameOfSomethingImpl
+  , _printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
+  , _choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
+  , _printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
+  , _describingLocale = describingLocaleImpl
   }
 
 blankStores :: WorldStores s
