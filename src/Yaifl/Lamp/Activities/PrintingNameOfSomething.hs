@@ -21,7 +21,6 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Solitude
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.AdaptiveText.Eval ( sayAdaptive )
 import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, getObject )
 import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
@@ -85,4 +84,4 @@ printNameEx p o = do
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    [makeRule "" (\o -> sayAdaptive (_objName o) o >> return (Just ()))]
+    [makeRule "" (\o -> say (name o) >> return (Just ()))]

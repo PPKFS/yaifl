@@ -10,13 +10,12 @@ module Yaifl.Core.Properties.Query (
 import Solitude
 
 import Yaifl.Core.Entity ( HasID, getID )
-import Yaifl.Core.Object ( objData, objSpecifics, IsObject (..) )
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Objects.RoomData ( roomEnclosing )
+import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( HasProperty(..), WMHasProperty )
 import Effectful.Error.Static ( Error, throwError )
-import Effectful ( (:>), Eff )
 
 getPropertyOrThrow ::
   HasID i
@@ -34,7 +33,7 @@ defaultPropertySetter ::
   => o
   -> v
   -> Eff es ()
-defaultPropertySetter e v = modifyObject e (objSpecifics % propertyL .~ v)
+defaultPropertySetter e v = modifyObject e (#specifics % propertyL .~ v)
 
 defaultPropertyGetter ::
   NoMissingObjects wm es
@@ -44,7 +43,7 @@ defaultPropertyGetter ::
   -> Eff es (Maybe v)
 defaultPropertyGetter e = do
   o <- getObject e
-  return $ preview (objSpecifics % propertyL) o
+  return $ preview (#specifics % propertyL) o
 
 
 modifyProperty ::
@@ -71,7 +70,7 @@ getEnclosing e = if isThing (getID e)
     defaultPropertyGetter e
   else (do
     o <- getRoom e
-    return $ Just $ o ^. objData % roomEnclosing
+    return $ Just $ o ^. #objectData % #enclosing
   )
 
 setEnclosing ::
@@ -85,4 +84,4 @@ setEnclosing e v = if isThing (getID e)
   then
     defaultPropertySetter e v
   else
-    modifyRoom e (objData % roomEnclosing .~ v)
+    modifyRoom e (#objectData % #enclosing .~ v)

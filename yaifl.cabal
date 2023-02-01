@@ -32,6 +32,7 @@ common common-options
     , enummapset
     , formatting
     , megaparsec
+    , nyan-interpolation
     , optics-extra
     , prettyprinter
     , prettyprinter-ansi-terminal
@@ -48,51 +49,35 @@ common common-options
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Effectful.Plugin
-  default-language:   Haskell2010
+    -fplugin=Effectful.Plugin -Wunused-packages
+  default-language: GHC2021
   default-extensions:
-    BangPatterns
-    ConstraintKinds
-    DataKinds
-    DeriveGeneric
+    OverloadedLabels
+    DuplicateRecordFields
     DerivingStrategies
-    FlexibleContexts
-    FlexibleInstances
-    FunctionalDependencies
-    GADTs
-    GeneralizedNewtypeDeriving
-    LambdaCase
-    MultiWayIf
-    OverloadedStrings
-    QuasiQuotes
-    RankNTypes
-    ScopedTypeVariables
-    StandaloneDeriving
-    TypeApplications
     TypeFamilies
-    TypeOperators
+    OverloadedStrings
     NoImplicitPrelude
+    QuasiQuotes
+    LambdaCase
+    DataKinds
+    MultiWayIf
 
 library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules:
-    Effectful.Optics
-
     Yaifl
 
-    Yaifl.Core.AdaptiveText
-    Yaifl.Core.AdaptiveText.Eval
     Yaifl.Core.Direction
     Yaifl.Core.Entity
-    Yaifl.Core.Logger
     Yaifl.Core.Metadata
     Yaifl.Core.Object
     Yaifl.Core.Say
     Yaifl.Core.WorldModel
 
     Yaifl.Core.Objects.Create
-    Yaifl.Core.Objects.Dynamic
+    --Yaifl.Core.Objects.Dynamic
     Yaifl.Core.Objects.Move
     Yaifl.Core.Objects.Query
     Yaifl.Core.Objects.Room
@@ -102,7 +87,7 @@ library
     Yaifl.Core.Properties.Enclosing
     Yaifl.Core.Properties.Has
     Yaifl.Core.Properties.Query
-    Yaifl.Core.Properties.TH
+    --Yaifl.Core.Properties.TH
 
     Yaifl.Core.Actions.Action
     Yaifl.Core.Actions.Activity
@@ -127,7 +112,6 @@ library
     Yaifl.Lamp.Actions.Looking
     Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
     Yaifl.Lamp.Activities.DescribingLocale
-    Yaifl.Lamp.Activities.PrintingNameOfADarkRoom
     Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
     Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
     Yaifl.Lamp.Activities.PrintingNameOfSomething

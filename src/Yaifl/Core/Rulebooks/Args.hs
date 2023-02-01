@@ -11,6 +11,7 @@ import Yaifl.Core.Metadata ( Timestamp, currentPlayer )
 import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
 import Yaifl.Core.WorldModel
+import Data.Text.Display
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
@@ -73,7 +74,7 @@ withPlayerSource = flip fmap getPlayer
 getPlayer ::
   NoMissingObjects wm es
   => Eff es (Thing wm)
-getPlayer = use currentPlayer >>= getThing
+getPlayer = use #currentPlayer >>= getThing
 
 -- | No Arguments, player source.
 playerNoArgs ::

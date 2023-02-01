@@ -12,9 +12,9 @@ module Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout where
 import Solitude
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Object ( Object(..), AnyObject, objData )
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query (getThingMaybe)
-import Yaifl.Core.Objects.ThingData ( ThingDescribed(..), thingDescribed )
+import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Rulebooks.Rule ( Rule, makeRule )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 
@@ -39,7 +39,7 @@ dontMentionUndescribed :: Rule wm (LocaleVariables wm, LocaleInfo wm) (LocaleVar
 dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule"
         (\(v, LocaleInfo _ e _) -> do
           asThing <- getThingMaybe e
-          let isDesc = asThing ^? _Just % objData % thingDescribed
+          let isDesc = asThing ^? _Just % #objectData % #described
           if
             isDesc == Just Undescribed
           then
@@ -53,13 +53,13 @@ setLocalePriority ::
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
-setLocalePriority e lv i = lv & localePriorities % at (_objID e) % _Just % priority .~ i
+setLocalePriority e lv i = lv & localePriorities % at (objectId e) % _Just % priority .~ i
 
 removeFromLocale ::
   AnyObject s
   -> LocaleVariables v
   -> LocaleVariables v
-removeFromLocale e lv = lv & localePriorities % at (_objID e) .~ Nothing
+removeFromLocale e lv = lv & localePriorities % at (objectId e) .~ Nothing
 {-
       [ Rule
         "don’t mention player’s supporter in room descriptions rule"

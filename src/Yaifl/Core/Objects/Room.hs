@@ -12,7 +12,7 @@ import Solitude
 import Yaifl.Core.Direction
 import Yaifl.Core.Entity (HasID(..), Entity)
 import Yaifl.Core.Metadata (Metadata, whenConstructing)
-import Yaifl.Core.Object (objData, Room)
+import Yaifl.Core.Object (Room)
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.TH (makeDirections)
@@ -49,7 +49,7 @@ connectionLens ::
   WMStdDirections wm
   => WMDirection wm
   -> Lens' (Room wm) (Maybe Connection)
-connectionLens dir = objData % roomMapConnections % coercedTo @(Map.Map (WMDirection wm) Connection ) % at dir
+connectionLens dir = (#objectData :: Lens' (Room wm) (RoomData wm)) % #mapConnections % coercedTo @(Map.Map (WMDirection wm) Connection ) % at dir
 
 makeConnection ::
   WMStdDirections wm

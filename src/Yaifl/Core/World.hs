@@ -9,7 +9,6 @@ import Effectful.Optics ( (%=) )
 import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
 import Yaifl.Core.Actions.Activity ( ActivityCollection )
 import Yaifl.Core.Entity ( Store, Entity )
-import Yaifl.Core.Logger ( LogBuffer )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.Dynamic (AbstractObject)
 import Yaifl.Core.Objects.RoomData ( RoomData )
@@ -25,7 +24,6 @@ data World (wm :: WorldModel) = World
   , _worldActions :: WorldActions wm
   , _worldActivities :: ActivityCollection wm
   , _messageBuffer :: MessageBuffer
-  , _worldLogs :: LogBuffer
   }
 
 data WorldStores (wm :: WorldModel) = WorldStores
@@ -42,9 +40,6 @@ makeLenses ''WorldStores
 
 instance Has (World wm) MessageBuffer where
   buf = messageBuffer
-
-instance Has (World wm) LogBuffer where
-  buf = worldLogs
 
 addWhenPlayBegins ::
   State (WorldActions wm) :> es

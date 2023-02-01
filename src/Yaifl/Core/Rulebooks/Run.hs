@@ -15,6 +15,7 @@ import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
 import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
 import qualified Data.Text as T
+import Data.Text.Display
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::

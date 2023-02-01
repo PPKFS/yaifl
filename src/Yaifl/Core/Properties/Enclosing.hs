@@ -1,7 +1,7 @@
 {-|
 Module      : Yaifl.Core.Properties.Enclosing
 Description : A component that holds things.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -16,30 +16,19 @@ module Yaifl.Core.Properties.Enclosing (
   -- * Enclosing
     Enclosing(..)
   , blankEnclosing
-
-  -- * Optics
-  , enclosingContains
-  , enclosingCapacity
   ) where
 
-import Data.EnumSet ( EnumSet, empty )
-
-import Yaifl.Core.Entity ( Entity )
 import Solitude
+
+import Data.EnumSet ( EnumSet, empty )
+import Yaifl.Core.Entity ( Entity )
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing
-  { _enclosingContains :: EnumSet Entity -- ^ The contained objects.
-  , _enclosingCapacity :: Maybe Int -- ^ An optional number of items that can be contained.
+  { contents :: EnumSet Entity -- ^ The contained objects.
+  , capacity :: Maybe Int -- ^ An optional number of items that can be contained.
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | An enclosing component with nothing in it.
 blankEnclosing :: Enclosing
 blankEnclosing = Enclosing Data.EnumSet.empty Nothing
-
-enclosingCapacity :: Lens' Enclosing (Maybe Int)
-enclosingCapacity = lensVL (\ f s -> case s of {Enclosing g e -> fmap (Enclosing g) (f e) })
-{-# INLINE enclosingCapacity #-}
-enclosingContains :: Lens' Enclosing (EnumSet Entity)
-enclosingContains = lensVL (\ f s -> case s of { Enclosing e g -> fmap (`Enclosing` g) (f e) })
-{-# INLINE enclosingContains #-}

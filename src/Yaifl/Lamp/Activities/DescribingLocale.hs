@@ -14,11 +14,10 @@ module Yaifl.Lamp.Activities.DescribingLocale
 import Solitude
 
 import Breadcrumbs
-
+import Data.Text.Display
 import Data.List ( groupBy )
 import Effectful.Optics
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity ( Store(unStore), Entity )
 import Yaifl.Core.Metadata (currentPlayer)
 import Yaifl.Core.Object
@@ -103,10 +102,10 @@ alsoSee = Rule "You can also see" (\v ->
 
     unless (null lp) $ do
       let (LocaleVariables prior dom p) = v
-      plID <- use currentPlayer
+      pl <- getCurrentPlayer
       isASupporter <- dom `isType` "supporter"
       isAnAnimal <- dom `isType` "animal"
-      playerLocE <- getLocation plID
+      playerLocE <- getLocation pl
       plRoom <- getRoomMaybe playerLocE
       addTag "player location" plRoom
       let isInLoc = maybe False (dom `objectEquals`) plRoom
@@ -209,10 +208,10 @@ getGroupingProperties o = do
   hc <- hasChildren o
   wr <- willRecurse o
   mbThing <- getThingMaybe o
-  let gwb = join $ mbThing ^? _Just % objData % thingWearable % _Wearable
-      gtl = mbThing ^? _Just % objData % thingLit
+  let gwb = join $ mbThing ^? _Just % #objectData % #wearable % #_Wearable
+      gtl = mbThing ^? _Just % #objectData % #lit
   (ic, op) <- getContainerProps o
-  n <- evalName o
+  let n = name o
   return $ GroupingProperties o n hc wr gwb (Just Lit == gtl) op ic
 
 hasChildren
@@ -221,7 +220,7 @@ hasChildren
   => ObjectLike wm o
   => o
   -> Eff es Bool
-hasChildren e = maybe False (\e' -> DES.size (_enclosingContains e') == 0) <$> getEnclosing e
+hasChildren e = maybe False (\e' -> DES.size (contents e') == 0) <$> getEnclosing e
 
 willRecurse ::
   NoMissingObjects wm es

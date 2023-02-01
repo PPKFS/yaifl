@@ -10,7 +10,6 @@ import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
-import Yaifl.Core.Logger ( Log, err )
 import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
@@ -43,7 +42,7 @@ sayIntroText ::
   => Eff es ()
 sayIntroText = do
   setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
-  t <- use title
+  t <- use #title
   say $ introText t
   setStyle Nothing
   pass
@@ -77,7 +76,7 @@ positionPlayer ::
   => WMHasProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do
-  fr <- use firstRoom
+  fr <- use #firstRoom
   pl <- getCurrentPlayer
   m <- move pl fr
   if m then return Nothing else failRuleWithError "Failed to move the player."

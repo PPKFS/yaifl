@@ -20,6 +20,7 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
+import Text.Interpolation.Nyan
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
@@ -32,11 +33,11 @@ data LookingActionVariables wm = LookingActionVariables
   , _roomDescribingAction :: !Text
   }
   deriving stock (Eq, Generic)
-
+{-}
 instance Buildable (LookingActionVariables s) where
   build (LookingActionVariables fr _ lvls _) = "Looking from "
     <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
-
+-}
 instance Refreshable wm (LookingActionVariables wm) where
   refreshVariables av = do
     lf <- getObject (_lookingFrom av)
@@ -77,7 +78,7 @@ findVisibilityHolder ::
 findVisibilityHolder e' = do
   obj <- getObject e'
   mCont <- getContainer e'
-  let n = _objName obj
+  let n = name obj
   if
     isRoom obj || isOpaqueClosedContainer <$?> mCont
   then
@@ -89,7 +90,7 @@ findVisibilityHolder e' = do
     do
       --get its container; we know it's a thing at this stage
       t <- getThing e'
-      getObject (t ^. objData % thingContainedBy)
+      getObject (t ^. #objectData % #containedBy)
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -104,7 +105,7 @@ recalculateLightOfParent ::
   => o
   -> Eff es Int
 recalculateLightOfParent e = do
-  (parent :: Maybe Entity) <- view (objData % thingContainedBy) <$$> getThingMaybe e
+  (parent :: Maybe Entity) <- view (#objectData % #containedBy) <$$> getThingMaybe e
   case parent of
     --it's a room.
     Nothing -> return 0
@@ -130,7 +131,7 @@ offersLight ::
   => o
   -> Eff es Bool
 offersLight e = do
-  let parentOffersLight o = offersLight (o ^. objData % thingContainedBy)
+  let parentOffersLight o = offersLight (o ^. #objectData % #containedBy)
       seeThruWithParent = maybe (return False) (\o' -> isSeeThrough o' &&^ parentOffersLight o')
   o <- getThingMaybe e
 
@@ -163,7 +164,7 @@ containsLitObj ::
   -> Eff es Bool
 containsLitObj e = do
   enc <- getEnclosing e
-  enc & maybe (return False) (\encs -> anyM hasLight (DES.elems $ encs ^. enclosingContains))
+  enc & maybe (return False) (\encs -> anyM hasLight (DES.elems $ contents encs))
 
 {- | (4) An object itself has light if:
   (a) it's a room with the lighted property,
@@ -176,8 +177,8 @@ objectItselfHasLight ::
   => o -- ^ the object
   -> Eff es Bool
 objectItselfHasLight e = asThingOrRoom e
-  ((Lit ==) . view (objData % thingLit))
-  ((Lighted ==) . view (objData % roomDarkness))
+  ((Lit ==) . view (#objectData % #lit))
+  ((Lighted ==) . view (#objectData % #darkness))
 
 {- | (4) An object has light if:
   (a) it itself has the light attribute set, or

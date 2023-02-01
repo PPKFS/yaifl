@@ -1,19 +1,19 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  ghc = pkgs.haskell.compiler.ghc902;
+  unstable = import (fetchTarball https://nixos.org/channels/nixos-unstable/nixexprs.tar.xz) { };
 in
   pkgs.mkShell {
     buildInputs = with pkgs; [
       cabal-install
-      ghc
+      unstable.ghc
       binutils
       zlib
       zlib.dev
       zlib.out
-      pkgs.haskell.packages.ghc902.haskell-language-server
+      unstable.haskellPackages.haskell-language-server
     ];
     shellHook = ''
-      eval $(egrep ^export ${ghc}/bin/ghc)
+      eval $(egrep ^export ${unstable.ghc}/bin/ghc)
     '';
   }

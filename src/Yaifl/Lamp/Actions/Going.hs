@@ -22,10 +22,10 @@ import Yaifl.Core.Actions.Action ( makeActionRulebook, Action(Action), ActionRul
 import Yaifl.Core.Direction ( WMStdDirections )
 import Yaifl.Core.Entity ( Entity, HasID(..) )
 import Yaifl.Core.Metadata (noteError, isPlayer)
-import Yaifl.Core.Object ( Thing, Room, objData, isType, objectEquals )
+import Yaifl.Core.Object ( Thing, Room, isType, objectEquals )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.Room ( getMapConnection )
-import Yaifl.Core.Objects.ThingData (thingContainedBy)
+import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
 import Yaifl.Core.Rulebooks.Rule
@@ -33,6 +33,8 @@ import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say (say, sayLn)
 import Yaifl.Lamp.Activities.PrintingNameOfSomething ( printNameDefiniteUncapitalised )
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
+import Text.Interpolation.Nyan
+import Effectful.Error.Static
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -127,7 +129,7 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
     Left txt -> return $ Left txt
     Right r -> return $ Right $ uncurry gav r ) (handleMissingObject "Failed to set going variables" (Left ""))
 
-setDoorGoneThrough :: Entity -> Eff (NoMissingObject : es) (Maybe Entity)
+setDoorGoneThrough :: Entity -> Eff (Error MissingObject : es) (Maybe Entity)
 setDoorGoneThrough = error ""
 
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
@@ -157,7 +159,7 @@ cantGoThroughUndescribedDoors = makeRule "stand up before going" $ \_v -> do
 
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -> do
-  nonVehicle <- getObject $ v ^. argsSource % objData % thingContainedBy
+  nonVehicle <- getObject $ v ^. argsSource % #objectData % #containedBy
   let vehcGoneBy = v ^. argsVariables % gavVehicleGoneBy
       roomGoneFrom = v ^. argsVariables % gavRoomFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
@@ -184,7 +186,7 @@ getContainingHierarchy ::
   => Thing wm
   -> Eff es [Thing wm]
 getContainingHierarchy o = do
-  cont <- getThingMaybe (o ^. objData % thingContainedBy)
+  cont <- getThingMaybe (o ^. #objectData % #containedBy)
   case cont of
     --no objects, just a room
     Nothing -> return []

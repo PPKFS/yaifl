@@ -42,8 +42,6 @@ data AbstractObject wm d
   = DynamicObject (TimestampedObject wm d)
   | StaticObject (Object wm d)
 
-instance Buildable (AbstractObject wm d) where
-  build = const "blah"
 
 instance HasID (AbstractObject wm d) where
   getID (StaticObject o) = getID o

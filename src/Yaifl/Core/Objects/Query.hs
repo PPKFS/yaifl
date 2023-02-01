@@ -14,7 +14,6 @@ module Yaifl.Core.Objects.Query
   , failHorriblyIfMissing
   , handleMissingObject
   , NoMissingObjects
-  , NoMissingObject
   , NoMissingRead
   -- * Get
   , lookupThing
@@ -43,6 +42,7 @@ module Yaifl.Core.Objects.Query
 
 import Solitude
 
+import Text.Interpolation.Nyan
 import Effectful.Error.Static ( runError, throwError, Error )
 import Effectful.Optics ( use )
 import Effectful.TH ( makeEffect )
@@ -50,17 +50,14 @@ import Effectful.TH ( makeEffect )
 import Yaifl.Core.Entity ( HasID(..), Entity)
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
-import Yaifl.Core.Objects.ThingData (thingContainedBy)
+import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.WorldModel (WorldModel)
 import Breadcrumbs
 
-
 data MissingObject = MissingObject
-  { _moExpected :: Text
-  , _moEntity :: Entity
+  { expected :: Text
+  , entity :: Entity
   } deriving stock (Eq, Show, Read, Ord, Generic)
-
-type NoMissingObject = Error MissingObject
 
 withoutMissingObjects ::
   (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
@@ -74,8 +71,7 @@ withoutMissingObjects f def = do
     Right x -> return x
 
 handleMissingObject ::
-  Breadcrumbs :> es
-  => State Metadata :> es
+  WithMetadata es
   => Text
   -> a
   -> MissingObject
@@ -85,7 +81,7 @@ handleMissingObject msg def (MissingObject t o) =
 
 failHorriblyIfMissing ::
   Breadcrumbs :> es
-  => (HasCallStack => Eff (NoMissingObject ': es) a)
+  => (HasCallStack => Eff (Error MissingObject ': es) a)
   -> Eff es a
 failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   let msg = [int|t|The object with ID #{o} could not be found because #{t}. We are failing horribly and erroring out because we can't recover.|]
@@ -109,10 +105,9 @@ makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
 
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
-type NoMissingObjects wm es = (Breadcrumbs :> es, NoMissingObject :> es,
-  ObjectLookup wm :> es, ObjectUpdate wm :> es, State Metadata :> es)
-type NoMissingRead wm es = (NoMissingObject :> es, ObjectLookup wm :> es, State Metadata :> es)
-type ObjectRead wm es = (ObjectLookup wm :> es, State Metadata :> es)
+type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es)
+type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, WithMetadata es)
+type ObjectRead wm es = (ObjectLookup wm :> es, WithMetadata es)
 
 class HasID o => ObjectLike wm o where
   getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
@@ -131,10 +126,10 @@ instance ObjectLike wm (Room wm) where
 
 instance ObjectLike wm (AnyObject wm) where
   getThing t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (_objID t) <> " but it was a room.") (getID t))
+    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (objectId t) <> " but it was a room.") (getID t))
       (preview _Thing t))
   getRoom t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a room from " <> show (_objID t) <> " but it was a thing.") (getID t))
+    (maybeToRight (MissingObject ("Tried to get a room from " <> show (objectId t) <> " but it was a thing.") (getID t))
       (preview _Room t))
 
 instance ObjectLike wm Entity where
@@ -250,19 +245,17 @@ getLocation ::
   -> Eff es (Room wm)
 getLocation t = do
   t' <- getThing t
-  let tcb = t' ^. objData % thingContainedBy
-  o <- getObject tcb
+  o <- getObject (t' ^. #objectData % #containedBy)
   join $ asThingOrRoom o getLocation return
 
--- TODO: I'd like this to flag up an error if, somehow, it's not a no-op.
 refreshRoom ::
   NoMissingObjects wm es
   => Room wm
   -> Eff es (Room wm)
 refreshRoom r = ifM (traceGuard Medium)
   (do
-    r' <- getRoom $ _objID r
-    when (r' /= r) $ noteError (const ()) [int|t|Refreshed room with ID #{_objID r} and found an outdated object|]
+    r' <- getRoom $ objectId r
+    when (r' /= r) $ noteError (const ()) [int|t|Refreshed room with ID #{objectId r} and found an outdated object|]
     return r)
   (pure r)
 
@@ -272,8 +265,8 @@ refreshThing ::
   -> Eff es (Thing wm)
 refreshThing r = ifM (traceGuard Medium)
   (do
-    r' <- getThing $ _objID r
-    when (r' /= r) $ noteError (const ()) [int|t|Refreshed thing with ID #{_objID r} and found an outdated object|]
+    r' <- getThing $ objectId r
+    when (r' /= r) $ noteError (const ()) [int|t|Refreshed thing with ID #{objectId r} and found an outdated object|]
     return r)
   (pure r)
 
@@ -282,4 +275,4 @@ getCurrentPlayer ::
   => ObjectLookup wm :> es
   => State Metadata :> es
   => Eff es (Thing wm)
-getCurrentPlayer = failHorriblyIfMissing $ use currentPlayer >>= getThing
+getCurrentPlayer = failHorriblyIfMissing $ use #currentPlayer >>= getThing

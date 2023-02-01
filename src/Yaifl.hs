@@ -17,7 +17,6 @@ import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Actions.Parser
 import Yaifl.Core.Direction
 import Yaifl.Core.Entity
-import Yaifl.Core.Logger
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Create
@@ -37,7 +36,6 @@ import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.DescribingLocale
 import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Lamp.Activities.PrintingNameOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
 import Yaifl.Lamp.ObjectSpecifics
 import Yaifl.Lamp.Properties.Container
@@ -47,7 +45,8 @@ import Yaifl.Lamp.Visibility
 import qualified Data.Map as DM
 import qualified Data.Text as T
 import Breadcrumbs
-
+import Text.Interpolation.Nyan
+import Effectful.Error.Static
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
 
 type HasStandardProperties s = (
@@ -66,7 +65,6 @@ blankWorld = World
   , _worldStores = blankStores
   , _worldActions = blankActions
   , _messageBuffer = blankMessageBuffer
-  , _worldLogs = LB []
   , _worldActivities = blankActivityCollection
   }
 
@@ -81,7 +79,7 @@ blankActivityCollection ::
   HasStandardProperties wm
   => ActivityCollection wm
 blankActivityCollection = ActivityCollection
-  { _printingNameOfADarkRoom = printingNameOfADarkRoomImpl
+  { _printingNameOfADarkRoom = error ""
   , _printingNameOfSomething = printingNameOfSomethingImpl
   , _printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
   , _choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
@@ -100,18 +98,17 @@ blankStores = WorldStores
 
 blankMetadata :: Metadata
 blankMetadata = Metadata
-  { _title = "Untitled"
-  , _roomDescriptions = SometimesAbbreviatedRoomDescriptions
-  , _dirtyTime = False
-  , _globalTime = 0
-  , _darknessWitnessed = False
-  , _currentPlayer = Entity 1
-  , _currentStage = Construction
-  , _previousRoom = voidID
-  , _firstRoom = voidID
-  , _errorLog = []
-  , _typeDAG = makeTypeDAG
-  , _traceAnalysisLevel = Maximal
+  { title = "Untitled"
+  , roomDescriptions = SometimesAbbreviatedRoomDescriptions
+  , globalTime = 0
+  , darknessWitnessed = False
+  , currentPlayer = Entity 1
+  , currentStage = Construction
+  , previousRoom = voidID
+  , firstRoom = voidID
+  , errorLog = []
+  , typeDAG = makeTypeDAG
+  , traceAnalysisLevel = Maximal
   }
 
 type EffStack wm = '[
@@ -120,7 +117,6 @@ type EffStack wm = '[
   , ObjectTraverse wm
   , ObjectUpdate wm
   , ObjectLookup wm
-  , Log
   , Reader [Text]
   , State Metadata
   , State (WorldActions wm)
@@ -174,7 +170,6 @@ convertToUnderlyingStack tId w =
   . zoomState worldActions
   . zoomState worldMetadata
   . runReader []
-  . runLoggingInternal @(World wm)
   . runQueryAsLookup
   . runTraverseAsLookup
   . zoomState worldActivities
@@ -230,7 +225,7 @@ interpretLookup = do
   let lookupHelper ::
         Entity
         -> Lens' (WorldStores wm) (Store (AbstractObject wm d))
-        -> (AbstractObject wm d -> Eff (NoMissingObject : es) (Object wm d))
+        -> (AbstractObject wm d -> Eff (Error MissingObject : es) (Object wm d))
         -> Lens' (WorldStores wm) (Store (AbstractObject wm e))
         -> Text
         -> Text
@@ -294,7 +289,7 @@ addGoingSynonyms = forM_ (universe @(WMDirection wm)) $ \dir ->
     let dirN = (T.toLower . fromString . show) dir in
     actions % at dirN ?= Left (InterpretAs ("go " <> dirN))
 
-makeTypeDAG :: Map ObjType (Set ObjType)
+makeTypeDAG :: Map ObjectType (Set ObjectType)
 makeTypeDAG = fromList
   [ ("object", fromList [])
   , ("thing", fromList ["object"])

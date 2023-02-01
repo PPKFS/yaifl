@@ -1,12 +1,11 @@
 {-|
 Module      : Yaifl.Core.Objects.RoomData
 Description : Properties that define a `Yaifl.Core.Object.Room`.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 -}
 
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Objects.RoomData (
@@ -20,15 +19,6 @@ module Yaifl.Core.Objects.RoomData (
   , Darkness(..)
   , RoomData(..)
   , blankRoomData
-  -- ** Optics
-  , roomIsVisited
-  , roomDarkness
-  , roomMapConnections
-  , roomContainingRegion
-  , roomEnclosing
-
-  , connectionExplicitness
-  , connectionDestination
   ) where
 
 import Solitude
@@ -78,11 +68,11 @@ newtype ContainingRegion = ContainingRegion
 
 -- | The properties that make up a room.
 data RoomData wm = RoomData
-  { _roomIsVisited :: IsVisited
-  , _roomDarkness :: Darkness
-  , _roomMapConnections :: MapConnections wm
-  , _roomContainingRegion :: ContainingRegion
-  , _roomEnclosing :: Enclosing
+  { isVisited :: IsVisited
+  , darkness :: Darkness
+  , mapConnections :: MapConnections wm
+  , containingRegion :: ContainingRegion
+  , enclosing :: Enclosing
   } deriving stock (Generic)
 
 deriving stock instance (Ord (WMDirection wm)) => Ord (RoomData wm)
@@ -93,6 +83,3 @@ deriving stock instance (Eq (WMDirection wm)) => Eq (RoomData wm)
 -- | A default for a room.
 blankRoomData :: RoomData wm
 blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
-
-makeLenses ''RoomData
-makeLenses ''Connection

@@ -1,12 +1,10 @@
 {-|
 Module      : Yaifl.Core.Metadata
 Description : A record of various metadata that we keep around.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 -}
-
-{-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Core.Metadata (
   -- * Metadata
@@ -16,7 +14,8 @@ module Yaifl.Core.Metadata (
   , Timestamp(..)
   , CurrentStage(..)
   , AnalysisLevel(..)
-  , ObjType(..)
+  , ObjectType(..)
+  , WithMetadata
 
   -- ** Error handling
   , noteError
@@ -30,19 +29,6 @@ module Yaifl.Core.Metadata (
   -- ** Timestamps
   , getGlobalTime
   , tickGlobalTime
-  -- * Optics
-  , title
-  , roomDescriptions
-  , dirtyTime
-  , globalTime
-  , darknessWitnessed
-  , currentPlayer
-  , currentStage
-  , previousRoom
-  , firstRoom
-  , errorLog
-  , typeDAG
-  , traceAnalysisLevel
   ) where
 
 import Solitude
@@ -50,6 +36,7 @@ import Effectful.Optics ( (.=), (%=), use )
 
 import Yaifl.Core.Entity ( Entity, HasID (..) )
 import Breadcrumbs
+import Data.Text.Display
 
 -- | Copy of Inform7's room description verbosity.
 data RoomDescriptions =
@@ -80,11 +67,11 @@ data CurrentStage = Construction | Verification | Runtime
 data AnalysisLevel = None | Low | Medium | High | Maximal
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
--- | See also `Yaifl.Core.Metadata._typeDAG`. An object type is just a string that has some relations to other types.
+-- | See also `Yaifl.Core.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
 -- there is no data or polymorphism connected to a type, so it's very possible to call something a supporter without
 -- having some supporter properties.
-newtype ObjType = ObjType
-  { unObjType :: Text
+newtype ObjectType = ObjectType
+  { unObjectType :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsString, Monoid, Semigroup)
 
@@ -92,38 +79,36 @@ newtype ObjType = ObjType
 -- anything dynamic (actions, activities) or anything relying on the worldmodel (objects), which means this remains
 -- lightweight and simple.
 data Metadata = Metadata
-  { _title :: Text -- ^ The title of the game.
-  , _roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
-  , _dirtyTime :: Bool -- ^ Currently unused; whether we have made changes but not committed them.
-  , _globalTime :: Timestamp -- ^ See `Timestamp`.
-  , _darknessWitnessed :: Bool -- ^ Whether the player has seen the description of a dark room.
-  , _currentPlayer :: Entity -- ^ The ID of the current player.
-  , _currentStage :: CurrentStage -- ^ See `CurrentStage`.
-  , _previousRoom :: Entity -- ^ The last room that was added during construction (to implicitly place new objects).
-  , _firstRoom :: Entity -- ^ The starting room.
-  , _errorLog :: [Text] -- ^ We keep track of noted errors for testing reasons.
-  , _typeDAG :: Map ObjType (Set ObjType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
-  , _traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
+  { title :: Text -- ^ The title of the game.
+  , roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
+  , globalTime :: Timestamp -- ^ See `Timestamp`.
+  , darknessWitnessed :: Bool -- ^ Whether the player has seen the description of a dark room.
+  , currentPlayer :: Entity -- ^ The ID of the current player.
+  , currentStage :: CurrentStage -- ^ See `CurrentStage`.
+  , previousRoom :: Entity -- ^ The last room that was added during construction (to implicitly place new objects).
+  , firstRoom :: Entity -- ^ The starting room.
+  , errorLog :: [Text] -- ^ We keep track of noted errors for testing reasons.
+  , typeDAG :: Map ObjectType (Set ObjectType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
+  , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
   -- more to come I guess
-  }
-makeLenses ''Metadata
+  } deriving stock (Generic)
 
+type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
 -- | Take note of an error (to be reported later) but continue execution.
 noteError ::
-  State Metadata :> es
-  => Breadcrumbs :> es
+  WithMetadata es
   => (Text -> a) -- ^ How to recover.
   -> Text -- ^ Error message.
   -> Eff es a
 noteError f t = do
-  errorLog %= (t:)
+  #errorLog %= (t:)
   addAnnotation t
   pure $ f t
 
 getGlobalTime ::
   State Metadata :> es
   => Eff es Timestamp
-getGlobalTime = use globalTime
+getGlobalTime = use #globalTime
 
 tickGlobalTime ::
   Bool
@@ -134,12 +119,12 @@ setTitle ::
   State Metadata :> es
   => Text -- ^ New title.
   -> Eff es ()
-setTitle = (title .=)
+setTitle = (#title .=)
 
 isRuntime ::
   State Metadata :> es
   => Eff es Bool
-isRuntime = (Runtime ==) <$> use currentStage
+isRuntime = (Runtime ==) <$> use #currentStage
 
 whenConstructingM ::
   State Metadata :> es
@@ -148,7 +133,7 @@ whenConstructingM ::
   -> Eff es ()
 whenConstructingM cond =
   whenM (andM [do
-    cs <- use currentStage
+    cs <- use #currentStage
     return $ cs == Construction, cond])
 
 whenConstructing ::
@@ -158,18 +143,18 @@ whenConstructing ::
   -> Eff es ()
 whenConstructing cond =
   whenM (andM [do
-    cs <- use currentStage
+    cs <- use #currentStage
     return $ cs == Construction, pure cond])
 
 traceGuard ::
   State Metadata :> es
   => AnalysisLevel
   -> Eff es Bool
-traceGuard lvl = ((lvl <=) <$> use traceAnalysisLevel) ||^ (not <$> isRuntime)
+traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
 
 isPlayer ::
   HasID o
   => State Metadata :> es
   => o
   -> Eff es Bool
-isPlayer o = (getID o ==) <$> use currentPlayer
+isPlayer o = (getID o ==) <$> use #currentPlayer

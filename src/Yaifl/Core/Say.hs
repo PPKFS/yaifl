@@ -13,11 +13,8 @@ module Yaifl.Core.Say
   , say
   , sayLn
   , sayIf
-
   , runSayPure
   , runSayIO
-
-  , msgBufBuffer
   )
 where
 
@@ -35,17 +32,16 @@ data Saying :: Effect where
   SayDoc :: StyledDoc -> Saying m ()
   SetStyle :: Maybe PPTTY.AnsiStyle -> Saying m ()
 
+makeEffect ''Saying
+
 data MessageBuffer = MessageBuffer
-  { _msgBufBuffer :: [StyledDoc] -- ^ Current messages held before flushing.
-  , _msgBufStyle :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
-  , _msgBufContext :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
-  }
+  { buffer :: [StyledDoc] -- ^ Current messages held before flushing.
+  , style :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
+  , context :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
+  } deriving stock (Show, Generic)
 
 blankMessageBuffer :: MessageBuffer
 blankMessageBuffer = MessageBuffer [] Nothing []
-
-makeEffect ''Saying
-makeLenses ''MessageBuffer
 
 processDoc ::
   forall s es.
@@ -76,7 +72,7 @@ runSayPure ::
 runSayPure = interpret $ \_ -> \case
   SayDoc doc -> do
     r <- processDoc doc
-    modify (\s -> s & buf % msgBufBuffer %~ (r:))
+    modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc])) %~ (r:))
   SetStyle mbStyle -> setStyle' mbStyle
 
 runSayIO ::
@@ -120,4 +116,4 @@ setStyle' ::
   PartialState s MessageBuffer es
   => Maybe PPTTY.AnsiStyle -- ^ The updated style.
   -> Eff es ()
-setStyle' s = buf % msgBufStyle .= s
+setStyle' s = buf % (#style @(Lens' MessageBuffer (Maybe PPTTY.AnsiStyle))) .= s

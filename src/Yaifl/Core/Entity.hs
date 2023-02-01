@@ -1,7 +1,8 @@
+{-# LANGUAGE TypeFamilies #-}
 {-|
 Module      : Yaifl.Core.Entity
 Description : Object IDs and stores.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -24,14 +25,17 @@ module Yaifl.Core.Entity
   , emptyStore
   ) where
 
+import Solitude
+
 import qualified Data.EnumMap as EM
 import qualified Data.IntMap as IM
-import Solitude
+import Formatting.Buildable ( Buildable(..) )
+import Data.Text.Display ( Display(..) )
 
 -- | An object ID. If something has an ID of 0, it's an error.
 newtype Entity = Entity
   { unID :: Int
-  } deriving stock   (Show, Generic)
+  } deriving stock (Show, Generic)
     deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
 
 -- | Lens-y typeclass for extracting Entities from something.

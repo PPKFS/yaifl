@@ -14,7 +14,6 @@ module Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Solitude
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity ( Store(..), HasID(..) )
 import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( getObject )
@@ -25,22 +24,22 @@ import Yaifl.Core.Rulebooks.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Breadcrumbs
+import Text.Interpolation.Nyan
 
 choosingNotableLocaleObjectsImpl ::
   WMHasProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
-choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" $ makeRule ""
+choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" [makeRule ""
   (\v -> do
     e' <- getEnclosing v
     case e' of
       Nothing -> (do
-        addAnnotation [int|t|Tried to choose notable locale objects from #{_objName v} which doesn't enclose.|]
+        addAnnotation [int|t|Tried to choose notable locale objects from #{name v} which doesn't enclose.|]
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do
           x' <- getObject x
-          xn <- evalName x'
-          addAnnotation $ "Found a " <> xn
-          return x') (DES.toList (_enclosingContains encl))
+          addAnnotation $ "Found a " <> name x'
+          return x') (DES.toList (contents encl))
         return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))
-  )
+  )]

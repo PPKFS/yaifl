@@ -1,7 +1,7 @@
 {-|
 Module      : Yaifl.Core.Objects.ThingData
 Description : Properties that define a `Yaifl.Core.Object.Thing`.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 -}
@@ -17,10 +17,6 @@ module Yaifl.Core.Objects.ThingData (
   , ThingData(..)
   , blankThingData
   -- ** Optics
-  , thingContainedBy
-  , thingLit
-  , thingWearable
-  , thingDescribed
   , _Wearable
   , _NotWearable
 ) where
@@ -42,15 +38,14 @@ data ThingDescribed = Undescribed | Described
 
 -- | Properties that define a `Yaifl.Core.Object.Thing`.
 data ThingData = ThingData
-  { _thingContainedBy :: Entity
-  , _thingLit :: ThingLit
-  , _thingWearable :: ThingWearability
-  , _thingDescribed :: ThingDescribed
+  { containedBy :: Entity
+  , lit :: ThingLit
+  , wearable :: ThingWearability
+  , described :: ThingDescribed
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | A default thing.
 blankThingData :: ThingData
 blankThingData = ThingData voidID NotLit NotWearable Described
 
-makeLenses ''ThingData
 makePrisms ''ThingWearability

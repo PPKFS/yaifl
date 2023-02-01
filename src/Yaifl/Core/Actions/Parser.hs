@@ -23,6 +23,7 @@ import Yaifl.Core.WorldModel ( WMDirection )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Breadcrumbs
+import Text.Interpolation.Nyan
 
 runActionHandlerAsWorldActions ::
   forall es wm a.

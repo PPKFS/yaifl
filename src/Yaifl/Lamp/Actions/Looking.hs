@@ -9,7 +9,6 @@ import Solitude
 import Effectful.Optics
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.AdaptiveText.Eval
 import Yaifl.Core.Entity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
@@ -24,6 +23,7 @@ import Yaifl.Lamp.Visibility
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Breadcrumbs
+import Data.Text.Display
 
 lookingAction ::
   HasLookingProperties wm
@@ -50,7 +50,7 @@ lookingActionSet ::
   -> Eff es (ArgumentParseResult (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   -- loc may be a thing (a container) or a room (the more likely case)
-  loc <- getObject (_argsSource ^. objData % thingContainedBy)
+  loc <- getObject (_argsSource ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent _argsSource
   return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking")
@@ -86,8 +86,8 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
     (\rb -> do
       let (LookingActionVariables loc cnt lvls ac) = _argsVariables rb
           visCeil = viaNonEmpty last lvls
-      roomDesc <- use roomDescriptions
-      dw <- use darknessWitnessed
+      roomDesc <- use @Metadata @RoomDescriptions #roomDescriptions
+      dw <- use @Metadata @Bool #darknessWitnessed
       addTag "darkness witnessed" dw
       addTag "room descriptions" roomDesc
       let abbrev = roomDesc == AbbreviatedRoomDescriptions
@@ -99,7 +99,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
             pass
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= "looking")) $ do
-            desc <- evalDescription loc
+            let desc = description loc
             when (desc /= T.empty)
               (sayLn desc)
         | otherwise -> pass

@@ -1,7 +1,7 @@
 {-|
 Module      : Yaifl.Core.Properties.Has
 Description : A typeclass for when a component has a specific property.
-Copyright   : (c) Avery 2022
+Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 

@@ -48,6 +48,7 @@ import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
 import Breadcrumbs ( withSpan )
 import Effectful.Optics ( use )
+import Data.Text.Display
 
 data Activity wm v r = Activity
     { _activityName :: !Text

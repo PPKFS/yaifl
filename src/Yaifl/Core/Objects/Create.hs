@@ -22,7 +22,6 @@ import Solitude
 import Effectful.Optics ( (.=), use )
 import Effectful.TH ( makeEffect )
 
-import Yaifl.Core.AdaptiveText ( AdaptiveText )
 import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
@@ -35,6 +34,7 @@ import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.WorldModel ( WMObjSpecifics )
 import Breadcrumbs
+import Data.Text.Display
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
@@ -87,9 +87,9 @@ reifyThing = reifyObject addAbstractThing
 makeObject ::
   ObjectCreation wm :> es
   => State Metadata :> es
-  => AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
-  -> ObjType
+  => SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
+  -> ObjectType
   -> Bool
   -> Maybe (WMObjSpecifics wm) -- ^ Object details.
   -> d
@@ -106,9 +106,9 @@ addObject ::
   => AddObjects wm es
   => (AbstractObject wm d -> Eff es (Object wm d))
   -> (AbstractObject wm d -> Eff es ())
-  -> AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
-  -> ObjType
+  -> SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
+  -> ObjectType
   -> Bool
   -> Maybe (WMObjSpecifics wm)
   -> d
@@ -120,24 +120,24 @@ addObject rf updWorld n d ty isT specifics details updateFunc =
     addAnnotation "object created"
     updWorld obj
     addAnnotation "object added to world"
-    lastRoom <- use previousRoom
+    lastRoom <- use #previousRoom
     if
       isRoom e
     then
-      previousRoom .= e
+      #previousRoom .= e
     else
       failHorriblyIfMissing $ do
         t <- getThing e
-        withoutSpan $ when (t ^. objData % thingContainedBy == voidID)
+        withoutSpan $ when (t ^. #objectData % #containedBy == voidID)
           (move t lastRoom >> pass)
     rf obj
 
 addThing ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
-  -> ObjType -- ^ Type.
+  => SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
+  -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ Static/Dynamic.
@@ -148,19 +148,19 @@ addThing name desc objtype specifics details = addObject reifyThing addAbstractT
 addThing' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
+  => SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
-addThing' n d stateUpdate = addThing n d (ObjType "thing")
+addThing' n d stateUpdate = addThing n d (ObjectType "thing")
     Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate) Nothing
 
 addRoom ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
-  -> ObjType -- ^ Type.
+  => SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
+  -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
   -> Maybe (ObjectUpdateFunc wm (RoomData wm))  -- ^
@@ -168,7 +168,7 @@ addRoom ::
 addRoom name desc objtype specifics details upd = do
   e <- addObject reifyRoom addAbstractRoom name desc objtype False specifics (fromMaybe blankRoomData details) upd
   md <- get
-  when (isVoid $ md ^. firstRoom) (firstRoom .= getID e)
+  when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
   return e
 
 isVoid :: Entity -> Bool
@@ -177,11 +177,11 @@ isVoid = (voidID ==)
 addRoom' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => AdaptiveText (ObjectDomain wm) -- ^ Name.
-  -> AdaptiveText (ObjectDomain wm) -- ^ Description.
+  => SayableText -- ^ Name.
+  -> SayableText -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es (Room wm)
-addRoom' n d rd = addRoom n d (ObjType "room")
+addRoom' n d rd = addRoom n d (ObjectType "room")
   Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd) Nothing
 
 addBaseObjects ::
@@ -190,5 +190,5 @@ addBaseObjects ::
   => Eff es ()
 addBaseObjects = do
   addRoom' "The Void" "If you're seeing this, you did something wrong." pass
-  addThing' "player" "It's you, looking handsome as always" (thingDescribed .= Undescribed)
-  firstRoom .= voidID
+  addThing' "player" "It's you, looking handsome as always" (#described .= Undescribed)
+  #firstRoom .= voidID
