@@ -11,8 +11,7 @@ import Solitude
 import Yaifl.Core.Entity ( HasID(getID) )
 import Yaifl.Core.Metadata (previousRoom, ObjectType(..))
 import Yaifl.Core.Object
-import Yaifl.Core.Objects.Create ( AddObjects, addThing )
-import Yaifl.Core.Objects.Dynamic ( ObjectUpdateFunc )
+import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.ThingData ( ThingData )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( HasProperty(..), WMHasProperty )
@@ -77,8 +76,7 @@ addDoor ::
   -> Room wm
   -> Room wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ maybe some extra stuff
   -> Eff es (Thing wm)
-addDoor n mbDes fr ba mbD mbUpd = localST (#previousRoom .~ objectId fr) $ do
-    addThing n (fromMaybe "" mbDes) (ObjectType "door")
-      (Just (inj (Proxy @wm) (DoorSpecifics (blankDoor (getID ba))))) mbD mbUpd
+addDoor n mbDes fr ba mbD = localST (#previousRoom .~ objectId fr) $ do
+    addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
+      (Just (inj (Proxy @wm) (DoorSpecifics (blankDoor (getID ba))))) mbD

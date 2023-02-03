@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Yaifl.Core.World where
 
 import Solitude
@@ -10,39 +8,35 @@ import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
 import Yaifl.Core.Actions.Activity ( ActivityCollection )
 import Yaifl.Core.Entity ( Store, Entity )
 import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.Objects.Dynamic (AbstractObject)
 import Yaifl.Core.Objects.RoomData ( RoomData )
 import Yaifl.Core.Objects.ThingData ( ThingData )
 import Yaifl.Core.Rulebooks.Rule ( Rule )
 import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
 import Yaifl.Core.Say ( Has(..), MessageBuffer )
 import Yaifl.Core.WorldModel ( WMValues, WorldModel )
+import Yaifl.Core.Object (Object)
 
 data World (wm :: WorldModel) = World
-  { _worldMetadata :: Metadata
-  , _worldStores :: WorldStores wm
-  , _worldActions :: WorldActions wm
-  , _worldActivities :: ActivityCollection wm
-  , _messageBuffer :: MessageBuffer
-  }
+  { metadata :: Metadata
+  , stores :: WorldStores wm
+  , actions :: WorldActions wm
+  , activities :: ActivityCollection wm
+  , messageBuffer :: MessageBuffer
+  } deriving stock (Generic)
 
 data WorldStores (wm :: WorldModel) = WorldStores
-  { _entityCounter :: (Entity, Entity)
-  , _things :: Store (AbstractObject wm ThingData)
-  , _rooms :: Store (AbstractObject wm (RoomData wm))
-  , _values :: Map Text (WMValues wm)
-  , _concepts :: ()-- !(Store (AbstractConcept t r c))
-  }
-
-makeLenses ''World
-makeLenses ''WorldModel
-makeLenses ''WorldStores
+  { entityCounter :: (Entity, Entity)
+  , things :: Store (Object wm ThingData)
+  , rooms :: Store (Object wm (RoomData wm))
+  , values :: Map Text (WMValues wm)
+  , concepts :: ()-- !(Store (AbstractConcept t r c))
+  } deriving stock (Generic)
 
 instance Has (World wm) MessageBuffer where
-  buf = messageBuffer
+  buf = #messageBuffer
 
 addWhenPlayBegins ::
   State (WorldActions wm) :> es
   => Rule wm () Bool
   -> Eff es ()
-addWhenPlayBegins r = whenPlayBegins %= addRuleLast r
+addWhenPlayBegins r = #whenPlayBegins %= addRuleLast r

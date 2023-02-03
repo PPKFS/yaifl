@@ -7,9 +7,6 @@ module Yaifl.Core.Actions.Action
   , ActionProcessing(..)
   , InterpretAs(..)
   , WorldActions(..)
-  , actions
-
-  , whenPlayBegins
   , actionUnderstandAs
   , addAction
   , runAction
@@ -61,22 +58,21 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> ignoreSpan >> pure (Right x))
 
 data WorldActions (wm :: WorldModel) = WorldActions
-  { _actions :: !(Map Text (Either InterpretAs (Action wm)))
-  , _whenPlayBegins :: !(Rulebook wm () () Bool)
-  , _actionProcessing :: ActionProcessing wm
-  }
-
-makeLenses ''WorldActions
+  { actions :: !(Map Text (Either InterpretAs (Action wm)))
+  , whenPlayBegins :: !(Rulebook wm () () Bool)
+  , actionProcessing :: ActionProcessing wm
+  } deriving stock (Generic)
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
+  forall wm es.
   State (WorldActions wm) :> es
   => RuleEffects wm es
   => UnverifiedArgs wm
   -> Action wm
   -> Eff es (Maybe Bool)
 runAction args act = withSpan "run action" (_actionName act) $ \aSpan -> do
-  (ActionProcessing ap) <- use actionProcessing
+  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
   ap aSpan act args
 
 -- | Add an action to the registry.
@@ -84,4 +80,4 @@ addAction ::
   State (WorldActions wm) :> es
   => Action wm
   -> Eff es ()
-addAction ac = actions % at (_actionName ac) ?= Right ac
+addAction ac = #actions % at (_actionName ac) ?= Right ac

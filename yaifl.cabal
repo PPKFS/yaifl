@@ -77,7 +77,6 @@ library
     Yaifl.Core.WorldModel
 
     Yaifl.Core.Objects.Create
-    --Yaifl.Core.Objects.Dynamic
     Yaifl.Core.Objects.Move
     Yaifl.Core.Objects.Query
     Yaifl.Core.Objects.Room
@@ -87,7 +86,7 @@ library
     Yaifl.Core.Properties.Enclosing
     Yaifl.Core.Properties.Has
     Yaifl.Core.Properties.Query
-    --Yaifl.Core.Properties.TH
+    Yaifl.Core.Properties.TH
 
     Yaifl.Core.Actions.Action
     Yaifl.Core.Actions.Activity

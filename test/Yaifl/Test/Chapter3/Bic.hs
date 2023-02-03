@@ -12,10 +12,9 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Test.Common
 import qualified Data.Text as T
 import Solitude
-import Yaifl.Core.AdaptiveText
 
 isBlankDescription :: Thing wm -> Bool
-isBlankDescription d = T.empty == rawAdaptiveText (d ^. objDescription)
+isBlankDescription d = T.empty == d ^. #description
 
 ex2World :: Game PlainWorldModel ()
 ex2World = do

@@ -16,10 +16,8 @@ import Solitude
 import Breadcrumbs
 import Data.Text.Display
 import Data.List ( groupBy )
-import Effectful.Optics
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Entity ( Store(unStore), Entity )
-import Yaifl.Core.Metadata (currentPlayer)
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.ThingData
@@ -76,8 +74,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     return (Just newP, Nothing))
 
 sayDomain ::
-  NoMissingObjects wm es
-  => RuleEffects wm es
+  RuleEffects wm es
   => ObjectLike wm o
   => Text
   -> o

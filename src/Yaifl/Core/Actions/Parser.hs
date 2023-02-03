@@ -63,7 +63,7 @@ findVerb ::
   -> Eff es [(Text, Text, Either InterpretAs (Action wm))]
 findVerb cmd = do
   let cmd' = T.toLower cmd
-  ac <- use actions
+  ac <- use #actions
   --sayLn $ show $ (map (view (_2 % actionUnderstandAs)) (Map.toList ac))
   let possVerbs = mapMaybe (\case
         (_, Right a@Action{_actionUnderstandAs}) ->

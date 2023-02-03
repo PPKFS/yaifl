@@ -75,16 +75,16 @@ testHarness fullTitle actionsToDo initWorld = do
         withSpan' "run" fullTitle $ do
           wa <- get @(WorldActions wm)
           --when I write a proper game loop, this is where it needs to go
-          failHorriblyIfMissing (runRulebook Nothing (wa ^. whenPlayBegins) ())
+          failHorriblyIfMissing (runRulebook Nothing (wa ^. #whenPlayBegins) ())
           mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
       flush
     --  print rs
   let flushBufferToText w' = runPureEff $ runStateShared w' $ do
           -- take it down and flip it around
-          msgList <- gets (view $ messageBuffer % msgBufBuffer % reversed)
+          msgList <- gets (view $ #messageBuffer % #buffer % reversed)
           return $ (mconcat . map show) msgList
   let (x, _) = flushBufferToText w2
-      amendedOutput = case w2 ^. worldMetadata % errorLog of
+      amendedOutput = case w2 ^. #metadata % #errorLog of
         [] -> x
         xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
       {-(LB logs) = w2 ^. worldLogs

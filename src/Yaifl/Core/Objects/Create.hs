@@ -5,16 +5,14 @@ module Yaifl.Core.Objects.Create
   ObjectCreation(..)
   , AddObjects
   , generateEntity
-  , addAbstractThing
-  , addAbstractRoom
   , addThing
   , addRoom
+  , addThingInternal
+  , addRoomInternal
   , addThing'
   , addObject
   , addRoom'
   , addBaseObjects
-  , reifyRoom
-  , reifyThing
   ) where
 
 import Solitude
@@ -25,7 +23,6 @@ import Effectful.TH ( makeEffect )
 import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
-import Yaifl.Core.Objects.Dynamic
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( ObjectUpdate, ObjectLookup, getThing, failHorriblyIfMissing )
 import Yaifl.Core.Objects.RoomData ( RoomData, blankRoomData )
@@ -38,8 +35,8 @@ import Data.Text.Display
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddAbstractThing :: AbstractObject wm ThingData -> ObjectCreation wm m ()
-  AddAbstractRoom :: AbstractObject wm (RoomData wm) -> ObjectCreation wm m ()
+  AddThing :: Object wm ThingData -> ObjectCreation wm m ()
+  AddRoom :: Object wm (RoomData wm) -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 
@@ -47,42 +44,6 @@ type AddObjects wm es = (
   ObjectCreation wm :> es
   , State Metadata :> es
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
-
--- | Turn an `AbstractObject` into a regular `Object` and update the cache if needed.
-reifyObject ::
-  State Metadata :> es
-  => (AbstractObject wm d -> Eff es ())
-  -> AbstractObject wm d
-  -> Eff es (Object wm d)
-reifyObject _ (StaticObject v) = return v
-reifyObject setFunc (DynamicObject ts) = do
-  let co = _tsCachedObject ts
-  now <- getGlobalTime
-  if
-    _tsCacheStamp ts == now
-  then
-    return co
-  else
-    do
-      -- update the object
-      updatedObj <- runObjectUpdate (_tsUpdateFunc ts) co
-      t <- getGlobalTime
-      setFunc (DynamicObject $ TimestampedObject updatedObj t (_tsUpdateFunc ts))
-      return updatedObj
-
-reifyRoom ::
-  State Metadata :> es
-  => (ObjectCreation wm :> es)
-  => AbstractObject wm (RoomData wm)
-  -> Eff es (Room wm)
-reifyRoom = reifyObject addAbstractRoom
-
-reifyThing ::
-  State Metadata :> es
-  => (ObjectCreation wm :> es)
-  => AbstractObject wm ThingData
-  -> Eff es (Thing wm)
-reifyThing = reifyObject addAbstractThing
 
 makeObject ::
   ObjectCreation wm :> es
@@ -93,30 +54,27 @@ makeObject ::
   -> Bool
   -> Maybe (WMObjSpecifics wm) -- ^ Object details.
   -> d
-  -> Maybe (ObjectUpdateFunc wm d) -- ^ 'Nothing' for a static object, 'Just f' for a dynamic object.
-  -> Eff es (Entity, AbstractObject wm d)
-makeObject n d ty isT specifics details upd = do
+  -> Eff es (Entity, Object wm d)
+makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
   let obj = Object n d e ty t specifics details
-  return (e, maybe (StaticObject obj) (DynamicObject . TimestampedObject obj t) upd)
+  return (e, obj)
 
 addObject ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => (AbstractObject wm d -> Eff es (Object wm d))
-  -> (AbstractObject wm d -> Eff es ())
+  => (Object wm d -> Eff es ())
   -> SayableText -- ^ Name.
   -> SayableText -- ^ Description.
   -> ObjectType
   -> Bool
   -> Maybe (WMObjSpecifics wm)
   -> d
-  -> Maybe (ObjectUpdateFunc wm d)
   -> Eff es (Object wm d)
-addObject rf updWorld n d ty isT specifics details updateFunc =
+addObject updWorld n d ty isT specifics details =
   withSpan' ("new " <> if isT then "thing" else "room") (display n) $ do
-    (e, obj) <- makeObject n d ty isT specifics details updateFunc
+    (e, obj) <- makeObject n d ty isT specifics details
     addAnnotation "object created"
     updWorld obj
     addAnnotation "object added to world"
@@ -130,9 +88,9 @@ addObject rf updWorld n d ty isT specifics details updateFunc =
         t <- getThing e
         withoutSpan $ when (t ^. #objectData % #containedBy == voidID)
           (move t lastRoom >> pass)
-    rf obj
+    pure obj
 
-addThing ::
+addThingInternal ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => SayableText -- ^ Name.
@@ -140,9 +98,8 @@ addThing ::
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Maybe (ObjectUpdateFunc wm ThingData) -- ^ Static/Dynamic.
   -> Eff es (Thing wm)
-addThing name desc objtype specifics details = addObject reifyThing addAbstractThing name desc objtype
+addThingInternal name desc objtype specifics details = addObject addThing name desc objtype
   True specifics (fromMaybe blankThingData details)
 
 addThing' ::
@@ -152,10 +109,10 @@ addThing' ::
   -> SayableText -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
-addThing' n d stateUpdate = addThing n d (ObjectType "thing")
-    Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate) Nothing
+addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
+    Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate)
 
-addRoom ::
+addRoomInternal ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => SayableText -- ^ Name.
@@ -163,10 +120,9 @@ addRoom ::
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
-  -> Maybe (ObjectUpdateFunc wm (RoomData wm))  -- ^
   -> Eff es (Room wm)
-addRoom name desc objtype specifics details upd = do
-  e <- addObject reifyRoom addAbstractRoom name desc objtype False specifics (fromMaybe blankRoomData details) upd
+addRoomInternal name desc objtype specifics details = do
+  e <- addObject addRoom name desc objtype False specifics (fromMaybe blankRoomData details)
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
   return e
@@ -181,8 +137,8 @@ addRoom' ::
   -> SayableText -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es (Room wm)
-addRoom' n d rd = addRoom n d (ObjectType "room")
-  Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd) Nothing
+addRoom' n d rd = addRoomInternal n d (ObjectType "room")
+  Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
 
 addBaseObjects ::
   WMHasProperty wm Enclosing
