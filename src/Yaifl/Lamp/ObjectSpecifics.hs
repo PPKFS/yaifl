@@ -33,7 +33,7 @@ makePrisms ''ObjectSpecifics
 class WMHasObjSpecifics (wm :: WorldModel) where
   inj :: Proxy wm -> ObjectSpecifics -> WMObjSpecifics wm
 
-instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c) where
+instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac) where
   inj _ = id
 
 instance HasProperty ObjectSpecifics Enclosing where

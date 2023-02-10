@@ -1,6 +1,7 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Rulebooks.Rule
   ( RuleEffects
@@ -15,10 +16,6 @@ module Yaifl.Core.Rulebooks.Rule
   , rulePass
   , ruleCondition
   , ruleCondition'
-
-  , ruleName
-  , runRule
-
   ) where
 
 import Solitude
@@ -26,13 +23,14 @@ import Solitude
 import Breadcrumbs ( Breadcrumbs, ignoreSpan, addAnnotation )
 import Effectful.Error.Static ( Error, throwError )
 import Effectful.TH ( makeEffect )
+import Text.Interpolation.Nyan ( rmode', int )
+
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
 import Yaifl.Core.Say ( Saying )
-import {-# SOURCE #-} Yaifl.Core.Actions.Activity ( ActivityCollection )
-import Text.Interpolation.Nyan
+import Yaifl.Core.WorldModel ( WMActivities )
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
@@ -48,19 +46,19 @@ data RuleCondition = RuleCondition
 
 type RuleEffects wm es = (
   State Metadata :> es
+  , State (WMActivities wm) :> es
   , Breadcrumbs :> es
   , NoMissingObjects wm es
   , Saying :> es
   , ActionHandler wm :> es
   , ObjectTraverse wm :> es
-  , State (ActivityCollection wm) :> es
   )
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule wm v r = Rule
-  { _ruleName :: Text
-  , _runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
+  { name :: Text
+  , runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
 
 -- | A helper for rules which are not implemented and therefore blank.
@@ -92,15 +90,13 @@ rulePass ::
   => m (Maybe a)
 rulePass = return Nothing
 
-makeLenses ''Rule
+makeFieldLabelsNoPrefix ''Rule
 
 ruleCondition' ::
   Error RuleCondition :> es
   => Eff es Bool
   -> Eff es ()
-ruleCondition' f = do
-  mbC <- f
-  if mbC then pass else throwError RuleCondition
+ruleCondition' f = ifM f pass $ throwError RuleCondition
 
 ruleCondition ::
   Error RuleCondition :> es

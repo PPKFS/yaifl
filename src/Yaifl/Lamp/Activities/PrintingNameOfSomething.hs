@@ -16,6 +16,7 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 , SayOptions(..)
 , Article(..)
 , Capitalisation(..)
+, WithPrintingNameOfSomething
 ) where
 
 import Solitude
@@ -25,7 +26,7 @@ import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, getObject )
 import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
 import Yaifl.Core.Say ( Saying, say )
-import qualified Yaifl.Core.Actions.Activity as Ac
+import Yaifl.Core.WorldModel
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -39,12 +40,15 @@ noSayOptions = NoOptions
 capitalThe :: SayOptions
 capitalThe = SayOptions Definite Capitalised
 
+type WithPrintingNameOfSomething wm = WithActivity "printingNameOfSomething" wm (AnyObject wm) ()
+
 printName ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
-  => State (ActivityCollection wm) :> es
+  => (State (WMActivities wm) :> es)
+  => WithPrintingNameOfSomething wm
   => ObjectLike wm o
   => o
   -> Eff es ()
@@ -54,7 +58,8 @@ printNameDefiniteUncapitalised ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
-  => State (ActivityCollection wm) :> es
+  => (State (WMActivities wm) :> es)
+  => WithPrintingNameOfSomething wm
   => ObjectTraverse wm :> es
   => ObjectLike wm o
   => o
@@ -64,8 +69,9 @@ printNameDefiniteUncapitalised = printNameEx (SayOptions Definite Uncapitalised)
 printNameEx ::
   NoMissingObjects wm es
   => Saying :> es
+  => WithPrintingNameOfSomething wm
   => ActionHandler wm :> es
-  => State (ActivityCollection wm) :> es
+  => State (WMActivities wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
   => SayOptions
@@ -73,7 +79,7 @@ printNameEx ::
   -> Eff es ()
 printNameEx p o = do
   e <- getObject o
-  let pr = doActivity Ac.printingNameOfSomething e
+  let pr = doActivity #printingNameOfSomething e
   case p of
     NoOptions -> pr
     SayOptions Indefinite Capitalised -> do say "A "; pr
@@ -84,4 +90,4 @@ printNameEx p o = do
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    [makeRule "" (\o -> say (name o) >> return (Just ()))]
+    [makeRule "" (\o -> say (o ^. #name) >> return (Just ()))]

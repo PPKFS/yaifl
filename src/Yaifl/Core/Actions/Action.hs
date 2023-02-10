@@ -1,4 +1,6 @@
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Actions.Action
   ( Action(..)
@@ -7,7 +9,6 @@ module Yaifl.Core.Actions.Action
   , ActionProcessing(..)
   , InterpretAs(..)
   , WorldActions(..)
-  , actionUnderstandAs
   , addAction
   , runAction
   , makeActionRulebook
@@ -15,12 +16,11 @@ module Yaifl.Core.Actions.Action
 
 import Solitude
 
+import Breadcrumbs
 import Effectful.Optics ( (?=), use )
-
 import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.WorldModel ( WorldModel )
-import Breadcrumbs
 
 -- | The type of argument parsing for actions. The important part here is that we
 -- parse to `v` rather than to `Args s v` to better move between rulebooks.
@@ -34,19 +34,20 @@ newtype ActionProcessing wm = ActionProcessing
 -- except that set action variables is not a rulebook.
 data Action (wm :: WorldModel) where
   Action ::
-    { _actionName :: !Text
-    , _actionUnderstandAs :: ![Text]
-    , _actionMatching :: ![Text]
-    , _actionParseArguments :: !(ActionParseArguments wm v)
-    , _actionBeforeRules :: !(ActionRulebook wm v)
-    , _actionCheckRules :: !(ActionRulebook wm v)
-    , _actionCarryOutRules :: !(ActionRulebook wm v)
-    , _actionReportRules :: !(ActionRulebook wm v)
+    { name :: Text
+    , understandAs :: [Text]
+    , matching :: [Text]
+    , parseArguments :: ActionParseArguments wm v
+    , beforeRules :: ActionRulebook wm v
+    , checkRules :: ActionRulebook wm v
+    , carryOutRules :: ActionRulebook wm v
+    , reportRules :: ActionRulebook wm v
     } -> Action wm
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
 type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
-makeLenses ''Action
+
+makeFieldLabelsNoPrefix ''Action
 
 newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
@@ -63,6 +64,8 @@ data WorldActions (wm :: WorldModel) = WorldActions
   , actionProcessing :: ActionProcessing wm
   } deriving stock (Generic)
 
+makeFieldLabelsNoPrefix ''WorldActions
+
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
   forall wm es.
@@ -71,7 +74,7 @@ runAction ::
   => UnverifiedArgs wm
   -> Action wm
   -> Eff es (Maybe Bool)
-runAction args act = withSpan "run action" (_actionName act) $ \aSpan -> do
+runAction args act = withSpan "run action" (act ^. #name) $ \aSpan -> do
   (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
   ap aSpan act args
 
@@ -80,4 +83,4 @@ addAction ::
   State (WorldActions wm) :> es
   => Action wm
   -> Eff es ()
-addAction ac = #actions % at (_actionName ac) ?= Right ac
+addAction ac = #actions % at (ac ^. #name) ?= Right ac

@@ -52,10 +52,12 @@ findNotable :: Rule s (LocaleVariables s) r
 findNotable = Rule "Find notable objects" (\v ->
   do
     -- by default, pick every object in the domain and assign them '5'
-    o <- doActivity choosingNotableLocaleObjects (v ^. localeDomain)
+    o <- doActivity #choosingNotableLocaleObjects (v ^. localeDomain)
     return ((\x -> set localePriorities x v) <$> o, Nothing))
 
-interestingLocale :: Rule s (LocaleVariables s) r
+interestingLocale ::
+  WithPrintingNameOfSomething wm
+  => Rule wm (LocaleVariables wm) r
 interestingLocale = Rule "Interesting locale paragraphs" (\v ->
   do
     let tb = v ^. localePriorities
@@ -68,7 +70,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     -- update: so now the printing a locale paragraph activity will instead modify
     --the locale variables and pass those through
     newP <- foldlM (\v' li -> do
-        r <- doActivity printingLocaleParagraphAbout (v', li)
+        r <- doActivity #printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
     addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ _localePriorities newP))
     return (Just newP, Nothing))
@@ -76,6 +78,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
 sayDomain ::
   RuleEffects wm es
   => ObjectLike wm o
+  => WithPrintingNameOfSomething wm
   => Text
   -> o
   -> Eff es ()
@@ -85,10 +88,11 @@ sayDomain x e = do
   say " you "
 
 alsoSee ::
-  WMHasProperty s Enclosing
-  => WMHasProperty s Container
-  => WMHasProperty s Openable
-  => Rule s (LocaleVariables s) r
+  WMHasProperty wm Enclosing
+  => WMHasProperty wm Container
+  => WMHasProperty wm Openable
+  => WithPrintingNameOfSomething wm
+  => Rule wm (LocaleVariables wm) r
 alsoSee = Rule "You can also see" (\v ->
   do
     -- lp is everything that has a locale priority

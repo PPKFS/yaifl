@@ -19,29 +19,18 @@ module Yaifl.Core.Rulebooks.Rulebook
   , addRuleLast
   , blankRulebook
   , noRulebookArguments
-
-    -- * Lenses
-  , argsSource
-  , argsVariables
-  , argsTimestamp
-  , ruleName
-  , runRule
-  , rbName
-  , rbDefaultOutcome
-  , rbParseArguments
-  , rbRules
   ) where
 
 
 import Solitude
 
-import Yaifl.Core.Metadata ( Metadata )
+import Yaifl.Core.Metadata ( WithMetadata )
 import Yaifl.Core.Objects.Query ( NoMissingObjects )
 import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule ( Rule, ruleName, runRule )
+import Yaifl.Core.Rulebooks.Rule
 import Breadcrumbs
 
-type ParseArgumentEffects wm es = (State Metadata :> es, NoMissingObjects wm es, Breadcrumbs :> es)
+type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ArgumentParseResult v)
@@ -51,11 +40,11 @@ type ArgumentParseResult v = Either Text v
 -- | A 'Rulebook' is a computation (ia -> m (Maybe r)) built out of an initialisation (ia -> Maybe v), a default `Maybe r`,
 -- and component rules `[(Text, (v -> m (Maybe v, Maybe r))]`
 data Rulebook wm ia v r = Rulebook
-  { _rbName :: Text
-  , _rbDefaultOutcome :: Maybe r
-  , _rbParseArguments :: ParseArguments wm ia v
-  , _rbRules :: [Rule wm v r]
-  }
+  { name :: Text
+  , defaultOutcome :: Maybe r
+  , parseArguments :: ParseArguments wm ia v
+  , rules :: [Rule wm v r]
+  } deriving stock (Generic)
 
 noRulebookArguments :: ParseArguments wm v v
 noRulebookArguments = ParseArguments (\x -> ignoreSpan >> return (Right x))
@@ -68,21 +57,21 @@ blankRulebook n = Rulebook n Nothing noRulebookArguments []
 -- | A `StandardRulebook` is one which expects to verify its own arguments.
 type StandardRulebook wm v r = Rulebook wm (UnverifiedArgs wm) v r
 
-makeLenses ''Rulebook
+makeFieldLabelsNoPrefix ''Rulebook
 
 -- | Add a rule to a rulebook last.
 addRuleLast ::
   Rule wm v r
   -> Rulebook wm ia v r
   -> Rulebook wm ia v r
-addRuleLast r = rbRules %~ (++ [r])
+addRuleLast r = #rules %~ (++ [r])
 
 -- | Add a rule to a rulebook first.
 addRuleFirst ::
   Rule wm v r
   -> Rulebook wm ia v r
   -> Rulebook wm ia v r
-addRuleFirst r = rbRules %~ (r :)
+addRuleFirst r = #rules %~ (r :)
 
 -- | Remove any unwanted return values from a `Rule`.
 rulePass ::

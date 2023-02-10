@@ -82,7 +82,7 @@ type WMStdDirections (wm :: WorldModel) = (
 class HasDirectionalTerms (wm :: WorldModel) where
   toTextDir :: Proxy wm -> WMDirection wm -> [Text]
 
-instance HasDirectionalTerms ('WorldModel s Direction b c) where
+instance HasDirectionalTerms ('WorldModel s Direction b c ac) where
   toTextDir _ = \case
     North -> ["n", "north"]
     South -> ["s", "south"]

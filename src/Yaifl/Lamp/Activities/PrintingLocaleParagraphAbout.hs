@@ -22,7 +22,7 @@ printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo 
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing Nothing
   (blankRulebook "Before printing a locale paragraph")
   ((blankRulebook "Carry out printing a locale paragraph")
-    { _rbRules = [
+    { rules = [
       dontMentionUndescribed
       ]
       {- [ dontMentionSupporter
@@ -53,13 +53,13 @@ setLocalePriority ::
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
-setLocalePriority e lv i = lv & localePriorities % at (objectId e) % _Just % priority .~ i
+setLocalePriority e lv i = lv & #localePriorities % at (objectId e) % _Just % #priority .~ i
 
 removeFromLocale ::
   AnyObject s
   -> LocaleVariables v
   -> LocaleVariables v
-removeFromLocale e lv = lv & localePriorities % at (objectId e) .~ Nothing
+removeFromLocale e lv = lv & #localePriorities % at (objectId e) .~ Nothing
 {-
       [ Rule
         "don’t mention player’s supporter in room descriptions rule"

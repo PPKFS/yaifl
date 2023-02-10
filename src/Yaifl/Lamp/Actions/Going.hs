@@ -31,7 +31,7 @@ import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Core.Say (say, sayLn)
-import Yaifl.Lamp.Activities.PrintingNameOfSomething ( printNameDefiniteUncapitalised )
+import Yaifl.Lamp.Activities.PrintingNameOfSomething ( printNameDefiniteUncapitalised, WithPrintingNameOfSomething )
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Text.Interpolation.Nyan
 import Effectful.Error.Static
@@ -51,7 +51,10 @@ data GoingActionVariables wm = GoingActionVariables
 
 makeLenses ''GoingActionVariables
 
-goingAction :: (WMStdDirections wm, WMHasProperty wm Door) => Action wm
+goingAction ::
+  (WMStdDirections wm, WMHasProperty wm Door)
+  => WithPrintingNameOfSomething wm
+  => Action wm
 goingAction = Action
   "going"
   ["go", "going"]
@@ -141,7 +144,9 @@ getNouns = _argsVariables . unArgs
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
 
-checkGoingRules :: [Rule wm (Args wm (GoingActionVariables wm)) Bool]
+checkGoingRules ::
+  WithPrintingNameOfSomething wm
+  => [Rule wm (Args wm (GoingActionVariables wm)) Bool]
 checkGoingRules = [
   standUpBeforeGoing
   , cantTravelInNotAVehicle
@@ -170,7 +175,9 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -
     pass
   rulePass
 
-standUpBeforeGoing :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+standUpBeforeGoing ::
+  WithPrintingNameOfSomething wm
+  => Rule wm (Args wm (GoingActionVariables wm)) Bool
 standUpBeforeGoing = makeRule "stand up before going" $ \v -> do
   chaises <- ruleCondition (nonEmpty <$> getSupportersOf (v ^. argsSource))
   res <- forM chaises (\chaise -> do

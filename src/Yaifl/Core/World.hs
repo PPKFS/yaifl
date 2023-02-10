@@ -4,8 +4,7 @@ import Solitude
 
 import Effectful.Optics ( (%=) )
 
-import Yaifl.Core.Actions.Action ( WorldActions, whenPlayBegins )
-import Yaifl.Core.Actions.Activity ( ActivityCollection )
+import Yaifl.Core.Actions.Action ( WorldActions )
 import Yaifl.Core.Entity ( Store, Entity )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.RoomData ( RoomData )
@@ -20,7 +19,6 @@ data World (wm :: WorldModel) = World
   { metadata :: Metadata
   , stores :: WorldStores wm
   , actions :: WorldActions wm
-  , activities :: ActivityCollection wm
   , messageBuffer :: MessageBuffer
   } deriving stock (Generic)
 

@@ -23,7 +23,7 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   -- I have no idea how this works
   -- coming back to it: nope, even less idea now
   -- a third go over: nope, still no idea
-  (ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments _actionParseArguments uv)))
+  (ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments parseArguments uv)))
   [ notImplementedRule "Before stage rule"
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
@@ -35,7 +35,7 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   , Rule "carry out stage rule"
         ( \v -> do
           ignoreSpan
-          r <- runRulebookAndReturnVariables (Just aSpan) _actionCarryOutRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) carryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "after stage rule"
   , notImplementedRule "investigate player awareness after rule"

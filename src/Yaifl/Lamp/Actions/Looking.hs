@@ -6,6 +6,8 @@ module Yaifl.Lamp.Actions.Looking
   ) where
 
 import Solitude
+import Breadcrumbs
+import Data.Text.Display
 import Effectful.Optics
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
@@ -22,8 +24,6 @@ import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, pri
 import Yaifl.Lamp.Visibility
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Breadcrumbs
-import Data.Text.Display
 
 lookingAction ::
   HasLookingProperties wm

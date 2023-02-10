@@ -34,7 +34,7 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
     e' <- getEnclosing v
     case e' of
       Nothing -> (do
-        addAnnotation [int|t|Tried to choose notable locale objects from #{name v} which doesn't enclose.|]
+        addAnnotation [int|t|Tried to choose notable locale objects from #{v ^. #name} which doesn't enclose.|]
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do

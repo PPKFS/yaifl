@@ -286,3 +286,12 @@ makeTypeDAG = fromList
   , ("container", fromList ["thing"])
   , ("supporter", fromList ["thing"])
   ]
+
+data ActivityCollection wm = ActivityCollection
+  { _printingNameOfADarkRoom :: !(Activity wm () ())
+  , _printingNameOfSomething :: !(Activity wm (AnyObject wm) ())
+  , _printingDescriptionOfADarkRoom :: !(Activity wm () ())
+  , _choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
+  , _printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
+  , _describingLocale :: !(Activity wm (LocaleVariables wm) ())
+  }

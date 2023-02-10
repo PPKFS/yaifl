@@ -11,14 +11,13 @@ import Effectful.Dispatch.Dynamic ( interpret )
 import Effectful.Optics ( use )
 
 import Yaifl.Core.Actions.Action
-import Yaifl.Core.Actions.Activity ( ActivityCollection )
 import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
 import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction )
 import Yaifl.Core.Say ( Saying, sayLn )
-import Yaifl.Core.WorldModel ( WMDirection )
+import Yaifl.Core.WorldModel ( WMDirection, WMActivities )
 
 import qualified Data.Map as Map
 import qualified Data.Text as T
@@ -32,7 +31,7 @@ runActionHandlerAsWorldActions ::
   => ObjectLookup wm :> es
   => ObjectUpdate wm :> es
   => State Metadata :> es
-  => State (ActivityCollection wm) :> es
+  => State (WMActivities wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
@@ -66,7 +65,7 @@ findVerb cmd = do
   ac <- use #actions
   --sayLn $ show $ (map (view (_2 % actionUnderstandAs)) (Map.toList ac))
   let possVerbs = mapMaybe (\case
-        (_, Right a@Action{_actionUnderstandAs}) ->
+        (_, Right a@Action{understandAs}) ->
           case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') _actionUnderstandAs
           of
             [] -> Nothing
@@ -84,7 +83,7 @@ findSubjects ::
   => State (WorldActions wm) :> es
   => Saying :> es
   => ObjectLookup wm :> es
-  => State (ActivityCollection wm) :> es
+  => State (WMActivities wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
@@ -125,13 +124,13 @@ tryAction ::
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
-  => State (ActivityCollection wm) :> es
+  => State (WMActivities wm) :> es
   => Saying :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool
 tryAction an f = do
   ta <- getGlobalTime
-  addAnnotation [int|t|Trying to do the action '#{_actionName an}'|]
+  addAnnotation [int|t|Trying to do the action '#{an ^. name}'|]
   let uva = f ta
   fromMaybe False <$> runAction uva an
