@@ -22,11 +22,10 @@ module Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Solitude
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Object ( Object(..), AnyObject )
+import Yaifl.Core.Object ( AnyObject )
 import Yaifl.Core.Objects.Query ( ObjectTraverse, ObjectLike, NoMissingObjects, getObject )
-import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule )
+import Yaifl.Core.Rulebooks.Rule ( ActionHandler, makeRule, ActivityCollector )
 import Yaifl.Core.Say ( Saying, say )
-import Yaifl.Core.WorldModel
 
 data SayOptions = NoOptions | SayOptions Article Capitalisation
 
@@ -47,7 +46,7 @@ printName ::
   => Saying :> es
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
-  => (State (WMActivities wm) :> es)
+  => State (ActivityCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => ObjectLike wm o
   => o
@@ -58,7 +57,7 @@ printNameDefiniteUncapitalised ::
   NoMissingObjects wm es
   => Saying :> es
   => ActionHandler wm :> es
-  => (State (WMActivities wm) :> es)
+  => State (ActivityCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => ObjectTraverse wm :> es
   => ObjectLike wm o
@@ -71,7 +70,7 @@ printNameEx ::
   => Saying :> es
   => WithPrintingNameOfSomething wm
   => ActionHandler wm :> es
-  => State (WMActivities wm) :> es
+  => State (ActivityCollector wm) :> es
   => ObjectTraverse wm :> es
   => ObjectLike wm o
   => SayOptions

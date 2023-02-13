@@ -77,9 +77,9 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
   --now the thing gone with is the item-pushed-between-rooms;
   goneWith <- getMatching "with" >>= maybe (return Nothing) getThingMaybe
   -- now the room gone from is the location of the actor;
-  roomFrom <- getRoom =<< getLocation _argsSource
+  roomFrom <- getRoom =<< getLocation source
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
-  vehicleGoneBy <- actorInEnterableVehicle _argsSource
+  vehicleGoneBy <- actorInEnterableVehicle source
   {-
     if we are going in a direction, then we want to find the door or room in D from the current room
     if we are going to a door (my add: or through a door), then choose the door
@@ -139,7 +139,7 @@ actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
 actorInEnterableVehicle _ = pure Nothing
 
 getNouns :: UnverifiedArgs wm  -> [ArgSubject wm]
-getNouns = _argsVariables . unArgs
+getNouns = variables . unArgs
 
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
@@ -164,12 +164,12 @@ cantGoThroughUndescribedDoors = makeRule "stand up before going" $ \_v -> do
 
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -> do
-  nonVehicle <- getObject $ v ^. argsSource % #objectData % #containedBy
-  let vehcGoneBy = v ^. argsVariables % gavVehicleGoneBy
-      roomGoneFrom = v ^. argsVariables % gavRoomFrom
+  nonVehicle <- getObject $ v ^. #source % #objectData % #containedBy
+  let vehcGoneBy = v ^. #variables % gavVehicleGoneBy
+      roomGoneFrom = v ^. #variables % gavRoomFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
   ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
-  whenM (isPlayer $ v ^. argsSource) $ do
+  whenM (isPlayer $ v ^. #source) $ do
     _outAction <- ifM (nonVehicle `isType` "supporter") (pure ("off" :: String)) (pure "out of")
    -- let dir = "[We] [would have] to get off [the nonvehicle] first."
     pass
@@ -179,13 +179,13 @@ standUpBeforeGoing ::
   WithPrintingNameOfSomething wm
   => Rule wm (Args wm (GoingActionVariables wm)) Bool
 standUpBeforeGoing = makeRule "stand up before going" $ \v -> do
-  chaises <- ruleCondition (nonEmpty <$> getSupportersOf (v ^. argsSource))
+  chaises <- ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
-      whenM (isPlayer $ v ^. argsSource) $ do
+      whenM (isPlayer $ v ^. #source) $ do
         say "(first getting off "
         printNameDefiniteUncapitalised chaise
         sayLn ")"
-      parseAction (ActionOptions True (Just $ v ^. argsSource)) "exit")
+      parseAction (ActionOptions True (Just $ v ^. #source)) "exit")
   if any isLeft res then return $ Just False else rulePass
 
 getContainingHierarchy ::

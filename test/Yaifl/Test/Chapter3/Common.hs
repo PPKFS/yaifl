@@ -5,14 +5,13 @@ import Yaifl.Test.Common
 import Solitude
 import Yaifl.Test.Chapter3.Bic
 import Yaifl.Test.Chapter3.Verbosity
-import Control.Monad.Catch
 import qualified Data.Map as M
 --import Yaifl.Core.Test.Chapter3.Verbosity
 
 spec :: Map String (IO Text)
 spec = M.fromList
-  [ ("Bic", testHarness "Bic" [] ex2World)
-  , ("Verbosity", testHarness "Verbosity" ex3TestMeWith ex3World)
+  [ ("Bic", testHarness "Bic" [] defaultOptions ex2World)
+  , ("Verbosity", testHarness "Verbosity" ex3TestMeWith defaultOptions ex3World)
   ]
 
 {-  it "runs chapter 3.1.3" $

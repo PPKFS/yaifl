@@ -23,7 +23,7 @@ module Yaifl.Core.WorldModel (
 import Solitude
 
 -- | All the various type parameters wrapped into a single type.
-data WorldModel = WorldModel Type Type Type Type Type
+data WorldModel = WorldModel Type Type Type Type (WorldModel -> Type)
 
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v a) = objSpec
@@ -38,7 +38,7 @@ type family WMRulebooks (wm :: WorldModel) :: Type where
   WMRulebooks ('WorldModel objSpec dir o v a) = v
 
 type family WMActivities (wm :: WorldModel) :: Type where
-  WMActivities ('WorldModel objSpec dir o v a) = a
+  WMActivities ('WorldModel objSpec dir o v a) = a ('WorldModel objSpec dir o v a)
 
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirection wm))
 type WMShow wm = WMConstr Show wm

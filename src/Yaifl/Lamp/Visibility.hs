@@ -1,9 +1,12 @@
+{-# LANGUAGE StrictData #-}
+
 module Yaifl.Lamp.Visibility where
 
 import Solitude
 
-import Breadcrumbs
-import Yaifl.Core.Actions.Activity
+import Breadcrumbs ( addAnnotation )
+import Text.Interpolation.Nyan ( rmode', int )
+import Yaifl.Core.Actions.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
 import Yaifl.Core.Entity
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
@@ -15,44 +18,55 @@ import Yaifl.Core.Properties.Query
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Say
-import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName)
+import Yaifl.Lamp.Activities.DescribingLocale
+import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, WithPrintingNameOfSomething)
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
-import Text.Interpolation.Nyan
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
-  (WMHasProperty wm Enclosing, WMHasProperty wm Enterable, WMHasProperty wm Container)
+  (WMHasProperty wm Enclosing, WMHasProperty wm Enterable, WMHasProperty wm Container
+  , WithPrintingNameOfADarkRoom wm
+  , WithDescribingLocale wm
+  , WithPrintingDescriptionOfADarkRoom wm
+  , WithPrintingNameOfADarkRoom wm)
 
 data LookingActionVariables wm = LookingActionVariables
-  { _lookingFrom :: !(AnyObject wm)
-  , _visibilityCount :: !Int
-  , _visibilityLevels :: [AnyObject wm]
-  , _roomDescribingAction :: !Text
+  { lookingFrom :: AnyObject wm
+  -- The looking action has a number called the visibility level count.
+  , visibilityCount :: Int
+  -- The looking action has an object called the visibility ceiling. (this is the last element).
+  , visibilityLevels :: [AnyObject wm]
+  -- The looking action has an action name called the room-describing action.
+  , roomDescribingAction :: Text
   }
   deriving stock (Eq, Generic)
-{-}
-instance Buildable (LookingActionVariables s) where
-  build (LookingActionVariables fr _ lvls _) = "Looking from "
-    <> show (_objID fr) <> " with levels " <> mconcat (map (show . _objID) lvls)
--}
+
 instance Refreshable wm (LookingActionVariables wm) where
   refreshVariables av = do
-    lf <- getObject (_lookingFrom av)
-    vls <- mapM getObject (_visibilityLevels av)
-    return $ av { _lookingFrom = lf, _visibilityLevels = vls }
+    lf <- getObject (lookingFrom av)
+    vls <- mapM getObject (visibilityLevels av)
+    return $ av { lookingFrom = lf, visibilityLevels = vls }
 
 foreachVisibilityHolder ::
   (NoMissingObjects wm es, ActionHandler wm :> es)
   => Saying :> es
   => ObjectTraverse wm :> es
-  => State (ActivityCollection wm) :> es
+  => State (ActivityCollector wm) :> es
+  => WithPrintingNameOfSomething wm
   => AnyObject wm
   -> Eff es ()
 foreachVisibilityHolder e = do
-  ifM (isSupporter e) (say "(on ") (say "(in ")
+  {-
+  repeat with intermediate level count running from 2 to the visibility level count:     
+    if the intermediate level is a supporter or the intermediate level is an animal:         
+    say " (on [the intermediate level])" (B);     
+    otherwise:
+    say " (in [the intermediate level])" (C);
+  -}
+  ifM (isSupporter e {- || isAnimal e -}) (say "(on ") (say "(in ")
   printName e
   say ")"
 
@@ -78,7 +92,7 @@ findVisibilityHolder ::
 findVisibilityHolder e' = do
   obj <- getObject e'
   mCont <- getContainer e'
-  let n = name obj
+  let n = obj ^. #name
   if
     isRoom obj || isOpaqueClosedContainer <$?> mCont
   then

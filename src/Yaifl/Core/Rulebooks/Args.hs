@@ -17,9 +17,9 @@ import Data.Text.Display
 -- the closed 's' universe and the variables, which are either unknown
 -- (see 'UnverifiedArgs') or known (concrete instantation).
 data Args wm v = Args
-  { _argsSource :: Thing wm
-  , _argsVariables :: v
-  , _argsTimestamp :: Timestamp
+  { source :: Thing wm
+  , variables :: v
+  , timestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
 instance Display (Args wm v) where
@@ -35,9 +35,9 @@ instance {-# OVERLAPPABLE #-} Refreshable wm av where
 
 instance Refreshable wm v => Refreshable wm (Args wm v) where
   refreshVariables av = do
-    v <- refreshVariables (_argsVariables av)
-    o <- getThing (getID $ _argsSource av)
-    return $ av { _argsSource = o, _argsVariables = v }
+    v <- refreshVariables (variables av)
+    o <- getThing (getID $ source av)
+    return $ av { source = o, variables = v }
 
 data ArgSubject wm =
   RegularSubject Entity -- GET LAMP
@@ -62,7 +62,7 @@ instance Refreshable wm (UnverifiedArgs wm) where
 deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
 deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
 
-makeLenses ''Args
+makeFieldLabelsNoPrefix ''Args
 
 withPlayerSource ::
   NoMissingObjects wm es
@@ -83,7 +83,7 @@ playerNoArgs ::
   => Eff es (Timestamp -> UnverifiedArgs wm)
 playerNoArgs = do
   ua <- withPlayerSource blankArgs
-  return (\ts -> ua & coercedTo @(Args wm [ArgSubject wm]) % argsTimestamp .~ ts)
+  return (\ts -> ua & coercedTo @(Args wm [ArgSubject wm]) % #timestamp .~ ts)
 
 blankArgs ::
   Thing wm
@@ -91,6 +91,6 @@ blankArgs ::
 blankArgs o = UnverifiedArgs $ Args o [] 0
 
 instance Functor (Args wm) where
-  fmap f = argsVariables %~ f
+  fmap f = #variables %~ f
 
 makePrisms ''ArgSubject

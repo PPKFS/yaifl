@@ -1,8 +1,12 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Yaifl (
   newWorld
   , blankWorld
   , HasStandardProperties
   , PlainWorldModel
+  , ActivityCollection(..)
   , Game
   , runGame
   ) where
@@ -24,7 +28,7 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Rulebooks.ActionProcessing
-import Yaifl.Core.Rulebooks.Rule (ActionHandler)
+import Yaifl.Core.Rulebooks.Rule (ActionHandler, ActivityCollector(..))
 import Yaifl.Core.Rulebooks.WhenPlayBegins
 import Yaifl.Core.Say
 import Yaifl.Core.World
@@ -46,7 +50,7 @@ import qualified Data.Text as T
 import Breadcrumbs
 import Text.Interpolation.Nyan
 
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () ()
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
@@ -58,13 +62,13 @@ type HasStandardProperties s = (
   , WMHasProperty s Door
   , HasDirectionalTerms s)
 
-blankWorld :: HasStandardProperties wm => World (wm :: WorldModel)
-blankWorld = World
+blankWorld :: HasStandardProperties wm => (ActivityCollection wm -> ActivityCollector wm) -> World (wm :: WorldModel)
+blankWorld mkAcColl = World
   { metadata = blankMetadata
   , stores = blankStores
   , actions = blankActions
   , messageBuffer = blankMessageBuffer
-  , activities = blankActivityCollection
+  , activities = mkAcColl blankActivityCollection
   }
 
 blankActions :: HasProperty (WMObjSpecifics s) Enclosing => WorldActions s
@@ -78,12 +82,12 @@ blankActivityCollection ::
   HasStandardProperties wm
   => ActivityCollection wm
 blankActivityCollection = ActivityCollection
-  { _printingNameOfADarkRoom = printingDescriptionOfADarkRoomImpl
-  , _printingNameOfSomething = printingNameOfSomethingImpl
-  , _printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
-  , _choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
-  , _printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
-  , _describingLocale = describingLocaleImpl
+  { printingNameOfADarkRoom = printingDescriptionOfADarkRoomImpl
+  , printingNameOfSomething = printingNameOfSomethingImpl
+  , printingDescriptionOfADarkRoom = printingDescriptionOfADarkRoomImpl
+  , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
+  , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
+  , describingLocale = describingLocaleImpl
   }
 
 blankStores :: WorldStores s
@@ -112,7 +116,7 @@ blankMetadata = Metadata
 
 type EffStack wm = '[
   ActionHandler wm
-  , State (ActivityCollection wm)
+  , State (ActivityCollector wm)
   , ObjectTraverse wm
   , ObjectUpdate wm
   , ObjectLookup wm
@@ -288,10 +292,12 @@ makeTypeDAG = fromList
   ]
 
 data ActivityCollection wm = ActivityCollection
-  { _printingNameOfADarkRoom :: !(Activity wm () ())
-  , _printingNameOfSomething :: !(Activity wm (AnyObject wm) ())
-  , _printingDescriptionOfADarkRoom :: !(Activity wm () ())
-  , _choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
-  , _printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
-  , _describingLocale :: !(Activity wm (LocaleVariables wm) ())
-  }
+  { printingNameOfADarkRoom :: !(Activity wm () ())
+  , printingNameOfSomething :: !(Activity wm (AnyObject wm) ())
+  , printingDescriptionOfADarkRoom :: !(Activity wm () ())
+  , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
+  , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
+  , describingLocale :: !(Activity wm (LocaleVariables wm) ())
+  } deriving stock (Generic)
+
+makeFieldLabelsNoPrefix ''ActivityCollection

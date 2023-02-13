@@ -9,6 +9,7 @@ Stability   : No
 
 module Yaifl.Lamp.Activities.DescribingLocale
 ( describingLocaleImpl
+, WithDescribingLocale
 ) where
 
 import Solitude
@@ -32,36 +33,47 @@ import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
 import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
+import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
+
+type WithDescribingLocale wm = (
+  WithChoosingNotableLocaleObjects wm
+  , WithPrintingNameOfSomething wm
+  , WithPrintingLocaleParagraphAbout wm
+  , WithActivity "describingLocale" wm (LocaleVariables wm) ())
 
 describingLocaleImpl ::
-  WMHasProperty s Enclosing
-  => WMHasProperty s Container
-  => WMHasProperty s Openable
-  => Activity s (LocaleVariables s) ()
+  WMHasProperty wm Enclosing
+  => WMHasProperty wm Container
+  => WMHasProperty wm Openable
+  => WithDescribingLocale wm
+  => Activity wm (LocaleVariables wm) ()
 describingLocaleImpl = Activity "Describing the locale of something" Nothing Nothing
   (blankRulebook "Before describing locale")
   ((blankRulebook "Carry out describing locale")
-    { _rbRules =
+    { rules =
       [ findNotable
       , interestingLocale
       , alsoSee]
     })
   (blankRulebook "After describing locale")
 
-findNotable :: Rule s (LocaleVariables s) r
+findNotable ::
+  WithChoosingNotableLocaleObjects wm
+  => Rule wm (LocaleVariables wm) r
 findNotable = Rule "Find notable objects" (\v ->
   do
     -- by default, pick every object in the domain and assign them '5'
-    o <- doActivity #choosingNotableLocaleObjects (v ^. localeDomain)
-    return ((\x -> set localePriorities x v) <$> o, Nothing))
+    o <- doActivity #choosingNotableLocaleObjects (v ^. #domain)
+    return ((\x -> set #localePriorities x v) <$> o, Nothing))
 
 interestingLocale ::
-  WithPrintingNameOfSomething wm
+  WithPrintingLocaleParagraphAbout wm
   => Rule wm (LocaleVariables wm) r
 interestingLocale = Rule "Interesting locale paragraphs" (\v ->
   do
-    let tb = v ^. localePriorities
-        sorted = sortBy (compare `on` _priority) (toList $ unStore tb)
+    let tb = v ^. #localePriorities
+        sorted = sortBy (compare `on` priority) (toList $ unStore tb)
     addTag "interesting things" (length sorted)
     --for each thing, we offer it to write a paragraph
     --then it is either no longer needed to be written about (Just Mentioned)
@@ -72,7 +84,7 @@ interestingLocale = Rule "Interesting locale paragraphs" (\v ->
     newP <- foldlM (\v' li -> do
         r <- doActivity #printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
-    addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ _localePriorities newP))
+    addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ localePriorities newP))
     return (Just newP, Nothing))
 
 sayDomain ::
@@ -99,7 +111,7 @@ alsoSee = Rule "You can also see" (\v ->
     -- i.e. things which haven't been removed as they've been mentioned
     -- or otherwise been removed (by setting priority to 0 somehow)
     -- I think now we're including the mentioned flag it's worth putting in here too
-    let lp = DEM.filter (\(LocaleInfo x _ m) -> x > 0 && not m) (unStore $ v ^. localePriorities)
+    let lp = DEM.filter (\(LocaleInfo x _ m) -> x > 0 && not m) (unStore $ v ^. #localePriorities)
 
     unless (null lp) $ do
       let (LocaleVariables prior dom p) = v
@@ -133,7 +145,7 @@ alsoSee = Rule "You can also see" (\v ->
       --first group the marked for listing elements
       --then group the groups by the grouping
       --this second thing can be a TODO.
-      groupingProps <- mapM (getGroupingProperties . _localeObject . snd) (DEM.toList (unStore prior))
+      groupingProps <- mapM (getGroupingProperties . localeObject . snd) (DEM.toList (unStore prior))
       let groupedList = groupBy groupingEquivalenceRelation groupingProps
 
       mapM_
@@ -212,7 +224,7 @@ getGroupingProperties o = do
   let gwb = join $ mbThing ^? _Just % #objectData % #wearable % #_Wearable
       gtl = mbThing ^? _Just % #objectData % #lit
   (ic, op) <- getContainerProps o
-  let n = name o
+  let n = o ^. #name
   return $ GroupingProperties o n hc wr gwb (Just Lit == gtl) op ic
 
 hasChildren

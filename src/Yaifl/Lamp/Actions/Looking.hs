@@ -6,24 +6,27 @@ module Yaifl.Lamp.Actions.Looking
   ) where
 
 import Solitude
-import Breadcrumbs
-import Data.Text.Display
-import Effectful.Optics
-import Yaifl.Core.Actions.Action
-import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Entity
-import Yaifl.Core.Metadata
-import Yaifl.Core.Object
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Objects.ThingData
-import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Say
-import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
-import Yaifl.Lamp.Visibility
+import Breadcrumbs ( addTag )
+
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Data.Text.Display ( display )
+
+import Effectful.Optics ( use )
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Entity ( emptyStore, HasID(..) )
+import Yaifl.Core.Metadata
+import Yaifl.Core.Object ( Object(..) )
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Objects.ThingData ( ThingData(..) )
+import Yaifl.Core.Rulebooks.Args
+import Yaifl.Core.Rulebooks.Rule ( makeRule )
+import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Say ( say, sayLn, setStyle )
+import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
+import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
+import Yaifl.Lamp.Visibility
 
 lookingAction ::
   HasLookingProperties wm
@@ -50,26 +53,30 @@ lookingActionSet ::
   -> Eff es (ArgumentParseResult (LookingActionVariables wm))
 lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   -- loc may be a thing (a container) or a room (the more likely case)
-  loc <- getObject (_argsSource ^. #objectData % #containedBy)
+  loc <- getObject (source ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
-  lightLevels <- recalculateLightOfParent _argsSource
+  lightLevels <- recalculateLightOfParent source
   return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking")
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
-carryOutLookingRules :: ActionRulebook wm (LookingActionVariables wm)
-carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
+carryOutLookingRules ::
+  WithPrintingNameOfADarkRoom wm
+  => WithDescribingLocale wm
+  => WithPrintingDescriptionOfADarkRoom wm
+  => ActionRulebook wm (LookingActionVariables wm)
+carryOutLookingRules = makeActionRulebook "carry out looking" [
   makeRule "room description heading rule"
     (\rb -> do
       setStyle (Just PPTTY.bold)
-      let (LookingActionVariables loc cnt lvls _) = _argsVariables rb
+      let (LookingActionVariables loc cnt lvls _) = variables rb
           visCeil = viaNonEmpty last lvls
       whenJust visCeil $ addTag "visibility ceiling" . display
       if
         | cnt == 0 -> do
-          beginActivity printingNameOfADarkRoom ()
-          whenHandling' printingNameOfADarkRoom $ do
+          beginActivity #printingNameOfADarkRoom ()
+          whenHandling' #printingNameOfADarkRoom $ do
             say "Darkness"
-          endActivity printingNameOfADarkRoom
+          endActivity #printingNameOfADarkRoom
           pass --no light, print darkness
         | (getID <$> visCeil) == Just (getID loc) -> do
           addTag @Text "Ceiling is the location" ""
@@ -82,9 +89,10 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       setStyle Nothing
       --TODO: "run paragraph on with special look spacing"?
       return Nothing),
+
   makeRule "room description body rule"
     (\rb -> do
-      let (LookingActionVariables loc cnt lvls ac) = _argsVariables rb
+      let (LookingActionVariables loc cnt lvls ac) = variables rb
           visCeil = viaNonEmpty last lvls
       roomDesc <- use @Metadata @RoomDescriptions #roomDescriptions
       dw <- use @Metadata @Bool #darknessWitnessed
@@ -95,8 +103,11 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       if
         | cnt == 0 ->
           unless (abbrev || (someAbbrev && dw)) $ do
-            doActivity printingDescriptionOfADarkRoom ()
-            pass
+            beginActivity #printingDescriptionOfADarkRoom ()
+            -- HERE
+            whenHandling' #printingDescriptionOfADarkRoom $ do
+              say "Darkness"
+            endActivity #printingNameOfADarkRoom
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= "looking")) $ do
             let desc = description loc
@@ -106,7 +117,7 @@ carryOutLookingRules = makeActionRulebook "Carry Out Looking" [
       return Nothing),
   makeRule "room description paragraphs about objects rule"
     (\rb -> do
-      let (LookingActionVariables _ _ lvls _) = _argsVariables rb
-      mapM_ (\o -> doActivity describingLocale (LocaleVariables emptyStore o 0)) lvls
+      let (LookingActionVariables _ _ lvls _) = variables rb
+      mapM_ (\o -> doActivity #describingLocale (LocaleVariables emptyStore o 0)) lvls
       return Nothing)
   ]

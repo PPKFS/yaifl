@@ -15,9 +15,9 @@ import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
-import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction )
+import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction, ActivityCollector )
 import Yaifl.Core.Say ( Saying, sayLn )
-import Yaifl.Core.WorldModel ( WMDirection, WMActivities )
+import Yaifl.Core.WorldModel ( WMDirection )
 
 import qualified Data.Map as Map
 import qualified Data.Text as T
@@ -31,7 +31,7 @@ runActionHandlerAsWorldActions ::
   => ObjectLookup wm :> es
   => ObjectUpdate wm :> es
   => State Metadata :> es
-  => State (WMActivities wm) :> es
+  => State (ActivityCollector wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
@@ -50,7 +50,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
         addAnnotation [int|t|Matched #{matched} and interpreting this as #{x}.|]
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
       [(matched, r, Right x)] -> do
-        addAnnotation [int|t|Action parse was successful; going with the verb #{_actionName x} after matching #{matched}|]
+        addAnnotation [int|t|Action parse was successful; going with the verb #{actionName x} after matching #{matched}|]
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
     whenLeft_ ac (\t' -> noteError (const ()) [int|t|Failed to parse the command #{t} because #{t'}.|])
@@ -66,7 +66,7 @@ findVerb cmd = do
   --sayLn $ show $ (map (view (_2 % actionUnderstandAs)) (Map.toList ac))
   let possVerbs = mapMaybe (\case
         (_, Right a@Action{understandAs}) ->
-          case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') _actionUnderstandAs
+          case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') understandAs
           of
             [] -> Nothing
             (ua, x):_ -> Just (ua, x, Right a)
@@ -83,7 +83,7 @@ findSubjects ::
   => State (WorldActions wm) :> es
   => Saying :> es
   => ObjectLookup wm :> es
-  => State (WMActivities wm) :> es
+  => State (ActivityCollector wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
@@ -103,7 +103,7 @@ findSubjects cmd a = failHorriblyIfMissing $ do
     Nothing -> return $ Left "No idea."
     Just x -> do
       ua <- playerNoArgs
-      Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { _argsVariables = [DirectionSubject x]})
+      Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = [DirectionSubject x]})
 
 parseDirection ::
   forall wm.
@@ -124,13 +124,13 @@ tryAction ::
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
-  => State (WMActivities wm) :> es
+  => State (ActivityCollector wm) :> es
   => Saying :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool
 tryAction an f = do
   ta <- getGlobalTime
-  addAnnotation [int|t|Trying to do the action '#{an ^. name}'|]
+  addAnnotation [int|t|Trying to do the action '#{actionName an}'|]
   let uva = f ta
   fromMaybe False <$> runAction uva an

@@ -56,17 +56,25 @@ newlinesToWrap = foldl' (\acc -> \case
 force :: NFData a => a -> a
 force a = deepseq a a
 
+data ConstructionOptions wm = ConstructionOptions
+  { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
+  }
+
+defaultOptions :: ConstructionOptions PlainWorldModel
+defaultOptions = ConstructionOptions ActivityCollector
+
 testHarness ::
   forall wm a.
   HasStandardProperties wm
   => HasCallStack
   => Text
   -> [Text]
+  -> ConstructionOptions wm
   -> Game wm a
   -> IO Text
-testHarness fullTitle actionsToDo initWorld = do
+testHarness fullTitle actionsToDo conOptions initWorld = do
   tId <- readTraceId
-  (_, !w2 :: World wm) <- runGame tId blankWorld $ do
+  (_, !w2 :: World wm) <- runGame tId (blankWorld (activityCollectionBuilder conOptions)) $ do
       withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld

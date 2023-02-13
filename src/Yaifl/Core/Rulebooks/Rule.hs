@@ -9,6 +9,7 @@ module Yaifl.Core.Rulebooks.Rule
   , RuleCondition(..)
   , ActionOptions(..)
   , ActionHandler(..)
+  , ActivityCollector(..)
   , parseAction
   , notImplementedRule
   , makeRule
@@ -42,11 +43,15 @@ data ActionOptions wm = ActionOptions
 
 makeEffect ''ActionHandler
 
+newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
+
+makeFieldLabelsNoPrefix ''ActivityCollector
+
 data RuleCondition = RuleCondition
 
 type RuleEffects wm es = (
   State Metadata :> es
-  , State (WMActivities wm) :> es
+  , State (ActivityCollector wm) :> es
   , Breadcrumbs :> es
   , NoMissingObjects wm es
   , Saying :> es

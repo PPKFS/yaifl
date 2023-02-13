@@ -1,26 +1,18 @@
-{-|
-Module      : Yaifl.Activities.Activity
-Description : An activity is a modular function.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Actions.Activity
   ( Activity(..)
-  , makeActivity
-  , LocaleVariables(..)
   , LocaleInfo(..)
   , LocalePriorities
+  , LocaleVariables(..)
   , WithActivity
-
-  , doActivity
+  , WithPrintingDescriptionOfADarkRoom
+  , WithPrintingNameOfADarkRoom
   , beginActivity
+  , doActivity
   , endActivity
+  , makeActivity
   , whenHandling
   , whenHandling'
   ) where
@@ -35,13 +27,16 @@ import Yaifl.Core.Entity ( Store )
 import Yaifl.Core.Object ( AnyObject )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject, failHorriblyIfMissing )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
-import Yaifl.Core.Rulebooks.Rule ( Rule, RuleEffects )
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
 import Yaifl.Core.WorldModel
 
 type WithActivity (name :: Symbol) wm v r =
   LabelOptic' name A_Lens (WMActivities wm) (Activity wm v r)
+
+type WithPrintingNameOfADarkRoom wm = WithActivity "printingNameOfADarkRoom" wm () ()
+type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () ()
 
 data Activity wm v r = Activity
     { name :: Text
@@ -93,18 +88,20 @@ makeActivity n rs = Activity n Nothing Nothing
   (blankRulebook ("After " <> n))
 
 beginActivity ::
+  forall wm v r es.
   (RuleEffects wm es, Display v)
   => Refreshable wm v
   => ActivityLens wm v r
   -> v
   -> Eff es v
-beginActivity acF c = do
-  ac <- use acF
+beginActivity acL c = do
+  ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
     withoutMissingObjects
       (do
+        -- run the before rules only.
         r <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
-        modify (acF % #currentVariables ?~ maybe c fst r)
+        modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
         pure $ maybe c fst r)
       (handleMissingObject "beginning an activity" c)
 
@@ -117,19 +114,20 @@ whenHandling' ::
 whenHandling' acF f = whenHandling acF (const f)
 
 whenHandling ::
+  forall wm v r a es.
   (RuleEffects wm es, Display v, Display r)
   => Refreshable wm v
   => ActivityLens wm v r
   -> (v -> Eff es a)
   -> Eff es (Either a (Maybe r))
-whenHandling acF f = do
-  ac <- use acF
+whenHandling acL f = do
+  ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "handling activity" (ac ^. #name) $ \aSpan ->
     case currentVariables ac of
       Nothing -> pure (Right Nothing)
       Just c -> do
         r <- failHorriblyIfMissing $ runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) c
-        modify (acF % #currentVariables ?~ maybe c fst r)
+        modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
         let runBlock = do
               a <- f c
               pure $ Left a
@@ -138,17 +136,18 @@ whenHandling acF f = do
           Nothing -> runBlock
           -- no result but we did update our variables
           Just (v, Nothing) -> do
-            modify (acF % #currentVariables ?~ v)
+            modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ v)
             runBlock
           Just (_, Just x) -> pure (Right (Just x))
 
 endActivity ::
+  forall wm v r es.
   (RuleEffects wm es, Display v)
   => Refreshable wm v
   => ActivityLens wm v r
   -> Eff es v
 endActivity acF = do
-  ac <- use acF
+  ac <- use @(ActivityCollector wm) (#activityCollection % acF)
   withSpan "end activity" (ac ^. #name) $ \aSpan ->
     failHorriblyIfMissing
       (do
@@ -156,23 +155,24 @@ endActivity acF = do
           Nothing -> error "ended without beginning"
           Just c -> do
             r <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) c
-            modify (acF % #currentVariables .~ Nothing)
+            modify @(ActivityCollector wm) (#activityCollection % acF % #currentVariables .~ Nothing)
             pure $ maybe c fst r)
 
 doActivity ::
+  forall wm r v es.
   (RuleEffects wm es, Display r, Display v)
   => Refreshable wm v
   => ActivityLens wm v r
   -> v
   -> Eff es (Maybe r)
 doActivity acL c = do
-  ac <- use acL
+  ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "activity" (ac ^. #name) $ \aSpan -> withoutMissingObjects (do
-    modify (acL % #currentVariables ?~ c)
+    modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
     x <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
     mr <- runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) (maybe c fst x)
     _ <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) (maybe c fst mr)
-    modify (acL % #currentVariables .~ Nothing)
+    modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
     return $ snd =<< mr) (handleMissingObject "running an activity" Nothing)
 
 makeLenses ''LocaleVariables

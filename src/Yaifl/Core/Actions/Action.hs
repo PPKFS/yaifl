@@ -12,6 +12,7 @@ module Yaifl.Core.Actions.Action
   , addAction
   , runAction
   , makeActionRulebook
+  , actionName
   ) where
 
 import Solitude
@@ -49,6 +50,11 @@ type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
 
 makeFieldLabelsNoPrefix ''Action
 
+actionName ::
+  Action wm
+  -> Text
+actionName = view #name
+
 newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
 -- | Helper function to make a rulebook of an action.
@@ -60,7 +66,7 @@ makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> ignoreSpan >> 
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { actions :: !(Map Text (Either InterpretAs (Action wm)))
-  , whenPlayBegins :: !(Rulebook wm () () Bool)
+  , whenPlayBegins :: Rulebook wm () () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock (Generic)
 
@@ -75,6 +81,7 @@ runAction ::
   -> Action wm
   -> Eff es (Maybe Bool)
 runAction args act = withSpan "run action" (act ^. #name) $ \aSpan -> do
+  -- running an action is simply evaluating the action processing rulebook.
   (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
   ap aSpan act args
 

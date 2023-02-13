@@ -9,7 +9,7 @@ import Yaifl.Core.Entity ( Store, Entity )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.RoomData ( RoomData )
 import Yaifl.Core.Objects.ThingData ( ThingData )
-import Yaifl.Core.Rulebooks.Rule ( Rule )
+import Yaifl.Core.Rulebooks.Rule ( Rule, ActivityCollector )
 import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
 import Yaifl.Core.Say ( Has(..), MessageBuffer )
 import Yaifl.Core.WorldModel ( WMValues, WorldModel )
@@ -19,6 +19,7 @@ data World (wm :: WorldModel) = World
   { metadata :: Metadata
   , stores :: WorldStores wm
   , actions :: WorldActions wm
+  , activities :: ActivityCollector wm
   , messageBuffer :: MessageBuffer
   } deriving stock (Generic)
 

@@ -9,11 +9,12 @@ Stability   : No
 
 module Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
   ( choosingNotableLocaleObjectsImpl
+  , WithChoosingNotableLocaleObjects
   ) where
 
 import Solitude
 
-import Yaifl.Core.Actions.Activity
+import Yaifl.Core.Actions.Activity hiding (name)
 import Yaifl.Core.Entity ( Store(..), HasID(..) )
 import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query ( getObject )
@@ -26,6 +27,7 @@ import qualified Data.EnumSet as DES
 import Breadcrumbs
 import Text.Interpolation.Nyan
 
+type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm (AnyObject wm) (LocalePriorities wm))
 choosingNotableLocaleObjectsImpl ::
   WMHasProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
@@ -34,7 +36,7 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
     e' <- getEnclosing v
     case e' of
       Nothing -> (do
-        addAnnotation [int|t|Tried to choose notable locale objects from #{v ^. #name} which doesn't enclose.|]
+        addAnnotation [int|t|Tried to choose notable locale objects from #{name v} which doesn't enclose.|]
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do

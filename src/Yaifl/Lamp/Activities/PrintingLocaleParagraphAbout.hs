@@ -18,6 +18,8 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Rulebooks.Rule ( Rule, makeRule )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 
+type WithPrintingLocaleParagraphAbout wm = WithActivity "printingLocaleParagraphAbout" wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+
 printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about something" Nothing Nothing
   (blankRulebook "Before printing a locale paragraph")
