@@ -13,12 +13,12 @@ import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Core.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Core.Objects.Move ( move )
 import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
+import Yaifl.Core.Print ( Print, printText, setStyle )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), noRulebookArguments )
 import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
-import Yaifl.Core.Say ( Saying, say, setStyle )
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -38,12 +38,12 @@ whenPlayBeginsRules = Rulebook
 
 sayIntroText ::
   State Metadata :> es
-  => Saying :> es
+  => Print :> es
   => Eff es ()
 sayIntroText = do
   setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
   t <- use #title
-  say $ introText t
+  printText $ introText t
   setStyle Nothing
   pass
 
@@ -68,7 +68,7 @@ initRoomDescription = do
   parseAction (ActionOptions True Nothing) "look" >>= (\case
      Left txt -> addAnnotation txt
      Right True -> pass
-     Right False -> error "aaaa")
+     Right False -> error "Could not find the looking action.")
   rulePass
 
 positionPlayer ::

@@ -15,7 +15,7 @@ import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.ThingData ( ThingData )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( HasProperty(..), WMHasProperty )
-import Yaifl.Core.WorldModel ( WMObjSpecifics, WorldModel(..) )
+import Yaifl.Core.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable )
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Door ( Door, blankDoor )
 import Yaifl.Lamp.Properties.Openable ( Openable )
@@ -33,7 +33,7 @@ makePrisms ''ObjectSpecifics
 class WMHasObjSpecifics (wm :: WorldModel) where
   inj :: Proxy wm -> ObjectSpecifics -> WMObjSpecifics wm
 
-instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac) where
+instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
   inj _ = id
 
 instance HasProperty ObjectSpecifics Enclosing where
@@ -71,8 +71,8 @@ addDoor ::
   forall wm es. WMHasObjSpecifics wm
   => WMHasProperty wm Enclosing
   => AddObjects wm es
-  => SayableText -- ^ name
-  -> Maybe SayableText -- ^ description
+  => WMSayable wm -- ^ name
+  -> Maybe (WMSayable wm) -- ^ description
   -> Room wm
   -> Room wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.

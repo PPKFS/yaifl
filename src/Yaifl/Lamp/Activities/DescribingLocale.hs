@@ -27,8 +27,8 @@ import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing )
 import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
-import Yaifl.Core.Say ( Saying, say )
-import Yaifl.Lamp.Activities.PrintingNameOfSomething
+import Yaifl.Core.Print
+import Yaifl.Lamp.Say
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
 import qualified Data.EnumMap.Strict as DEM
@@ -95,9 +95,9 @@ sayDomain ::
   -> o
   -> Eff es ()
 sayDomain x e = do
-  say x
-  printNameEx (SayOptions Definite Uncapitalised) e
-  say " you "
+  printText x
+  printName e
+  printText " you "
 
 alsoSee ::
   WMHasProperty wm Enclosing
@@ -124,12 +124,12 @@ alsoSee = Rule "You can also see" (\v ->
       let isInLoc = maybe False (dom `objectEquals`) plRoom
       if
         | isRoom dom ->
-          if isInLoc then say "You " else sayDomain "In " dom
+          if isInLoc then printText "You " else sayDomain "In " dom
         | isASupporter || isAnAnimal -> sayDomain "On " dom
         | otherwise -> sayDomain "In " dom
-      say "can "
-      when (p > 0) $ say "also "
-      say "see "
+      printText "can "
+      when (p > 0) $ printText "also "
+      printText "see "
       --I'm going to completely ignore what inform does here because trying to parse their
       --object list handling is a pain.
       --so instead I think it makes the most sense, to me, to run two groupings
@@ -153,18 +153,18 @@ alsoSee = Rule "You can also see" (\v ->
             case objGrp of
               [] -> pass -- nothing to print
               [e'] -> do
-                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
+                printName (grpObj e')
                 pass
               e' : _ -> do
                 addTag "Group of multiple objects: " (e', num)
-                say $ show $ length objGrp
-                printNameEx (SayOptions Indefinite Uncapitalised) (grpObj e')
+                printText $ show $ length objGrp
+                printName (grpObj e')
                 pass
-            when (num < length groupedList - 1) (say ", ")
-            when (num == length groupedList - 2) (say "and ")
+            when (num < length groupedList - 1) (printText ", ")
+            when (num == length groupedList - 2) (printText "and ")
         )
         $ zip groupedList [0 ..]
-      when isInLoc (say " here")
+      when isInLoc (printText " here")
       paragraphBreak
     return (Nothing, Nothing))
 
@@ -224,7 +224,7 @@ getGroupingProperties o = do
   let gwb = join $ mbThing ^? _Just % #objectData % #wearable % #_Wearable
       gtl = mbThing ^? _Just % #objectData % #lit
   (ic, op) <- getContainerProps o
-  let n = o ^. #name
+  let n = display $ o ^. #name -- TODO
   return $ GroupingProperties o n hc wr gwb (Just Lit == gtl) op ic
 
 hasChildren
@@ -248,9 +248,9 @@ willRecurse e = do
   return $ isSup || maybe False (\c -> _containerOpacity c == Transparent || _containerOpenable c == Open) cont
 
 paragraphBreak ::
-  Saying :> es
+  Print :> es
   => Eff es ()
-paragraphBreak = say ".\n\n"
+paragraphBreak = printText ".\n\n"
 
 --p2275 of the complete program, in B/lwt
 getContainerProps ::

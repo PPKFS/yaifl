@@ -21,7 +21,6 @@ module Yaifl.Core.Object (
   , Thing
   , Room
   , AnyObject
-  , SayableText
   -- ** Helpers
   , objectEquals
   , isType
@@ -41,10 +40,8 @@ import Yaifl.Core.Entity (Entity (..), HasID (..))
 import Yaifl.Core.Metadata ( ObjectType, noteError, typeDAG, Timestamp, WithMetadata )
 import Yaifl.Core.Objects.RoomData (RoomData)
 import Yaifl.Core.Objects.ThingData (ThingData)
-import Yaifl.Core.WorldModel (WMObjSpecifics)
+import Yaifl.Core.WorldModel (WMObjSpecifics, WMSayable)
 import Data.Text.Display
-
-type SayableText = Text
 
 -- | Determine whether an object is of a certain type.
 isType ::
@@ -73,8 +70,8 @@ isType o = isTypeInternal (objectType o)
 
 -- | A game object.
 data Object wm objData = Object
-  { name :: SayableText
-  , description :: SayableText
+  { name :: WMSayable wm
+  , description :: WMSayable wm
   , objectId :: Entity
   , objectType :: ObjectType
   , creationTime :: Timestamp

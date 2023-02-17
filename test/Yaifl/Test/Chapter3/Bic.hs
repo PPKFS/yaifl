@@ -6,15 +6,16 @@ import Yaifl.Core.Object
 import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Say
+import Yaifl.Core.Print
 import Yaifl.Core.World
-import Yaifl.Lamp.Activities.PrintingNameOfSomething
 import Yaifl.Test.Common
 import qualified Data.Text as T
 import Solitude
+import Data.Text.Display
+import Yaifl.Core.WorldModel
 
-isBlankDescription :: Thing wm -> Bool
-isBlankDescription d = T.empty == d ^. #description
+isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
+isBlankDescription d = T.empty == display (d ^. #description)
 
 ex2World :: Game PlainWorldModel ()
 ex2World = do
@@ -28,8 +29,8 @@ ex2World = do
     do
       traverseThings (\t -> do
         when (isBlankDescription t) (do
-          printName t
-          sayLn " has no description.")
+          say t
+          printLn " has no description.")
         return Nothing)
       return Nothing
 

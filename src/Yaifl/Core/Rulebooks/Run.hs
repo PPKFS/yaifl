@@ -13,7 +13,7 @@ import Data.Text.Display ( Display, display )
 import Effectful.Error.Static ( runError )
 import Yaifl.Core.Metadata ( noteError )
 import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
-import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects, RuleCondition )
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
 import qualified Data.Text as T
 

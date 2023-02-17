@@ -35,7 +35,9 @@ import Yaifl.Core.WorldModel
 type WithActivity (name :: Symbol) wm v r =
   LabelOptic' name A_Lens (WMActivities wm) (Activity wm v r)
 
-type WithPrintingNameOfADarkRoom wm = WithActivity "printingNameOfADarkRoom" wm () ()
+type WithPrintingNameOfADarkRoom wm =
+  ( WithActivity "printingNameOfADarkRoom" wm () ()
+  )
 type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () ()
 
 data Activity wm v r = Activity

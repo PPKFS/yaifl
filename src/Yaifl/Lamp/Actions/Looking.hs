@@ -13,20 +13,24 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Data.Text.Display ( display )
 
 import Effectful.Optics ( use )
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Entity ( emptyStore, HasID(..) )
 import Yaifl.Core.Metadata
-import Yaifl.Core.Object ( Object(..) )
+import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.ThingData ( ThingData(..) )
+import Yaifl.Core.Print ( Print, setStyle, printText, printLn )
 import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule ( makeRule )
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Say ( say, sayLn, setStyle )
 import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
-import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, capitalThe, printNameEx)
+import Yaifl.Lamp.Properties.Animal
+import Yaifl.Lamp.Properties.Supporter ( isSupporter )
+import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
+import Yaifl.Core.AdaptiveNarrative
 
 lookingAction ::
   HasLookingProperties wm
@@ -59,9 +63,12 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking")
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
+
+
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm
   => WithDescribingLocale wm
+  => WithResponse wm "nameOfADarkRoomA"
   => WithPrintingDescriptionOfADarkRoom wm
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
@@ -75,17 +82,18 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
         | cnt == 0 -> do
           beginActivity #printingNameOfADarkRoom ()
           whenHandling' #printingNameOfADarkRoom $ do
-            say "Darkness"
+            -- "Darkness"
+            sayResponse #nameOfADarkRoomA
           endActivity #printingNameOfADarkRoom
-          pass --no light, print darkness
+          pass
         | (getID <$> visCeil) == Just (getID loc) -> do
           addTag @Text "Ceiling is the location" ""
-          traverse_ printName visCeil --if the ceiling is the location, then print [the location]
+          say visCeil
         | True -> do
           addTag @Text "Ceiling is not the location" ""
-          traverse_ (printNameEx capitalThe) visCeil --otherwise print [The visibility ceiling]
+          say @Text "The " >> say visCeil
       mapM_ foreachVisibilityHolder (drop 1 lvls)
-      sayLn "\n"
+      printLn "\n"
       setStyle Nothing
       --TODO: "run paragraph on with special look spacing"?
       return Nothing),
@@ -106,13 +114,13 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             beginActivity #printingDescriptionOfADarkRoom ()
             -- HERE
             whenHandling' #printingDescriptionOfADarkRoom $ do
-              say "Darkness"
+              say @Text "Darkness"
             endActivity #printingNameOfADarkRoom
         | (getID <$> visCeil) == Just (getID loc) ->
           unless (abbrev || (someAbbrev && ac /= "looking")) $ do
-            let desc = description loc
-            when (desc /= T.empty)
-              (sayLn desc)
+            desc <- sayText $ description loc
+            when (display desc /= T.empty)
+              (printLn $ display desc)
         | otherwise -> pass
       return Nothing),
   makeRule "room description paragraphs about objects rule"
@@ -121,3 +129,26 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
       mapM_ (\o -> doActivity #describingLocale (LocaleVariables emptyStore o 0)) lvls
       return Nothing)
   ]
+
+foreachVisibilityHolder ::
+  (NoMissingObjects wm es, ActionHandler wm :> es)
+  => Print :> es
+  => ObjectTraverse wm :> es
+  => State (ActivityCollector wm) :> es
+  => State (ResponseCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => WithPrintingNameOfSomething wm
+  => AnyObject wm
+  -> Eff es ()
+foreachVisibilityHolder e = do
+  {-
+  repeat with intermediate level count running from 2 to the visibility level count:     
+    if the intermediate level is a supporter or the intermediate level is an animal:         
+    say " (on [the intermediate level])" (B);     
+    otherwise:
+    say " (in [the intermediate level])" (C);
+  -}
+  ifM (isSupporter e  ||^ isAnimal e )
+    (printText "(on ") (printText "(in ")
+  printName e
+  say @Text ")"

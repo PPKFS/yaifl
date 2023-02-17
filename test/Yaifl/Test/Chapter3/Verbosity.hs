@@ -7,10 +7,10 @@ import Yaifl.Core.Objects.Room
 import Yaifl.Test.Common
 import Solitude
 
-wmrwN :: Text
+wmrwN :: Text' wm
 wmrwN = "The Wilkie Memorial Research Wing"
 
-wmrwDesc :: Text
+wmrwDesc :: Text' wm
 wmrwDesc =
   [wrappedText|The research wing was built onto the science building in 1967, when the college's finances were
       good but its aesthetic standards at a local minimum. A dull brown corridor recedes both north
@@ -20,10 +20,10 @@ wmrwDesc =
 
       The Men's Restroom is immediately west of this point.|]
 
-tmrN :: Text
+tmrN :: Text' wm
 tmrN = "The Men's Restroom"
 
-tmrDesc :: Text
+tmrDesc :: Text' wm
 tmrDesc = [wrappedText|Well, yes, you really shouldn't be in here.  But the nearest women's room is on the other side of the building,
       and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things
       scrawled over the urinals which might have been intended in confidence.|]

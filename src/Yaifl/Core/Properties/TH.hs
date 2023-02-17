@@ -51,8 +51,8 @@ makeDirections :: Bool -> [Text] -> Q [Dec]
 makeDirections std dirs = do
   v <- mapM (\n -> do
     let replaceTH' y x = if std then replaceTH (replace "XSUBHERE2" "(injectDirection XSUBHERE)" y) x else replaceTH (replace "XSUBHERE2" "XSUBHERE" y) x
-        r1 = replaceTH' "isXSUBHEREOf :: (Breadcrumbs :> es, ObjectQuery wm es, State (Metadata) :> es) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
-        r2 = replaceTH' "isXSUBHEREOfOneWay :: (Breadcrumbs :> es, ObjectQuery wm es, State (Metadata) :> es) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
+        r1 = replaceTH' "isXSUBHEREOf :: (Breadcrumbs :> es, ObjectQuery wm es, State (Metadata) :> es, Display (WMSayable wm)) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
+        r2 = replaceTH' "isXSUBHEREOfOneWay :: (Breadcrumbs :> es, ObjectQuery wm es, State (Metadata) :> es, Display (WMSayable wm)) => WMStdDirections wm => Room wm -> Room wm -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
     return $ r1 <> r2
     ) dirs
   return $ join v

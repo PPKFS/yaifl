@@ -16,22 +16,24 @@ import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Say
+import Yaifl.Lamp.Say
 import Yaifl.Lamp.Activities.DescribingLocale
-import Yaifl.Lamp.Activities.PrintingNameOfSomething (printName, WithPrintingNameOfSomething)
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
+import Data.Text.Display
+import Yaifl.Core.WorldModel
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
   (WMHasProperty wm Enclosing, WMHasProperty wm Enterable, WMHasProperty wm Container
+  , Display (WMSayable wm)
+  , IsString (WMSayable wm)
   , WithPrintingNameOfADarkRoom wm
   , WithDescribingLocale wm
   , WithPrintingDescriptionOfADarkRoom wm
-  , WithPrintingNameOfADarkRoom wm)
+  , WithResponse wm "nameOfADarkRoomA")
 
 data LookingActionVariables wm = LookingActionVariables
   { lookingFrom :: AnyObject wm
@@ -49,26 +51,6 @@ instance Refreshable wm (LookingActionVariables wm) where
     lf <- getObject (lookingFrom av)
     vls <- mapM getObject (visibilityLevels av)
     return $ av { lookingFrom = lf, visibilityLevels = vls }
-
-foreachVisibilityHolder ::
-  (NoMissingObjects wm es, ActionHandler wm :> es)
-  => Saying :> es
-  => ObjectTraverse wm :> es
-  => State (ActivityCollector wm) :> es
-  => WithPrintingNameOfSomething wm
-  => AnyObject wm
-  -> Eff es ()
-foreachVisibilityHolder e = do
-  {-
-  repeat with intermediate level count running from 2 to the visibility level count:     
-    if the intermediate level is a supporter or the intermediate level is an animal:         
-    say " (on [the intermediate level])" (B);     
-    otherwise:
-    say " (in [the intermediate level])" (C);
-  -}
-  ifM (isSupporter e {- || isAnimal e -}) (say "(on ") (say "(in ")
-  printName e
-  say ")"
 
 getVisibilityLevels ::
   NoMissingObjects wm es
@@ -97,7 +79,7 @@ findVisibilityHolder e' = do
     isRoom obj || isOpaqueClosedContainer <$?> mCont
   then
     do
-      addAnnotation [int|t|The visibility holder of #{n} is itself|]
+      addAnnotation [int|t|The visibility holder of #{display n} is itself|]
       --return it
       return (toAny e')
   else

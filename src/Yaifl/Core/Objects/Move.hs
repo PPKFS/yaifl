@@ -16,11 +16,13 @@ import Yaifl.Core.Properties.Query (getEnclosing, getPropertyOrThrow, setEnclosi
 import Breadcrumbs
 import Text.Interpolation.Nyan
 import Data.Text.Display
+import Yaifl.Core.WorldModel
 
 move ::
   Breadcrumbs :> es
   => State Metadata :> es
   => ObjectQuery wm es
+  => Display (WMSayable wm)
   => WMHasProperty wm Enclosing
   => ObjectLike wm o
   => Thing wm

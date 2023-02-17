@@ -29,7 +29,7 @@ import Yaifl.Core.Objects.RoomData ( RoomData, blankRoomData )
 import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
-import Yaifl.Core.WorldModel ( WMObjSpecifics )
+import Yaifl.Core.WorldModel ( WMObjSpecifics, WMSayable )
 import Breadcrumbs
 import Data.Text.Display
 
@@ -42,14 +42,16 @@ makeEffect ''ObjectCreation
 
 type AddObjects wm es = (
   ObjectCreation wm :> es
+  , Display (WMSayable wm)
+  , IsString (WMSayable wm)
   , State Metadata :> es
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 makeObject ::
   ObjectCreation wm :> es
   => State Metadata :> es
-  => SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> ObjectType
   -> Bool
   -> Maybe (WMObjSpecifics wm) -- ^ Object details.
@@ -65,8 +67,8 @@ addObject ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => (Object wm d -> Eff es ())
-  -> SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  -> WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> ObjectType
   -> Bool
   -> Maybe (WMObjSpecifics wm)
@@ -93,8 +95,8 @@ addObject updWorld n d ty isT specifics details =
 addThingInternal ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
@@ -105,8 +107,8 @@ addThingInternal name desc objtype specifics details = addObject addThing name d
 addThing' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
@@ -115,8 +117,8 @@ addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
 addRoomInternal ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
@@ -133,8 +135,8 @@ isVoid = (voidID ==)
 addRoom' ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
-  => SayableText -- ^ Name.
-  -> SayableText -- ^ Description.
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es (Room wm)
 addRoom' n d rd = addRoomInternal n d (ObjectType "room")

@@ -37,7 +37,7 @@ data Action (wm :: WorldModel) where
   Action ::
     { name :: Text
     , understandAs :: [Text]
-    , matching :: [Text]
+    , matches :: [Text]
     , parseArguments :: ActionParseArguments wm v
     , beforeRules :: ActionRulebook wm v
     , checkRules :: ActionRulebook wm v

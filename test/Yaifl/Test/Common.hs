@@ -13,9 +13,10 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Run
 import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
-import Yaifl.Core.Say
+
 import Yaifl.Core.World
 import qualified Data.Text as T
+import Yaifl.Lamp.Responses
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -58,10 +59,11 @@ force a = deepseq a a
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
+  , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
   }
 
 defaultOptions :: ConstructionOptions PlainWorldModel
-defaultOptions = ConstructionOptions ActivityCollector
+defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 
 testHarness ::
   forall wm a.
@@ -74,7 +76,7 @@ testHarness ::
   -> IO Text
 testHarness fullTitle actionsToDo conOptions initWorld = do
   tId <- readTraceId
-  (_, !w2 :: World wm) <- runGame tId (blankWorld (activityCollectionBuilder conOptions)) $ do
+  (_, !w2 :: World wm) <- runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) $ do
       withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld

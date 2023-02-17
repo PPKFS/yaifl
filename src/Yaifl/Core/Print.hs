@@ -1,20 +1,21 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Say
+module Yaifl.Core.Print
   ( -- * Types
     MessageBuffer (..)
-  , Saying(..)
+  , Print(..)
   , Has(..)
   , PartialState
   -- * Smart constructors
   , blankMessageBuffer
   -- * Buffer modification
   , setStyle
-  , say
-  , sayLn
-  , sayIf
-  , runSayPure
-  , runSayIO
+  , printText
+  , printLn
+  , printIf
+  , runPrintPure
+  , runPrintIO
   )
 where
 
@@ -28,17 +29,19 @@ import Effectful.Optics (use, (.=))
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
-data Saying :: Effect where
-  SayDoc :: StyledDoc -> Saying m ()
-  SetStyle :: Maybe PPTTY.AnsiStyle -> Saying m ()
+data Print :: Effect where
+  PrintDoc :: StyledDoc -> Print m ()
+  SetStyle :: Maybe PPTTY.AnsiStyle -> Print m ()
 
-makeEffect ''Saying
+makeEffect ''Print
 
 data MessageBuffer = MessageBuffer
   { buffer :: [StyledDoc] -- ^ Current messages held before flushing.
   , style :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
   , context :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   } deriving stock (Show, Generic)
+
+makeFieldLabelsNoPrefix ''MessageBuffer
 
 blankMessageBuffer :: MessageBuffer
 blankMessageBuffer = MessageBuffer [] Nothing []
@@ -64,51 +67,51 @@ type PartialState s t es = (Has s t, State s :> es)
 instance Has s s where
   buf = castOptic simple
 
-runSayPure ::
+runPrintPure ::
   forall s es a.
   PartialState s MessageBuffer es
-  => Eff (Saying : es) a
+  => Eff (Print : es) a
   -> Eff es a
-runSayPure = interpret $ \_ -> \case
-  SayDoc doc -> do
+runPrintPure = interpret $ \_ -> \case
+  PrintDoc doc -> do
     r <- processDoc doc
     modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc])) %~ (r:))
   SetStyle mbStyle -> setStyle' mbStyle
 
-runSayIO ::
+runPrintIO ::
   forall s es a.
   IOE :> es
   => PartialState s MessageBuffer es
-  => Eff (Saying : es) a
+  => Eff (Print : es) a
   -> Eff es a
-runSayIO = interpret $ \_ -> \case
-  SayDoc doc -> do
+runPrintIO = interpret $ \_ -> \case
+  PrintDoc doc -> do
     r <- processDoc doc
     print r
   SetStyle mbStyle -> setStyle' mbStyle
 
--- | Say a string (well, Text).
-say ::
-  Saying :> es
+-- | Print a string (well, Text).
+printText ::
+  Print :> es
   => Text -- ^ Message.
   -> Eff es ()
-say = sayDoc . PP.pretty
+printText = printDoc . PP.pretty
 
--- | Say @message@ with a newline.
-sayLn ::
-  Saying :> es
+-- | Print @message@ with a newline.
+printLn ::
+  Print :> es
   => Text -- ^ Message.
   -> Eff es ()
-sayLn a = say (a <> "\n")
+printLn a = printText (a <> "\n")
 
--- | Conditionally say @message@.
-sayIf ::
-  Saying :> es
+-- | Conditionally Print @message@.
+printIf ::
+  Print :> es
   => Bool -- ^ Condition to evaluate.
   -> Text -- ^ Message.
   -> Eff es ()
-sayIf True = say
-sayIf False = const pass
+printIf True = printText
+printIf False = const pass
 
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.

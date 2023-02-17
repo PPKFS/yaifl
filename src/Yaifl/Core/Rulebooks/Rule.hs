@@ -2,6 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Core.Rulebooks.Rule
   ( RuleEffects
@@ -10,6 +11,12 @@ module Yaifl.Core.Rulebooks.Rule
   , ActionOptions(..)
   , ActionHandler(..)
   , ActivityCollector(..)
+  , ResponseCollector(..)
+  , Response(..)
+  , RuleLimitedEffect(..)
+  , ConcreteRuleStack
+  , SayableValue(..)
+  --, runRuleLimitedEffect
   , parseAction
   , notImplementedRule
   , makeRule
@@ -28,10 +35,12 @@ import Text.Interpolation.Nyan ( rmode', int )
 
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Object ( Thing )
-import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects )
+import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects, ObjectUpdate, ObjectLookup, MissingObject )
 import Yaifl.Core.Rulebooks.Args ( Refreshable )
-import Yaifl.Core.Say ( Saying )
-import Yaifl.Core.WorldModel ( WMActivities )
+import Yaifl.Core.Print ( Print, printText )
+import Yaifl.Core.WorldModel ( WMActivities, WMResponses, WMSayable )
+import Data.Text.Display
+import Yaifl.Core.AdaptiveNarrative
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
@@ -45,19 +54,51 @@ makeEffect ''ActionHandler
 
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
 
+newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }
+
 makeFieldLabelsNoPrefix ''ActivityCollector
+makeFieldLabelsNoPrefix ''ResponseCollector
 
 data RuleCondition = RuleCondition
 
 type RuleEffects wm es = (
   State Metadata :> es
   , State (ActivityCollector wm) :> es
+  , State (ResponseCollector wm) :> es
+  , State (AdaptiveNarrative wm) :> es
   , Breadcrumbs :> es
   , NoMissingObjects wm es
-  , Saying :> es
+  , Display (WMSayable wm)
+  , SayableValue (WMSayable wm) wm
+  , Print :> es
   , ActionHandler wm :> es
   , ObjectTraverse wm :> es
   )
+
+type ConcreteRuleStack wm = '[
+  ActionHandler wm
+  , State (AdaptiveNarrative wm)
+  , State (ResponseCollector wm)
+  , State (ActivityCollector wm)
+  , ObjectTraverse wm
+  , ObjectUpdate wm
+  , ObjectLookup wm
+  , State Metadata
+  , Print
+  , Breadcrumbs
+  , Error MissingObject
+  ]
+
+class SayableValue s wm where
+  sayText :: RuleEffects wm es => s -> Eff es Text
+  say :: RuleEffects wm es => s -> Eff es ()
+  default say :: RuleEffects wm es => s -> Eff es ()
+  say s = sayText s >>= printText
+
+instance SayableValue Text wm where
+  sayText = pure
+
+newtype RuleLimitedEffect wm a = RuleLimitedEffect (Eff (ConcreteRuleStack wm) a)
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
@@ -65,6 +106,10 @@ data Rule wm v r = Rule
   { name :: Text
   , runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
+
+newtype Response wm = Response { runResponse :: forall es. (RuleEffects wm es) => Eff es () }
+
+makeFieldLabelsNoPrefix ''Response
 
 -- | A helper for rules which are not implemented and therefore blank.
 notImplementedRule ::

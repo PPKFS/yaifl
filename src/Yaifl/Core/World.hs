@@ -9,11 +9,12 @@ import Yaifl.Core.Entity ( Store, Entity )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Objects.RoomData ( RoomData )
 import Yaifl.Core.Objects.ThingData ( ThingData )
-import Yaifl.Core.Rulebooks.Rule ( Rule, ActivityCollector )
+import Yaifl.Core.Rulebooks.Rule ( Rule, ActivityCollector, ResponseCollector )
 import Yaifl.Core.Rulebooks.Rulebook ( addRuleLast )
-import Yaifl.Core.Say ( Has(..), MessageBuffer )
+import Yaifl.Core.Print ( Has(..), MessageBuffer )
 import Yaifl.Core.WorldModel ( WMValues, WorldModel )
 import Yaifl.Core.Object (Object)
+import Yaifl.Core.AdaptiveNarrative
 
 data World (wm :: WorldModel) = World
   { metadata :: Metadata
@@ -21,6 +22,8 @@ data World (wm :: WorldModel) = World
   , actions :: WorldActions wm
   , activities :: ActivityCollector wm
   , messageBuffer :: MessageBuffer
+  , responses :: ResponseCollector wm
+  , adaptiveNarrative :: AdaptiveNarrative wm
   } deriving stock (Generic)
 
 data WorldStores (wm :: WorldModel) = WorldStores

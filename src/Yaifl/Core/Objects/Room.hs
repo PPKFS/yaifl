@@ -2,6 +2,7 @@
 
 module Yaifl.Core.Objects.Room
   ( isWestOf
+  , isSouthOf
   , getMapConnection
   ) where
 
@@ -16,8 +17,9 @@ import Yaifl.Core.Object (Room)
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.TH (makeDirections)
-import Yaifl.Core.WorldModel (WMDirection)
+import Yaifl.Core.WorldModel (WMDirection, WMSayable)
 import Breadcrumbs
+import Data.Text.Display
 
 hasSpecificConnectionTo ::
   WMStdDirections wm
@@ -64,6 +66,7 @@ addDirectionFrom ::
   => State Metadata :> es
   => Breadcrumbs :> es
   => WMStdDirections wm
+  => Display (WMSayable wm)
   => WMDirection wm
   -> Room wm
   -> Room wm
@@ -75,6 +78,7 @@ addDirectionFromOneWay ::
   => State Metadata :> es
   => Breadcrumbs :> es
   => WMStdDirections wm
+  => Display (WMSayable wm)
   => WMDirection wm
   -> Room wm
   -> Room wm
@@ -86,6 +90,7 @@ isDirectionFromInternal ::
   => Breadcrumbs :> es
   => WMStdDirections wm
   => ObjectQuery wm es
+  => Display (WMSayable wm)
   => Bool
   -> WMDirection wm
   -> Room wm
@@ -114,4 +119,4 @@ isDirectionFromInternal mkRev dir r1' r2' = withoutMissingObjects (do
       unless (isJust $ r1 ^? connectionLens opp) $ modifyRoom r1 (makeConnection Implicit dir r2)
     pass) (handleMissingObject "failed to make direction" ())
 
-makeDirections True ["West"]
+makeDirections True ["West", "South"]

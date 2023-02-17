@@ -15,24 +15,30 @@ import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Rulebooks.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
-import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction, ActivityCollector )
-import Yaifl.Core.Say ( Saying, sayLn )
-import Yaifl.Core.WorldModel ( WMDirection )
+import Yaifl.Core.Rulebooks.Rule ( ActionOptions(..), ActionHandler(..), parseAction, ActivityCollector, ResponseCollector, SayableValue )
+import Yaifl.Core.Print ( Print, printLn )
+import Yaifl.Core.WorldModel ( WMDirection, WMSayable )
 
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Breadcrumbs
 import Text.Interpolation.Nyan
+import Data.Text.Display
+import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative)
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
-  => Saying :> es
+  => Print :> es
   => ObjectLookup wm :> es
   => ObjectUpdate wm :> es
   => State Metadata :> es
   => State (ActivityCollector wm) :> es
   => ObjectTraverse wm :> es
+  => State (ResponseCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => Display (WMSayable wm)
+  => SayableValue (WMSayable wm) wm
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
   => Eff (ActionHandler wm : es) a
@@ -40,7 +46,7 @@ runActionHandlerAsWorldActions ::
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts t -> do
     -- print the prompt
-    unless (silently actionOpts) $ sayLn $ "> " <> t
+    unless (silently actionOpts) $ printLn $ "> " <> t
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of
@@ -81,11 +87,15 @@ findSubjects ::
   => ObjectUpdate wm :> es
   => State Metadata :> es
   => State (WorldActions wm) :> es
-  => Saying :> es
+  => Print :> es
   => ObjectLookup wm :> es
   => State (ActivityCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
   => ObjectTraverse wm :> es
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => State (ResponseCollector wm) :> es
+  => Display (WMSayable wm)
+  => SayableValue (WMSayable wm) wm
   => Breadcrumbs :> es
   => Text
   -> Action wm
@@ -125,7 +135,10 @@ tryAction ::
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
   => State (ActivityCollector wm) :> es
-  => Saying :> es
+  => State (ResponseCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => SayableValue (WMSayable wm) wm
+  => Print :> es
   => Action wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool

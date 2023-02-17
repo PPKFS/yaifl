@@ -7,6 +7,7 @@ module Yaifl (
   , HasStandardProperties
   , PlainWorldModel
   , ActivityCollection(..)
+  , Text'(..)
   , Game
   , runGame
   ) where
@@ -28,9 +29,8 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Rulebooks.ActionProcessing
-import Yaifl.Core.Rulebooks.Rule (ActionHandler, ActivityCollector(..))
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.WhenPlayBegins
-import Yaifl.Core.Say
 import Yaifl.Core.World
 import Yaifl.Core.WorldModel
 import Yaifl.Lamp.Actions.Going
@@ -39,7 +39,6 @@ import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.DescribingLocale
 import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Lamp.Activities.PrintingNameOfSomething as Activity
 import Yaifl.Lamp.ObjectSpecifics
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Door
@@ -49,8 +48,28 @@ import qualified Data.Map as DM
 import qualified Data.Text as T
 import Breadcrumbs
 import Text.Interpolation.Nyan
+import Yaifl.Core.Print
+import Yaifl.Lamp.Responses
+import Data.Text.Display
+import Data.Text.Lazy.Builder (fromText)
+import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
+import Yaifl.Lamp.Say
 
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection
+newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm Text))
+
+instance Display (Text' wm) where
+  displayBuilder (Text' (Left t)) = fromText t
+  displayBuilder (Text' (Right (n, _))) = fromText n
+
+instance IsString (Text' wm) where
+  fromString = Text' . Left . toText
+
+instance SayableValue (Text' wm) wm where
+  sayText (Text' (Left t)) = pure t
+  sayText (Text' (Right (_, RuleLimitedEffect e))) = inject e
+
+
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection Text'
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
@@ -62,13 +81,19 @@ type HasStandardProperties s = (
   , WMHasProperty s Door
   , HasDirectionalTerms s)
 
-blankWorld :: HasStandardProperties wm => (ActivityCollection wm -> ActivityCollector wm) -> World (wm :: WorldModel)
-blankWorld mkAcColl = World
+blankWorld ::
+  HasStandardProperties wm
+  => (ActivityCollection wm -> ActivityCollector wm)
+  -> (ResponseCollection wm -> ResponseCollector wm)
+  -> World (wm :: WorldModel)
+blankWorld mkAcColl mkRsColl = World
   { metadata = blankMetadata
   , stores = blankStores
   , actions = blankActions
   , messageBuffer = blankMessageBuffer
   , activities = mkAcColl blankActivityCollection
+  , responses = mkRsColl blankResponseCollection
+  , adaptiveNarrative = blankAdaptiveNarrative
   }
 
 blankActions :: HasProperty (WMObjSpecifics s) Enclosing => WorldActions s
@@ -116,6 +141,8 @@ blankMetadata = Metadata
 
 type EffStack wm = '[
   ActionHandler wm
+  , State (AdaptiveNarrative wm)
+  , State (ResponseCollector wm)
   , State (ActivityCollector wm)
   , ObjectTraverse wm
   , ObjectUpdate wm
@@ -124,7 +151,7 @@ type EffStack wm = '[
   , State Metadata
   , State (WorldActions wm)
   , ObjectCreation wm
-  , Saying
+  , Print
   , State (World wm)
   , Breadcrumbs
   , IOE
@@ -159,7 +186,7 @@ zoomState l = interpret $ \env -> \case
 
 convertToUnderlyingStack ::
   forall wm a.
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
   => TraceID
   -> World wm
   -> Eff (EffStack wm) a
@@ -168,7 +195,7 @@ convertToUnderlyingStack tId w =
   runEff
   . runBreadcrumbs (Just tId)
   . runStateShared w
-  . runSayPure @(World wm)
+  . runPrintPure @(World wm)
   . runCreationAsLookup
   . zoomState #actions
   . zoomState @(World wm) #metadata
@@ -176,6 +203,8 @@ convertToUnderlyingStack tId w =
   . runQueryAsLookup
   . runTraverseAsLookup
   . zoomState @(World wm) #activities
+  . zoomState @(World wm) #responses
+  . zoomState @(World wm) #adaptiveNarrative
   . runActionHandlerAsWorldActions
 
 -- TODO: there's probably a much nicer way to make these traverse lens nicely
@@ -256,7 +285,7 @@ updateIt newObj mbExisting = case mbExisting of
   Just _ -> Just newObj
 
 runGame ::
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
   => TraceID
   -> World wm
   -> Eff (EffStack wm) a

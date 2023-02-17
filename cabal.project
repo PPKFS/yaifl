@@ -8,6 +8,14 @@ source-repository-package
   subdir: full
   subdir: core
 
+source-repository-package
+  type: git
+  location: https://github.com/haskell-effectful/effectful.git
+  tag: efa513f51adcddd3ee37f8f8453b9f909ebef6b0
+  subdir: effectful-core
+  subdir: effectful-plugin
+  subdir: effectful-th
+  subdir: effectful
 packages:
   ./yaifl.cabal
   solitude/solitude.cabal

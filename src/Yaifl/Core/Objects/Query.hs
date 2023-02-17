@@ -51,8 +51,9 @@ import Yaifl.Core.Entity ( HasID(..), Entity)
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.ThingData
-import Yaifl.Core.WorldModel (WorldModel)
+import Yaifl.Core.WorldModel (WorldModel, WMSayable)
 import Breadcrumbs
+import Data.Text.Display
 
 data MissingObject = MissingObject
   { expected :: Text
@@ -105,7 +106,7 @@ makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
 
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
-type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es)
+type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es, Display (WMSayable wm))
 type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, WithMetadata es)
 type ObjectRead wm es = (ObjectLookup wm :> es, WithMetadata es)
 

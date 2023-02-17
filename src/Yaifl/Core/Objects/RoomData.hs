@@ -18,6 +18,7 @@ module Yaifl.Core.Objects.RoomData (
   , ContainingRegion(..)
   , Darkness(..)
   , RoomData(..)
+  , IsVisited(..)
   , blankRoomData
   ) where
 

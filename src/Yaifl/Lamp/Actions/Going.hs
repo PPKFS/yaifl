@@ -30,11 +30,11 @@ import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Say (say, sayLn)
-import Yaifl.Lamp.Activities.PrintingNameOfSomething ( printNameDefiniteUncapitalised, WithPrintingNameOfSomething )
+import Yaifl.Core.Print
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Text.Interpolation.Nyan
 import Effectful.Error.Static
+import Yaifl.Lamp.Say
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -182,9 +182,9 @@ standUpBeforeGoing = makeRule "stand up before going" $ \v -> do
   chaises <- ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
       whenM (isPlayer $ v ^. #source) $ do
-        say "(first getting off "
-        printNameDefiniteUncapitalised chaise
-        sayLn ")"
+        printText "(first getting off "
+        printName chaise
+        printLn ")"
       parseAction (ActionOptions True (Just $ v ^. #source)) "exit")
   if any isLeft res then return $ Just False else rulePass
 

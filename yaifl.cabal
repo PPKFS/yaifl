@@ -21,28 +21,23 @@ common common-options
   build-depends:
       base
     , solitude
-    , aeson
     , breadcrumbs
     , containers
-    , directory
-    , effectful
     , effectful-core
     , effectful-plugin
     , effectful-th
     , enummapset
     , formatting
-    , megaparsec
     , nyan-interpolation
     , optics-extra
     , prettyprinter
     , prettyprinter-ansi-terminal
-    , replace-megaparsec
     , template-haskell
     , text
     , text-display
-    , time
     , haskell-src-meta
     , haskell-src-exts
+
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
     -fhide-source-paths -Wno-unused-top-binds
@@ -73,7 +68,9 @@ library
     Yaifl.Core.Entity
     Yaifl.Core.Metadata
     Yaifl.Core.Object
-    Yaifl.Core.Say
+    Yaifl.Core.Print
+    Yaifl.Core.AdaptiveNarrative
+
     Yaifl.Core.WorldModel
 
     Yaifl.Core.Objects.Create
@@ -105,7 +102,9 @@ library
     Yaifl.Lamp.Properties.Container
     Yaifl.Lamp.Properties.Supporter
     Yaifl.Lamp.Properties.Door
+    Yaifl.Lamp.Properties.Animal
     Yaifl.Lamp.ObjectSpecifics
+    Yaifl.Lamp.Say
 
     Yaifl.Lamp.Actions.Going
     Yaifl.Lamp.Actions.Looking
@@ -113,9 +112,9 @@ library
     Yaifl.Lamp.Activities.DescribingLocale
     Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
     Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-    Yaifl.Lamp.Activities.PrintingNameOfSomething
 
     Yaifl.Lamp.Visibility
+    Yaifl.Lamp.Responses
 
 test-suite yaifl-test
   import:             common-options
@@ -127,7 +126,10 @@ test-suite yaifl-test
     , tasty-golden
     , exceptions
     , yaifl
+    , aeson
     , filepath
+    , directory
+    , time
     , pretty
     , Diff
     , bytestring
@@ -142,4 +144,5 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.Verbosity
+    Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Common
