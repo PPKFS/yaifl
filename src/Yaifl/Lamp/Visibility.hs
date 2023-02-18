@@ -33,7 +33,9 @@ type HasLookingProperties wm =
   , WithPrintingNameOfADarkRoom wm
   , WithDescribingLocale wm
   , WithPrintingDescriptionOfADarkRoom wm
-  , WithResponse wm "nameOfADarkRoomA")
+  , WithResponse wm "roomDescriptionHeadingA" ()
+  , WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
+  , WithResponse wm "roomDescriptionHeadingC" (AnyObject wm))
 
 data LookingActionVariables wm = LookingActionVariables
   { lookingFrom :: AnyObject wm

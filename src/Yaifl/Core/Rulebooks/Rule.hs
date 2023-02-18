@@ -107,7 +107,7 @@ data Rule wm v r = Rule
   , runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
 
-newtype Response wm = Response { runResponse :: forall es. (RuleEffects wm es) => Eff es () }
+newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff es Text }
 
 makeFieldLabelsNoPrefix ''Response
 

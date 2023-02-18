@@ -33,15 +33,18 @@ instance WithPrintingNameOfSomething wm => SayableValue (AnyObject wm) wm where
   say = printName
   sayText o = sayText $ o ^. #name
 
-type WithResponse wm (name :: Symbol) = LabelOptic' name A_Lens (WMResponses wm) (Response wm)
+type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) (Response wm v)
 
 sayResponse ::
-  forall wm es.
+  forall wm v es.
   RuleEffects wm es
-  => Lens' (WMResponses wm) (Response wm)
+  => Lens' (WMResponses wm) (Response wm v)
+  -> v
   -> Eff es ()
-sayResponse aL = do
-  join $ use @(ResponseCollector wm) $ #responseCollection % aL % #runResponse
+sayResponse aL v = do
+  Response t <- use @(ResponseCollector wm) $ #responseCollection % aL
+  r <- t v
+  say r
 
 type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) ())
 

@@ -4,19 +4,22 @@
 module Yaifl.Lamp.Responses where
 
 import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Print
+
 import Solitude
+import Yaifl.Core.Object
 
 
 data ResponseCollection wm = ResponseCollection
-  { nameOfADarkRoomA :: Response wm
-  , v :: ()
+  { roomDescriptionHeadingA :: Response wm ()
+  , roomDescriptionHeadingB :: Response wm (AnyObject wm)
+  , roomDescriptionHeadingC :: Response wm (AnyObject wm)
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ResponseCollection
 
 blankResponseCollection :: ResponseCollection wm
 blankResponseCollection = ResponseCollection
-  { nameOfADarkRoomA = Response $ printText "Darkness"
-  , v = ()
+  { roomDescriptionHeadingA = Response $ const $ pure "Darkness"
+  , roomDescriptionHeadingB = Response $ const $ pure "Darkness"
+  , roomDescriptionHeadingC = Response $ const $ pure "Darkness"
   }

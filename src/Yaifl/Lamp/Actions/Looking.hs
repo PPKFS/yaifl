@@ -21,7 +21,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.ThingData ( ThingData(..) )
-import Yaifl.Core.Print ( Print, setStyle, printText, printLn )
+import Yaifl.Core.Print ( Print, setStyle, printLn )
 import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook
@@ -63,12 +63,12 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking")
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
-
-
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm
   => WithDescribingLocale wm
-  => WithResponse wm "nameOfADarkRoomA"
+  => WithResponse wm "roomDescriptionHeadingA" ()
+  => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
+  => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
   => WithPrintingDescriptionOfADarkRoom wm
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
@@ -83,7 +83,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
           beginActivity #printingNameOfADarkRoom ()
           whenHandling' #printingNameOfADarkRoom $ do
             -- "Darkness"
-            sayResponse #nameOfADarkRoomA
+            sayResponse #roomDescriptionHeadingA ()
           endActivity #printingNameOfADarkRoom
           pass
         | (getID <$> visCeil) == Just (getID loc) -> do
@@ -138,17 +138,15 @@ foreachVisibilityHolder ::
   => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => WithPrintingNameOfSomething wm
+  => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
+  => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
   => AnyObject wm
   -> Eff es ()
 foreachVisibilityHolder e = do
-  {-
-  repeat with intermediate level count running from 2 to the visibility level count:     
-    if the intermediate level is a supporter or the intermediate level is an animal:         
-    say " (on [the intermediate level])" (B);     
-    otherwise:
-    say " (in [the intermediate level])" (C);
-  -}
   ifM (isSupporter e  ||^ isAnimal e )
-    (printText "(on ") (printText "(in ")
+    -- say " (on [the intermediate level])" (B);
+    (sayResponse #roomDescriptionHeadingB e)
+    -- say " (in [the intermediate level])" (C);    
+    (sayResponse #roomDescriptionHeadingC e)
   printName e
   say @Text ")"
