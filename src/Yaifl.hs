@@ -54,8 +54,9 @@ import Data.Text.Display
 import Data.Text.Lazy.Builder (fromText)
 import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
 import Yaifl.Lamp.Say
+import Effectful.Writer.Static.Local
 
-newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm Text))
+newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
 instance Display (Text' wm) where
   displayBuilder (Text' (Left t)) = fromText t
@@ -65,8 +66,8 @@ instance IsString (Text' wm) where
   fromString = Text' . Left . toText
 
 instance SayableValue (Text' wm) wm where
-  sayText (Text' (Left t)) = pure t
-  sayText (Text' (Right (_, RuleLimitedEffect e))) = inject e
+  sayTell (Text' (Left t)) = tell t
+  sayTell (Text' (Right (_, RuleLimitedEffect e))) = inject e
 
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection Text'

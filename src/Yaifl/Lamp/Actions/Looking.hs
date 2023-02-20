@@ -16,6 +16,7 @@ import Effectful.Optics ( use )
 
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
+import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Entity ( emptyStore, HasID(..) )
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object ( Object(..), AnyObject )
@@ -28,9 +29,9 @@ import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
 import Yaifl.Lamp.Properties.Animal
 import Yaifl.Lamp.Properties.Supporter ( isSupporter )
+import Yaifl.Lamp.Responses
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
-import Yaifl.Core.AdaptiveNarrative
 
 lookingAction ::
   HasLookingProperties wm

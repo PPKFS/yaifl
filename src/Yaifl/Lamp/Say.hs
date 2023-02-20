@@ -1,50 +1,65 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+
 module Yaifl.Lamp.Say where
 
-import Solitude
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Object
-import Yaifl.Core.Print
-import Yaifl.Core.WorldModel
-import Effectful.Optics (use)
-import GHC.TypeLits
-import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.AdaptiveNarrative
 import Data.Text.Display
-
-
---instance SayableValue wm ("our" :: Symbol) where
+import Solitude
+import Yaifl.Core.Actions.Activity
+import Yaifl.Core.AdaptiveNarrative
+import Yaifl.Core.Object
+import Yaifl.Core.Objects.Query
+import Yaifl.Core.Print
+import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.WorldModel
+import Data.Char (toUpper)
+import qualified Data.Text as T
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
-  sayText s = fromMaybe "" <$> traverse sayText s
+  sayTell s = fromMaybe () <$> traverse sayTell s
   say s = whenJust s say
 
 instance WithPrintingNameOfSomething wm => SayableValue (Room wm) wm where
   say = printName
-  sayText o = sayText $ o ^. #name
+  sayTell o = sayTell $ o ^. #name
 
 instance WithPrintingNameOfSomething wm => SayableValue (Thing wm) wm where
   say = printName
-  sayText o = sayText $ o ^. #name
+  sayTell o = sayTell $ o ^. #name
 
 instance WithPrintingNameOfSomething wm => SayableValue (AnyObject wm) wm where
   say = printName
-  sayText o = sayText $ o ^. #name
+  sayTell o = sayTell $ o ^. #name
 
-type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) (Response wm v)
+data SayingForm s =
+  The s -- [The foo]
+  | The_ s -- [the foo]
+  | A s -- [A foo]
+  | A_ s -- [a foo]
 
-sayResponse ::
-  forall wm v es.
-  RuleEffects wm es
-  => Lens' (WMResponses wm) (Response wm v)
-  -> v
-  -> Eff es ()
-sayResponse aL v = do
-  Response t <- use @(ResponseCollector wm) $ #responseCollection % aL
-  r <- t v
-  say r
+
+instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (SayingForm o) wm where
+  sayTell s = do
+    let (objLike, isDef, isCap) = getDetails s
+    (o :: AnyObject wm) <- getObject objLike
+    let articleEff
+          | isDef = (if o ^. #nameProperness == Proper
+              then pure ""
+              else pure "the"
+            )
+          | o ^. #namePlurality == PluralNamed = pure "some"
+          | Just x <- o ^. #indefiniteArticle = sayText x
+          | otherwise = pure "a"
+    article <- articleEff
+    sayTell (if isCap then maybe "" (uncurry T.cons) (bimapF toUpper id (T.uncons article)) else article)
+    when (article /= "") (sayTell @Text " ")
+    sayTell @(AnyObject wm) o
+    where
+      getDetails = \case
+        The a -> (a, True, True)
+        The_ a -> (a, True, False)
+        A a -> (a, False, True)
+        A_ a -> (a, False, False)
 
 type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) ())
 

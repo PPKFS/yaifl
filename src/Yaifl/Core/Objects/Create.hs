@@ -60,7 +60,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  let obj = Object n d e ty t specifics details
+  let obj = Object n Nothing Nothing SingularNamed Improper d e ty t specifics details
   return (e, obj)
 
 addObject ::

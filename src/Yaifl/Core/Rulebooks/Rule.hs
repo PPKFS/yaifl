@@ -12,7 +12,6 @@ module Yaifl.Core.Rulebooks.Rule
   , ActionHandler(..)
   , ActivityCollector(..)
   , ResponseCollector(..)
-  , Response(..)
   , RuleLimitedEffect(..)
   , ConcreteRuleStack
   , SayableValue(..)
@@ -24,6 +23,7 @@ module Yaifl.Core.Rulebooks.Rule
   , rulePass
   , ruleCondition
   , ruleCondition'
+  , sayText
   ) where
 
 import Solitude
@@ -41,6 +41,7 @@ import Yaifl.Core.Print ( Print, printText )
 import Yaifl.Core.WorldModel ( WMActivities, WMResponses, WMSayable )
 import Data.Text.Display
 import Yaifl.Core.AdaptiveNarrative
+import Effectful.Writer.Static.Local
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
@@ -90,15 +91,21 @@ type ConcreteRuleStack wm = '[
   ]
 
 class SayableValue s wm where
-  sayText :: RuleEffects wm es => s -> Eff es Text
+  sayTell :: RuleEffects wm es => s -> Eff (Writer Text : es) ()
   say :: RuleEffects wm es => s -> Eff es ()
   default say :: RuleEffects wm es => s -> Eff es ()
-  say s = sayText s >>= printText
+  say s = execWriter (sayTell s) >>= printText
 
 instance SayableValue Text wm where
-  sayText = pure
+  sayTell = tell
 
-newtype RuleLimitedEffect wm a = RuleLimitedEffect (Eff (ConcreteRuleStack wm) a)
+sayText ::
+  SayableValue s wm
+  => RuleEffects wm es
+  => s
+  -> Eff es Text
+sayText = execWriter . sayTell
+newtype RuleLimitedEffect wm es a = RuleLimitedEffect (Eff (es : ConcreteRuleStack wm) a)
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
@@ -106,10 +113,6 @@ data Rule wm v r = Rule
   { name :: Text
   , runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
-
-newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff es Text }
-
-makeFieldLabelsNoPrefix ''Response
 
 -- | A helper for rules which are not implemented and therefore blank.
 notImplementedRule ::

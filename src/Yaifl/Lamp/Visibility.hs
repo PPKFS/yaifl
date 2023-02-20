@@ -16,7 +16,6 @@ import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Rulebooks.Args
-import Yaifl.Lamp.Say
 import Yaifl.Lamp.Activities.DescribingLocale
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
@@ -24,6 +23,7 @@ import Yaifl.Lamp.Properties.Supporter
 import qualified Data.EnumSet as DES
 import Data.Text.Display
 import Yaifl.Core.WorldModel
+import Yaifl.Lamp.Responses
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =

@@ -57,7 +57,8 @@ actionName = view #name
 
 newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
--- | Helper function to make a rulebook of an action.
+-- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
+-- we ignore the span to avoid clutter and thread the arguments through.
 makeActionRulebook ::
   Text
   -> [Rule o (Args o v) Bool]

@@ -21,6 +21,8 @@ module Yaifl.Core.Object (
   , Thing
   , Room
   , AnyObject
+  , NamePlurality(..)
+  , NameProperness(..)
   -- ** Helpers
   , objectEquals
   , isType
@@ -68,9 +70,19 @@ isType o = isTypeInternal (objectType o)
           else
             anyM (`isTypeInternal` e') iv
 
+data NamePlurality = SingularNamed | PluralNamed
+  deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
+
+data NameProperness = Improper | Proper
+  deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
+
 -- | A game object.
 data Object wm objData = Object
   { name :: WMSayable wm
+  , pluralName :: Maybe (WMSayable wm)
+  , indefiniteArticle :: Maybe (WMSayable wm)
+  , namePlurality :: NamePlurality
+  , nameProperness :: NameProperness
   , description :: WMSayable wm
   , objectId :: Entity
   , objectType :: ObjectType
