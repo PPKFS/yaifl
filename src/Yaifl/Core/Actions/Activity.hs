@@ -32,12 +32,11 @@ import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
 import Yaifl.Core.WorldModel
 
+-- | A nicer wrapper around label optics for activities.
 type WithActivity (name :: Symbol) wm v r =
   LabelOptic' name A_Lens (WMActivities wm) (Activity wm v r)
 
-type WithPrintingNameOfADarkRoom wm =
-  ( WithActivity "printingNameOfADarkRoom" wm () ()
-  )
+type WithPrintingNameOfADarkRoom wm = (WithActivity "printingNameOfADarkRoom" wm () ())
 type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () ()
 
 data Activity wm v r = Activity

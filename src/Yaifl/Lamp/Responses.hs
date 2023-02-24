@@ -12,6 +12,7 @@ import Yaifl.Core.WorldModel
 import Effectful.Optics
 import GHC.TypeLits
 import Yaifl.Lamp.Say
+import Yaifl.Lamp.Interpolator
 
 newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 
@@ -21,6 +22,9 @@ data ResponseCollection wm = ResponseCollection
   { roomDescriptionHeadingA :: Response wm ()
   , roomDescriptionHeadingB :: Response wm (AnyObject wm)
   , roomDescriptionHeadingC :: Response wm (AnyObject wm)
+
+  , roomDescriptionBodyA :: Response wm ()
+
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ResponseCollection
@@ -40,8 +44,9 @@ type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses w
 
 blankResponseCollection :: WithPrintingNameOfSomething wm => ResponseCollection wm
 blankResponseCollection = ResponseCollection
-  { roomDescriptionHeadingA = Response $ const $ tell "Darkness"
+  { roomDescriptionHeadingA = Response $ const [sayingTell|Darkness|]
   , roomDescriptionHeadingB = Response $ \intermediateLevel -> do
+      [sayingTell|(on {The intermediateLevel})|]
       sayTell @Text "(on"
       sayTell $ The_ intermediateLevel
       sayTell @Text ")"
@@ -49,4 +54,13 @@ blankResponseCollection = ResponseCollection
       sayTell @Text "(in"
       sayTell $ The_ intermediateLevel
       sayTell @Text ")"
+  , roomDescriptionBodyA = Response $ const $ do
+      pass
+      {- sayTell It
+      sayTell $ Verb_ Be
+      sayTell "pitch dark, and "
+      sayTell We_
+      sayTell $ Can't_ (Verb_ See)
+      sayTell " a thing"
+      -}
   }

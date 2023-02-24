@@ -6,14 +6,10 @@ module Yaifl.Lamp.Actions.Looking
   ) where
 
 import Solitude
+
 import Breadcrumbs ( addTag )
-
-import qualified Data.Text as T
-import qualified Prettyprinter.Render.Terminal as PPTTY
 import Data.Text.Display ( display )
-
 import Effectful.Optics ( use )
-
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.AdaptiveNarrative
@@ -27,11 +23,14 @@ import Yaifl.Core.Rulebooks.Args
 import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook
 import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
+import Yaifl.Lamp.Interpolator
 import Yaifl.Lamp.Properties.Animal
 import Yaifl.Lamp.Properties.Supporter ( isSupporter )
 import Yaifl.Lamp.Responses
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
+import qualified Data.Text as T
+import qualified Prettyprinter.Render.Terminal as PPTTY
 
 lookingAction ::
   HasLookingProperties wm
@@ -61,7 +60,7 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
   loc <- getObject (source ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent source
-  return $ Right $ LookingActionVariables loc lightLevels (take lightLevels vl) "looking")
+  return $ Right $ LookingActionVariables loc (take lightLevels vl) "looking")
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
 carryOutLookingRules ::
@@ -70,29 +69,32 @@ carryOutLookingRules ::
   => WithResponse wm "roomDescriptionHeadingA" ()
   => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
   => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
+  => WithResponse wm "roomDescriptionBodyA" ()
   => WithPrintingDescriptionOfADarkRoom wm
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
   makeRule "room description heading rule"
     (\rb -> do
       setStyle (Just PPTTY.bold)
-      let (LookingActionVariables loc cnt lvls _) = variables rb
-          visCeil = viaNonEmpty last lvls
-      whenJust visCeil $ addTag "visibility ceiling" . display
-      if
-        | cnt == 0 -> do
+      let (LookingActionVariables loc lvls _) = variables rb
+          mbVisCeil = viaNonEmpty last lvls
+      whenJust mbVisCeil $ addTag "visibility ceiling" . display
+      case mbVisCeil of
+        -- vis count is 0
+        Nothing -> do
           beginActivity #printingNameOfADarkRoom ()
           whenHandling' #printingNameOfADarkRoom $ do
             -- "Darkness"
             sayResponse #roomDescriptionHeadingA ()
           endActivity #printingNameOfADarkRoom
-          pass
-        | (getID <$> visCeil) == Just (getID loc) -> do
-          addTag @Text "Ceiling is the location" ""
-          say visCeil
-        | True -> do
-          addTag @Text "Ceiling is not the location" ""
-          say @Text "The " >> say visCeil
+        Just visCeil ->
+          if getID visCeil == getID loc
+          then do
+            addTag @Text "Ceiling is the location" ""
+            [saying|{visCeil}|]
+          else do
+            addTag @Text "Ceiling is not the location" ""
+            [saying|{the visCeil}|]
       mapM_ foreachVisibilityHolder (drop 1 lvls)
       printLn "\n"
       setStyle Nothing
@@ -101,32 +103,37 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
 
   makeRule "room description body rule"
     (\rb -> do
-      let (LookingActionVariables loc cnt lvls ac) = variables rb
-          visCeil = viaNonEmpty last lvls
-      roomDesc <- use @Metadata @RoomDescriptions #roomDescriptions
-      dw <- use @Metadata @Bool #darknessWitnessed
+      let (LookingActionVariables loc lvls ac) = variables rb
+          mbVisCeil = viaNonEmpty last lvls
+      roomDesc <- use @Metadata #roomDescriptions
+      dw <- use @Metadata #darknessWitnessed
       addTag "darkness witnessed" dw
       addTag "room descriptions" roomDesc
       let abbrev = roomDesc == AbbreviatedRoomDescriptions
           someAbbrev = roomDesc == SometimesAbbreviatedRoomDescriptions
-      if
-        | cnt == 0 ->
+      case mbVisCeil of
+        -- vis count is 0
+        Nothing ->
           unless (abbrev || (someAbbrev && dw)) $ do
             beginActivity #printingDescriptionOfADarkRoom ()
-            -- HERE
             whenHandling' #printingDescriptionOfADarkRoom $ do
-              say @Text "Darkness"
+              --[regarding Nothing]
+              --[saying|nothing and then also {ss abbrev}|]
+              sayResponse #roomDescriptionBodyA ()
             endActivity #printingNameOfADarkRoom
-        | (getID <$> visCeil) == Just (getID loc) ->
-          unless (abbrev || (someAbbrev && ac /= "looking")) $ do
-            desc <- sayText $ description loc
-            when (display desc /= T.empty)
-              (printLn $ display desc)
-        | otherwise -> pass
+        Just visCeil ->
+          if getID visCeil == getID loc
+          then
+            unless (abbrev || (someAbbrev && ac /= "looking")) $ do
+              desc <- sayText $ description loc
+              when (display desc /= T.empty)
+                (printLn $ display desc)
+          else
+            pass
       return Nothing),
   makeRule "room description paragraphs about objects rule"
     (\rb -> do
-      let (LookingActionVariables _ _ lvls _) = variables rb
+      let (LookingActionVariables _ lvls _) = variables rb
       mapM_ (\o -> doActivity #describingLocale (LocaleVariables emptyStore o 0)) lvls
       return Nothing)
   ]

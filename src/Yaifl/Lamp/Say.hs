@@ -1,5 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Lamp.Say where
 
@@ -14,6 +16,8 @@ import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.WorldModel
 import Data.Char (toUpper)
 import qualified Data.Text as T
+import Yaifl.Core.Objects.RoomData
+import Yaifl.Core.Objects.ThingData
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -37,6 +41,15 @@ data SayingForm s =
   | A s -- [A foo]
   | A_ s -- [a foo]
 
+data SayType_The wm d = SayType_The (Object wm d)
+
+instance WithPrintingNameOfSomething wm => SayableValue (SayType_The wm (Either (ThingData) (RoomData wm))) wm where
+  say (SayType_The a) = say a
+  sayTell (SayType_The a) = sayTell a
+
+instance WithPrintingNameOfSomething wm => SayableValue (SayType_The wm (RoomData wm)) wm where
+  say (SayType_The a) = say a
+  sayTell (SayType_The a) = sayTell a
 
 instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (SayingForm o) wm where
   sayTell s = do

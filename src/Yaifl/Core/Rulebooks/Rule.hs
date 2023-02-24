@@ -1,8 +1,8 @@
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Core.Rulebooks.Rule
   ( RuleEffects
@@ -29,19 +29,18 @@ module Yaifl.Core.Rulebooks.Rule
 import Solitude
 
 import Breadcrumbs ( Breadcrumbs, ignoreSpan, addAnnotation )
+import Data.Text.Display
 import Effectful.Error.Static ( Error, throwError )
 import Effectful.TH ( makeEffect )
+import Effectful.Writer.Static.Local
 import Text.Interpolation.Nyan ( rmode', int )
-
+import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Object ( Thing )
-import Yaifl.Core.Objects.Query ( ObjectTraverse, NoMissingObjects, ObjectUpdate, ObjectLookup, MissingObject )
-import Yaifl.Core.Rulebooks.Args ( Refreshable )
+import Yaifl.Core.Objects.Query
 import Yaifl.Core.Print ( Print, printText )
+import Yaifl.Core.Rulebooks.Args ( Refreshable )
 import Yaifl.Core.WorldModel ( WMActivities, WMResponses, WMSayable )
-import Data.Text.Display
-import Yaifl.Core.AdaptiveNarrative
-import Effectful.Writer.Static.Local
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)

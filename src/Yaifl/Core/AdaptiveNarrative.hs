@@ -1,4 +1,6 @@
 module Yaifl.Core.AdaptiveNarrative where
+
+
 import Yaifl.Core.Object
 import Solitude
 import Effectful.Optics (use)

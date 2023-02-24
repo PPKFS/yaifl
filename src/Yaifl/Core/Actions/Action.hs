@@ -50,6 +50,7 @@ type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
 
 makeFieldLabelsNoPrefix ''Action
 
+-- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
 actionName ::
   Action wm
   -> Text
@@ -60,10 +61,10 @@ newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 -- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
 -- we ignore the span to avoid clutter and thread the arguments through.
 makeActionRulebook ::
-  Text
-  -> [Rule o (Args o v) Bool]
+  Text -- ^ the name of the rule.
+  -> [Rule o (Args o v) Bool] -- ^ the list of rules.
   -> ActionRulebook o v
-makeActionRulebook n = Rulebook n Nothing (ParseArguments $ \x -> ignoreSpan >> pure (Right x))
+makeActionRulebook n = Rulebook n Nothing (ParseArguments $ (ignoreSpan >>) . pure . Right)
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { actions :: !(Map Text (Either InterpretAs (Action wm)))

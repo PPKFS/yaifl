@@ -25,7 +25,7 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing )
-import Yaifl.Core.Rulebooks.Rule ( Rule(..), RuleEffects )
+import Yaifl.Core.Rulebooks.Rule
 import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Print
 import Yaifl.Lamp.Say
@@ -35,6 +35,7 @@ import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Lamp.Interpolator
 
 type WithDescribingLocale wm = (
   WithChoosingNotableLocaleObjects wm
@@ -128,6 +129,7 @@ alsoSee = Rule "You can also see" (\v ->
         | isASupporter || isAnAnimal -> sayDomain "On " dom
         | otherwise -> sayDomain "In " dom
       printText "can "
+      [saying|also ligma {The dom}|]
       when (p > 0) $ printText "also "
       printText "see "
       --I'm going to completely ignore what inform does here because trying to parse their

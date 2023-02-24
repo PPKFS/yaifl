@@ -28,7 +28,9 @@ common common-options
     , effectful-th
     , enummapset
     , formatting
+    , megaparsec
     , nyan-interpolation
+    , nyan-interpolation-core
     , optics-extra
     , prettyprinter
     , prettyprinter-ansi-terminal
@@ -104,6 +106,7 @@ library
     Yaifl.Lamp.Properties.Door
     Yaifl.Lamp.Properties.Animal
     Yaifl.Lamp.ObjectSpecifics
+    Yaifl.Lamp.Interpolator
     Yaifl.Lamp.Say
 
     Yaifl.Lamp.Actions.Going

@@ -35,18 +35,22 @@ type HasLookingProperties wm =
   , WithPrintingDescriptionOfADarkRoom wm
   , WithResponse wm "roomDescriptionHeadingA" ()
   , WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
-  , WithResponse wm "roomDescriptionHeadingC" (AnyObject wm))
+  , WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
+  , WithResponse wm "roomDescriptionBodyA" ())
 
 data LookingActionVariables wm = LookingActionVariables
   { lookingFrom :: AnyObject wm
-  -- The looking action has a number called the visibility level count.
-  , visibilityCount :: Int
   -- The looking action has an object called the visibility ceiling. (this is the last element).
   , visibilityLevels :: [AnyObject wm]
   -- The looking action has an action name called the room-describing action.
   , roomDescribingAction :: Text
   }
   deriving stock (Eq, Generic)
+
+visibilityCount ::
+  LookingActionVariables wm
+  -> Int
+visibilityCount = length . view #visibilityLevels
 
 instance Refreshable wm (LookingActionVariables wm) where
   refreshVariables av = do
