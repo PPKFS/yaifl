@@ -2,7 +2,7 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Rulebooks.ActionProcessing
+module Yaifl.Core.Rules.ActionProcessing
   ( actionProcessingRules
   ) where
 
@@ -11,9 +11,9 @@ import Solitude
 import Breadcrumbs
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook
-import Yaifl.Core.Rulebooks.Run
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook
+import Yaifl.Core.Rules.Run
 
 
 actionProcessingRules :: ActionProcessing wm

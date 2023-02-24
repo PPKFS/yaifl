@@ -19,18 +19,20 @@ import Yaifl.Core.Object ( Object(..), AnyObject )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.ThingData ( ThingData(..) )
 import Yaifl.Core.Print ( Print, setStyle, printLn )
-import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Rules.Args
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
-import Yaifl.Lamp.Interpolator
+import Yaifl.Core.SayQQ
 import Yaifl.Lamp.Properties.Animal
 import Yaifl.Lamp.Properties.Supporter ( isSupporter )
-import Yaifl.Lamp.Responses
+import Yaifl.Core.Responses
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Lamp.Locale
 
 lookingAction ::
   HasLookingProperties wm
@@ -94,7 +96,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             [saying|{visCeil}|]
           else do
             addTag @Text "Ceiling is not the location" ""
-            [saying|{the visCeil}|]
+            [saying|{The visCeil}|]
       mapM_ foreachVisibilityHolder (drop 1 lvls)
       printLn "\n"
       setStyle Nothing
@@ -139,12 +141,13 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
   ]
 
 foreachVisibilityHolder ::
-  (NoMissingObjects wm es, ActionHandler wm :> es)
-  => Print :> es
+  NoMissingObjects wm es
+  => ActionHandler wm :> es
   => ObjectTraverse wm :> es
+  => Print :> es
   => State (ActivityCollector wm) :> es
-  => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
+  => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
   => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
@@ -156,5 +159,3 @@ foreachVisibilityHolder e = do
     (sayResponse #roomDescriptionHeadingB e)
     -- say " (in [the intermediate level])" (C);    
     (sayResponse #roomDescriptionHeadingC e)
-  printName e
-  say @Text ")"

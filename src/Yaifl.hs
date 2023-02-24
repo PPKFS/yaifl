@@ -28,16 +28,15 @@ import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
-import Yaifl.Core.Rulebooks.ActionProcessing
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.WhenPlayBegins
+import Yaifl.Core.Rules.ActionProcessing
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.WhenPlayBegins
 import Yaifl.Core.World
 import Yaifl.Core.WorldModel
 import Yaifl.Lamp.Actions.Going
 import Yaifl.Lamp.Actions.Looking
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.DescribingLocale
-import Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom as Activity
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.ObjectSpecifics
 import Yaifl.Lamp.Properties.Container
@@ -49,12 +48,15 @@ import qualified Data.Text as T
 import Breadcrumbs
 import Text.Interpolation.Nyan
 import Yaifl.Core.Print
-import Yaifl.Lamp.Responses
+import Yaifl.Core.Responses
 import Data.Text.Display
 import Data.Text.Lazy.Builder (fromText)
 import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
 import Yaifl.Lamp.Say
 import Effectful.Writer.Static.Local
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Lamp.ResponseCollection
+import Yaifl.Lamp.Locale
 
 newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 

@@ -1,14 +1,19 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
-module Yaifl.Lamp.Interpolator (saying, sayingTell) where
-import Language.Haskell.TH.Quote
-import Language.Haskell.TH hiding (Type)
+{-# OPTIONS_GHC -Wno-missing-methods #-}
+
+module Yaifl.Core.SayQQ
+  ( saying
+  , sayingTell
+  ) where
+
 import Solitude
-import Yaifl.Core.Rulebooks.Rule
+
+import Language.Haskell.TH hiding (Type)
+import Language.Haskell.TH.Quote
+import Language.Haskell.TH.Syntax hiding (Type)
+
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
-import Language.Haskell.TH.Syntax hiding (Type)
-import GHC.TypeLits
-import Yaifl.Core.Object
 
 data SayingKind = Tell | Raw
 
@@ -40,7 +45,7 @@ compile :: forall sayKind. Lift (SayingPiece sayKind) => Proxy sayKind -> String
 compile _ s =
   case P.parse @Void @String @[SayingPiece sayKind] sayingParser "" s of
     Left  err -> fail (show err)
-    Right aat -> [e| sequence aat |]
+    Right aat -> [e| sequence_ aat |]
 
 instance Lift (SayingPiece 'Tell) where
   lift (TextLit t) = [e| sayTell t |]

@@ -3,8 +3,10 @@ module Yaifl.Core.Objects.Move
   ) where
 
 import Solitude
-import qualified Data.EnumSet as ES
 
+import Breadcrumbs
+import Data.Text.Display
+import Text.Interpolation.Nyan
 import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Metadata (tickGlobalTime, Metadata (..))
 import Yaifl.Core.Object
@@ -13,10 +15,8 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has (WMHasProperty)
 import Yaifl.Core.Properties.Query (getEnclosing, getPropertyOrThrow, setEnclosing)
-import Breadcrumbs
-import Text.Interpolation.Nyan
-import Data.Text.Display
 import Yaifl.Core.WorldModel
+import qualified Data.EnumSet as ES
 
 move ::
   Breadcrumbs :> es

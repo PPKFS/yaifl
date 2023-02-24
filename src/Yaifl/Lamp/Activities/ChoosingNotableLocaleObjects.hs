@@ -1,12 +1,3 @@
-{-|
-Module      : Yaifl.Activities.ChoosingNotableLocaleObjects
-Description : The activity for choosing notable objects in the locale.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 module Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
   ( choosingNotableLocaleObjectsImpl
   , WithChoosingNotableLocaleObjects
@@ -21,12 +12,13 @@ import Yaifl.Core.Objects.Query ( getObject )
 import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing )
-import Yaifl.Core.Rulebooks.Rule (makeRule)
+import Yaifl.Core.Rules.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Breadcrumbs
 import Text.Interpolation.Nyan
 import Data.Text.Display
+import Yaifl.Lamp.Locale
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm (AnyObject wm) (LocalePriorities wm))
 choosingNotableLocaleObjectsImpl ::
@@ -42,7 +34,7 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
       Just encl -> (do
         l <- mapM (\x -> do
           x' <- getObject x
-          addAnnotation $ "Found a " <> (display $ name x')
+          addAnnotation $ "Found a " <> display (name x')
           return x') (DES.toList (contents encl))
         return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))
   )]

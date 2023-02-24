@@ -1,12 +1,3 @@
-{-|
-Module      : Yaifl.ActivityCollection
-Description : A collection of the default activities.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 module Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout where
 
 import Solitude
@@ -15,8 +6,9 @@ import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query (getThingMaybe)
 import Yaifl.Core.Objects.ThingData
-import Yaifl.Core.Rulebooks.Rule ( Rule, makeRule )
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Core.Rules.Rule ( Rule, makeRule )
+import Yaifl.Core.Rules.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Lamp.Locale
 
 type WithPrintingLocaleParagraphAbout wm = WithActivity "printingLocaleParagraphAbout" wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 

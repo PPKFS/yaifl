@@ -27,14 +27,15 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.Room ( getMapConnection )
 import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Has ( WMHasProperty )
-import Yaifl.Core.Rulebooks.Args ( ArgSubject(..) )
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Rules.Args ( ArgSubject(..) )
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Print
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Text.Interpolation.Nyan
 import Effectful.Error.Static
 import Yaifl.Lamp.Say
+import Yaifl.Core.Rules.RuleEffects
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").

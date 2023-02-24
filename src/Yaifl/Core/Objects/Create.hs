@@ -17,21 +17,21 @@ module Yaifl.Core.Objects.Create
 
 import Solitude
 
+import Breadcrumbs
+import Data.Text.Display
 import Effectful.Optics ( (.=), use )
 import Effectful.TH ( makeEffect )
 
-import Yaifl.Core.Entity ( HasID(getID), Entity, voidID )
+import Yaifl.Core.Entity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Move ( move )
-import Yaifl.Core.Objects.Query ( ObjectUpdate, ObjectLookup, getThing, failHorriblyIfMissing )
+import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData ( RoomData, blankRoomData )
 import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.WorldModel ( WMObjSpecifics, WMSayable )
-import Breadcrumbs
-import Data.Text.Display
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
@@ -60,8 +60,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  let obj = Object n Nothing Nothing SingularNamed Improper d e ty t specifics details
-  return (e, obj)
+  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t specifics details)
 
 addObject ::
   WMHasProperty wm Enclosing
@@ -101,8 +100,9 @@ addThingInternal ::
   -> Maybe (WMObjSpecifics wm)
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
-addThingInternal name desc objtype specifics details = addObject addThing name desc objtype
-  True specifics (fromMaybe blankThingData details)
+addThingInternal name desc objtype specifics details =
+  addObject addThing name desc objtype
+    True specifics (fromMaybe blankThingData details)
 
 addThing' ::
   WMHasProperty wm Enclosing
@@ -129,7 +129,9 @@ addRoomInternal name desc objtype specifics details = do
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
   return e
 
-isVoid :: Entity -> Bool
+isVoid ::
+  Entity
+  -> Bool
 isVoid = (voidID ==)
 
 addRoom' ::

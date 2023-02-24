@@ -1,11 +1,3 @@
-{-|
-Module      : Yaifl.Core.Objects.RoomData
-Description : Properties that define a `Yaifl.Core.Object.Room`.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
--}
-
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Objects.RoomData (

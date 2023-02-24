@@ -1,4 +1,4 @@
-module Yaifl.Core.Rulebooks.WhenPlayBegins
+module Yaifl.Core.Rules.WhenPlayBegins
   ( whenPlayBeginsName
   , whenPlayBeginsRules
   , introText
@@ -16,9 +16,10 @@ import Yaifl.Core.Objects.Query ( NoMissingObjects, getCurrentPlayer )
 import Yaifl.Core.Print ( Print, printText, setStyle )
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
-import Yaifl.Core.Rulebooks.Rule ( makeRule', rulePass, ActionHandler, ActionOptions (..), parseAction )
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), noRulebookArguments )
-import Yaifl.Core.Rulebooks.Run ( failRuleWithError )
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook ( Rulebook(..), noRulebookArguments )
+import Yaifl.Core.Rules.Run ( failRuleWithError )
+import Yaifl.Core.Rules.RuleEffects
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

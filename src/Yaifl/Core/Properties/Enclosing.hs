@@ -1,15 +1,3 @@
-{-|
-Module      : Yaifl.Core.Properties.Enclosing
-Description : A component that holds things.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-
-This is in the core library because it is required (e.g. for location info, and for rooms).
-It is agnostic as to what is doing the containing, so rooms, containers, supporters, etc can all
-be queried in the same way.
--}
-
 {-# LANGUAGE StrictData #-}
 
 module Yaifl.Core.Properties.Enclosing (

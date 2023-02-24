@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Rulebooks.Args where
+module Yaifl.Core.Rules.Args where
 
 import Solitude
 

@@ -1,15 +1,3 @@
-{-|
-Module      : Yaifl.Core.Properties.Has
-Description : A typeclass for when a component has a specific property.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-
-This is mostly so we can have composite components (e.g. a `Yaifl.Core.Objects.ObjectData.RoomData` has an
-`Yaifl.Core.Properties.Enclosing`, but also a bunch of other stuff) as well as being generic over different
-components with common properties (any `Yaifl.Core.Properties.Enclosing` works, be it a room or a container).
--}
-
 {-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Core.Properties.Has (

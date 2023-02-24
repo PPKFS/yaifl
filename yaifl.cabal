@@ -90,13 +90,14 @@ library
     Yaifl.Core.Actions.Action
     Yaifl.Core.Actions.Activity
     Yaifl.Core.Actions.Parser
-
-    Yaifl.Core.Rulebooks.ActionProcessing
-    Yaifl.Core.Rulebooks.Args
-    Yaifl.Core.Rulebooks.Rule
-    Yaifl.Core.Rulebooks.Rulebook
-    Yaifl.Core.Rulebooks.Run
-    Yaifl.Core.Rulebooks.WhenPlayBegins
+    Yaifl.Core.Rules.RuleEffects
+    Yaifl.Core.Rules.ActionProcessing
+    Yaifl.Core.Rules.Args
+    Yaifl.Core.Rules.Rule
+    Yaifl.Core.Rules.Rulebook
+    Yaifl.Core.Rules.Run
+    Yaifl.Core.Rules.WhenPlayBegins
+    Yaifl.Core.SayQQ
 
     Yaifl.Core.World
 
@@ -106,18 +107,19 @@ library
     Yaifl.Lamp.Properties.Door
     Yaifl.Lamp.Properties.Animal
     Yaifl.Lamp.ObjectSpecifics
-    Yaifl.Lamp.Interpolator
+    Yaifl.Lamp.Locale
+
     Yaifl.Lamp.Say
+    Yaifl.Lamp.ResponseCollection
 
     Yaifl.Lamp.Actions.Going
     Yaifl.Lamp.Actions.Looking
     Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
     Yaifl.Lamp.Activities.DescribingLocale
-    Yaifl.Lamp.Activities.PrintingDescriptionOfADarkRoom
     Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 
     Yaifl.Lamp.Visibility
-    Yaifl.Lamp.Responses
+    Yaifl.Core.Responses
 
 test-suite yaifl-test
   import:             common-options

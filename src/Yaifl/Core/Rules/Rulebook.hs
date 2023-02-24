@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TupleSections #-}
 
-module Yaifl.Core.Rulebooks.Rulebook
+module Yaifl.Core.Rules.Rulebook
   ( -- * Types
     Args(..)
   , UnverifiedArgs(..)
@@ -26,8 +26,8 @@ import Solitude
 
 import Yaifl.Core.Metadata ( WithMetadata )
 import Yaifl.Core.Objects.Query ( NoMissingObjects )
-import Yaifl.Core.Rulebooks.Args
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rules.Args
+import Yaifl.Core.Rules.Rule
 import Breadcrumbs
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es)

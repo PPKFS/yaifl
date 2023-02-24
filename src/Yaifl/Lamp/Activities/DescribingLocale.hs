@@ -1,12 +1,3 @@
-{-|
-Module      : Yaifl.Actions.Action
-Description : An action is a verb that is carried out by the player (or an NPC).
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
 module Yaifl.Lamp.Activities.DescribingLocale
 ( describingLocaleImpl
 , WithDescribingLocale
@@ -25,8 +16,8 @@ import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
 import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Properties.Query ( getEnclosing )
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Print
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Properties.Container
@@ -35,7 +26,9 @@ import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Lamp.Interpolator
+import Yaifl.Core.SayQQ
+import Yaifl.Lamp.Locale
+import Yaifl.Core.Rules.RuleEffects
 
 type WithDescribingLocale wm = (
   WithChoosingNotableLocaleObjects wm

@@ -1,46 +1,24 @@
-{-# LANGUAGE UndecidableInstances #-}
+
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Lamp.Responses where
+module Yaifl.Lamp.ResponseCollection where
 
-import Yaifl.Core.Rulebooks.Rule
-
-import Solitude
+import Yaifl.Core.Responses
 import Yaifl.Core.Object
-import Effectful.Writer.Static.Local (tell, Writer, execWriter)
-import Yaifl.Core.WorldModel
-import Effectful.Optics
-import GHC.TypeLits
+import Solitude
 import Yaifl.Lamp.Say
-import Yaifl.Lamp.Interpolator
-
-newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
-
-makeFieldLabelsNoPrefix ''Response
+import Yaifl.Core.SayQQ
+import Yaifl.Core.Rules.RuleEffects
 
 data ResponseCollection wm = ResponseCollection
   { roomDescriptionHeadingA :: Response wm ()
   , roomDescriptionHeadingB :: Response wm (AnyObject wm)
   , roomDescriptionHeadingC :: Response wm (AnyObject wm)
-
   , roomDescriptionBodyA :: Response wm ()
-
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ResponseCollection
-
-sayResponse ::
-  forall wm v es.
-  RuleEffects wm es
-  => Lens' (WMResponses wm) (Response wm v)
-  -> v
-  -> Eff es ()
-sayResponse aL v = do
-  Response t <- use @(ResponseCollector wm) $ #responseCollection % aL
-  r <- execWriter $ t v
-  say r
-
-type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) (Response wm v)
 
 blankResponseCollection :: WithPrintingNameOfSomething wm => ResponseCollection wm
 blankResponseCollection = ResponseCollection

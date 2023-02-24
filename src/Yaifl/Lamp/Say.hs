@@ -12,12 +12,13 @@ import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Print
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rules.Rule
 import Yaifl.Core.WorldModel
 import Data.Char (toUpper)
 import qualified Data.Text as T
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Objects.ThingData
+import Yaifl.Core.Rules.RuleEffects
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s

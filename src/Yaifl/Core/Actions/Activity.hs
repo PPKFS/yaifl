@@ -3,9 +3,6 @@
 
 module Yaifl.Core.Actions.Activity
   ( Activity(..)
-  , LocaleInfo(..)
-  , LocalePriorities
-  , LocaleVariables(..)
   , WithActivity
   , WithPrintingDescriptionOfADarkRoom
   , WithPrintingNameOfADarkRoom
@@ -23,13 +20,12 @@ import Breadcrumbs ( withSpan )
 import Data.Text.Display
 import Effectful.Optics ( use )
 import GHC.TypeLits
-import Yaifl.Core.Entity ( Store )
-import Yaifl.Core.Object ( AnyObject )
 import Yaifl.Core.Objects.Query ( withoutMissingObjects, handleMissingObject, failHorriblyIfMissing )
-import Yaifl.Core.Rulebooks.Args ( Refreshable )
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), blankRulebook )
-import Yaifl.Core.Rulebooks.Run ( runRulebookAndReturnVariables )
+import Yaifl.Core.Rules.Args ( Refreshable )
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Rules.Rulebook ( Rulebook(..), blankRulebook )
+import Yaifl.Core.Rules.Run ( runRulebookAndReturnVariables )
 import Yaifl.Core.WorldModel
 
 -- | A nicer wrapper around label optics for activities.
@@ -48,34 +44,7 @@ data Activity wm v r = Activity
     , afterRules :: Rulebook wm v v ()
     } deriving stock (Generic)
 
--- | Some state we thread through printing out locale information.
-data LocaleVariables wm = LocaleVariables
-  { localePriorities :: LocalePriorities wm
-  , domain :: AnyObject wm
-  , paragraphCount :: Int
-  } deriving stock (Generic)
-
-instance Display (LocaleVariables wm) where
-  displayBuilder = const "locale variables"
-
--- | Locale priorities
-type LocalePriorities wm = Store (LocaleInfo wm)
-
-instance Display (LocalePriorities wm) where
-  displayBuilder = const "locale priorities"
-
-data LocaleInfo wm = LocaleInfo
-  { priority :: Int
-  , localeObject :: AnyObject wm
-  , isMentioned :: Bool
-  } deriving stock (Generic)
-
-instance Display (LocaleInfo wm) where
-  displayBuilder = const "locale info"
-
-makeFieldLabelsNoPrefix ''LocaleInfo
 makeFieldLabelsNoPrefix ''Activity
-makeFieldLabelsNoPrefix ''LocaleVariables
 
 type ActivityLens wm v r = Lens' (WMActivities wm) (Activity wm v r)
 
@@ -175,6 +144,3 @@ doActivity acL c = do
     _ <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) (maybe c fst mr)
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
     return $ snd =<< mr) (handleMissingObject "running an activity" Nothing)
-
-makeLenses ''LocaleVariables
-makeLenses ''LocaleInfo

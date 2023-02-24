@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Yaifl.Core.Rulebooks.Run
+module Yaifl.Core.Rules.Run
   ( runRulebook
   , runRulebookAndReturnVariables
   , failRuleWithError
@@ -12,10 +12,11 @@ import Breadcrumbs
 import Data.Text.Display ( Display, display )
 import Effectful.Error.Static ( runError )
 import Yaifl.Core.Metadata ( noteError )
-import Yaifl.Core.Rulebooks.Args ( Refreshable(..) )
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
+import Yaifl.Core.Rules.Args ( Refreshable(..) )
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
 import qualified Data.Text as T
+import Yaifl.Core.Rules.RuleEffects
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::

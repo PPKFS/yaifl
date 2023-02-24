@@ -1,11 +1,3 @@
-{-|
-Module      : Yaifl.Core.Objects.ThingData
-Description : Properties that define a `Yaifl.Core.Object.Thing`.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
--}
-
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 

@@ -4,7 +4,6 @@
 
 module Yaifl.Core.Actions.Action
   ( Action(..)
-  , ActionParseArguments
   , ActionRulebook
   , ActionProcessing(..)
   , InterpretAs(..)
@@ -19,16 +18,19 @@ import Solitude
 
 import Breadcrumbs
 import Effectful.Optics ( (?=), use )
-import Yaifl.Core.Rulebooks.Rule ( RuleEffects, Rule )
-import Yaifl.Core.Rulebooks.Rulebook
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.WorldModel ( WorldModel )
-
--- | The type of argument parsing for actions. The important part here is that we
--- parse to `v` rather than to `Args s v` to better move between rulebooks.
-type ActionParseArguments wm v = ParseArguments wm (UnverifiedArgs wm) v
+import Yaifl.Core.Rules.RuleEffects
 
 newtype ActionProcessing wm = ActionProcessing
-  (forall es. RuleEffects wm es => SpanID -> Action wm -> UnverifiedArgs wm -> Eff es (Maybe Bool))
+  (forall es.
+    RuleEffects wm es
+    => SpanID
+    -> Action wm
+    -> UnverifiedArgs wm
+    -> Eff es (Maybe Bool)
+  )
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
@@ -38,7 +40,7 @@ data Action (wm :: WorldModel) where
     { name :: Text
     , understandAs :: [Text]
     , matches :: [Text]
-    , parseArguments :: ActionParseArguments wm v
+    , parseArguments :: ParseArguments wm (UnverifiedArgs wm) v
     , beforeRules :: ActionRulebook wm v
     , checkRules :: ActionRulebook wm v
     , carryOutRules :: ActionRulebook wm v
