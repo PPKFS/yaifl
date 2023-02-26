@@ -3,7 +3,7 @@ module Yaifl.Core.AdaptiveNarrative where
 
 import Yaifl.Core.Object
 import Solitude
-import Effectful.Optics (use)
+import Effectful.Optics (use, (.=))
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Metadata
 import Breadcrumbs
@@ -32,6 +32,12 @@ blankAdaptiveNarrative = AdaptiveNarrative
   , tense = Present
   , priorNamedObject = Nothing
   }
+
+regarding ::
+  State (AdaptiveNarrative wm) :> es
+  => Maybe (AnyObject wm)
+  -> Eff es ()
+regarding mbObj = #priorNamedObject .= mbObj
 
 getMentioned ::
   State (AdaptiveNarrative wm) :> es

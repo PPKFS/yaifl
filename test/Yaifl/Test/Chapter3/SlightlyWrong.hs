@@ -8,7 +8,8 @@ import Yaifl.Test.Common
 import Solitude
 import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.AdaptiveNarrative
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Rules.Rule
 import Effectful.Writer.Static.Local
 
 awnN :: Text' wm

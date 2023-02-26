@@ -6,6 +6,7 @@ module Yaifl.Core.Actions.Activity
   , WithActivity
   , WithPrintingDescriptionOfADarkRoom
   , WithPrintingNameOfADarkRoom
+  , blankActivity
   , beginActivity
   , doActivity
   , endActivity
@@ -47,6 +48,11 @@ data Activity wm v r = Activity
 makeFieldLabelsNoPrefix ''Activity
 
 type ActivityLens wm v r = Lens' (WMActivities wm) (Activity wm v r)
+
+blankActivity ::
+  Text
+  -> Activity wm v r
+blankActivity n = makeActivity n []
 
 makeActivity ::
   Text

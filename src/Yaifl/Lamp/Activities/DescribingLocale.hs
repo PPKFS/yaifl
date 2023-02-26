@@ -122,7 +122,6 @@ alsoSee = Rule "You can also see" (\v ->
         | isASupporter || isAnAnimal -> sayDomain "On " dom
         | otherwise -> sayDomain "In " dom
       printText "can "
-      [saying|also ligma {The dom}|]
       when (p > 0) $ printText "also "
       printText "see "
       --I'm going to completely ignore what inform does here because trying to parse their

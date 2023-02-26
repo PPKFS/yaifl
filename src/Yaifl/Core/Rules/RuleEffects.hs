@@ -71,6 +71,9 @@ class SayableValue s wm where
 instance SayableValue Text wm where
   sayTell = tell
 
+instance SayableValue String wm where
+  sayTell = tell . toText
+
 sayText ::
   SayableValue s wm
   => RuleEffects wm es

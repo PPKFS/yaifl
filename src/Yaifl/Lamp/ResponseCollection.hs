@@ -10,6 +10,7 @@ import Solitude
 import Yaifl.Lamp.Say
 import Yaifl.Core.SayQQ
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Lamp.Actions.Looking
 
 data ResponseCollection wm = ResponseCollection
   { roomDescriptionHeadingA :: Response wm ()
@@ -22,16 +23,9 @@ makeFieldLabelsNoPrefix ''ResponseCollection
 
 blankResponseCollection :: WithPrintingNameOfSomething wm => ResponseCollection wm
 blankResponseCollection = ResponseCollection
-  { roomDescriptionHeadingA = Response $ const [sayingTell|Darkness|]
-  , roomDescriptionHeadingB = Response $ \intermediateLevel -> do
-      [sayingTell|(on {The intermediateLevel})|]
-      sayTell @Text "(on"
-      sayTell $ The_ intermediateLevel
-      sayTell @Text ")"
-  , roomDescriptionHeadingC = Response $ \intermediateLevel -> do
-      sayTell @Text "(in"
-      sayTell $ The_ intermediateLevel
-      sayTell @Text ")"
+  { roomDescriptionHeadingA = roomDescriptionHeadingAImpl
+  , roomDescriptionHeadingB = roomDescriptionHeadingBImpl
+  , roomDescriptionHeadingC = roomDescriptionHeadingCImpl
   , roomDescriptionBodyA = Response $ const $ do
       pass
       {- sayTell It

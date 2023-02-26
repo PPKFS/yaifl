@@ -10,13 +10,14 @@ import Yaifl
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Metadata
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
-import Yaifl.Core.Rulebooks.Run
-import Yaifl.Core.Rulebooks.WhenPlayBegins (introText)
+import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.Run
+import Yaifl.Core.Rules.WhenPlayBegins (introText)
+import Yaifl.Lamp.ResponseCollection
+import Yaifl.Core.Rules.RuleEffects
 
 import Yaifl.Core.World
 import qualified Data.Text as T
-import Yaifl.Lamp.Responses
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

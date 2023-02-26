@@ -3,6 +3,9 @@
 
 module Yaifl.Lamp.Actions.Looking
   ( lookingAction
+  , roomDescriptionHeadingAImpl
+  , roomDescriptionHeadingBImpl
+  , roomDescriptionHeadingCImpl
   ) where
 
 import Solitude
@@ -119,8 +122,8 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
           unless (abbrev || (someAbbrev && dw)) $ do
             beginActivity #printingDescriptionOfADarkRoom ()
             whenHandling' #printingDescriptionOfADarkRoom $ do
-              --[regarding Nothing]
-              --[saying|nothing and then also {ss abbrev}|]
+              regarding Nothing
+              [saying|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
               sayResponse #roomDescriptionBodyA ()
             endActivity #printingNameOfADarkRoom
         Just visCeil ->
@@ -159,3 +162,16 @@ foreachVisibilityHolder e = do
     (sayResponse #roomDescriptionHeadingB e)
     -- say " (in [the intermediate level])" (C);    
     (sayResponse #roomDescriptionHeadingC e)
+
+roomDescriptionHeadingAImpl :: Response wm ()
+roomDescriptionHeadingAImpl = Response $ const [sayingTell|Darkness|]
+
+roomDescriptionHeadingBImpl ::
+  WithPrintingNameOfSomething wm
+  => Response wm (AnyObject wm)
+roomDescriptionHeadingBImpl = Response $ \intermediateLevel -> [sayingTell|(on {the intermediateLevel})|]
+
+roomDescriptionHeadingCImpl ::
+  WithPrintingNameOfSomething wm
+  => Response wm (AnyObject wm)
+roomDescriptionHeadingCImpl = Response $ \intermediateLevel -> [sayingTell|(in {the intermediateLevel})|]

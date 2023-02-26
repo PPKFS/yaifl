@@ -1,7 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Yaifl.Lamp.Say where
 
@@ -16,8 +14,6 @@ import Yaifl.Core.Rules.Rule
 import Yaifl.Core.WorldModel
 import Data.Char (toUpper)
 import qualified Data.Text as T
-import Yaifl.Core.Objects.RoomData
-import Yaifl.Core.Objects.ThingData
 import Yaifl.Core.Rules.RuleEffects
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
@@ -42,15 +38,21 @@ data SayingForm s =
   | A s -- [A foo]
   | A_ s -- [a foo]
 
-data SayType_The wm d = SayType_The (Object wm d)
+type Verb = Text
+data SayArticleThe wm d = SayArticleThe Bool (Object wm d)
+newtype SayLiteralIt = SayLiteralIt Bool
+newtype SayLiteralAre = SayLiteralAre Bool
+newtype SayLiteralWe = SayLiteralWe Bool
+newtype SayVerbSee = SayVerbSee Bool
+data SayModalCan't = SayModalCan't Bool Verb
 
-instance WithPrintingNameOfSomething wm => SayableValue (SayType_The wm (Either (ThingData) (RoomData wm))) wm where
-  say (SayType_The a) = say a
-  sayTell (SayType_The a) = sayTell a
+instance
+  ( ObjectLike wm (Object wm o)
+  , WithPrintingNameOfSomething wm
+  ) => SayableValue (SayArticleThe wm o) wm where
+  say (SayArticleThe c a) = if c then say (The a) else say (The_ a)
+  sayTell (SayArticleThe c a) = if c then sayTell (The a) else sayTell (The_ a)
 
-instance WithPrintingNameOfSomething wm => SayableValue (SayType_The wm (RoomData wm)) wm where
-  say (SayType_The a) = say a
-  sayTell (SayType_The a) = sayTell a
 
 instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (SayingForm o) wm where
   sayTell s = do

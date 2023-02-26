@@ -5,9 +5,10 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Create
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rulebooks.Rule
+import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Print
 import Yaifl.Core.World
+import Yaifl.Core.Rules.Rule
 import Yaifl.Test.Common
 import qualified Data.Text as T
 import Solitude
