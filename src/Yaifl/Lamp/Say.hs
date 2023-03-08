@@ -15,6 +15,7 @@ import Yaifl.Core.WorldModel
 import Data.Char (toUpper)
 import qualified Data.Text as T
 import Yaifl.Core.Rules.RuleEffects
+import GHC.TypeLits
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -38,20 +39,33 @@ data SayingForm s =
   | A s -- [A foo]
   | A_ s -- [a foo]
 
-type Verb = Text
-data SayArticleThe wm d = SayArticleThe Bool (Object wm d)
-newtype SayLiteralIt = SayLiteralIt Bool
-newtype SayLiteralAre = SayLiteralAre Bool
-newtype SayLiteralWe = SayLiteralWe Bool
-newtype SayVerbSee = SayVerbSee Bool
-data SayModalCan't = SayModalCan't Bool Verb
+class ConjugatableVerb (v :: Symbol) where
+  toVerb :: Proxy v -> Verb
+
+data Verb = Verb
+  {
+
+  }
+data SayArticle (article :: Symbol) wm d = SayArticle Bool (Object wm d)
+data SayModal (modal :: Symbol) (verb :: Symbol) = SayModal Bool Bool
+newtype SayModalVerb (modal :: Symbol) = SayModalVerb Bool
+newtype SayLiteral (lit :: Symbol) = SayLiteral Bool
+
+instance (
+  SayableValue (SayLiteral verb) wm
+  , SayableValue (SayModalVerb modal) wm)
+  => SayableValue (SayModal modal verb) wm where
+  sayTell (SayModal modalCap verbCap) = do
+    sayTell $ SayModalVerb @modal modalCap
+    sayTell @Text " "
+    sayTell $ SayLiteral @verb verbCap
 
 instance
   ( ObjectLike wm (Object wm o)
   , WithPrintingNameOfSomething wm
-  ) => SayableValue (SayArticleThe wm o) wm where
-  say (SayArticleThe c a) = if c then say (The a) else say (The_ a)
-  sayTell (SayArticleThe c a) = if c then sayTell (The a) else sayTell (The_ a)
+  ) => SayableValue (SayArticle "the" wm o) wm where
+  say (SayArticle c a) = if c then say (The a) else say (The_ a)
+  sayTell (SayArticle c a) = if c then sayTell (The a) else sayTell (The_ a)
 
 
 instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (SayingForm o) wm where

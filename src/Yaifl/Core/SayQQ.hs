@@ -8,7 +8,7 @@ module Yaifl.Core.SayQQ
 
 import Solitude
 
-import Data.Char (isUpper, toUpper)
+import Data.Char (isUpper, toUpper, toLower)
 import Language.Haskell.TH hiding (Type)
 import Language.Haskell.TH.Quote
 import Language.Haskell.TH.Syntax hiding (Type)
@@ -18,11 +18,13 @@ import qualified Text.Megaparsec.Char as P
 
 data SayingKind = Tell | Raw
 
+class Verb v where
+
 data SayingPiece (sayKind :: SayingKind) =
   RegularText Text -- ^ some literal text
   | Sayable Text -- ^ something sayable directly (a binding); {foo}
   | SayLiteral Text -- ^ SayLit_Foo; #{foo}
-  | SayModal Text Text -- ^ SayModal_Foo; #{modal foo}
+  | SayModal Text Text-- ^ SayModal_Foo; #{modal foo}
   | SayRegarding Text -- ^ SayRegarding_Foo; #{regarding foo}
   | SayArticle Text Text -- ^ SayArticle_Foo; {article foo}
   | SayAdapt Text Text -- ^ SayAdapt_Foo; #{adapt foo for tense/person bar}
@@ -54,10 +56,10 @@ compile _ s =
     Right aat -> [e| sequence_ aat |]
 
 instance Lift (SayingPiece 'Tell) where
-  lift = liftSayingWithMethod "sayTell"
+  lift = pure . liftSayingWithMethod "sayTell"
 
 instance Lift (SayingPiece 'Raw) where
-  lift = liftSayingWithMethod "say"
+  lift = pure . liftSayingWithMethod "say"
 
 makeCapitalised ::
   String
@@ -68,23 +70,81 @@ makeCapitalised prefix t =
     then AppE (ConE $ mkName $ prefix <> toString t) (ConE $ mkName "True")
     else AppE (ConE $ mkName $ prefix <> toString (t & _head %~ toUpper)) (ConE $ mkName "False")
 
+uncapitaliseString ::
+  Text
+  -> String
+uncapitaliseString = toString . (_head %~ toLower)
+
+isCapitalised ::
+  Text
+  -> String
+isCapitalised = show . isUpper . T.head
+
+methodVarE ::
+  String
+  -> Exp
+methodVarE method = VarE $ mkName method
+
 liftSayingWithMethod ::
-  Applicative f
-  => String
+  String
   -> SayingPiece sayKind
-  -> f Exp
-liftSayingWithMethod method (RegularText t) = pure $ AppE (AppTypeE (VarE $ mkName method) (ConT $ mkName "String")) (LitE $ StringL $ toString t)
-liftSayingWithMethod method (SayLiteral t) = pure $ AppE (VarE $ mkName method) (makeCapitalised "SayLiteral" t)
-liftSayingWithMethod method (Sayable t) = pure $ AppE (VarE $ mkName method) (VarE $ mkName $ toString t)
+  -> Exp
+liftSayingWithMethod method (RegularText t) =
+  AppE
+    (AppTypeE
+      (methodVarE method)
+      (ConT $ mkName "Text")
+    ) -- say or sayTell @Text
+    (LitE $ StringL $ toString t)
+
+liftSayingWithMethod method (SayLiteral t) =
+  AppE
+    (methodVarE method) -- say or sayTell
+    (AppE
+      (AppTypeE
+        (ConE $ mkName "SayLiteral")
+        (LitT $ StrTyLit $ uncapitaliseString t) -- SayLiteral @"foo"
+      )
+      (ConE $ mkName $ isCapitalised t) -- Capitalised?
+    )
+
+liftSayingWithMethod method (Sayable t) =
+  AppE
+    (methodVarE method)
+    (VarE $ mkName $ toString t)
+
 liftSayingWithMethod method (SayArticle pref t) =
-  let tyName = makeCapitalised "SayArticle" pref
-  in pure $ AppE (VarE $ mkName method) (AppE tyName (VarE $ mkName $ toString t))
+  AppE
+    (methodVarE method)
+    (AppE
+      (AppE
+        (AppTypeE
+          (ConE $ mkName "SayArticle")
+          (LitT $ StrTyLit $ uncapitaliseString pref) -- SayArticle @"foo"
+        )
+        (ConE $ mkName $ isCapitalised t) -- Capitalised?
+      )
+      (VarE $ mkName $ toString t)
+    )
 liftSayingWithMethod method (SayModal modal t) =
-  let tyName = makeCapitalised "SayModal" modal
-      modalledVerb = makeCapitalised "SayVerb" t
-      in pure $ AppE (VarE $ mkName method) (AppE tyName modalledVerb)
+  AppE
+    (methodVarE method)
+    (AppE
+      (AppE
+        (AppTypeE
+          (AppTypeE
+            (ConE $ mkName "SayModal")
+            (LitT $ StrTyLit $ uncapitaliseString modal) -- SayArticle @"foo"
+          )
+          (LitT $ StrTyLit $ uncapitaliseString t)
+        )
+        (ConE $ mkName $ isCapitalised modal) -- Capitalised?
+      )
+      (ConE $ mkName $ isCapitalised t)
+    )
 liftSayingWithMethod method (SayRegarding reg) = error "todo regarding"
 liftSayingWithMethod method (SayAdapt adaptTo t) = error "todo adapt to"
+
 
 sayingParser :: P.Parsec Void String [SayingPiece a]
 sayingParser = many piece <* P.eof where

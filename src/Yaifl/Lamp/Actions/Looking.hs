@@ -136,6 +136,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
           else
             pass
       return Nothing),
+
   makeRule "room description paragraphs about objects rule"
     (\rb -> do
       let (LookingActionVariables _ lvls _) = variables rb
