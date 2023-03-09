@@ -7,6 +7,7 @@ import Effectful.Optics (use, (.=))
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Metadata
 import Breadcrumbs
+import Yaifl.Core.Rules.Args (getPlayer)
 
 data NarrativeViewpoint =
   FirstPersonSingular
@@ -20,7 +21,7 @@ data Tense = Present | Past | Perfect | PastPerfect | Future
 
 data AdaptiveNarrative wm = AdaptiveNarrative
   { narrativeViewpoint :: NarrativeViewpoint
-  , adaptiveTextViewpoint :: NarrativeViewpoint
+  --, adaptiveTextViewpoint :: NarrativeViewpoint
   , tense :: Tense
   , priorNamedObject :: Maybe (AnyObject wm)
   } deriving stock (Generic)
@@ -28,7 +29,7 @@ data AdaptiveNarrative wm = AdaptiveNarrative
 blankAdaptiveNarrative :: AdaptiveNarrative wm
 blankAdaptiveNarrative = AdaptiveNarrative
   { narrativeViewpoint = SecondPersonSingular
-  , adaptiveTextViewpoint = FirstPersonPlural
+  --, adaptiveTextViewpoint = FirstPersonPlural
   , tense = Present
   , priorNamedObject = Nothing
   }
@@ -38,6 +39,15 @@ regarding ::
   => Maybe (AnyObject wm)
   -> Eff es ()
 regarding mbObj = #priorNamedObject .= mbObj
+
+regardingThePlayer ::
+  forall wm es.
+  State (AdaptiveNarrative wm) :> es
+  => NoMissingObjects wm es
+  => Eff es ()
+regardingThePlayer = do
+  p <- getPlayer @wm
+  regarding $ Just $ toAny p
 
 getMentioned ::
   State (AdaptiveNarrative wm) :> es

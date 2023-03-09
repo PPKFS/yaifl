@@ -16,6 +16,8 @@ import Data.Char (toUpper)
 import qualified Data.Text as T
 import Yaifl.Core.Rules.RuleEffects
 import GHC.TypeLits
+import Effectful.Optics (use)
+import Effectful.Writer.Static.Local (Writer, tell)
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -46,10 +48,22 @@ data Verb = Verb
   {
 
   }
+
 data SayArticle (article :: Symbol) wm d = SayArticle Bool (Object wm d)
 data SayModal (modal :: Symbol) (verb :: Symbol) = SayModal Bool Bool
 newtype SayModalVerb (modal :: Symbol) = SayModalVerb Bool
 newtype SayLiteral (lit :: Symbol) = SayLiteral Bool
+
+instance {-# OVERLAPPABLE #-} (TypeError
+  ('Text "Cannot conjugate the verb 'to " ':<>: 'ShowType a ':<>:
+    'Text "'; perhaps you are missing a SayableValue (SayLiteral " ':<>:
+    'ShowType a ':<>: 'Text ") instance if this is not a verb?")) => ConjugatableVerb a where
+  toVerb :: Proxy a -> Verb
+  toVerb = error "impossible"
+
+instance {-# OVERLAPS #-} ConjugatableVerb v => SayableValue (SayLiteral v) wm where
+  sayTell (SayLiteral True) = sayTell @Text "Are"
+  sayTell (SayLiteral False) = sayTell @Text "are"
 
 instance (
   SayableValue (SayLiteral verb) wm
@@ -59,6 +73,29 @@ instance (
     sayTell $ SayModalVerb @modal modalCap
     sayTell @Text " "
     sayTell $ SayLiteral @verb verbCap
+
+withCapitalisation ::
+  Bool
+  -> Text
+  -> Eff (Writer Text : es) ()
+withCapitalisation False t = tell t
+withCapitalisation True t = tell $ t & _head  %~ toUpper
+
+instance SayableValue (SayLiteral "we") wm where
+  sayTell (SayLiteral cap) = do
+    regardingThePlayer
+    nv <- use @(AdaptiveNarrative wm) #narrativeViewpoint
+    playerPronoun <- getPlayerPronoun
+    withCapitalisation cap $ case nv of
+      FirstPersonSingular -> "I"
+      SecondPersonSingular -> "you"
+      ThirdPersonSingular -> playerPronoun
+      FirstPersonPlural -> "we"
+      SecondPersonPlural -> "you"
+      ThirdPersonPlural -> "they"
+
+getPlayerPronoun :: Eff es Text
+getPlayerPronoun = pure "they"
 
 instance
   ( ObjectLike wm (Object wm o)
