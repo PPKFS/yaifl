@@ -14,8 +14,9 @@ import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Object ( Thing )
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Print ( Print, printText )
+import Yaifl.Core.Print ( Print, printText, printLn )
 import Yaifl.Core.WorldModel ( WMActivities, WMResponses, WMSayable )
+import qualified Data.Text as T
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
@@ -80,3 +81,13 @@ sayText ::
   => s
   -> Eff es Text
 sayText = execWriter . sayTell
+
+sayLn ::
+  SayableValue s wm
+  => RuleEffects wm es
+  => s
+  -> Eff es ()
+sayLn s = do
+  t <- sayText s
+  when (display t /= T.empty)
+    (printLn $ display t)

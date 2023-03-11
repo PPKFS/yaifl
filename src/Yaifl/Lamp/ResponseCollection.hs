@@ -8,8 +8,6 @@ import Yaifl.Core.Responses
 import Yaifl.Core.Object
 import Solitude
 import Yaifl.Lamp.Say
-import Yaifl.Core.SayQQ
-import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Lamp.Actions.Looking
 
 data ResponseCollection wm = ResponseCollection
@@ -26,13 +24,5 @@ blankResponseCollection = ResponseCollection
   { roomDescriptionHeadingA = roomDescriptionHeadingAImpl
   , roomDescriptionHeadingB = roomDescriptionHeadingBImpl
   , roomDescriptionHeadingC = roomDescriptionHeadingCImpl
-  , roomDescriptionBodyA = Response $ const $ do
-      pass
-      {- sayTell It
-      sayTell $ Verb_ Be
-      sayTell "pitch dark, and "
-      sayTell We_
-      sayTell $ Can't_ (Verb_ See)
-      sayTell " a thing"
-      -}
+  , roomDescriptionBodyA = roomDescriptionBodyAImpl
   }

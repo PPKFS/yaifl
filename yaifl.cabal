@@ -110,6 +110,7 @@ library
     Yaifl.Lamp.Locale
 
     Yaifl.Lamp.Say
+    Yaifl.Lamp.Verb
     Yaifl.Lamp.ResponseCollection
 
     Yaifl.Lamp.Actions.Going
@@ -137,6 +138,8 @@ test-suite yaifl-test
     , time
     , pretty
     , Diff
+    , tagged
+    , optparse-applicative
     , bytestring
     , solitude
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N

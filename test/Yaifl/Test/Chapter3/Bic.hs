@@ -34,10 +34,3 @@ ex2World = do
           printLn " has no description.")
         return Nothing)
       return Nothing
-
-ex2Test :: [Text]
-ex2Test =
-  [ expectLooking "The Staff Break Room" ""
-  , expectYouCanSee ["a Bic pen", "a orange", "a napkin"]
-  , expectLine "Bic pen has no description."
-  ]

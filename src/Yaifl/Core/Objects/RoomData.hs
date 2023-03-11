@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Core.Objects.RoomData (
@@ -76,3 +77,5 @@ deriving stock instance (Eq (WMDirection wm)) => Eq (RoomData wm)
 -- | A default for a room.
 blankRoomData :: RoomData wm
 blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
+
+makeFieldLabelsNoPrefix ''RoomData

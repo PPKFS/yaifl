@@ -29,10 +29,14 @@ import Yaifl.Core.Rules.RuleEffects
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (Eff (es : ConcreteRuleStack wm) a)
 
+newtype Precondition wm v = Precondition
+  { checkPrecondition :: forall es. RuleEffects wm es => v -> Eff es Bool }
+
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
 data Rule wm v r = Rule
   { name :: Text
+  --, preconditions :: Maybe [Precondition wm v]
   , runRule :: forall es. (RuleEffects wm es, Error RuleCondition :> es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
   }
 
@@ -52,7 +56,7 @@ makeRule ::
   -> Rule wm v r
 makeRule n f = Rule n (fmap (Nothing, ) . f)
 
--- | Make a rule that does has no arguments. this is more convenient to avoid \() ->...
+-- | Make a rule that has no arguments. this is more convenient to avoid \() ->...
 makeRule' ::
   Text -- ^ Rule name.
   -> (forall es. (RuleEffects wm es, Error RuleCondition :> es) => Eff es (Maybe r)) -- ^ Rule function.

@@ -26,7 +26,6 @@ import qualified Data.EnumMap.Strict as DEM
 import qualified Data.EnumSet as DES
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Core.SayQQ
 import Yaifl.Lamp.Locale
 import Yaifl.Core.Rules.RuleEffects
 

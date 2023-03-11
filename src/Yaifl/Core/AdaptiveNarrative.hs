@@ -9,18 +9,28 @@ import Yaifl.Core.Metadata
 import Breadcrumbs
 import Yaifl.Core.Rules.Args (getPlayer)
 
-data NarrativeViewpoint =
+data VerbPersonage =
   FirstPersonSingular
   | FirstPersonPlural
   | SecondPersonSingular
   | SecondPersonPlural
   | ThirdPersonPlural
   | ThirdPersonSingular
-
+  deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
+{-
+let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };
+	let tenses be {past tense, present tense, future tense, perfect tense, past perfect tense};
+	repeat with the p running through views:
+		repeat with the t running through tenses:
+			now the story viewpoint is p;
+			now the story tense is t;
+			say "[p] [t] - [We] [negate the verb see] / [We] [eat] [line break]";
+-}
 data Tense = Present | Past | Perfect | PastPerfect | Future
+  deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
 data AdaptiveNarrative wm = AdaptiveNarrative
-  { narrativeViewpoint :: NarrativeViewpoint
+  { narrativeViewpoint :: VerbPersonage
   --, adaptiveTextViewpoint :: NarrativeViewpoint
   , tense :: Tense
   , priorNamedObject :: Maybe (AnyObject wm)
@@ -67,3 +77,17 @@ getMentionedRoom = do
   case r of
     Nothing -> error "The last mentioned object was expected to be a room, but it was not"
     Just x -> pure x
+
+getPersonageOfObject ::
+  forall wm es.
+  State Metadata :> es
+  => State (AdaptiveNarrative wm) :> es
+  => Eff es VerbPersonage
+getPersonageOfObject = do
+  o <- getMentioned
+  case o of
+    Nothing -> pure ThirdPersonSingular
+    Just someObj -> do
+      ifM (isPlayer someObj)
+        (use @(AdaptiveNarrative wm) #narrativeViewpoint)
+        (pure $ if someObj ^. #namePlurality == PluralNamed then ThirdPersonPlural else ThirdPersonSingular)

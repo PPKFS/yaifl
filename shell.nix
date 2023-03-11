@@ -8,6 +8,7 @@ in
       cabal-install
       unstable.ghc
       binutils
+      delta
       zlib
       zlib.dev
       zlib.out

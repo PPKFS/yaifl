@@ -18,6 +18,8 @@ import Yaifl.Core.Rules.RuleEffects
 import GHC.TypeLits
 import Effectful.Optics (use)
 import Effectful.Writer.Static.Local (Writer, tell)
+import Yaifl.Lamp.Verb
+import Yaifl.Core.Metadata
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -41,25 +43,11 @@ data SayingForm s =
   | A s -- [A foo]
   | A_ s -- [a foo]
 
-class ConjugatableVerb (v :: Symbol) where
-  toVerb :: Proxy v -> Verb
-
-data Verb = Verb
-  {
-
-  }
 
 data SayArticle (article :: Symbol) wm d = SayArticle Bool (Object wm d)
 data SayModal (modal :: Symbol) (verb :: Symbol) = SayModal Bool Bool
 newtype SayModalVerb (modal :: Symbol) = SayModalVerb Bool
 newtype SayLiteral (lit :: Symbol) = SayLiteral Bool
-
-instance {-# OVERLAPPABLE #-} (TypeError
-  ('Text "Cannot conjugate the verb 'to " ':<>: 'ShowType a ':<>:
-    'Text "'; perhaps you are missing a SayableValue (SayLiteral " ':<>:
-    'ShowType a ':<>: 'Text ") instance if this is not a verb?")) => ConjugatableVerb a where
-  toVerb :: Proxy a -> Verb
-  toVerb = error "impossible"
 
 instance {-# OVERLAPS #-} ConjugatableVerb v => SayableValue (SayLiteral v) wm where
   sayTell (SayLiteral True) = sayTell @Text "Are"
@@ -81,6 +69,27 @@ withCapitalisation ::
 withCapitalisation False t = tell t
 withCapitalisation True t = tell $ t & _head  %~ toUpper
 
+conjugateVerb ::
+  forall wm es.
+  State Metadata :> es
+  => State (AdaptiveNarrative wm) :> es
+  => VerbSense
+  -> Verb
+  -> Eff es Text
+conjugateVerb sense (Verb conjugationTable) = do
+    --VerbSense -> Voice -> Tense -> VerbPersonage -> Text
+    personage <- getPersonageOfObject
+    t <- use @(AdaptiveNarrative wm) #tense
+    pure $
+      conjugationTable
+        sense
+        Active -- we never actually need Passive, I think.
+        t
+        personage
+
+instance SayableValue (SayModalVerb "can't") wm where
+  sayTell (SayModalVerb cap) = withCapitalisation cap $ "can't"
+
 instance SayableValue (SayLiteral "we") wm where
   sayTell (SayLiteral cap) = do
     regardingThePlayer
@@ -93,6 +102,21 @@ instance SayableValue (SayLiteral "we") wm where
       FirstPersonPlural -> "we"
       SecondPersonPlural -> "you"
       ThirdPersonPlural -> "they"
+
+instance SayableValue (SayLiteral "it") wm where
+  sayTell (SayLiteral cap) = do
+    regarding Nothing
+    withCapitalisation cap "it"
+
+instance SayableValue (SayLiteral "see") wm where
+  sayTell (SayLiteral cap) = do
+    v <- conjugateVerb Positive $ makeVerb "see"
+    withCapitalisation cap v
+
+instance SayableValue (SayLiteral "are") wm where
+  sayTell (SayLiteral cap) = do
+    v <- conjugateVerb Positive $ makeVerb "are"
+    withCapitalisation cap v
 
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"

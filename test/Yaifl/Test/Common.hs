@@ -10,21 +10,22 @@ import Yaifl
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Metadata
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.Run
-import Yaifl.Core.Rules.WhenPlayBegins (introText)
 import Yaifl.Lamp.ResponseCollection
 import Yaifl.Core.Rules.RuleEffects
 
 import Yaifl.Core.World
 import qualified Data.Text as T
+import Yaifl.Core.AdaptiveNarrative
+import Yaifl.Core.Print
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
   notSupported _ = fail "Quotation in this context is not supported"
 
 wrappedText :: QuasiQuoter
-wrappedText = expQQ (return . LitE . StringL . toString . T.strip . newlinesToWrap . unindent . tabsToSpaces . toText)
+wrappedText = expQQ
+  (return . LitE . StringL . toString . T.strip . newlinesToWrap . unindent . tabsToSpaces . toText)
 
 lineIndent :: Text -> Int
 lineIndent = T.length . T.takeWhile (== ' ')
@@ -55,9 +56,6 @@ newlinesToWrap = foldl' (\acc -> \case
   "" -> acc <> "\n" <> (if fmap snd (unsnoc acc) == Just '\n' then "" else "\n")
   x -> acc <> x) "" . lines
 
-force :: NFData a => a -> a
-force a = deepseq a a
-
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
   , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
@@ -70,68 +68,51 @@ testHarness ::
   forall wm a.
   HasStandardProperties wm
   => HasCallStack
-  => Text
+  => Bool
+  -> Text
   -> [Text]
   -> ConstructionOptions wm
   -> Game wm a
   -> IO Text
-testHarness fullTitle actionsToDo conOptions initWorld = do
+testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
   tId <- readTraceId
-  (_, !w2 :: World wm) <- runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) $ do
-      withSpan' "test run" fullTitle $ do
+  fst <$$> runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) $ do
+      output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
           initWorld
         --withSpan "world verification" fullTitle $ do
-        withSpan' "run" fullTitle $ do
-          wa <- get @(WorldActions wm)
-          --when I write a proper game loop, this is where it needs to go
-          failHorriblyIfMissing (runRulebook Nothing (wa ^. #whenPlayBegins) ())
-          mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
+        let runWorld suffix = do
+              withSpan' ("run " <> suffix) fullTitle $ do
+                wa <- get @(WorldActions wm)
+                unless (suffix == "") $ printLn suffix
+                --when I write a proper game loop, this is where it needs to go
+                failHorriblyIfMissing (runRulebook Nothing (wa ^. #whenPlayBegins) ())
+                mapM_ (parseAction (ActionOptions False Nothing)) actionsToDo
+                (w2 :: World wm) <- get
+                let (x, _) = runPureEff $ runStateShared w2 $ do
+                      -- take it down and flip it around
+                      msgList <- gets (view $ #messageBuffer % #buffer % reversed)
+                      return $ (mconcat . map show) msgList
+                pure $ case w2 ^. #metadata % #errorLog of
+                  [] -> x <> "\n"
+                  xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
+        w <- get
+        if allTenses
+          then do
+            mconcat <$> sequence [ (do
+              put (updateNarrative x y w)
+              runWorld ("Tense: " <> show y <> " | Viewpoint: " <> show x)) | x <- universe, y <- universe ]
+          else runWorld ""
       flush
-    --  print rs
-  let flushBufferToText w' = runPureEff $ runStateShared w' $ do
-          -- take it down and flip it around
-          msgList <- gets (view $ #messageBuffer % #buffer % reversed)
-          return $ (mconcat . map show) msgList
-  let (x, _) = flushBufferToText w2
-      amendedOutput = case w2 ^. #metadata % #errorLog of
-        [] -> x
-        xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
-      {-(LB logs) = w2 ^. worldLogs
-      finalisedLogs = reverse $ map (\(txts, ts, _, ms, txt) ->
-        let cxt' = (let f = T.intercalate "|" (filter (/= T.empty) txts) in if T.empty == f then "" else "<"<>f<>">")
-            logTy = case ms of
-              Info -> "[Info]"
-              Debug -> "[Debug]"
-              Warning -> "[Warn]"
-              Error -> "[Error]"
-        in
-        show ts <> logTy <> cxt' <> txt
-        ) logs
-  writeFile (toString $ "test/logs/" <> fullTitle) (toString $ unlines finalisedLogs)-}
+      pure output
 
-  pure amendedOutput
+updateNarrative ::
+  VerbPersonage
+  -> Tense
+  -> World wm
+  -> World wm
+updateNarrative p t w = w & #adaptiveNarrative % #narrativeViewpoint .~ p & #adaptiveNarrative % #tense .~ t
 
 readTraceId :: IO TraceID
 readTraceId = TraceID <$> readFileBS "traceid.temp"
-
-expectLine :: Text -> Text
-expectLine t1 = t1 <> "\n"
-
-expectTitle :: Text -> Text
-expectTitle = introText
-
-expectYouCanSee :: [Text] -> Text
-expectYouCanSee t1 = expectLine ("You can see " <> listThings t1 <> " here.\n")
-
-listThings :: [Text] -> Text
-listThings t1 = mconcat $ zipWith (\x v -> x <> (if v < length t1 - 1 then ", " else "") <>
-                (if v == length t1 - 2 then "and " else "")) t1 [0..]
-
-expectLooking :: Text -> Text -> Text
-expectLooking t "" = expectLine t <> expectLine ""
-expectLooking t d = expectLine t <> expectLine "" <> expectLine d
-
-expectAction :: Text -> Text
-expectAction a = expectLine $ "> " <> a <> "\n"

@@ -8,8 +8,8 @@ import Solitude
 import Effectful.Optics
 import Yaifl.Core.Entity ( HasID(..), Entity )
 import Yaifl.Core.Metadata ( Timestamp, currentPlayer )
-import Yaifl.Core.Object ( Thing )
-import Yaifl.Core.Objects.Query (NoMissingObjects, getThing)
+import Yaifl.Core.Object ( Thing, Room )
+import Yaifl.Core.Objects.Query (NoMissingObjects, getThing, getLocation)
 import Yaifl.Core.WorldModel
 import Data.Text.Display
 
@@ -75,6 +75,12 @@ getPlayer ::
   NoMissingObjects wm es
   => Eff es (Thing wm)
 getPlayer = use #currentPlayer >>= getThing
+
+getActorLocation ::
+  NoMissingObjects wm es
+  => Args wm v
+  -> Eff es (Room wm)
+getActorLocation args = getLocation $ source args
 
 -- | No Arguments, player source.
 playerNoArgs ::
