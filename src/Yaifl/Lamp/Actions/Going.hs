@@ -156,20 +156,20 @@ checkGoingRules = [
   ]
 
 cantGoThroughClosedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughClosedDoors = makeRule "stand up before going" $ \_v -> do
+cantGoThroughClosedDoors = makeRule "stand up before going" [] $ \_v -> do
   return Nothing
 
 cantGoThroughUndescribedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughUndescribedDoors = makeRule "stand up before going" $ \_v -> do
+cantGoThroughUndescribedDoors = makeRule "stand up before going" [] $ \_v -> do
   return Nothing
 
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -> do
+cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \v -> do
   nonVehicle <- getObject $ v ^. #source % #objectData % #containedBy
   let vehcGoneBy = v ^. #variables % gavVehicleGoneBy
       roomGoneFrom = v ^. #variables % gavRoomFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
-  ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
+  error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
     _outAction <- ifM (nonVehicle `isType` "supporter") (pure ("off" :: String)) (pure "out of")
    -- let dir = "[We] [would have] to get off [the nonvehicle] first."
@@ -179,15 +179,15 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" $ \v -
 standUpBeforeGoing ::
   WithPrintingNameOfSomething wm
   => Rule wm (Args wm (GoingActionVariables wm)) Bool
-standUpBeforeGoing = makeRule "stand up before going" $ \v -> do
-  chaises <- ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
+standUpBeforeGoing = makeRule "stand up before going" [] $ \v -> do error ""
+  {-chaises <- error ""--ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
       whenM (isPlayer $ v ^. #source) $ do
         printText "(first getting off "
         printName chaise
         printLn ")"
       parseAction (ActionOptions True (Just $ v ^. #source)) "exit")
-  if any isLeft res then return $ Just False else rulePass
+  if any isLeft res then return $ Just False else rulePass-}
 
 getContainingHierarchy ::
   NoMissingObjects wm es

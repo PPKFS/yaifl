@@ -30,7 +30,7 @@ printingLocaleParagraphAboutImpl = Activity "Printing a locale paragraph about s
   (blankRulebook "After printing a locale paragraph")
 
 dontMentionUndescribed :: Rule wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
-dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule"
+dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule" []
         (\(v, LocaleInfo _ e _) -> do
           asThing <- getThingMaybe e
           let isDesc = asThing ^? _Just % #objectData % #described

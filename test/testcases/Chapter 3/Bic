@@ -1,329 +1,419 @@
-Tense: Present | Viewpoint: FirstPersonSingular
------------------
------- Bic ------
------------------
+---------------
+----- Bic -----
+---------------
 
-The Staff Break Room
-
-You can see a Bic pen, an orange, and a napkin here.
+Tense: past tense | Viewpoint: first person singular
 
 Bic pen has no description.
 
-Tense: Past | Viewpoint: FirstPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+I could see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Perfect | Viewpoint: FirstPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: present tense | Viewpoint: first person singular
 
 Bic pen has no description.
 
-Tense: PastPerfect | Viewpoint: FirstPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+I can see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Future | Viewpoint: FirstPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: future tense | Viewpoint: first person singular
 
 Bic pen has no description.
 
-Tense: Present | Viewpoint: FirstPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+I will be able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Past | Viewpoint: FirstPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: perfect tense | Viewpoint: first person singular
 
 Bic pen has no description.
 
-Tense: Perfect | Viewpoint: FirstPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+I have been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: PastPerfect | Viewpoint: FirstPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: past perfect tense | Viewpoint: first person singular
 
 Bic pen has no description.
 
-Tense: Future | Viewpoint: FirstPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+I had been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Present | Viewpoint: SecondPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: past tense | Viewpoint: first person plural
 
 Bic pen has no description.
 
-Tense: Past | Viewpoint: SecondPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+We could see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Perfect | Viewpoint: SecondPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: present tense | Viewpoint: first person plural
 
 Bic pen has no description.
 
-Tense: PastPerfect | Viewpoint: SecondPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+We can see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Future | Viewpoint: SecondPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: future tense | Viewpoint: first person plural
 
 Bic pen has no description.
 
-Tense: Present | Viewpoint: SecondPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+We will be able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Past | Viewpoint: SecondPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: perfect tense | Viewpoint: first person plural
 
 Bic pen has no description.
 
-Tense: Perfect | Viewpoint: SecondPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+We have been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: PastPerfect | Viewpoint: SecondPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: past perfect tense | Viewpoint: first person plural
 
 Bic pen has no description.
 
-Tense: Future | Viewpoint: SecondPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+We had been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Present | Viewpoint: ThirdPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: past tense | Viewpoint: second person singular
 
 Bic pen has no description.
 
-Tense: Past | Viewpoint: ThirdPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+You could see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Perfect | Viewpoint: ThirdPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: present tense | Viewpoint: second person singular
 
 Bic pen has no description.
 
-Tense: PastPerfect | Viewpoint: ThirdPersonPlural
------------------
------- Bic ------
------------------
+Staff Break Room
+You can see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Future | Viewpoint: ThirdPersonPlural
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: future tense | Viewpoint: second person singular
 
 Bic pen has no description.
 
-Tense: Present | Viewpoint: ThirdPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+You will be able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: Past | Viewpoint: ThirdPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: perfect tense | Viewpoint: second person singular
 
 Bic pen has no description.
 
-Tense: Perfect | Viewpoint: ThirdPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+You have been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
 
-Bic pen has no description.
-
-Tense: PastPerfect | Viewpoint: ThirdPersonSingular
------------------
------- Bic ------
------------------
-
-The Staff Break Room
-
-You can see Bic pen, orange, and napkin here.
+Tense: past perfect tense | Viewpoint: second person singular
 
 Bic pen has no description.
 
-Tense: Future | Viewpoint: ThirdPersonSingular
------------------
------- Bic ------
------------------
+Staff Break Room
+You had been able to see an orange, a Bic pen and a napkin here.
 
-The Staff Break Room
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
 
-You can see Bic pen, orange, and napkin here.
+---------------
+----- Bic -----
+---------------
+
+Tense: past tense | Viewpoint: second person plural
 
 Bic pen has no description.
+
+Staff Break Room
+You could see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: present tense | Viewpoint: second person plural
+
+Bic pen has no description.
+
+Staff Break Room
+You can see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: future tense | Viewpoint: second person plural
+
+Bic pen has no description.
+
+Staff Break Room
+You will be able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: perfect tense | Viewpoint: second person plural
+
+Bic pen has no description.
+
+Staff Break Room
+You have been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: past perfect tense | Viewpoint: second person plural
+
+Bic pen has no description.
+
+Staff Break Room
+You had been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: past tense | Viewpoint: third person singular
+
+Bic pen has no description.
+
+Staff Break Room
+He could see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: present tense | Viewpoint: third person singular
+
+Bic pen has no description.
+
+Staff Break Room
+He can see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: future tense | Viewpoint: third person singular
+
+Bic pen has no description.
+
+Staff Break Room
+He will be able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: perfect tense | Viewpoint: third person singular
+
+Bic pen has no description.
+
+Staff Break Room
+He has been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: past perfect tense | Viewpoint: third person singular
+
+Bic pen has no description.
+
+Staff Break Room
+He had been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: past tense | Viewpoint: third person plural
+
+Bic pen has no description.
+
+Staff Break Room
+They could see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It was a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: present tense | Viewpoint: third person plural
+
+Bic pen has no description.
+
+Staff Break Room
+They can see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: future tense | Viewpoint: third person plural
+
+Bic pen has no description.
+
+Staff Break Room
+They will be able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'll be a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: perfect tense | Viewpoint: third person plural
+
+Bic pen has no description.
+
+Staff Break Room
+They have been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It's been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice.
+
+---------------
+----- Bic -----
+---------------
+
+Tense: past perfect tense | Viewpoint: third person plural
+
+Bic pen has no description.
+
+Staff Break Room
+They had been able to see an orange, a Bic pen and a napkin here.
+
+>examine orange
+It'd been a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice

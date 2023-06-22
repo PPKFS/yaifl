@@ -19,7 +19,7 @@ import Yaifl.Core.Actions.Activity
 import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Entity ( emptyStore, HasID(..) )
 import Yaifl.Core.Metadata
-import Yaifl.Core.Object ( Object(..), AnyObject )
+import Yaifl.Core.Object ( Object(..), AnyObject, Thing )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.RoomData (IsVisited(..))
 import Yaifl.Core.Objects.ThingData ( ThingData(..) )
@@ -79,7 +79,7 @@ carryOutLookingRules ::
   => WithPrintingDescriptionOfADarkRoom wm
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
-  makeRule "room description heading rule"
+  makeRule "room description heading rule" forPlayer'
     (\rb -> do
       -- say bold type;
       setStyle (Just PPTTY.bold)
@@ -118,7 +118,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
       --TODO: "run paragraph on with special look spacing"?
       return Nothing),
 
-  makeRule "room description body rule"
+  makeRule "room description body rule" forPlayer'
     (\rb -> do
       let (LookingActionVariables _ lvls ac) = variables rb
           mbVisCeil = viaNonEmpty last lvls
@@ -162,11 +162,13 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
   -- because I've ignored all the junk about marked for listing or w/e, and we can do nice clean loops
   -- 19 lines down to 2. lol.
   -- it is a very long-winded way to iterate through the visibility levels and describe the locale at each level.
-  makeRule "room description paragraphs about objects rule"
+  -- the actual meat is
+  -- describe locale for the intermediate position;
+  makeRule "room description paragraphs about objects rule" forPlayer'
     (\rb -> mapM_ (\o -> doActivity #describingLocale (LocaleVariables emptyStore o 0)) (visibilityLevels . variables $ rb) >>
       return Nothing),
 
-  makeRule "check new arrival rule"
+  makeRule "check new arrival rule" forPlayer'
     (\rb -> do
       let (LookingActionVariables _ lvls _) = variables rb
           mbVisCeil = viaNonEmpty last lvls
@@ -220,3 +222,6 @@ roomDescriptionHeadingCImpl = Response $ \intermediateLevel -> [sayingTell|(in {
 
 roomDescriptionBodyAImpl :: Response wm ()
 roomDescriptionBodyAImpl = Response $ const [saying|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
+
+otherPeopleLookingAImpl :: Response wm (Thing wm)
+otherPeopleLookingAImpl = Response $ \actor -> [saying|{The actor} #{look} around.|]

@@ -10,7 +10,6 @@ import Solitude
 
 import Breadcrumbs
 import Data.Text.Display ( Display, display )
-import Effectful.Error.Static ( runError )
 import Yaifl.Core.Metadata ( noteError )
 import Yaifl.Core.Rules.Args ( Refreshable(..) )
 import Yaifl.Core.Rules.Rule
@@ -69,12 +68,12 @@ processRuleList ::
   -> Eff es (v, Maybe re)
 processRuleList _ [] v = return (v, Nothing)
 processRuleList rbSpan (Rule{..} : xs) args = do
-  mbRes <- (if T.null name then id else withSpan' "rule" name) $ runError @RuleCondition $ runRule args
+  mbRes <- (if T.null name then id else withSpan' "rule" name) $ do
+    reqsMet <- checkPreconditions args preconditions
+    if reqsMet then Right <$> runRule args else pure (Left ())
   case mbRes of
     -- we failed the precondition
-    Left _ -> do
-      addAnnotationToSpan rbSpan $ "Failed precondition for rule " <> name
-      pure (args, Nothing)
+    Left _ ->  pure (args, Nothing)
     Right (v, res) -> do
       whenJust v (\v' -> addAnnotationTo (Just rbSpan) $ "Updated rulebook variables to " <> display v')
       newArgs <- refreshVariables $ fromMaybe args v
@@ -84,8 +83,8 @@ processRuleList rbSpan (Rule{..} : xs) args = do
           addAnnotationTo (Just rbSpan) $ "Finished rulebook with result " <> display r
           return (newArgs, Just r)
 
-  -- if we hit nothing, continue; otherwise return
-
+checkPreconditions :: RuleEffects wm es => v -> [Precondition wm v] -> Eff es Bool
+checkPreconditions v = allM (\p -> inject $ p `checkPrecondition` v)
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.
@@ -93,4 +92,4 @@ failRuleWithError ::
   Breadcrumbs :> es
   => Text -- ^ Error message.
   -> Eff es (Maybe Bool)
-failRuleWithError t = addAnnotation t >> return (Just False)
+failRuleWithError = const (return (Just False)) <=< addAnnotation

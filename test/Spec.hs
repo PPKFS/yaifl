@@ -80,7 +80,7 @@ goldenTests = do
   return $ askOption $ \(AllTenses a) ->
     testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
       k -- test name
-      (\ref new -> ["delta", ref, new])
+      (\ref new -> ["diff", ref, new])
       ("test/testcases/" <> k) -- golden file path
       (encodeUtf8 <$> v))  -- action whose result is tested
       (allExamples a)

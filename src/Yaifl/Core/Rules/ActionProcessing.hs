@@ -33,6 +33,7 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   , notImplementedRule "investigate player awareness rule"
   , notImplementedRule "check stage rule"
   , Rule "carry out stage rule"
+      []
         ( \v -> do
           ignoreSpan
           r <- runRulebookAndReturnVariables (Just aSpan) carryOutRules v

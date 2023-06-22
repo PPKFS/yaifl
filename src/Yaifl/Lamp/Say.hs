@@ -18,7 +18,7 @@ import Yaifl.Core.Rules.RuleEffects
 import GHC.TypeLits
 import Effectful.Optics (use)
 import Effectful.Writer.Static.Local (Writer, tell)
-import Yaifl.Lamp.Verb
+import Yaifl.Core.Verb
 import Yaifl.Core.Metadata
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
@@ -82,8 +82,8 @@ conjugateVerb sense (Verb conjugationTable) = do
     t <- use @(AdaptiveNarrative wm) #tense
     pure $
       conjugationTable
-        sense
         Active -- we never actually need Passive, I think.
+        sense
         t
         personage
 
@@ -172,6 +172,6 @@ printName o = do
 
 printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
-    [makeRule "" (\o -> do
+    [makeRule "" [] (\o -> do
       t <- sayText $ o ^. #name
       printText t >> return (Just ())) ]

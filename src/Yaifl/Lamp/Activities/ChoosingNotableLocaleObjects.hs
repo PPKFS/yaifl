@@ -24,7 +24,7 @@ type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleO
 choosingNotableLocaleObjectsImpl ::
   WMHasProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
-choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" [makeRule ""
+choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" [makeRule "" []
   (\v -> do
     e' <- getEnclosing v
     case e' of

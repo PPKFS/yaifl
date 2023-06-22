@@ -33,8 +33,6 @@ makeFieldLabelsNoPrefix ''ActivityCollector
 makeFieldLabelsNoPrefix ''ResponseCollector
 makeEffect ''ActionHandler
 
-data RuleCondition = RuleCondition
-
 type RuleEffects wm es = (
   State Metadata :> es
   , State (ActivityCollector wm) :> es

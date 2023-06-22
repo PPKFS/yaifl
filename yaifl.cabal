@@ -110,7 +110,7 @@ library
     Yaifl.Lamp.Locale
 
     Yaifl.Lamp.Say
-    Yaifl.Lamp.Verb
+    Yaifl.Core.Verb
     Yaifl.Lamp.ResponseCollection
 
     Yaifl.Lamp.Actions.Going

@@ -54,7 +54,7 @@ describingLocaleImpl = Activity "Describing the locale of something" Nothing Not
 findNotable ::
   WithChoosingNotableLocaleObjects wm
   => Rule wm (LocaleVariables wm) r
-findNotable = Rule "Find notable objects" (\v ->
+findNotable = Rule "Find notable objects" [] (\v ->
   do
     -- by default, pick every object in the domain and assign them '5'
     o <- doActivity #choosingNotableLocaleObjects (v ^. #domain)
@@ -63,7 +63,7 @@ findNotable = Rule "Find notable objects" (\v ->
 interestingLocale ::
   WithPrintingLocaleParagraphAbout wm
   => Rule wm (LocaleVariables wm) r
-interestingLocale = Rule "Interesting locale paragraphs" (\v ->
+interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
   do
     let tb = v ^. #localePriorities
         sorted = sortBy (compare `on` priority) (toList $ unStore tb)
@@ -98,7 +98,7 @@ alsoSee ::
   => WMHasProperty wm Openable
   => WithPrintingNameOfSomething wm
   => Rule wm (LocaleVariables wm) r
-alsoSee = Rule "You can also see" (\v ->
+alsoSee = Rule "You can also see" [] (\v ->
   do
     -- lp is everything that has a locale priority
     -- i.e. things which haven't been removed as they've been mentioned

@@ -8,15 +8,8 @@ import Yaifl.Core.Objects.Query
 import Yaifl.Core.Metadata
 import Breadcrumbs
 import Yaifl.Core.Rules.Args (getPlayer)
+import Yaifl.Core.Verb
 
-data VerbPersonage =
-  FirstPersonSingular
-  | FirstPersonPlural
-  | SecondPersonSingular
-  | SecondPersonPlural
-  | ThirdPersonPlural
-  | ThirdPersonSingular
-  deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };
 	let tenses be {past tense, present tense, future tense, perfect tense, past perfect tense};
@@ -26,8 +19,6 @@ let views be {first person singular, first person plural, second person singular
 			now the story tense is t;
 			say "[p] [t] - [We] [negate the verb see] / [We] [eat] [line break]";
 -}
-data Tense = Present | Past | Perfect | PastPerfect | Future
-  deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
 data AdaptiveNarrative wm = AdaptiveNarrative
   { narrativeViewpoint :: VerbPersonage
