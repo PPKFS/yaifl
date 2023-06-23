@@ -18,8 +18,8 @@ import Yaifl.Core.Rules.RuleEffects
 import GHC.TypeLits
 import Effectful.Optics (use)
 import Effectful.Writer.Static.Local (Writer, tell)
-import Yaifl.Core.Verb
 import Yaifl.Core.Metadata
+import Yaifl.Core.Verb
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -76,15 +76,17 @@ conjugateVerb ::
   => VerbSense
   -> Verb
   -> Eff es Text
-conjugateVerb sense (Verb conjugationTable) = do
+conjugateVerb sense (Verb _ conjugationTable) = do
     --VerbSense -> Voice -> Tense -> VerbPersonage -> Text
     personage <- getPersonageOfObject
     t <- use @(AdaptiveNarrative wm) #tense
-    pure $
+    error ""
+    traceShow (t, personage) pass
+    pure $ runTabulation
       conjugationTable
         Active -- we never actually need Passive, I think.
-        sense
         t
+        sense
         personage
 
 instance SayableValue (SayModalVerb "can't") wm where

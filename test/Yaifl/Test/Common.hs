@@ -18,6 +18,7 @@ import Yaifl.Core.World
 import qualified Data.Text as T
 import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Print
+import Yaifl.Core.Verb
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

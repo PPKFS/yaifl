@@ -222,6 +222,7 @@ roomDescriptionHeadingCImpl = Response $ \intermediateLevel -> [sayingTell|(in {
 
 roomDescriptionBodyAImpl :: Response wm ()
 roomDescriptionBodyAImpl = Response $ const [saying|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
-
+{-
 otherPeopleLookingAImpl :: Response wm (Thing wm)
 otherPeopleLookingAImpl = Response $ \actor -> [saying|{The actor} #{look} around.|]
+-}

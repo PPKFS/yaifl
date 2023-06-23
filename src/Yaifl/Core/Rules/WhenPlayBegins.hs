@@ -57,7 +57,7 @@ introText w = fold
   , longBorder <> "\n\n"
   ]
   where
-    shortBorder = "------"
+    shortBorder = "-----"
     longBorder = mconcat $ replicate
       (2 * T.length shortBorder + T.length w + 2) "-"
 
