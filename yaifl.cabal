@@ -116,7 +116,7 @@ library
     Yaifl.Lamp.Actions.Going
     Yaifl.Lamp.Actions.Looking
     Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Lamp.Activities.DescribingLocale
+    Yaifl.Lamp.Activities.PrintingTheLocaleDescription
     Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 
     Yaifl.Lamp.Visibility

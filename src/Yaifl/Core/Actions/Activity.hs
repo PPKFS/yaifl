@@ -6,6 +6,7 @@ module Yaifl.Core.Actions.Activity
   , WithActivity
   , WithPrintingDescriptionOfADarkRoom
   , WithPrintingNameOfADarkRoom
+  , WithListingNondescriptItems
   , blankActivity
   , beginActivity
   , doActivity
@@ -28,6 +29,7 @@ import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Core.Rules.Run ( runRulebookAndReturnVariables )
 import Yaifl.Core.WorldModel
+import Yaifl.Core.Object
 
 -- | A nicer wrapper around label optics for activities.
 type WithActivity (name :: Symbol) wm v r =
@@ -35,6 +37,7 @@ type WithActivity (name :: Symbol) wm v r =
 
 type WithPrintingNameOfADarkRoom wm = (WithActivity "printingNameOfADarkRoom" wm () ())
 type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () ()
+type WithListingNondescriptItems wm = WithActivity "listingNondescriptItems" wm (AnyObject wm) ()
 
 data Activity wm v r = Activity
     { name :: Text

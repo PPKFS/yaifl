@@ -16,7 +16,6 @@ import Yaifl.Core.Properties.Enclosing
 import Yaifl.Core.Properties.Has
 import Yaifl.Core.Properties.Query
 import Yaifl.Core.Rules.Args
-import Yaifl.Lamp.Activities.DescribingLocale
 import Yaifl.Lamp.Properties.Container
 import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.Properties.Supporter
@@ -24,6 +23,7 @@ import qualified Data.EnumSet as DES
 import Data.Text.Display
 import Yaifl.Core.WorldModel
 import Yaifl.Core.Responses
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
@@ -31,7 +31,7 @@ type HasLookingProperties wm =
   , Display (WMSayable wm)
   , IsString (WMSayable wm)
   , WithPrintingNameOfADarkRoom wm
-  , WithDescribingLocale wm
+  , WithPrintingTheLocaleDescription wm
   , WithPrintingDescriptionOfADarkRoom wm
   , WithResponse wm "roomDescriptionHeadingA" ()
   , WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)

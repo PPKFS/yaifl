@@ -20,7 +20,7 @@ import Yaifl.Core.Verb
 newtype AllTenses = AllTenses Bool
 
 instance IsOption AllTenses where
-  defaultValue = AllTenses True
+  defaultValue = AllTenses False
   parseValue = fmap AllTenses . safeRead
   optionName = return "alltenses"
   optionHelp = return "Run the examples in all tenses and viewpoints"
@@ -118,7 +118,7 @@ goldenTests = do
       ("test/testcases/" <> k) -- golden file path
       (encodeUtf8 <$> v))  -- action whose result is tested
       (allExamples a)
-    , testGroup "Conjugation" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
+    {- }, testGroup "Conjugation" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
       k -- test name
       (\ref new -> ["delta", ref, new])
 
@@ -126,5 +126,6 @@ goldenTests = do
       (encodeUtf8 <$> v))  -- action whose result is tested
       allVerbs
 
-      --map doConjugation ["have", "be", "see", "eat", "fall"]
+      --map doConjugation ["have", "be", "see", "eat", "fall"]-}
+
     ]

@@ -29,51 +29,7 @@ import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.Locale
 import Yaifl.Core.Rules.RuleEffects
 
-type WithDescribingLocale wm = (
-  WithChoosingNotableLocaleObjects wm
-  , WithPrintingNameOfSomething wm
-  , WithPrintingLocaleParagraphAbout wm
-  , WithActivity "describingLocale" wm (LocaleVariables wm) ())
 
-describingLocaleImpl ::
-  WMHasProperty wm Enclosing
-  => WMHasProperty wm Container
-  => WMHasProperty wm Openable
-  => WithDescribingLocale wm
-  => Activity wm (LocaleVariables wm) ()
-describingLocaleImpl = Activity "Describing the locale of something" Nothing Nothing
-  (blankRulebook "Before describing locale")
-  ((blankRulebook "Carry out describing locale")
-    { rules =
-      [ findNotable
-      , interestingLocale
-      , alsoSee]
-    })
-  (blankRulebook "After describing locale")
-
-findNotable ::
-  WithChoosingNotableLocaleObjects wm
-  => Rule wm (LocaleVariables wm) r
-findNotable = Rule "Find notable objects" [] (\v ->
-  do
-    -- by default, pick every object in the domain and assign them '5'
-    o <- doActivity #choosingNotableLocaleObjects (v ^. #domain)
-    return ((\x -> set #localePriorities x v) <$> o, Nothing))
-
-interestingLocale ::
-  WithPrintingLocaleParagraphAbout wm
-  => Rule wm (LocaleVariables wm) r
-interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
-  do
-    let tb = v ^. #localePriorities
-        sorted = sortBy (compare `on` priority) (toList $ unStore tb)
-    addTag "interesting things" (length sorted)
-    --for each thing, we offer it to write a paragraph
-    --then it is either no longer needed to be written about (Just Mentioned)
-    --mentioned, but still hanging around (Just Unmentioned)
-    --or ignored (Nothing)
-    -- update: so now the printing a locale paragraph activity will instead modify
-    --the locale variables and pass those through
     newP <- foldlM (\v' li -> do
         r <- doActivity #printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
@@ -92,74 +48,6 @@ sayDomain x e = do
   printName e
   printText " you "
 
-alsoSee ::
-  WMHasProperty wm Enclosing
-  => WMHasProperty wm Container
-  => WMHasProperty wm Openable
-  => WithPrintingNameOfSomething wm
-  => Rule wm (LocaleVariables wm) r
-alsoSee = Rule "You can also see" [] (\v ->
-  do
-    -- lp is everything that has a locale priority
-    -- i.e. things which haven't been removed as they've been mentioned
-    -- or otherwise been removed (by setting priority to 0 somehow)
-    -- I think now we're including the mentioned flag it's worth putting in here too
-    let lp = DEM.filter (\(LocaleInfo x _ m) -> x > 0 && not m) (unStore $ v ^. #localePriorities)
-
-    unless (null lp) $ do
-      let (LocaleVariables prior dom p) = v
-      pl <- getCurrentPlayer
-      isASupporter <- dom `isType` "supporter"
-      isAnAnimal <- dom `isType` "animal"
-      playerLocE <- getLocation pl
-      plRoom <- getRoomMaybe playerLocE
-      addTag "player location" plRoom
-      let isInLoc = maybe False (dom `objectEquals`) plRoom
-      if
-        | isRoom dom ->
-          if isInLoc then printText "You " else sayDomain "In " dom
-        | isASupporter || isAnAnimal -> sayDomain "On " dom
-        | otherwise -> sayDomain "In " dom
-      printText "can "
-      when (p > 0) $ printText "also "
-      printText "see "
-      --I'm going to completely ignore what inform does here because trying to parse their
-      --object list handling is a pain.
-      --so instead I think it makes the most sense, to me, to run two groupings
-      --first, identical things should be grouped as "there are 2 Xs"
-      --no idea how to decide if two things are equal.
-      --inform decries this as "they have identical parser rhetoric"
-      --then see if anything wants to tag itself as part of a group (groupablecomponent)
-      --and then group them according to that?)
-
-      --current me: thank god past me left notes because otherwise I would've gone and dug into
-      -- the inform6 source again and cried
-
-      --first group the marked for listing elements
-      --then group the groups by the grouping
-      --this second thing can be a TODO.
-      groupingProps <- mapM (getGroupingProperties . localeObject . snd) (DEM.toList (unStore prior))
-      let groupedList = groupBy groupingEquivalenceRelation groupingProps
-
-      mapM_
-        ( \(objGrp, num) -> do
-            case objGrp of
-              [] -> pass -- nothing to print
-              [e'] -> do
-                printName (grpObj e')
-                pass
-              e' : _ -> do
-                addTag "Group of multiple objects: " (e', num)
-                printText $ show $ length objGrp
-                printName (grpObj e')
-                pass
-            when (num < length groupedList - 1) (printText ", ")
-            when (num == length groupedList - 2) (printText "and ")
-        )
-        $ zip groupedList [0 ..]
-      when isInLoc (printText " here")
-      paragraphBreak
-    return (Nothing, Nothing))
 
 --something about having omit contents from listing here
 --are identically named TODO??? about matching containers???

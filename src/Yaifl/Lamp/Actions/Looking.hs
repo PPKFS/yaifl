@@ -30,13 +30,13 @@ import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.SayQQ
-import Yaifl.Lamp.Activities.DescribingLocale ( WithDescribingLocale )
 import Yaifl.Lamp.Locale
 import Yaifl.Lamp.Properties.Animal
 import Yaifl.Lamp.Properties.Supporter ( isSupporter )
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription, printingTheLocaleDescriptionImpl)
 
 lookingAction ::
   HasLookingProperties wm
@@ -71,7 +71,7 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
 
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm
-  => WithDescribingLocale wm
+  => WithPrintingTheLocaleDescription wm
   => WithResponse wm "roomDescriptionHeadingA" ()
   => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
   => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
@@ -165,7 +165,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
   -- the actual meat is
   -- describe locale for the intermediate position;
   makeRule "room description paragraphs about objects rule" forPlayer'
-    (\rb -> mapM_ (\o -> doActivity #describingLocale (LocaleVariables emptyStore o 0)) (visibilityLevels . variables $ rb) >>
+    (\rb -> mapM_ (\o -> doActivity #printingTheLocaleDescription (LocaleVariables emptyStore o 0)) (visibilityLevels . variables $ rb) >>
       return Nothing),
 
   makeRule "check new arrival rule" forPlayer'
@@ -201,7 +201,7 @@ foreachVisibilityHolder ::
 foreachVisibilityHolder e = do
   -- let intermediate level be the visibility-holder of the actor;   
   -- repeat with intermediate level count running from 2 to the visibility level count:
-  ifM (isSupporter e  ||^ isAnimal e )
+  ifM (isSupporter e  ||^ isAnimal e)
     -- say " (on [the intermediate level])" (B);
     (sayResponse #roomDescriptionHeadingB e)
     -- say " (in [the intermediate level])" (C);    
@@ -222,7 +222,8 @@ roomDescriptionHeadingCImpl = Response $ \intermediateLevel -> [sayingTell|(in {
 
 roomDescriptionBodyAImpl :: Response wm ()
 roomDescriptionBodyAImpl = Response $ const [saying|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
-{-
-otherPeopleLookingAImpl :: Response wm (Thing wm)
+
+otherPeopleLookingAImpl ::
+  WithPrintingNameOfSomething wm
+  => Response wm (Thing wm)
 otherPeopleLookingAImpl = Response $ \actor -> [saying|{The actor} #{look} around.|]
--}

@@ -44,7 +44,7 @@ import Yaifl.Core.WorldModel
 import Yaifl.Lamp.Actions.Going
 import Yaifl.Lamp.Actions.Looking
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Lamp.Activities.DescribingLocale
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.Locale
 import Yaifl.Lamp.ObjectSpecifics
@@ -56,6 +56,7 @@ import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
 import qualified Data.Map as DM
 import qualified Data.Text as T
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription (printingTheLocaleDescriptionImpl)
 
 newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
@@ -114,7 +115,8 @@ blankActivityCollection = ActivityCollection
   , printingDescriptionOfADarkRoom = blankActivity "printing the description of a dark room"
   , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
   , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
-  , describingLocale = describingLocaleImpl
+  , printingTheLocaleDescription = printingTheLocaleDescriptionImpl
+  , listingNondescriptItems = blankActivity "listing nondescript items"
   }
 
 blankStores :: WorldStores s
@@ -328,7 +330,8 @@ data ActivityCollection wm = ActivityCollection
   , printingDescriptionOfADarkRoom :: !(Activity wm () ())
   , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
   , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
-  , describingLocale :: !(Activity wm (LocaleVariables wm) ())
+  , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
+  , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActivityCollection

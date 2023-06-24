@@ -77,11 +77,8 @@ conjugateVerb ::
   -> Verb
   -> Eff es Text
 conjugateVerb sense (Verb _ conjugationTable) = do
-    --VerbSense -> Voice -> Tense -> VerbPersonage -> Text
     personage <- getPersonageOfObject
     t <- use @(AdaptiveNarrative wm) #tense
-    error ""
-    traceShow (t, personage) pass
     pure $ runTabulation
       conjugationTable
         Active -- we never actually need Passive, I think.
@@ -89,8 +86,18 @@ conjugateVerb sense (Verb _ conjugationTable) = do
         sense
         personage
 
+sayVerb ::
+  forall v wm es.
+  KnownSymbol v
+  => RuleEffects wm es
+  => SayLiteral v
+  -> Eff (Writer Text : es) ()
+sayVerb (SayLiteral cap) = do
+    v <- conjugateVerb Positive $ makeVerb (toText $ symbolVal (Proxy @v))
+    withCapitalisation cap v
+
 instance SayableValue (SayModalVerb "can't") wm where
-  sayTell (SayModalVerb cap) = withCapitalisation cap $ "can't"
+  sayTell (SayModalVerb cap) = withCapitalisation cap "can't"
 
 instance SayableValue (SayLiteral "we") wm where
   sayTell (SayLiteral cap) = do
@@ -111,14 +118,13 @@ instance SayableValue (SayLiteral "it") wm where
     withCapitalisation cap "it"
 
 instance SayableValue (SayLiteral "see") wm where
-  sayTell (SayLiteral cap) = do
-    v <- conjugateVerb Positive $ makeVerb "see"
-    withCapitalisation cap v
+  sayTell = sayVerb @"see"
 
 instance SayableValue (SayLiteral "are") wm where
-  sayTell (SayLiteral cap) = do
-    v <- conjugateVerb Positive $ makeVerb "are"
-    withCapitalisation cap v
+  sayTell s = sayVerb @"be" (coerce s)
+
+instance SayableValue (SayLiteral "look") wm where
+  sayTell = sayVerb @"look"
 
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"
