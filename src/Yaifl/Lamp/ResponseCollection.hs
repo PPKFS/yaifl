@@ -17,8 +17,10 @@ data ResponseCollection wm = ResponseCollection
   , roomDescriptionHeadingC :: Response wm (AnyObject wm)
   , roomDescriptionBodyA :: Response wm ()
   , youCanAlsoSeeA :: Response wm ()
-  , youCanAlsoSeeB :: Response wm ()
-  , youCanAlsoSeeC :: Response wm ()
+  , youCanAlsoSeeB :: Response wm (AnyObject wm)
+  , youCanAlsoSeeC :: Response wm (AnyObject wm)
+  , youCanAlsoSeeD :: Response wm ()
+  , youCanAlsoSeeE :: Response wm ()
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ResponseCollection
@@ -32,4 +34,6 @@ blankResponseCollection = ResponseCollection
   , youCanAlsoSeeA = youCanAlsoSeeAImpl
   , youCanAlsoSeeB = youCanAlsoSeeBImpl
   , youCanAlsoSeeC = youCanAlsoSeeCImpl
+  , youCanAlsoSeeD = youCanAlsoSeeDImpl
+  , youCanAlsoSeeE = youCanAlsoSeeEImpl
   }

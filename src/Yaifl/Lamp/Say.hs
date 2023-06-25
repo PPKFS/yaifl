@@ -123,6 +123,9 @@ instance SayableValue (SayLiteral "see") wm where
 instance SayableValue (SayLiteral "are") wm where
   sayTell s = sayVerb @"be" (coerce s)
 
+instance SayableValue (SayLiteral "can") wm where
+  sayTell s = sayVerb @"be able to" (coerce s)
+
 instance SayableValue (SayLiteral "look") wm where
   sayTell = sayVerb @"look"
 

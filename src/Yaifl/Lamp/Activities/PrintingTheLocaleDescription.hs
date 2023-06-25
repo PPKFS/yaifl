@@ -4,6 +4,8 @@ module Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 , youCanAlsoSeeAImpl
 , youCanAlsoSeeBImpl
 , youCanAlsoSeeCImpl
+, youCanAlsoSeeDImpl
+, youCanAlsoSeeEImpl
 ) where
 
 import Solitude
@@ -33,6 +35,8 @@ import Yaifl.Lamp.Locale
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Responses
 import Yaifl.Core.SayQQ
+import Yaifl.Core.AdaptiveNarrative (regardingThePlayer)
+import Yaifl.Core.WorldModel
 
 
 type WithPrintingTheLocaleDescription wm = (
@@ -41,8 +45,10 @@ type WithPrintingTheLocaleDescription wm = (
   , WithListingNondescriptItems wm
   , WithPrintingLocaleParagraphAbout wm
   , WithResponse wm "youCanAlsoSeeA" ()
-  , WithResponse wm "youCanAlsoSeeC" ()
-  , WithResponse wm "youCanAlsoSeeB" ()
+  , WithResponse wm "youCanAlsoSeeC" (AnyObject wm)
+  , WithResponse wm "youCanAlsoSeeB" (AnyObject wm)
+  , WithResponse wm "youCanAlsoSeeD" ()
+  , WithResponse wm "youCanAlsoSeeE" ()
   , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ())
 
 printingTheLocaleDescriptionImpl ::
@@ -93,13 +99,29 @@ interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
     return (Just newP, Nothing))
 
 youCanAlsoSeeAImpl :: Response wm ()
-youCanAlsoSeeAImpl = Response $ const [sayingTell|Darkness|]
+youCanAlsoSeeAImpl = Response $ const [sayingTell|#{We} |]
 
-youCanAlsoSeeCImpl :: Response wm ()
-youCanAlsoSeeCImpl = Response $ const [sayingTell|Darkness|]
+youCanAlsoSeeBImpl ::
+  WithPrintingNameOfSomething wm
+  => Response wm (AnyObject wm)
+youCanAlsoSeeBImpl = Response $ \domain -> [sayingTell|On {the domain} #{we} |]
 
-youCanAlsoSeeBImpl :: Response wm ()
-youCanAlsoSeeBImpl = Response $ const [sayingTell|Darkness|]
+youCanAlsoSeeCImpl ::
+  WithPrintingNameOfSomething wm
+  => Response wm (AnyObject wm)
+youCanAlsoSeeCImpl = Response $ \domain -> [sayingTell|In {the domain} #{we} |]
+
+youCanAlsoSeeDImpl :: Response wm ()
+youCanAlsoSeeDImpl = Response $ const $ do
+  regardingThePlayer
+  [sayingTell|#{can} also see |]
+
+youCanAlsoSeeEImpl ::
+  Display (WMSayable wm)
+  => Response wm ()
+youCanAlsoSeeEImpl = Response $ const $ do
+  regardingThePlayer
+  [sayingTell|#{can} see |]
 
 alsoSee ::
   WMHasProperty wm Enclosing
@@ -108,8 +130,10 @@ alsoSee ::
   => WithPrintingNameOfSomething wm
   => WithListingNondescriptItems wm
   => WithResponse wm "youCanAlsoSeeA" ()
-  => WithResponse wm "youCanAlsoSeeC" ()
-  => WithResponse wm "youCanAlsoSeeB" ()
+  => WithResponse wm "youCanAlsoSeeC" (AnyObject wm)
+  => WithResponse wm "youCanAlsoSeeB" (AnyObject wm)
+  => WithResponse wm "youCanAlsoSeeD" ()
+  => WithResponse wm "youCanAlsoSeeE" ()
   => Rule wm (LocaleVariables wm) r
 alsoSee = Rule "You can also see" [] (\v ->
   do
@@ -126,11 +150,6 @@ alsoSee = Rule "You can also see" [] (\v ->
       -- these are marked for listing.
       -- if we have mentionables, then we unmark the ones which are already mentioned. this is the filter above.
 
-      --if the number of marked for listing things is 0:
-      --      abandon the listing nondescript items activity with the domain;
-      -- unless (null lp) $ do
-
-
     -- begin the listing nondescript items activity with the domain; 
     beginActivity #listingNondescriptItems (v ^. #domain)
     -- if the number of marked for listing things is 0:
@@ -138,7 +157,7 @@ alsoSee = Rule "You can also see" [] (\v ->
     when (null lp) $ void $ endActivity #listingNondescriptItems
     -- if handling the listing nondescript items activity with the domain:
     whenHandling' #listingNondescriptItems $ do
-      let (LocaleVariables prior dom p) = v
+      let (LocaleVariables prior dom paragraphCount) = v
       pl <- getCurrentPlayer
       playerLocE <- getLocation pl
       plRoom <- getRoomMaybe playerLocE
@@ -153,24 +172,36 @@ alsoSee = Rule "You can also see" [] (\v ->
         -- otherwise if the domain is a supporter or the domain is an animal:
         -- say "On [the domain] [we] " (B);
         | isASupporter || isAnAnimal ->
-          sayResponse #youCanAlsoSeeB ()
+          sayResponse #youCanAlsoSeeB dom
         -- otherwise: say "In [the domain] [we] " (C);
         | otherwise ->
-          sayResponse #youCanAlsoSeeC ()
+          sayResponse #youCanAlsoSeeC dom
       -- if the locale paragraph count is greater than 0:
-      --say "[regarding the player][can] also see " (D);
+      if paragraphCount > 0
+        --say "[regarding the player][can] also see " (D);
+        then sayResponse #youCanAlsoSeeD ()
+        -- otherwise: say "[regarding the player][can] see " (E);
+        else sayResponse #youCanAlsoSeeE ()
+      -- there is a big mess of looping to see if everything
+      -- has a common parent and therefore we are listing the contents
+      -- of something. this will happen unless the author
+      -- manually adds some notable object that isn't present in the room
+
+      when (all (\localeItem -> f)
+        . DEM.map (\li -> asThingOrRoom (localeObject li)
+          (\t -> Just $ t ^. #objectData % #containedBy)
+          (const Nothing)) $ lp) pass
       {-
-      otherwise:
-                    say "[regarding the player][can] see " (E);
-                let the common holder be nothing;
-                let contents form of list be true;
-                repeat with list item running through marked for listing things:
-                    if the holder of the list item is not the common holder:
-                        if the common holder is nothing,
-                            now the common holder is the holder of the list item;
-                        otherwise now contents form of list is false;
-                    if the list item is mentioned, now the list item is not marked for listing;
-                filter list recursion to unmentioned things;
+
+      let the common holder be nothing;
+      let contents form of list be true;
+      repeat with list item running through marked for listing things:
+          if the holder of the list item is not the common holder:
+              if the common holder is nothing,
+                  now the common holder is the holder of the list item;
+              otherwise now contents form of list is false;
+          if the list item is mentioned, now the list item is not marked for listing;
+      filter list recursion to unmentioned things;
                 if contents form of list is true and the common holder is not nothing,
                     list the contents of the common holder, as a sentence, including contents,
                         giving brief inventory information, tersely, not listing
@@ -181,8 +212,6 @@ alsoSee = Rule "You can also see" [] (\v ->
                 unfilter list recursion;
             end the listing nondescript items activity with the domain;
     continue the activity.
-
-
       -}
     {-
 
