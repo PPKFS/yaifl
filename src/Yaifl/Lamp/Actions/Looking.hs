@@ -3,10 +3,8 @@
 
 module Yaifl.Lamp.Actions.Looking
   ( lookingAction
-  , roomDescriptionHeadingAImpl
-  , roomDescriptionHeadingBImpl
-  , roomDescriptionHeadingCImpl
-  , roomDescriptionBodyAImpl
+  , RoomDescriptionResponses(..)
+  , roomDescriptionResponsesImpl
   ) where
 
 import Solitude
@@ -37,6 +35,14 @@ import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Lamp.Activities.PrintingTheLocaleDescription ( WithPrintingTheLocaleDescription )
+
+roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => RoomDescriptionResponses wm
+roomDescriptionResponsesImpl = RDR
+  { roomDescriptionHeadingA = roomDescriptionHeadingAImpl
+  , roomDescriptionHeadingB = roomDescriptionHeadingBImpl
+  , roomDescriptionHeadingC = roomDescriptionHeadingCImpl
+  , roomDescriptionBodyA = roomDescriptionBodyAImpl
+  }
 
 lookingAction ::
   HasLookingProperties wm
@@ -72,10 +78,7 @@ lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm
   => WithPrintingTheLocaleDescription wm
-  => WithResponse wm "roomDescriptionHeadingA" ()
-  => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
-  => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
-  => WithResponse wm "roomDescriptionBodyA" ()
+  => WithResponseSet wm "roomDescriptions" (RoomDescriptionResponses wm)
   => WithPrintingDescriptionOfADarkRoom wm
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
@@ -95,7 +98,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
           -- if handling the printing the name of a dark room activity:
           whenHandling' #printingNameOfADarkRoom $ do
             -- say "Darkness" (A);
-            sayResponse #roomDescriptionHeadingA ()
+            sayResponse (#roomDescriptions % #roomDescriptionHeadingA) ()
           -- end the printing the name of a dark room activity;
           endActivity #printingNameOfADarkRoom
         Just visCeil ->
@@ -143,7 +146,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
               -- now the prior named object is nothing;
               regarding Nothing
               -- say "[It] [are] pitch dark, and [we] [can't see] a thing." (A);
-              sayResponse #roomDescriptionBodyA ()
+              sayResponse (#roomDescriptions % #roomDescriptionBodyA) ()
             -- end the printing the description of a dark room activity;
             endActivity #printingDescriptionOfADarkRoom
         Just visCeil ->
@@ -194,8 +197,7 @@ foreachVisibilityHolder ::
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
-  => WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
-  => WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
+  => WithResponseSet wm "roomDescriptions" (RoomDescriptionResponses wm)
   => AnyObject wm
   -> Eff es ()
 foreachVisibilityHolder e = do
@@ -203,9 +205,9 @@ foreachVisibilityHolder e = do
   -- repeat with intermediate level count running from 2 to the visibility level count:
   ifM (isSupporter e  ||^ isAnimal e)
     -- say " (on [the intermediate level])" (B);
-    (sayResponse #roomDescriptionHeadingB e)
+    (sayResponse (#roomDescriptions % #roomDescriptionHeadingB) e)
     -- say " (in [the intermediate level])" (C);    
-    (sayResponse #roomDescriptionHeadingC e)
+    (sayResponse (#roomDescriptions % #roomDescriptionHeadingC) e)
 
 roomDescriptionHeadingAImpl :: Response wm ()
 roomDescriptionHeadingAImpl = Response $ const [sayingTell|Darkness|]

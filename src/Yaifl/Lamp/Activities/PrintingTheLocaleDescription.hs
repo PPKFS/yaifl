@@ -1,12 +1,8 @@
 module Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 ( printingTheLocaleDescriptionImpl
 , WithPrintingTheLocaleDescription
-, youCanAlsoSeeAImpl
-, youCanAlsoSeeBImpl
-, youCanAlsoSeeCImpl
-, youCanAlsoSeeDImpl
-, youCanAlsoSeeEImpl
-, youCanAlsoSeeFImpl
+, YouCanAlsoSeeResponses(..)
+, youCanAlsoSeeResponsesImpl
 ) where
 
 import Solitude
@@ -33,21 +29,44 @@ import Yaifl.Lamp.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Lamp.ListWriter
 
+data YouCanAlsoSeeResponses wm = YCAS
+  { youCanAlsoSeeA :: Response wm ()
+  , youCanAlsoSeeB :: Response wm (AnyObject wm)
+  , youCanAlsoSeeC :: Response wm (AnyObject wm)
+  , youCanAlsoSeeD :: Response wm ()
+  , youCanAlsoSeeE :: Response wm ()
+  , youCanAlsoSeeF :: Response wm ()
+  } deriving stock (Generic)
 
 type WithPrintingTheLocaleDescription wm = (
   WithChoosingNotableLocaleObjects wm
   , WithPrintingNameOfSomething wm
   , WithListingNondescriptItems wm
   , WithPrintingLocaleParagraphAbout wm
-  , WithResponse wm "youCanAlsoSeeA" ()
-  , WithResponse wm "youCanAlsoSeeC" (AnyObject wm)
-  , WithResponse wm "youCanAlsoSeeB" (AnyObject wm)
-  , WithResponse wm "youCanAlsoSeeD" ()
-  , WithResponse wm "youCanAlsoSeeE" ()
-  , WithResponse wm "youCanAlsoSeeF" ()
+  , WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
   , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ()
   , WithActivity "listingContents" wm [AnyObject wm] ()
   )
+
+youCanAlsoSeeResponsesImpl ::
+  WithPrintingNameOfSomething wm
+  => YouCanAlsoSeeResponses wm
+youCanAlsoSeeResponsesImpl = YCAS
+  { youCanAlsoSeeA = youCanAlsoSeeAImpl
+  , youCanAlsoSeeB = youCanAlsoSeeBImpl
+  , youCanAlsoSeeC = youCanAlsoSeeCImpl
+  , youCanAlsoSeeD = youCanAlsoSeeDImpl
+  , youCanAlsoSeeE = youCanAlsoSeeEImpl
+  , youCanAlsoSeeF = youCanAlsoSeeFImpl
+  }
+
+sayYCASResponse ::
+  WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
+  => RuleEffects wm es
+  => Lens' (YouCanAlsoSeeResponses wm) (Response wm v)
+  -> v
+  -> Eff es ()
+sayYCASResponse l = sayResponse (#youCanAlsoSee % l)
 
 printingTheLocaleDescriptionImpl ::
   WithPrintingTheLocaleDescription wm
@@ -157,20 +176,20 @@ alsoSee = Rule "You can also see" [] (\v ->
       if
         --if the domain is the location: say "[We] " (A);
         | isRoom dom && isInLoc ->
-          sayResponse #youCanAlsoSeeA ()
+          sayYCASResponse #youCanAlsoSeeA ()
         -- otherwise if the domain is a supporter or the domain is an animal:
         -- say "On [the domain] [we] " (B);
         | isASupporter || isAnAnimal ->
-          sayResponse #youCanAlsoSeeB dom
+          sayYCASResponse #youCanAlsoSeeB dom
         -- otherwise: say "In [the domain] [we] " (C);
         | otherwise ->
-          sayResponse #youCanAlsoSeeC dom
+          sayYCASResponse #youCanAlsoSeeC dom
       -- if the locale paragraph count is greater than 0:
       if paragraphCount > 0
         --say "[regarding the player][can] also see " (D);
-        then sayResponse #youCanAlsoSeeD ()
+        then sayYCASResponse #youCanAlsoSeeD ()
         -- otherwise: say "[regarding the player][can] see " (E);
-        else sayResponse #youCanAlsoSeeE ()
+        else sayYCASResponse #youCanAlsoSeeE ()
       -- there is a big mess of looping to see if everything
       -- has a common parent and therefore we are listing the contents
       -- of something. this will happen unless the author
@@ -195,9 +214,10 @@ alsoSee = Rule "You can also see" [] (\v ->
           else
             --otherwise say "[a list of marked for listing things including contents]";
             --which is the same as above ^ but not as an activity
-            let objectsWithContents = withContents objects in [saying|{objectsWithContents}|]
+            let listWithContents = withContents objects in
+            [saying|{a listWithContents}|]
       --if the domain is the location, say " here" (F);
-      when (isRoom dom && isInLoc) $ sayResponse #youCanAlsoSeeF ()
+      when (isRoom dom && isInLoc) $ sayYCASResponse #youCanAlsoSeeF ()
       --say ".[paragraph break]";
       [saying|.#{paragraphBreak}|]
     endActivity #listingNondescriptItems

@@ -33,10 +33,14 @@ type HasLookingProperties wm =
   , WithPrintingNameOfADarkRoom wm
   , WithPrintingTheLocaleDescription wm
   , WithPrintingDescriptionOfADarkRoom wm
-  , WithResponse wm "roomDescriptionHeadingA" ()
-  , WithResponse wm "roomDescriptionHeadingB" (AnyObject wm)
-  , WithResponse wm "roomDescriptionHeadingC" (AnyObject wm)
-  , WithResponse wm "roomDescriptionBodyA" ())
+  , WithResponseSet wm "roomDescriptions" (RoomDescriptionResponses wm))
+
+data RoomDescriptionResponses wm = RDR
+  { roomDescriptionHeadingA :: Response wm ()
+  , roomDescriptionHeadingB :: Response wm (AnyObject wm)
+  , roomDescriptionHeadingC :: Response wm (AnyObject wm)
+  , roomDescriptionBodyA :: Response wm ()
+  } deriving stock (Generic)
 
 data LookingActionVariables wm = LookingActionVariables
   { lookingFrom :: AnyObject wm

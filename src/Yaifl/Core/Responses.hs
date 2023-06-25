@@ -25,4 +25,5 @@ sayResponse aL v = do
   r <- execWriter $ t v
   say r
 
+type WithResponseSet wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) v
 type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) (Response wm v)

@@ -44,7 +44,7 @@ data SayingForm s =
   | A_ s -- [a foo]
 
 
-data SayArticle (article :: Symbol) wm d = SayArticle Bool (Object wm d)
+data SayArticle (article :: Symbol) v = SayArticle Bool v
 data SayModal (modal :: Symbol) (verb :: Symbol) = SayModal Bool Bool
 newtype SayModalVerb (modal :: Symbol) = SayModalVerb Bool
 newtype SayLiteral (lit :: Symbol) = SayLiteral Bool
@@ -138,7 +138,7 @@ getPlayerPronoun = pure "they"
 instance
   ( ObjectLike wm (Object wm o)
   , WithPrintingNameOfSomething wm
-  ) => SayableValue (SayArticle "the" wm o) wm where
+  ) => SayableValue (SayArticle "the" (Object wm o)) wm where
   say (SayArticle c a) = if c then say (The a) else say (The_ a)
   sayTell (SayArticle c a) = if c then sayTell (The a) else sayTell (The_ a)
 
@@ -167,7 +167,7 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
         A_ a -> (a, False, False)
 
 type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) ())
-
+-- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
   NoMissingObjects wm es
   => Print :> es
