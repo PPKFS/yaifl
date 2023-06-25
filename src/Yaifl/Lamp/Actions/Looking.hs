@@ -36,7 +36,7 @@ import Yaifl.Lamp.Properties.Supporter ( isSupporter )
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Lamp.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription, printingTheLocaleDescriptionImpl)
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription ( WithPrintingTheLocaleDescription )
 
 lookingAction ::
   HasLookingProperties wm

@@ -129,6 +129,9 @@ instance SayableValue (SayLiteral "can") wm where
 instance SayableValue (SayLiteral "look") wm where
   sayTell = sayVerb @"look"
 
+instance SayableValue (SayLiteral "paragraphBreak") wm where
+  sayTell _ = tell "\n\n"
+
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"
 

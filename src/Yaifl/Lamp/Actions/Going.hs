@@ -22,7 +22,7 @@ import Yaifl.Core.Actions.Action ( makeActionRulebook, Action(Action), ActionRul
 import Yaifl.Core.Direction ( WMStdDirections )
 import Yaifl.Core.Entity ( Entity, HasID(..) )
 import Yaifl.Core.Metadata (noteError, isPlayer)
-import Yaifl.Core.Object ( Thing, Room, isType, objectEquals )
+import Yaifl.Core.Object ( Thing, Room, isType )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.Room ( getMapConnection )
 import Yaifl.Core.Objects.ThingData
@@ -30,12 +30,9 @@ import Yaifl.Core.Properties.Has ( WMHasProperty )
 import Yaifl.Core.Rules.Args ( ArgSubject(..) )
 import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.Print
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Text.Interpolation.Nyan
 import Effectful.Error.Static
-import Yaifl.Lamp.Say
-import Yaifl.Core.Rules.RuleEffects
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -54,7 +51,6 @@ makeLenses ''GoingActionVariables
 
 goingAction ::
   (WMStdDirections wm, WMHasProperty wm Door)
-  => WithPrintingNameOfSomething wm
   => Action wm
 goingAction = Action
   "going"
@@ -146,8 +142,7 @@ getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
 
 checkGoingRules ::
-  WithPrintingNameOfSomething wm
-  => [Rule wm (Args wm (GoingActionVariables wm)) Bool]
+  [Rule wm (Args wm (GoingActionVariables wm)) Bool]
 checkGoingRules = [
   standUpBeforeGoing
   , cantTravelInNotAVehicle
@@ -166,8 +161,8 @@ cantGoThroughUndescribedDoors = makeRule "stand up before going" [] $ \_v -> do
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \v -> do
   nonVehicle <- getObject $ v ^. #source % #objectData % #containedBy
-  let vehcGoneBy = v ^. #variables % gavVehicleGoneBy
-      roomGoneFrom = v ^. #variables % gavRoomFrom
+  let _vehcGoneBy = v ^. #variables % gavVehicleGoneBy
+      _roomGoneFrom = v ^. #variables % gavRoomFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
   error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
@@ -177,9 +172,8 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   rulePass
 
 standUpBeforeGoing ::
-  WithPrintingNameOfSomething wm
-  => Rule wm (Args wm (GoingActionVariables wm)) Bool
-standUpBeforeGoing = makeRule "stand up before going" [] $ \v -> do error ""
+  Rule wm (Args wm (GoingActionVariables wm)) Bool
+standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> do error ""
   {-chaises <- error ""--ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
       whenM (isPlayer $ v ^. #source) $ do

@@ -15,13 +15,16 @@ module Yaifl (
 import Solitude hiding ( Reader, runReader )
 
 import Breadcrumbs
+
 import Data.Text.Display
 import Data.Text.Lazy.Builder (fromText)
 import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
 import Effectful.Optics ( (?=), (%=), use, (<<%=) )
 import Effectful.Reader.Static ( runReader, Reader )
 import Effectful.Writer.Static.Local
+
 import Text.Interpolation.Nyan
+
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Actions.Parser
@@ -41,11 +44,13 @@ import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Rules.WhenPlayBegins
 import Yaifl.Core.World
 import Yaifl.Core.WorldModel
+
 import Yaifl.Lamp.Actions.Going
 import Yaifl.Lamp.Actions.Looking
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Lamp.Activities.PrintingTheLocaleDescription
+import Yaifl.Lamp.Activities.ListingContents
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 import Yaifl.Lamp.Locale
 import Yaifl.Lamp.ObjectSpecifics
 import Yaifl.Lamp.Properties.Container
@@ -54,9 +59,9 @@ import Yaifl.Lamp.Properties.Openable
 import Yaifl.Lamp.ResponseCollection
 import Yaifl.Lamp.Say
 import Yaifl.Lamp.Visibility
+
 import qualified Data.Map as DM
 import qualified Data.Text as T
-import Yaifl.Lamp.Activities.PrintingTheLocaleDescription (printingTheLocaleDescriptionImpl)
 
 newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
@@ -117,6 +122,7 @@ blankActivityCollection = ActivityCollection
   , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
   , printingTheLocaleDescription = printingTheLocaleDescriptionImpl
   , listingNondescriptItems = blankActivity "listing nondescript items"
+  , listingContents = listingContentsImpl
   }
 
 blankStores :: WorldStores s
@@ -332,6 +338,7 @@ data ActivityCollection wm = ActivityCollection
   , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
   , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
   , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
+  , listingContents :: !(Activity wm [AnyObject wm] ())
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActivityCollection

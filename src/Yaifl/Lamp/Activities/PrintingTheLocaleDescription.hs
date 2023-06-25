@@ -6,37 +6,32 @@ module Yaifl.Lamp.Activities.PrintingTheLocaleDescription
 , youCanAlsoSeeCImpl
 , youCanAlsoSeeDImpl
 , youCanAlsoSeeEImpl
+, youCanAlsoSeeFImpl
 ) where
 
 import Solitude
 
 import Breadcrumbs
 import Data.Text.Display
-import Data.List ( groupBy )
+
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Entity ( Store(unStore), Entity )
+import Yaifl.Core.AdaptiveNarrative (regardingThePlayer)
+import Yaifl.Core.Entity ( Store(unStore) )
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Objects.ThingData
-import Yaifl.Core.Properties.Enclosing ( Enclosing(..) )
-import Yaifl.Core.Properties.Has ( WMHasProperty )
-import Yaifl.Core.Properties.Query ( getEnclosing )
+import Yaifl.Core.Responses
 import Yaifl.Core.Rules.Rule
+import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Rules.Rulebook ( Rulebook(..), blankRulebook )
-import Yaifl.Core.Print
-import Yaifl.Lamp.Say
-import Yaifl.Lamp.Properties.Container
-import Yaifl.Lamp.Properties.Openable ( Openable(..), getOpenable )
-import qualified Data.EnumMap.Strict as DEM
-import qualified Data.EnumSet as DES
+import Yaifl.Core.SayQQ
+import Yaifl.Core.WorldModel
 import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Lamp.Locale
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.Responses
-import Yaifl.Core.SayQQ
-import Yaifl.Core.AdaptiveNarrative (regardingThePlayer)
-import Yaifl.Core.WorldModel
+import Yaifl.Lamp.Say
+import qualified Data.EnumMap.Strict as DEM
+import Yaifl.Lamp.ListWriter
 
 
 type WithPrintingTheLocaleDescription wm = (
@@ -49,13 +44,13 @@ type WithPrintingTheLocaleDescription wm = (
   , WithResponse wm "youCanAlsoSeeB" (AnyObject wm)
   , WithResponse wm "youCanAlsoSeeD" ()
   , WithResponse wm "youCanAlsoSeeE" ()
-  , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ())
+  , WithResponse wm "youCanAlsoSeeF" ()
+  , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ()
+  , WithActivity "listingContents" wm [AnyObject wm] ()
+  )
 
 printingTheLocaleDescriptionImpl ::
-  WMHasProperty wm Enclosing
-  => WMHasProperty wm Container
-  => WMHasProperty wm Openable
-  => WithPrintingTheLocaleDescription wm
+  WithPrintingTheLocaleDescription wm
   => Activity wm (LocaleVariables wm) ()
 printingTheLocaleDescriptionImpl = Activity "Printing the locale description of something" Nothing Nothing
   (blankRulebook "Before printing the locale description")
@@ -123,17 +118,11 @@ youCanAlsoSeeEImpl = Response $ const $ do
   regardingThePlayer
   [sayingTell|#{can} see |]
 
+youCanAlsoSeeFImpl :: Response wm ()
+youCanAlsoSeeFImpl = Response $ const [sayingTell| here|]
+
 alsoSee ::
-  WMHasProperty wm Enclosing
-  => WMHasProperty wm Container
-  => WMHasProperty wm Openable
-  => WithPrintingNameOfSomething wm
-  => WithListingNondescriptItems wm
-  => WithResponse wm "youCanAlsoSeeA" ()
-  => WithResponse wm "youCanAlsoSeeC" (AnyObject wm)
-  => WithResponse wm "youCanAlsoSeeB" (AnyObject wm)
-  => WithResponse wm "youCanAlsoSeeD" ()
-  => WithResponse wm "youCanAlsoSeeE" ()
+  WithPrintingTheLocaleDescription wm
   => Rule wm (LocaleVariables wm) r
 alsoSee = Rule "You can also see" [] (\v ->
   do
@@ -157,7 +146,7 @@ alsoSee = Rule "You can also see" [] (\v ->
     when (null lp) $ void $ endActivity #listingNondescriptItems
     -- if handling the listing nondescript items activity with the domain:
     whenHandling' #listingNondescriptItems $ do
-      let (LocaleVariables prior dom paragraphCount) = v
+      let (LocaleVariables _ dom paragraphCount) = v
       pl <- getCurrentPlayer
       playerLocE <- getLocation pl
       plRoom <- getRoomMaybe playerLocE
@@ -186,79 +175,30 @@ alsoSee = Rule "You can also see" [] (\v ->
       -- has a common parent and therefore we are listing the contents
       -- of something. this will happen unless the author
       -- manually adds some notable object that isn't present in the room
-
-      when (all (\localeItem -> f)
-        . DEM.map (\li -> asThingOrRoom (localeObject li)
+      allHolders <- sequence $ DEM.foldl' (\xs li -> flip cons xs $ asThingOrRoom (localeObject li)
           (\t -> Just $ t ^. #objectData % #containedBy)
-          (const Nothing)) $ lp) pass
-      {-
-
-      let the common holder be nothing;
-      let contents form of list be true;
-      repeat with list item running through marked for listing things:
-          if the holder of the list item is not the common holder:
-              if the common holder is nothing,
-                  now the common holder is the holder of the list item;
-              otherwise now contents form of list is false;
-          if the list item is mentioned, now the list item is not marked for listing;
-      filter list recursion to unmentioned things;
-                if contents form of list is true and the common holder is not nothing,
-                    list the contents of the common holder, as a sentence, including contents,
-                        giving brief inventory information, tersely, not listing
-                        concealed items, listing marked items only;
-                otherwise say "[a list of marked for listing things including contents]";
-                if the domain is the location, say " here" (F);
-                say ".[paragraph break]";
-                unfilter list recursion;
-            end the listing nondescript items activity with the domain;
-    continue the activity.
-      -}
-    {-
-
-
-
-
-
-      addTag "player location" plRoom
-      let
-      {- -}
-      printText "can "
-      when (p > 0) $ printText "also "
-      printText "see "
-      --I'm going to completely ignore what inform does here because trying to parse their
-      --object list handling is a pain.
-      --so instead I think it makes the most sense, to me, to run two groupings
-      --first, identical things should be grouped as "there are 2 Xs"
-      --no idea how to decide if two things are equal.
-      --inform decries this as "they have identical parser rhetoric"
-      --then see if anything wants to tag itself as part of a group (groupablecomponent)
-      --and then group them according to that?)
-
-      --current me: thank god past me left notes because otherwise I would've gone and dug into
-      -- the inform6 source again and cried
-
-      --first group the marked for listing elements
-      --then group the groups by the grouping
-      --this second thing can be a TODO.
-      {- groupingProps <- mapM (getGroupingProperties . localeObject . snd) (DEM.toList (unStore prior))
-      let groupedList = groupBy groupingEquivalenceRelation groupingProps
-
-      mapM_
-        ( \(objGrp, num) -> do
-            case objGrp of
-              [] -> pass -- nothing to print
-              [e'] -> do
-                printName (grpObj e')
-                pass
-              e' : _ -> do
-                addTag "Group of multiple objects: " (e', num)
-                printText $ show $ length objGrp
-                printName (grpObj e')
-                pass
-            when (num < length groupedList - 1) (printText ", ")
-            when (num == length groupedList - 2) (printText "and ")
-        )
-        $ zip groupedList [0 ..]
-      when isInLoc (printText " here")
-      paragraphBreak -} -}
+          (const Nothing)) [] lp
+      case allHolders of
+        -- no items
+        [] -> error "impossible - no items found?"
+        (x:xs) -> do
+          let objects = map localeObject $ DEM.elems lp
+          if all (== x) xs && isJust x
+          -- list the contents of the common holder, as a sentence, including contents,
+          -- giving brief inventory information, tersely, not listing
+          -- concealed items, listing marked items only;
+          -- this is via inter
+          -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html#SP17
+          -- most of this is hell imho but we shall try
+          then
+            void $ doActivity #listingContents objects
+          else
+            --otherwise say "[a list of marked for listing things including contents]";
+            --which is the same as above ^ but not as an activity
+            let objectsWithContents = withContents objects in [saying|{objectsWithContents}|]
+      --if the domain is the location, say " here" (F);
+      when (isRoom dom && isInLoc) $ sayResponse #youCanAlsoSeeF ()
+      --say ".[paragraph break]";
+      [saying|.#{paragraphBreak}|]
+    endActivity #listingNondescriptItems
     return (Nothing, Nothing))

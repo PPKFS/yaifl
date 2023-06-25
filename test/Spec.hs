@@ -109,7 +109,7 @@ unionsWithPrefixes = M.unions . map (\(k, v) -> M.mapKeys (\k1 -> k <> "/" <> k1
 goldenTests :: IO TestTree
 goldenTests = do
   let allExamples = makeExampleMap
-      allVerbs = makeVerbs
+      _allVerbs = makeVerbs
   return $ askOption $ \(AllTenses a) ->
     testGroup "Tests" [
       testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff

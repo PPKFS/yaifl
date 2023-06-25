@@ -142,8 +142,8 @@ liftSayingWithMethod method (SayModal modal t) =
       )
       (ConE $ mkName $ isCapitalised t)
     )
-liftSayingWithMethod method (SayRegarding reg) = error "todo regarding"
-liftSayingWithMethod method (SayAdapt adaptTo t) = error "todo adapt to"
+liftSayingWithMethod _method (SayRegarding _reg) = error "todo regarding"
+liftSayingWithMethod _method (SayAdapt _adaptTo _t) = error "todo adapt to"
 
 
 sayingParser :: P.Parsec Void String [SayingPiece a]

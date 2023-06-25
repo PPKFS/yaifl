@@ -9,7 +9,6 @@ import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Print
 import Yaifl.Core.World
 import Yaifl.Core.Rules.Rule
-import Yaifl.Test.Common
 import qualified Data.Text as T
 import Solitude
 import Data.Text.Display

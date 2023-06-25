@@ -98,8 +98,8 @@ toHaveAndToBe v present past = Tabulation $ \case
     Past -> \case
       Positive -> past
       Negative -> \vp -> past vp #| "not"
-    Perfect -> \vs vp -> "have" #| pastParticiple v
-    PastPerfect -> \vs vp -> "vargl" #| pastParticiple v
+    Perfect -> \_vs _vp -> "have" #| pastParticiple v
+    PastPerfect -> \_vs _vp -> "vargl" #| pastParticiple v
     Future -> \case
       Positive -> const $ "will" #| infinitive v
       Negative -> const $ "will not" #| infinitive v
@@ -158,10 +158,10 @@ regularVerbConjugation v = Tabulation $ \case
   Active -> \case
     Present -> \case
       Positive -> regularVerbPresent v
-      Negative -> \vp -> "b" {- tabulate toDo Present Negative vp -} #| infinitive v
+      Negative -> \_vp -> "b" {- tabulate toDo Present Negative vp -} #| infinitive v
     Past -> \case
       Positive -> const $ pastForm v
-      Negative -> \vp -> "c" {- tabulate toDo Past Negative vp -} #| infinitive v
+      Negative -> \_vp -> "c" {- tabulate toDo Past Negative vp -} #| infinitive v
     Perfect -> \vs vp -> tabulate toAuxiliaryHave Present vs vp #| pastParticiple v
     PastPerfect -> \vs vp -> tabulate toAuxiliaryHave Past vs vp #| pastParticiple v
     Future -> let f pref = const $ pref #| infinitive v in \case

@@ -25,20 +25,9 @@ common common-options
     , containers
     , effectful-core
     , effectful-plugin
-    , effectful-th
-    , enummapset
-    , formatting
-    , megaparsec
-    , nyan-interpolation
-    , nyan-interpolation-core
-    , optics-extra
-    , prettyprinter
-    , prettyprinter-ansi-terminal
     , template-haskell
     , text
     , text-display
-    , haskell-src-meta
-    , haskell-src-exts
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
@@ -46,7 +35,7 @@ common common-options
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Effectful.Plugin -Wunused-packages
+    -fplugin=Effectful.Plugin -Wunused-packages -Werror
   default-language: GHC2021
   default-extensions:
     OverloadedLabels
@@ -61,8 +50,8 @@ common common-options
     MultiWayIf
 
 library
-  import:          common-options
-  hs-source-dirs:  src
+  import: common-options
+  hs-source-dirs: src
   exposed-modules:
     Yaifl
 
@@ -112,6 +101,8 @@ library
     Yaifl.Lamp.Say
     Yaifl.Core.Verb
     Yaifl.Lamp.ResponseCollection
+    Yaifl.Lamp.Activities.ListingContents
+    Yaifl.Lamp.ListWriter
 
     Yaifl.Lamp.Actions.Going
     Yaifl.Lamp.Actions.Looking
@@ -121,6 +112,16 @@ library
 
     Yaifl.Lamp.Visibility
     Yaifl.Core.Responses
+  build-depends:
+    effectful-th
+    , enummapset
+    , formatting
+    , haskell-src-exts
+    , haskell-src-meta
+    , megaparsec
+    , nyan-interpolation
+    , prettyprinter
+    , prettyprinter-ansi-terminal
 
 test-suite yaifl-test
   import:             common-options
@@ -130,18 +131,12 @@ test-suite yaifl-test
   build-depends:
     , tasty
     , tasty-golden
-    , exceptions
     , yaifl
     , aeson
-    , filepath
     , directory
-    , time
-    , pretty
-    , Diff
-    , tagged
-    , optparse-applicative
-    , bytestring
-    , solitude
+    , effectful-plugin
+    --, optparse-applicative
+
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N
   default-extensions:
     QuasiQuotes

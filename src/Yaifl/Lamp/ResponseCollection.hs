@@ -21,6 +21,7 @@ data ResponseCollection wm = ResponseCollection
   , youCanAlsoSeeC :: Response wm (AnyObject wm)
   , youCanAlsoSeeD :: Response wm ()
   , youCanAlsoSeeE :: Response wm ()
+  , youCanAlsoSeeF :: Response wm ()
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ResponseCollection
@@ -36,4 +37,5 @@ blankResponseCollection = ResponseCollection
   , youCanAlsoSeeC = youCanAlsoSeeCImpl
   , youCanAlsoSeeD = youCanAlsoSeeDImpl
   , youCanAlsoSeeE = youCanAlsoSeeEImpl
+  , youCanAlsoSeeF = youCanAlsoSeeFImpl
   }

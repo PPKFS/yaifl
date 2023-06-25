@@ -12,7 +12,6 @@ import Solitude
 import Yaifl.Core.Entity ( HasID, getID )
 import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Objects.RoomData
 import Yaifl.Core.Properties.Enclosing ( Enclosing )
 import Yaifl.Core.Properties.Has ( HasProperty(..), WMHasProperty )
 import Effectful.Error.Static ( Error, throwError )
