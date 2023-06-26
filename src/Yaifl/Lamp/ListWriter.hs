@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Yaifl.Lamp.ListWriter
   ( ListWritingVariables(..)
   , withContents
@@ -11,6 +12,15 @@ import Solitude
 import Yaifl.Core.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Lamp.Say
+import Yaifl.Core.Actions.Activity
+import Data.Text.Display
+import Yaifl.Core.Responses
+import Effectful.Writer.Static.Local
+
+type WithListWriting wm = (
+  WithPrintingNameOfSomething wm
+  , WithActivity "listingContents" wm (ListWritingVariables wm) ()
+  )
 
 data ListWritingVariables wm = ListWritingVariables
   { contents :: [AnyObject wm]
@@ -47,6 +57,9 @@ data ListWritingVariables wm = ListWritingVariables
   , andOrCapitalised :: Bool
   } deriving stock ( Generic )
 
+instance Display (ListWritingVariables wm) where
+  displayBuilder = pure ""
+
 blankListWritingVariables :: [AnyObject wm] -> ListWritingVariables wm
 blankListWritingVariables c = ListWritingVariables
   { contents = c
@@ -75,7 +88,7 @@ withContents = (#includingContents .~ True) . blankListWritingVariables
 -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html#SP16
   -- turns out the "LW_RESPONSE" stuff is all dfefined in Variables and Rulebooks in the standard rules
 
-instance SayableValue (SayArticle "aListWithContents" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "aListWithContents" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { includingContents = True
@@ -84,7 +97,7 @@ instance SayableValue (SayArticle "aListWithContents" (ListWritingVariables wm))
           , notListingConcealedItems = True
           }
 
-instance SayableValue (SayArticle "isAreThe" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "isAreThe" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
@@ -92,7 +105,7 @@ instance SayableValue (SayArticle "isAreThe" (ListWritingVariables wm)) wm where
           , prefacingWithIsAre = True
           }
 
-instance SayableValue (SayArticle "isAre" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "isAre" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
@@ -100,14 +113,14 @@ instance SayableValue (SayArticle "isAre" (ListWritingVariables wm)) wm where
           , prefacingWithIsAre = True
           }
 
-instance SayableValue (SayArticle "isAreA" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "isAreA" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
           , prefacingWithIsAre = True
           }
 
-instance SayableValue (SayArticle "The" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "The" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
@@ -115,40 +128,58 @@ instance SayableValue (SayArticle "The" (ListWritingVariables wm)) wm where
           , usingDefiniteArticle = True
           }
 
-instance SayableValue (SayArticle "the" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "the" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
           , usingDefiniteArticle = True
           }
 
-instance SayableValue (SayArticle "A" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "A" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
           , capitaliseFirstArticle = True
           }
 
-instance SayableValue (SayArticle "a" (ListWritingVariables wm)) wm where
+instance WithListWriting wm => SayableValue (SayArticle "a" (ListWritingVariables wm)) wm where
   sayTell (SayArticle _ lwv) =
     writeListOfThings $ lwv
           { asEnglishSentence = True
           }
 
-instance SayableValue (ListWritingVariables wm) wm where
+instance WithListWriting wm => SayableValue (ListWritingVariables wm) wm where
   sayTell lwv =
     writeListOfThings $ lwv
           { asEnglishSentence = True
           , suppressingAllArticles = True
           }
 
-writeListOfThings :: ListWritingVariables wm -> Eff es ()
-writeListOfThings ListWritingVariables{..} = do
-  let margin = if withExtraIndentation then 1 else 0
-  -- if the list is empty
-    -- and we have `isare`, response w
-    -- otherwise response y
-    -- if newline, then print newline
-  -- otherwise if we are not using the activity we do writelistr
-  -- otherwise we carry out the listing contents activity
-  pass
+writeListOfThings ::
+  WithListWriting wm
+  => RuleEffects wm es
+  => Writer Text :> es
+  => ListWritingVariables wm
+  -> Eff es ()
+writeListOfThings lwv = do
+  let margin = if withExtraIndentation lwv then 1 else 0
+  case contents lwv of
+    [] -> do
+      if prefacingWithIsAre lwv
+      then sayListWriterResponse #w ()
+      else sayListWriterResponse #y ()
+      when (withNewlines lwv) $ tell "\n"
+    ls
+      | not (asListingActivity lwv) -> writeListR lwv
+    _ -> void $ doActivity #listingContents lwv
+
+writeListR :: ListWritingVariables wm -> Eff es ()
+writeListR = error ""
+
+data ListWriterResponses wm = LWR
+  { w :: Response wm ()
+  , y :: Response wm ()
+  } deriving stock ( Generic )
+
+sayListWriterResponse :: Lens' (ListWriterResponses wm) (Response wm v) -> v -> Eff es ()
+sayListWriterResponse = error ""
