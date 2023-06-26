@@ -214,8 +214,8 @@ alsoSee = Rule "You can also see" [] (\v ->
           else
             --otherwise say "[a list of marked for listing things including contents]";
             --which is the same as above ^ but not as an activity
-            let listWithContents = withContents objects in
-            [saying|{a listWithContents}|]
+            let listWithContents = (withContents objects) { asListingActivity = False } in
+            [saying|{aListWithContents listWithContents}|]
       --if the domain is the location, say " here" (F);
       when (isRoom dom && isInLoc) $ sayYCASResponse #youCanAlsoSeeF ()
       --say ".[paragraph break]";

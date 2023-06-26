@@ -24,12 +24,12 @@ listingContentsImpl = makeActivity "Listing contents of something" [makeRule "st
   (\objs -> do
     -- giving brief inventory information, tersely, not listing
     -- concealed items, listing marked items only;
-    let objectsWithContents = ListWritingVariables
-          { objects = objs
-          , listConcealedThings = False
+    let objectsWithContents = (blankListWritingVariables objs)
+          { asEnglishSentence = True
           , tersely = True
-          , listContents = True
-          , asListingActivity = True
+          , includingContents = True
+          -- to avoid the infinite loop, this doesn't start the activity again
+          , asListingActivity = False
           }
     [saying|{objectsWithContents}|]
     pure Nothing )]
