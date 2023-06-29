@@ -55,6 +55,7 @@ data ListWritingVariables wm = ListWritingVariables
   , capitaliseFirstArticle :: Bool
   -- ???
   , andOrCapitalised :: Bool
+  , fromStart :: Bool
   } deriving stock ( Generic )
 
 instance Display (ListWritingVariables wm) where
@@ -78,6 +79,7 @@ blankListWritingVariables c = ListWritingVariables
   , withExtraIndentation = False
   , capitaliseFirstArticle = False
   , asListingActivity = True
+  , fromStart = True
   -- ???
   , andOrCapitalised = False
   }
@@ -169,10 +171,12 @@ writeListOfThings lwv = do
       then sayListWriterResponse #w ()
       else sayListWriterResponse #y ()
       when (withNewlines lwv) $ tell "\n"
-    ls
+    _
       | not (asListingActivity lwv) -> writeListR lwv
     _ -> void $ doActivity #listingContents lwv
 
+-- so inform has two different ways to write a list - one that is a list of arbitrary items (markedlistiterator)
+-- and objecttreeiterator. this seems like it's all a giant pain so...we have a list, let's just print that
 writeListR :: ListWritingVariables wm -> Eff es ()
 writeListR = error ""
 
@@ -183,3 +187,5 @@ data ListWriterResponses wm = LWR
 
 sayListWriterResponse :: Lens' (ListWriterResponses wm) (Response wm v) -> v -> Eff es ()
 sayListWriterResponse = error ""
+
+-- what else...probably want a test *now* for grouping items and for coalescing the list correctly
