@@ -16,14 +16,21 @@ import Yaifl.Core.Actions.Activity
 import Data.Text.Display
 import Yaifl.Core.Responses
 import Effectful.Writer.Static.Local
+import Effectful.Optics
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm (ListWritingVariables wm) ()
   )
 
+data ListWritingItem wm =
+  SingleObject (AnyObject wm)
+  -- a group may contain equivalence classes of objects
+  | GroupedItems (NonEmpty (ListWritingItem wm))
+  | EquivalenceClass (NonEmpty (ListWritingItem wm))
+
 data ListWritingVariables wm = ListWritingVariables
-  { contents :: [AnyObject wm]
+  { contents :: [ListWritingItem wm]
   -- New-line after each entry NEWLINE_BIT
   , withNewlines :: Bool
   -- Indent each entry by depth INDENT_BIT
@@ -63,7 +70,7 @@ instance Display (ListWritingVariables wm) where
 
 blankListWritingVariables :: [AnyObject wm] -> ListWritingVariables wm
 blankListWritingVariables c = ListWritingVariables
-  { contents = c
+  { contents = map SingleObject c
   , withNewlines = False
   , indented = False
   , givingInventoryInformation = False
@@ -177,8 +184,35 @@ writeListOfThings lwv = do
 
 -- so inform has two different ways to write a list - one that is a list of arbitrary items (markedlistiterator)
 -- and objecttreeiterator. this seems like it's all a giant pain so...we have a list, let's just print that
+-- coalesce the list if this is the first go round
 writeListR :: ListWritingVariables wm -> Eff es ()
-writeListR = error ""
+writeListR ListWritingVariables{..} = do
+  let adjustedList = if fromStart then coalesceList contents else contents
+  when prefacingWithIsAre $ do
+    sayListWriterResponse #v ()
+    if withNewlines
+    then tell ":\n"
+    else tell " "
+  --isAre is now off.
+  forM_ (zip [length adjustedList..] adjustedList) $ \(i, item) -> do
+    oxfordComma <- use #oxfordCommaEnabled
+    case item of
+      SingleObject obj -> singleClassGroup 1 obj
+
+      GroupedItems xs -> multiClassGroup xs
+      -- because they are identical, we should be able to do everything by
+      -- the first element + the length of the list
+      EquivalenceClass l@(x :| _) -> singleClassGroup (length l) x
+    -- if we're printing as a sentence
+    when asEnglishSentence $ do
+      -- and we're onn the second last item and the oxford comma is enabled
+      when (i == 1 && oxfordComma) $ do
+        -- and we have more than 2 items in the list
+        when (length adjustedList > 2) $ tell ","
+        sayListWriterResponse #c ()
+      when (i > 1) $ tell ", "
+
+
 
 data ListWriterResponses wm = LWR
   { w :: Response wm ()
