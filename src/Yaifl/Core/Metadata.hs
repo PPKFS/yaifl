@@ -90,6 +90,7 @@ data Metadata = Metadata
   , errorLog :: [Text] -- ^ We keep track of noted errors for testing reasons.
   , typeDAG :: Map ObjectType (Set ObjectType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
   , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
+  , oxfordCommaEnabled :: Bool -- ^ should we use the oxford comma in lists?
   -- more to come I guess
   } deriving stock (Generic)
 
