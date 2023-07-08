@@ -75,6 +75,7 @@ makeVerbTabulation :: VerbForms -> Tabulation
 makeVerbTabulation v@VerbForms{infinitive="be"} = toBeTabulation v
 makeVerbTabulation v@VerbForms{infinitive="have"} = toHaveTabulation v
 makeVerbTabulation v@VerbForms{infinitive="do"} = toDoTabulation v
+makeVerbTabulation v@VerbForms{infinitive="be able to"} = toBeAbleToTabulation v
 makeVerbTabulation x = regularVerbConjugation x
 
 tabulate :: Verb -> Tense -> VerbSense -> VerbPersonage -> Text

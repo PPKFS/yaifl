@@ -63,9 +63,10 @@ instance (
     sayTell $ SayLiteral @verb verbCap
 
 withCapitalisation ::
-  Bool
+  Writer Text :> es
+  => Bool
   -> Text
-  -> Eff (Writer Text : es) ()
+  -> Eff es ()
 withCapitalisation False t = tell t
 withCapitalisation True t = tell $ t & _head  %~ toUpper
 
@@ -90,11 +91,15 @@ sayVerb ::
   forall v wm es.
   KnownSymbol v
   => RuleEffects wm es
+  => Writer Text :> es
   => SayLiteral v
-  -> Eff (Writer Text : es) ()
+  -> Eff es ()
 sayVerb (SayLiteral cap) = do
     v <- conjugateVerb Positive $ makeVerb (toText $ symbolVal (Proxy @v))
     withCapitalisation cap v
+
+instance SayableValue Int wm where
+  sayTell x = tell (display x)
 
 instance SayableValue (SayModalVerb "can't") wm where
   sayTell (SayModalVerb cap) = withCapitalisation cap "can't"
@@ -142,11 +147,18 @@ instance
   say (SayArticle c a) = if c then say (The a) else say (The_ a)
   sayTell (SayArticle c a) = if c then sayTell (The a) else sayTell (The_ a)
 
+instance
+  ( ObjectLike wm (Object wm o)
+  , WithPrintingNameOfSomething wm
+  ) => SayableValue (SayArticle "a" (Object wm o)) wm where
+  say (SayArticle c a) = if c then say (A a) else say (A_ a)
+  sayTell (SayArticle c a) = if c then sayTell (A a) else sayTell (A_ a)
 
 instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (SayingForm o) wm where
   sayTell s = do
     let (objLike, isDef, isCap) = getDetails s
     (o :: AnyObject wm) <- getObject objLike
+    oName <- sayText $ o ^. #name
     let articleEff
           | isDef = (if o ^. #nameProperness == Proper
               then pure ""
@@ -154,6 +166,7 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
             )
           | o ^. #namePlurality == PluralNamed = pure "some"
           | Just x <- o ^. #indefiniteArticle = sayText x
+          | (oName ^? _head) `elem` map Just ['a', 'i', 'e', 'o', 'u'] = pure "an"
           | otherwise = pure "a"
     article <- articleEff
     sayTell (if isCap then maybe "" (uncurry T.cons) (bimapF toUpper id (T.uncons article)) else article)

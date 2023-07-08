@@ -6,17 +6,13 @@ module Yaifl.Lamp.Activities.ListingContents
 import Solitude
 
 import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Object
 import Yaifl.Core.Rules.Rule
-import Yaifl.Lamp.Say
-import Yaifl.Core.SayQQ
 import Yaifl.Lamp.ListWriter
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Print
+import Effectful.Writer.Static.Local (execWriter)
 
 type WithListingContents wm = (
-  WithPrintingNameOfSomething wm
-  , WithActivity "listingContents" wm (ListWritingParameters wm) ()
-  , WithActivity "groupingTogether" wm (AnyObject wm) ()
+  WithListWriting wm
   )
 
 listingContentsImpl :: WithListingContents wm => Activity wm (ListWritingParameters wm) ()
@@ -31,5 +27,5 @@ listingContentsImpl = makeActivity "Listing contents of something" [makeRule "st
           -- to avoid the infinite loop, this doesn't start the activity again
           , asListingActivity = False
           }
-    [saying|{objectsWithContents}|]
+    execWriter (writeListOfThings objectsWithContents) >>= printText
     pure Nothing )]

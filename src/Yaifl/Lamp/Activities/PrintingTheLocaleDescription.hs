@@ -40,13 +40,11 @@ data YouCanAlsoSeeResponses wm = YCAS
 
 type WithPrintingTheLocaleDescription wm = (
   WithChoosingNotableLocaleObjects wm
-  , WithPrintingNameOfSomething wm
+  , WithListWriting wm
   , WithListingNondescriptItems wm
   , WithPrintingLocaleParagraphAbout wm
   , WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
   , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ()
-  , WithActivity "listingContents" wm (ListWritingParameters wm) ()
-  , WithActivity "groupingTogether" wm (AnyObject wm) ()
   )
 
 youCanAlsoSeeResponsesImpl ::

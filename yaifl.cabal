@@ -130,11 +130,12 @@ test-suite yaifl-test
   main-is:            Spec.hs
   build-depends:
     , tasty
-    , tasty-golden
+    --, tasty-golden
     , yaifl
     , aeson
     , directory
     , effectful-plugin
+    , tasty-silver
     --, optparse-applicative
 
   ghc-options:        -threaded -rtsopts -with-rtsopts=-N

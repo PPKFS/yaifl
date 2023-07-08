@@ -4,7 +4,10 @@ module Yaifl.Lamp.ListWriter
   ( ListWritingParameters(..)
   , withContents
   , blankListWritingParameters
-
+  , WithListWriting
+  , writeListOfThings
+  , listWriterResponsesImpl
+  , ListWriterResponses(..)
   ) where
 
 import Yaifl.Core.Object
@@ -19,11 +22,14 @@ import Effectful.Writer.Static.Local
 import Effectful.Optics
 import Yaifl.Core.Metadata
 import qualified Data.Text as T
+import Yaifl.Core.SayQQ
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm (ListWritingParameters wm) ()
   , WithActivity "groupingTogether" wm (AnyObject wm) ()
+  , WithActivity "printingANumberOf" wm (Int, AnyObject wm) ()
+  , WithResponseSet wm "listWriterResponses" (ListWriterResponses wm)
   )
 
 data ListWritingItem wm =
@@ -193,8 +199,8 @@ writeListOfThings lwp = evalStateLocal (LWV
   case contents lwp of
     [] -> do
       if prefacingWithIsAre lwp
-      then sayListWriterResponse #w ()
-      else sayListWriterResponse #y ()
+      then sayTellListWriterResponse #w ()
+      else sayTellListWriterResponse #y ()
       when (withNewlines lwp) $ tell "\n"
     _
       | not (asListingActivity lwp) -> writeListR
@@ -215,32 +221,62 @@ writeListR = do
   ListWritingParameters{..} <- use @(ListWritingVariables wm) #lwp
   let adjustedList = if fromStart then coalesceList contents else contents
   when prefacingWithIsAre $ do
-    sayListWriterResponse #v ()
+    sayTellListWriterResponse #v ()
     if withNewlines
     then tell ":\n"
     else tell " "
   --isAre is now off.
-  forM_ (zip [length adjustedList..] adjustedList) $ \(i, item) -> do
+  forM_ (zip [1..] adjustedList) $ \(i, item) -> do
     oxfordComma <- use @Metadata #oxfordCommaEnabled
-
     case item of
-      SingleObject obj -> singleClassGroup 1 (SingleObject obj)
-
+      SingleObject obj -> singleClassGroup (i == 1) 1 (SingleObject obj)
       GroupedItems xs -> multiClassGroup xs
       -- because they are identical, we should be able to do everything by
       -- the first element + the length of the list
-      EquivalenceClass l@(x :| _) -> singleClassGroup (length l) (SingleObject x)
+      EquivalenceClass l@(x :| _) -> singleClassGroup (i == 1) (length l) (SingleObject x)
     -- if we're printing as a sentence
     when asEnglishSentence $ do
       -- and we're onn the second last item and the oxford comma is enabled
-      when (i == 1 && oxfordComma) $ do
+      when (i == (length adjustedList - 1) && oxfordComma) $ do
         -- and we have more than 2 items in the list
         when (length adjustedList > 2) $ tell @Text ","
-        sayListWriterResponse #c ()
-      when (i > 1) $ tell ", "
+        sayTellListWriterResponse #c ()
+      when (i < (length adjustedList - 1)) $ tell ", "
 
-singleClassGroup :: Int -> ListWritingItem wm -> Eff es a1
-singleClassGroup = error ""
+singleClassGroup ::
+  forall wm es.
+  WithListWriting wm
+  => Writer Text :> es
+  => State (ListWritingVariables wm) :> es
+  => RuleEffects wm es
+  => Bool
+  -> Int -- ^ number of class elements
+  -> ListWritingItem wm
+  -> Eff es ()
+singleClassGroup isFirst cnt item' = do
+  LWV{lwp, depth, margin} <- get
+  when (indented lwp) $ tell (T.replicate (2 * (depth+margin)) " ")
+  let getObjectOut = \case
+        SingleObject o -> o
+        GroupedItems (g :| _) -> getObjectOut g
+        EquivalenceClass (g :| _) -> g
+  let item = getObjectOut item'
+  if cnt == 1
+    -- TODO: tidy all this up
+  then do
+    if
+      | suppressingAllArticles lwp -> [sayingTell|{item}|]
+      | usingDefiniteArticle lwp && isFirst && capitaliseFirstArticle lwp -> [sayingTell|{The item}|]
+      | usingDefiniteArticle lwp -> [sayingTell|{the item}|]
+      | isFirst && capitaliseFirstArticle lwp -> [sayingTell|{A item}|]
+      | otherwise -> [sayingTell|{a item}|]
+  else do
+    [sayingTell|{cnt} |]
+    void $ doActivity #printingANumberOf (cnt, item)
+  writeAfterEntry cnt item'
+
+writeAfterEntry :: Int -> ListWritingItem wm -> Eff es ()
+writeAfterEntry = const $ const pass
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]
 coalesceList = id
@@ -281,7 +317,23 @@ data ListWriterResponses wm = LWR
   , y :: Response wm ()
   } deriving stock ( Generic )
 
-sayListWriterResponse :: Lens' (ListWriterResponses wm) (Response wm v) -> v -> Eff es ()
-sayListWriterResponse = error ""
+listWriterResponsesImpl :: ListWriterResponses wm
+listWriterResponsesImpl = LWR
+  { c = constResponse " and "
+  -- "[regarding list writer internals][are] nothing" (W) TODO
+  , w = constResponse "is nothing"
+  -- "[regarding list writer internals][are]" (V) TODO
+  , v = constResponse "is"
+  , y = constResponse "nothing"
+  }
+
+sayTellListWriterResponse ::
+  WithResponseSet wm "listWriterResponses" (ListWriterResponses wm)
+  => Writer Text :> es
+  => RuleEffects wm es
+  => Lens' (ListWriterResponses wm) (Response wm v)
+  -> v
+  -> Eff es ()
+sayTellListWriterResponse l = sayTellResponse  (#listWriterResponses % l)
 
 -- what else...probably want a test *now* for grouping items and for coalescing the list correctly

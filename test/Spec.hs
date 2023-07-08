@@ -7,15 +7,13 @@ import Solitude
 import Data.Aeson ( decodeFileStrict, encodeFile )
 import Breadcrumbs
 import System.Directory
-import System.IO ( hPutStrLn )
-import Test.Tasty
-import Test.Tasty.Golden
+import Test.Tasty hiding (defaultMain)
+import Test.Tasty.Silver
 import Test.Tasty.Options
-import Test.Tasty.Ingredients
-import Test.Tasty.Runners
 import qualified Data.Map as M
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Yaifl.Core.Verb
+import Test.Tasty.Silver.Interactive (defaultMain)
 
 newtype AllTenses = AllTenses Bool
 
@@ -35,27 +33,15 @@ main :: IO ()
 main = runEff
   . runBreadcrumbs Nothing $
     do
-      (testTree, opts) <- liftIO $ do
-        testTree <- goldenTests
-        installSignalHandlers
-        opts <- parseOptions (includingOptions [Option (Proxy @AllTenses)] : defaultIngredients) testTree
-        pure (testTree, opts)
-      case tryIngredients defaultIngredients opts testTree of
-        Nothing -> liftIO $ do
-          hPutStrLn stderr
-            "No ingredients agreed to run. Something is wrong either with your ingredient set or the options."
-          exitFailure
-        Just act -> do
-          runNo <- liftIO getAndIncrementRunNumber
-          ok <- withSpan' "Test Suite" ("Run #" <> show runNo) $ do
-            (TraceID s) <- getTraceId
-            liftIO $ do
-              writeFileBS "traceid.temp" s
-              o <- liftIO act
-              removeFile "traceid.temp"
-              pure o
-          flush
-          liftIO $ if ok then exitSuccess else exitFailure
+      testTree <- liftIO goldenTests
+      runNo <- liftIO getAndIncrementRunNumber
+      withSpan' "Test Suite" ("Run #" <> show runNo) $ do
+        (TraceID s) <- getTraceId
+        liftIO $ do
+          writeFileBS "traceid.temp" s
+          defaultMain testTree
+          removeFile "traceid.temp"
+        flush
 
 getAndIncrementRunNumber :: IO Int
 getAndIncrementRunNumber = do
@@ -112,11 +98,11 @@ goldenTests = do
       _allVerbs = makeVerbs
   return $ askOption $ \(AllTenses a) ->
     testGroup "Tests" [
-      testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
+      testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsAction
       k -- test name
-      (\ref new -> ["delta", ref, new])
       ("test/testcases/" <> k) -- golden file path
-      (encodeUtf8 <$> v))  -- action whose result is tested
+      v  -- action whose result is tested
+      id)
       (allExamples a)
     {- }, testGroup "Conjugation" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
       k -- test name

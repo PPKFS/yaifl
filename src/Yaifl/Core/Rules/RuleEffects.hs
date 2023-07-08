@@ -62,7 +62,7 @@ type ConcreteRuleStack wm = '[
   ]
 
 class SayableValue s wm where
-  sayTell :: RuleEffects wm es => s -> Eff (Writer Text : es) ()
+  sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()
   say :: RuleEffects wm es => s -> Eff es ()
   default say :: RuleEffects wm es => s -> Eff es ()
   say s = execWriter (sayTell s) >>= printText

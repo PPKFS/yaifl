@@ -125,6 +125,7 @@ blankActivityCollection = ActivityCollection
   , listingNondescriptItems = blankActivity "listing nondescript items"
   , listingContents = listingContentsImpl
   , groupingTogether = blankActivity "grouping things together"
+  , printingANumberOf = blankActivity "printing a number of"
   }
 
 blankStores :: WorldStores s
@@ -343,6 +344,7 @@ data ActivityCollection wm = ActivityCollection
   , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
   , listingContents :: !(Activity wm (ListWritingParameters wm) ())
   , groupingTogether :: Activity wm (AnyObject wm) ()
+  , printingANumberOf :: Activity wm (Int, AnyObject wm) ()
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActivityCollection
