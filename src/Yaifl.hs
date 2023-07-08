@@ -62,6 +62,7 @@ import Yaifl.Lamp.Visibility
 
 import qualified Data.Map as DM
 import qualified Data.Text as T
+import Yaifl.Lamp.ListWriter
 
 newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
@@ -123,6 +124,7 @@ blankActivityCollection = ActivityCollection
   , printingTheLocaleDescription = printingTheLocaleDescriptionImpl
   , listingNondescriptItems = blankActivity "listing nondescript items"
   , listingContents = listingContentsImpl
+  , groupingTogether = blankActivity "grouping things together"
   }
 
 blankStores :: WorldStores s
@@ -147,6 +149,7 @@ blankMetadata = Metadata
   , errorLog = []
   , typeDAG = makeTypeDAG
   , traceAnalysisLevel = Maximal
+  , oxfordCommaEnabled = True
   }
 
 type EffStack wm = '[
@@ -338,7 +341,8 @@ data ActivityCollection wm = ActivityCollection
   , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
   , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
   , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
-  , listingContents :: !(Activity wm [AnyObject wm] ())
+  , listingContents :: !(Activity wm (ListWritingParameters wm) ())
+  , groupingTogether :: Activity wm (AnyObject wm) ()
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActivityCollection

@@ -23,7 +23,7 @@ import qualified Data.Text as T
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm (ListWritingParameters wm) ()
-  , WithActivity "groupingTogether" wm (ListWritingItem wm) ()
+  , WithActivity "groupingTogether" wm (AnyObject wm) ()
   )
 
 data ListWritingItem wm =
@@ -256,8 +256,12 @@ multiClassGroup ::
 multiClassGroup groupOfThings = do
   LWV{lwp, depth, margin} <- get
   when (indented lwp) $ tell (T.replicate (2 * (depth+margin)) " ")
+  let getObjectOut = \case
+        SingleObject o -> o
+        GroupedItems (g :| _) -> getObjectOut g
+        EquivalenceClass (g :| _) -> g
   --  as we know the items are grouped, we should be fine to just take the first element as the class representative
-  beginActivity #groupingTogether (head groupOfThings)
+  beginActivity #groupingTogether (getObjectOut $ head groupOfThings)
   whenHandling' #groupingTogether $ do
     o <- get @(ListWritingVariables wm)
     modify @(ListWritingVariables wm) (\s -> s &

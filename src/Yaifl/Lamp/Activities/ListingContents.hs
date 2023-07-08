@@ -16,15 +16,15 @@ import Yaifl.Core.Rules.RuleEffects
 type WithListingContents wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm (ListWritingParameters wm) ()
+  , WithActivity "groupingTogether" wm (AnyObject wm) ()
   )
 
-listingContentsImpl ::
-  Activity wm [AnyObject wm] ()
+listingContentsImpl :: WithListingContents wm => Activity wm (ListWritingParameters wm) ()
 listingContentsImpl = makeActivity "Listing contents of something" [makeRule "standard listing contents" []
   (\objs -> do
     -- giving brief inventory information, tersely, not listing
     -- concealed items, listing marked items only;
-    let objectsWithContents = (blankListWritingParameters objs)
+    let objectsWithContents = objs
           { asEnglishSentence = True
           , tersely = True
           , includingContents = True

@@ -45,7 +45,8 @@ type WithPrintingTheLocaleDescription wm = (
   , WithPrintingLocaleParagraphAbout wm
   , WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
   , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ()
-  , WithActivity "listingContents" wm [AnyObject wm] ()
+  , WithActivity "listingContents" wm (ListWritingParameters wm) ()
+  , WithActivity "groupingTogether" wm (AnyObject wm) ()
   )
 
 youCanAlsoSeeResponsesImpl ::
@@ -210,7 +211,7 @@ alsoSee = Rule "You can also see" [] (\v ->
           -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html#SP17
           -- most of this is hell imho but we shall try
           then
-            void $ doActivity #listingContents objects
+            void $ doActivity #listingContents (withContents objects)
           else
             --otherwise say "[a list of marked for listing things including contents]";
             --which is the same as above ^ but not as an activity
