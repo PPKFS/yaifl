@@ -6,7 +6,6 @@ import Solitude
 
 import Breadcrumbs
 import Data.Text.Display
-import Text.Interpolation.Nyan
 import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Metadata (tickGlobalTime, Metadata (..))
 import Yaifl.Core.Object
@@ -51,5 +50,4 @@ move oObj oLoc = withoutMissingObjects moveBlock moveHandler
       tickGlobalTime True
       --at this point we know it's a success
       return True
-    moveHandler = handleMissingObject
-      [int|t| Failed to move #{getID oObj} to #{getID oLoc}|] False
+    moveHandler = handleMissingObject ("Failed to move " <> display (getID oObj) <> " to " <> (display $ getID oLoc)) False

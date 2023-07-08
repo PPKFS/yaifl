@@ -11,7 +11,6 @@ import Breadcrumbs
 import Data.Text.Display
 import Effectful.Dispatch.Dynamic ( interpret )
 import Effectful.Optics ( use )
-import Text.Interpolation.Nyan
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
@@ -51,13 +50,13 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
       xs:x:_ -> return $ Left $ "Did you mean " <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
       [(matched, r, Left (InterpretAs x))] -> do
-        addAnnotation [int|t|Matched #{matched} and interpreting this as #{x}.|]
+        addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
       [(matched, r, Right x)] -> do
-        addAnnotation [int|t|Action parse was successful; going with the verb #{actionName x} after matching #{matched}|]
+        addAnnotation $ "Action parse was successful; going with the verb " <> actionName x <> " after matching " <> matched
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
-    whenLeft_ ac (\t' -> noteError (const ()) [int|t|Failed to parse the command #{t} because #{t'}.|])
+    whenLeft_ ac (\t' -> noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t')
     return ac
 
 findVerb ::
@@ -142,6 +141,6 @@ tryAction ::
   -> Eff es Bool
 tryAction an f = do
   ta <- getGlobalTime
-  addAnnotation [int|t|Trying to do the action '#{actionName an}'|]
+  addAnnotation $ "Trying to do the action '"<> actionName an <> "'"
   let uva = f ta
   fromMaybe False <$> runAction uva an

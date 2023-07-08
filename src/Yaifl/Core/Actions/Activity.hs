@@ -78,9 +78,10 @@ beginActivity acL c = do
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
     withoutMissingObjects
       (do
+        modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
         -- run the before rules only.
         r <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
-        modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
+        whenJust r $ \r' -> modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ fst r')
         pure $ maybe c fst r)
       (handleMissingObject "beginning an activity" c)
 
@@ -121,21 +122,22 @@ whenHandling acL f = do
 
 endActivity ::
   forall wm v r es.
-  (RuleEffects wm es, Display v)
+  HasCallStack
+  => (RuleEffects wm es, Display v)
   => Refreshable wm v
   => ActivityLens wm v r
-  -> Eff es v
+  -> Eff es (Maybe v)
 endActivity acF = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acF)
   withSpan "end activity" (ac ^. #name) $ \aSpan ->
     failHorriblyIfMissing
       (do
         case currentVariables ac of
-          Nothing -> error "ended without beginning"
+          Nothing -> pure Nothing
           Just c -> do
             r <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) c
             modify @(ActivityCollector wm) (#activityCollection % acF % #currentVariables .~ Nothing)
-            pure $ maybe c fst r)
+            pure $ maybe (Just c) (Just . fst) r)
 
 doActivity ::
   forall wm r v es.

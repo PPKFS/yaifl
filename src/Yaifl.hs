@@ -22,9 +22,6 @@ import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
 import Effectful.Optics ( (?=), (%=), use, (<<%=) )
 import Effectful.Reader.Static ( runReader, Reader )
 import Effectful.Writer.Static.Local
-
-import Text.Interpolation.Nyan
-
 import Yaifl.Core.Actions.Action
 import Yaifl.Core.Actions.Activity
 import Yaifl.Core.Actions.Parser
@@ -64,7 +61,7 @@ import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Lamp.ListWriter
 
-newtype Text' (wm :: WorldModel) =  Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
+newtype Text' (wm :: WorldModel) = Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
 instance Display (Text' wm) where
   displayBuilder (Text' (Left t)) = fromText t
@@ -278,8 +275,8 @@ interpretLookup = do
                 mbRoom <- use $ #stores % l' % at i
                 let (cs :: Text) = show callStack
                 case mbRoom of
-                  Nothing -> pure $ Left [int|t|Could not find the object #s{i} as either a thing or room (Queried as a #{expected}).|]
-                  Just _ -> pure $ Left [int|t|Tried to lookup a #{errTy} as a #{expected}: #{i}. (at: #{cs}) |]
+                  Nothing -> pure $ Left $ "Could not find the object " <> show i <> " as either a thing or room (Queried as a " <> show expected <> ")."
+                  Just _ -> pure $ Left $ "Tried to lookup a " <> errTy <> " as a " <> show expected <> ":" <> show i <> ". (at: " <> show cs <> ")."
               Just ao -> pure $ Right ao
   interpret $ \_ -> \case
     LookupThing e -> lookupHelper (getID e) #things #rooms "thing" "room"
@@ -336,7 +333,7 @@ makeTypeDAG = fromList
 
 data ActivityCollection wm = ActivityCollection
   { printingNameOfADarkRoom :: !(Activity wm () ())
-  , printingNameOfSomething :: !(Activity wm (AnyObject wm) ())
+  , printingNameOfSomething :: !(Activity wm (AnyObject wm) Text)
   , printingDescriptionOfADarkRoom :: !(Activity wm () ())
   , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
   , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))

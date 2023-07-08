@@ -42,7 +42,6 @@ module Yaifl.Core.Objects.Query
 
 import Solitude
 
-import Text.Interpolation.Nyan
 import Effectful.Error.Static ( runError, throwError, Error )
 import Effectful.Optics ( use )
 import Effectful.TH ( makeEffect )
@@ -61,7 +60,8 @@ data MissingObject = MissingObject
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 withoutMissingObjects ::
-  (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
+  HasCallStack
+  => (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
   -> (HasCallStack => MissingObject -> Eff es a)  -- ^ the handler
   -> Eff es a
 withoutMissingObjects f def = do
@@ -78,14 +78,15 @@ handleMissingObject ::
   -> MissingObject
   -> Eff es a
 handleMissingObject msg def (MissingObject t o) =
-  noteError (const def) [int|t|When #{msg}, the object with ID #{o} could not be found because #{t}.|]
+  noteError (const def) $ "When " <> show msg <> " the object with ID " <> show o <> " could not be found because " <> show t
 
 failHorriblyIfMissing ::
-  Breadcrumbs :> es
+  HasCallStack
+  => Breadcrumbs :> es
   => (HasCallStack => Eff (Error MissingObject ': es) a)
   -> Eff es a
 failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
-  let msg = [int|t|The object with ID #{o} could not be found because #{t}. We are failing horribly and erroring out because we can't recover.|]
+  let msg = "the object with ID " <> show o <> " could not be found because " <> show t <> ". We are failing horribly and erroring out because we can't recover."
   addAnnotation msg
   error msg)
 
@@ -256,7 +257,7 @@ refreshRoom ::
 refreshRoom r = ifM (traceGuard Medium)
   (do
     r' <- getRoom $ objectId r
-    when (r' /= r) $ noteError (const ()) [int|t|Refreshed room with ID #{objectId r} and found an outdated object|]
+    when (r' /= r) $ noteError (const ()) $ "Refreshed room with ID" <> show (objectId r) <> " and found an outdated object"
     return r)
   (pure r)
 
@@ -267,7 +268,7 @@ refreshThing ::
 refreshThing r = ifM (traceGuard Medium)
   (do
     r' <- getThing $ objectId r
-    when (r' /= r) $ noteError (const ()) [int|t|Refreshed thing with ID #{objectId r} and found an outdated object|]
+    when (r' /= r) $ noteError (const ()) $ "Refreshed thing with ID" <> show (objectId r) <> " and found an outdated object"
     return r)
   (pure r)
 

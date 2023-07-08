@@ -31,7 +31,6 @@ import Yaifl.Core.Rules.Args ( ArgSubject(..) )
 import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
-import Text.Interpolation.Nyan
 import Effectful.Error.Static
 
 data GoingActionVariables wm = GoingActionVariables
@@ -108,7 +107,7 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
         --if it's not a door, then we've messed up.
         mbDoor <- getDoor thing
         case mbDoor of
-          Nothing -> noteError Left [int|t|You said you wanted to go to the TODO which makes no sense.|]
+          Nothing -> noteError Left ""--[int|t|You said you wanted to go to the TODO which makes no sense.|]
           Just d ->
             --get the other side of the door. we don't check (TODO) whether the other side is indeed a room.
             if

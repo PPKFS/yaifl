@@ -6,13 +6,13 @@ in
   pkgs.mkShell {
     buildInputs = with pkgs; [
       cabal-install
-      unstable.ghc
+      haskell.compiler.ghc945
       binutils
       delta
       zlib
       zlib.dev
       zlib.out
-      unstable.haskellPackages.haskell-language-server
+      haskell.packages.ghc94.haskell-language-server
     ];
     shellHook = ''
       eval $(egrep ^export ${unstable.ghc}/bin/ghc)

@@ -40,11 +40,15 @@ type RuleEffects wm es = (
   , State (AdaptiveNarrative wm) :> es
   , Breadcrumbs :> es
   , NoMissingObjects wm es
-  , Display (WMSayable wm)
-  , SayableValue (WMSayable wm) wm
+  , RuleConstraints wm
   , Print :> es
   , ActionHandler wm :> es
   , ObjectTraverse wm :> es
+  )
+
+type RuleConstraints wm =
+  ( Display (WMSayable wm)
+  , SayableValue (WMSayable wm) wm
   )
 
 type ConcreteRuleStack wm = '[

@@ -16,7 +16,6 @@ import Yaifl.Core.Rules.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Breadcrumbs
-import Text.Interpolation.Nyan
 import Data.Text.Display
 import Yaifl.Lamp.Locale
 
@@ -29,7 +28,7 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
     e' <- getEnclosing v
     case e' of
       Nothing -> (do
-        addAnnotation [int|t|Tried to choose notable locale objects from #{display (name v)} which doesn't enclose.|]
+        addAnnotation $ "Tried to choose notable locale objects from " <> display (name v) <> " which doesn't enclose."
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do

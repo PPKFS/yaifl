@@ -5,7 +5,6 @@ module Yaifl.Lamp.Visibility where
 import Solitude
 
 import Breadcrumbs ( addAnnotation )
-import Text.Interpolation.Nyan ( rmode', int )
 import Yaifl.Core.Actions.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
 import Yaifl.Core.Entity
 import Yaifl.Core.Object
@@ -89,7 +88,7 @@ findVisibilityHolder e' = do
     isRoom obj || isOpaqueClosedContainer <$?> mCont
   then
     do
-      addAnnotation [int|t|The visibility holder of #{display n} is itself|]
+      addAnnotation $ "The visibility holder of " <> display n <> " is itself"
       --return it
       return (toAny e')
   else

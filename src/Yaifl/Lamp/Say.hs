@@ -16,7 +16,7 @@ import Data.Char (toUpper)
 import qualified Data.Text as T
 import Yaifl.Core.Rules.RuleEffects
 import GHC.TypeLits
-import Effectful.Optics (use)
+import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell)
 import Yaifl.Core.Metadata
 import Yaifl.Core.Verb
@@ -179,7 +179,7 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
         A a -> (a, False, True)
         A_ a -> (a, False, False)
 
-type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) ())
+type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) Text)
 -- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
   NoMissingObjects wm es
@@ -195,10 +195,12 @@ printName ::
   -> Eff es ()
 printName o = do
   e <- getObject o
-  void $ doActivity #printingNameOfSomething e
+  t <- doActivity #printingNameOfSomething e
+  printText (fromMaybe "" t)
 
-printingNameOfSomethingImpl :: Activity s (AnyObject s) ()
+printingNameOfSomethingImpl :: Activity s (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
     [makeRule "" [] (\o -> do
+      regarding (Just o)
       t <- sayText $ o ^. #name
-      printText t >> return (Just ())) ]
+      pure $ Just t) ]

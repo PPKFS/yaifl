@@ -100,7 +100,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             -- say "Darkness" (A);
             sayResponse (#roomDescriptions % #roomDescriptionHeadingA) ()
           -- end the printing the name of a dark room activity;
-          endActivity #printingNameOfADarkRoom
+          void $ endActivity #printingNameOfADarkRoom
         Just visCeil ->
           -- otherwise if the visibility ceiling is the location:
           if getID visCeil == getID loc
@@ -148,7 +148,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
               -- say "[It] [are] pitch dark, and [we] [can't see] a thing." (A);
               sayResponse (#roomDescriptions % #roomDescriptionBodyA) ()
             -- end the printing the description of a dark room activity;
-            endActivity #printingDescriptionOfADarkRoom
+            void $ endActivity #printingDescriptionOfADarkRoom
         Just visCeil ->
           -- otherwise if the visibility ceiling is the location:
           if getID visCeil == getID loc

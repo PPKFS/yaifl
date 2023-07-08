@@ -25,7 +25,7 @@ import Breadcrumbs ( ignoreSpan, addAnnotation )
 import Yaifl.Core.Rules.Args ( Refreshable, Args, getPlayer )
 import Yaifl.Core.Rules.RuleEffects
 
-newtype RuleLimitedEffect wm es a = RuleLimitedEffect (Eff (es : ConcreteRuleStack wm) a)
+newtype RuleLimitedEffect wm es a = RuleLimitedEffect (RuleConstraints wm => Eff (es : ConcreteRuleStack wm) a)
 
 newtype Precondition wm v = Precondition
   { checkPrecondition :: forall es. RuleEffects wm es => v -> Eff es Bool }
