@@ -91,6 +91,10 @@ data Object wm objData = Object
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
 
+type Thing wm = Object wm ThingData
+type Room wm = Object wm (RoomData wm)
+type AnyObject wm = Object wm (Either ThingData (RoomData wm))
+
 makeFieldLabelsNoPrefix ''Object
 
 instance Display (Object wm objData) where
@@ -98,10 +102,6 @@ instance Display (Object wm objData) where
 
 instance HasID (Object wm d) where
   getID = objectId
-
-type Thing wm = Object wm ThingData
-type Room wm = Object wm (RoomData wm)
-type AnyObject wm = Object wm (Either ThingData (RoomData wm))
 
 -- | By generalising `Eq`, we can compare two objects of different kinds. Trivially this is always `False`,
 -- but it does allow comparing a `Thing` and an `AnyObject`.

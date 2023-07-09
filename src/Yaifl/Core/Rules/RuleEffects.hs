@@ -1,7 +1,19 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DefaultSignatures #-}
-module Yaifl.Core.Rules.RuleEffects where
+module Yaifl.Core.Rules.RuleEffects
+  ( sayLn
+  , RuleEffects
+  , ActionHandler(..)
+  , parseAction
+  , ActionOptions(..)
+  , ActivityCollector(..)
+  , ResponseCollector(..)
+  , ConcreteRuleStack
+  , SayableValue(..)
+  , RuleConstraints
+  , sayText
+  ) where
 
 import Solitude
 
@@ -12,7 +24,7 @@ import Effectful.TH ( makeEffect )
 import Effectful.Writer.Static.Local
 import Yaifl.Core.AdaptiveNarrative
 import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.Object ( Thing )
+import Yaifl.Core.Object
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Print ( Print, printText, printLn )
 import Yaifl.Core.WorldModel ( WMActivities, WMResponses, WMSayable )

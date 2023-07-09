@@ -29,8 +29,9 @@ import Yaifl.Core.Objects.Query ( NoMissingObjects )
 import Yaifl.Core.Rules.Args
 import Yaifl.Core.Rules.Rule
 import Breadcrumbs
+import Yaifl.Core.Rules.RuleEffects
 
-type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es)
+type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ArgumentParseResult v)

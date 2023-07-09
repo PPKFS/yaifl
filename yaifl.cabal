@@ -30,7 +30,7 @@ common common-options
     , text-display
 
   ghc-options:
-    -Wall -Wcompat -Widentities -Wredundant-constraints -Wno-unused-packages
+    -Wall -Wcompat -Widentities -Wredundant-constraints -Wno-unused-packages -Wno-deprecations
     -fhide-source-paths -Wno-unused-top-binds
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances

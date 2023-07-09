@@ -1,18 +1,4 @@
-{-|
-Module      : Yaifl.Actions.Going
-Description : The going action.
-Copyright   : (c) Avery, 2022
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-Stability   : No
--}
-
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TemplateHaskell #-}
-
-
 module Yaifl.Lamp.Actions.Going
   (goingAction) where
 
@@ -32,21 +18,20 @@ import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Effectful.Error.Static
+import Yaifl.Core.Rules.RuleEffects
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
-    _gavRoomFrom :: Room wm
+    roomGoneFrom :: Room wm
     --The going action has an object called the room gone to (matched as "to").
-  , _gavRoomTo :: Room wm
+  , roomGoneTo :: Room wm
     --The going action has an object called the door gone through (matched as "through").
-  , _gavDoorGoneThrough :: Maybe (Thing wm)
+  , doorGoneThrough :: Maybe (Thing wm)
     --The going action has an object called the vehicle gone by (matched as "by").
-  , _gavVehicleGoneBy :: Maybe (Thing wm)
+  , vehicleGoneBy :: Maybe (Thing wm)
     --The going action has an object called the thing gone with (matched as "with").
-  , _gavThingGoneWith :: Maybe (Thing wm)
-  }
-
-makeLenses ''GoingActionVariables
+  , thingGoneWith :: Maybe (Thing wm)
+  } deriving stock ( Generic )
 
 goingAction ::
   (WMStdDirections wm, WMHasProperty wm Door)
@@ -73,7 +58,7 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
   --now the thing gone with is the item-pushed-between-rooms;
   goneWith <- getMatching "with" >>= maybe (return Nothing) getThingMaybe
   -- now the room gone from is the location of the actor;
-  roomFrom <- getRoom =<< getLocation source
+  roomFrom <- getLocation source
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
   vehicleGoneBy <- actorInEnterableVehicle source
   {-
@@ -82,7 +67,8 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
     after this, if there is a door in the way then we are clearly going through the door and our target is through the door
     and of course now the room we're going to is on the other side of the door.
   -}
-  let (n :: [ArgSubject wm]) = getNouns a
+ {-
+  let (n :: [ArgSubject wm]) = [] --error ""--getNouns a
   -- find all the possible targets we could mean
   targets <- catMaybes <$> mapM (\case
       -- if the noun is a direction
@@ -98,9 +84,9 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
       ) n
   -- ensure we have 1 target, which is either a room (passthrough) or a door (in which case we want to go through it)
   target <- case targets of
-    [] -> noteError Left "I have no idea where you wanted to go."
+    [] -> pure $ Left "I have no idea where you wanted to go."
     --we have too many targets; this probably arises if we try to go east via the west door
-    (_:_:_) -> noteError Left "I have no idea where you wanted to go; you seemed to suggest multiple directions."
+    (_:_:_) -> pure $ Left "I have no idea where you wanted to go; you seemed to suggest multiple directions."
     -- this should either be a room or a door
     [x] -> asThingOrRoomM x
       (\thing -> do
@@ -124,9 +110,12 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
         , _gavVehicleGoneBy = vehicleGoneBy
         , _gavThingGoneWith = goneWith
         }
+
   case target of
     Left txt -> return $ Left txt
-    Right r -> return $ Right $ uncurry gav r ) (handleMissingObject "Failed to set going variables" (Left ""))
+    Right r -> return $ Right $ uncurry gav r )
+    -}
+  error "") ( handleMissingObject "Failed to set going variables" (Left ""))
 
 setDoorGoneThrough :: Entity -> Eff (Error MissingObject : es) (Maybe Entity)
 setDoorGoneThrough = error ""
@@ -134,8 +123,8 @@ setDoorGoneThrough = error ""
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
 actorInEnterableVehicle _ = pure Nothing
 
-getNouns :: UnverifiedArgs wm  -> [ArgSubject wm]
-getNouns = variables . unArgs
+getNouns :: UnverifiedArgs wm  -> Text
+getNouns = error "" --variables . unArgs
 
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing

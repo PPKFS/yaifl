@@ -97,7 +97,7 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
                       return $ (mconcat . map show) msgList
                 pure $ case w2 ^. #metadata % #errorLog of
                   [] -> x <> "\n"
-                  xs -> x <> "\nEncountered the following errors:  \n" <> unlines xs
+                  xs -> x <> "\nEncountered the following errors:  \n" <> unlines (reverse xs)
         w <- get
         if allTenses
           then do

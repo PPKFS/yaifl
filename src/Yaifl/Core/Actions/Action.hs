@@ -46,6 +46,7 @@ data Action (wm :: WorldModel) where
     , carryOutRules :: ActionRulebook wm v
     , reportRules :: ActionRulebook wm v
     } -> Action wm
+
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
 type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
@@ -53,11 +54,10 @@ type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
 makeFieldLabelsNoPrefix ''Action
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
-actionName ::
-  Action wm
-  -> Text
-actionName = view #name
+actionName :: Lens' (Action wm) Text
+actionName = #name
 
+-- | If we should interpret some verb as another action (possibly which then points to another interpret as)
 newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
 
 -- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
@@ -69,10 +69,10 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing (ParseArguments $ (ignoreSpan >>) . pure . Right)
 
 data WorldActions (wm :: WorldModel) = WorldActions
-  { actions :: !(Map Text (Either InterpretAs (Action wm)))
+  { actions :: Map Text (Either InterpretAs (Action wm))
   , whenPlayBegins :: Rulebook wm () () Bool
   , actionProcessing :: ActionProcessing wm
-  } deriving stock (Generic)
+  } deriving stock ( Generic )
 
 makeFieldLabelsNoPrefix ''WorldActions
 

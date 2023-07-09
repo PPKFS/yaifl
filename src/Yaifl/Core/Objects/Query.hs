@@ -128,10 +128,10 @@ instance ObjectLike wm (Room wm) where
 
 instance ObjectLike wm (AnyObject wm) where
   getThing t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (objectId t) <> " but it was a room.") (getID t))
+    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (t ^. #objectId) <> " but it was a room.") (getID t))
       (preview _Thing t))
   getRoom t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a room from " <> show (objectId t) <> " but it was a thing.") (getID t))
+    (maybeToRight (MissingObject ("Tried to get a room from " <> show (t ^. #objectId) <> " but it was a thing.") (getID t))
       (preview _Room t))
 
 instance ObjectLike wm Entity where

@@ -1,7 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Yaifl.Core.Rules.Args where
+module Yaifl.Core.Rules.Args
+  ( Args(..)
+  , Refreshable(..)
+  , ArgSubject(..)
+  , UnverifiedArgs(..)
+  , withPlayerSource
+  , getPlayer
+  , getActorLocation
+  , blankArgs
+  , playerNoArgs
+  ) where
 
 import Solitude
 
@@ -43,7 +53,8 @@ data ArgSubject wm =
   RegularSubject Entity -- GET LAMP
   | ConceptSubject Text -- TALK TO BOB ABOUT *PHILOSOPHY*
   | DirectionSubject (WMDirection wm) -- GO WEST
-  | MatchedSubject Text Entity -- GO *THROUGH DOOR*
+  | MatchedSubject Text (ArgSubject wm) -- GO *THROUGH DOOR*
+  | StringLiteralSubject Text -- a fallback
   deriving stock (Generic)
 
 deriving stock instance (WMEq wm) => Eq (ArgSubject wm)
@@ -51,9 +62,10 @@ deriving stock instance (WMShow wm) => Show (ArgSubject wm)
 deriving stock instance (WMOrd wm) => Ord (ArgSubject wm)
 deriving stock instance (WMRead wm) => Read (ArgSubject wm)
 
--- | Before 'Args' are parsed, the variables are a list of objects.
+-- | Before 'Args' are parsed, the variable is just a command string
+-- the action has to parse them, ideally into some intermediary mix of `ArgSubject`.
 newtype UnverifiedArgs wm = UnverifiedArgs
-  { unArgs :: Args wm [ArgSubject wm]
+  { unArgs :: Args wm Text
   } deriving newtype (Generic)
 
 instance Refreshable wm (UnverifiedArgs wm) where
@@ -89,12 +101,12 @@ playerNoArgs ::
   => Eff es (Timestamp -> UnverifiedArgs wm)
 playerNoArgs = do
   ua <- withPlayerSource blankArgs
-  return (\ts -> ua & coercedTo @(Args wm [ArgSubject wm]) % #timestamp .~ ts)
+  return (\ts -> ua & coercedTo @(Args wm Text) % #timestamp .~ ts)
 
 blankArgs ::
   Thing wm
   -> UnverifiedArgs wm
-blankArgs o = UnverifiedArgs $ Args o [] 0
+blankArgs o = UnverifiedArgs $ Args o "" 0
 
 instance Functor (Args wm) where
   fmap f = #variables %~ f

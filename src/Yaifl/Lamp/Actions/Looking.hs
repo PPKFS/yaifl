@@ -67,13 +67,18 @@ lookingActionSet ::
   => NoMissingObjects wm es
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (LookingActionVariables wm))
-lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
+lookingActionSet ua@(UnverifiedArgs Args{..}) = withoutMissingObjects (expectNoArguments "look" ua $ do
   -- loc may be a thing (a container) or a room (the more likely case)
   loc <- getObject (source ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent source
   return $ Right $ LookingActionVariables loc (take lightLevels vl) "looking")
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
+
+expectNoArguments :: Text -> UnverifiedArgs wm -> Eff es (ArgumentParseResult b) -> Eff es (ArgumentParseResult b)
+expectNoArguments acName (UnverifiedArgs Args{..}) f = case variables of
+  "" -> f
+  txt -> return $ Left $ "I only understood as far as wanting to " <> acName <> " and was not sure what '" <> txt <> "' meant."
 
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm

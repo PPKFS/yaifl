@@ -17,7 +17,7 @@ import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Print ( Print, printLn )
-import Yaifl.Core.Rules.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ArgSubject (..) )
+import Yaifl.Core.Rules.Args ( playerNoArgs, UnverifiedArgs (..), Args (..) )
 import Yaifl.Core.WorldModel ( WMDirection, WMSayable )
 import qualified Data.Map as Map
 import qualified Data.Text as T
@@ -52,8 +52,9 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [(matched, r, Left (InterpretAs x))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
+      -- we've successfully resolved it into an action
       [(matched, r, Right x)] -> do
-        addAnnotation $ "Action parse was successful; going with the verb " <> actionName x <> " after matching " <> matched
+        addAnnotation $ "Action parse was successful; going with the verb " <> view actionName x <> " after matching " <> matched
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
     whenLeft_ ac (\t' -> noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t')
@@ -81,19 +82,20 @@ findVerb cmd = do
 findSubjects ::
   forall wm es.
   ActionHandler wm :> es
-  => ObjectUpdate wm :> es
-  => State Metadata :> es
-  => State (WorldActions wm) :> es
-  => Print :> es
+  -- => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Breadcrumbs :> es
+  => Display (WMSayable wm)
   => ObjectLookup wm :> es
+  => ObjectTraverse wm :> es
+  => ObjectUpdate wm :> es
+  => Print :> es
+  => SayableValue (WMSayable wm) wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
-  => ObjectTraverse wm :> es
-  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => State (ResponseCollector wm) :> es
-  => Display (WMSayable wm)
-  => SayableValue (WMSayable wm) wm
-  => Breadcrumbs :> es
+  => State (WorldActions wm) :> es
+  => State Metadata :> es
+
   => Text
   -> Action wm
   -> Eff es (Either Text Bool)
@@ -106,11 +108,9 @@ findSubjects cmd a = failHorriblyIfMissing $ do
   --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
-  case parseDirection (Proxy @wm) cmd of
-    Nothing -> return $ Left "No idea."
-    Just x -> do
-      ua <- playerNoArgs
-      Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = [DirectionSubject x]})
+    ua <- playerNoArgs
+    Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = cmd })
+
 
 parseDirection ::
   forall wm.
@@ -141,6 +141,5 @@ tryAction ::
   -> Eff es Bool
 tryAction an f = do
   ta <- getGlobalTime
-  addAnnotation $ "Trying to do the action '"<> actionName an <> "'"
-  let uva = f ta
-  fromMaybe False <$> runAction uva an
+  addAnnotation $ "Trying to do the action '"<> view actionName an <> "'"
+  fromMaybe False <$> runAction (f ta) an
