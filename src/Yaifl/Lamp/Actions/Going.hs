@@ -54,9 +54,9 @@ goingActionSet ::
   (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm Door)
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
-goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
+goingActionSet a@(UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
-  goneWith <- getMatching "with" >>= maybe (return Nothing) getThingMaybe
+  goneWith <- getMatchingThing "with"
   -- now the room gone from is the location of the actor;
   roomFrom <- getLocation source
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
@@ -115,7 +115,14 @@ goingActionSet a@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
     Left txt -> return $ Left txt
     Right r -> return $ Right $ uncurry gav r )
     -}
-  error "") ( handleMissingObject "Failed to set going variables" (Left ""))
+  error ""
+
+getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
+getMatchingThing matchElement = do
+  e <- getMatching matchElement
+  case e of
+    Nothing -> pure Nothing
+    Just e' -> getThingMaybe e'
 
 setDoorGoneThrough :: Entity -> Eff (Error MissingObject : es) (Maybe Entity)
 setDoorGoneThrough = error ""
@@ -149,8 +156,8 @@ cantGoThroughUndescribedDoors = makeRule "stand up before going" [] $ \_v -> do
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \v -> do
   nonVehicle <- getObject $ v ^. #source % #objectData % #containedBy
-  let _vehcGoneBy = v ^. #variables % gavVehicleGoneBy
-      _roomGoneFrom = v ^. #variables % gavRoomFrom
+  let _vehcGoneBy = v ^. #variables % #vehicleGoneBy
+      _roomGoneFrom = v ^. #variables % #roomGoneFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
   error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
