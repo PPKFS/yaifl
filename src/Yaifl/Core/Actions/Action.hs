@@ -6,6 +6,7 @@ module Yaifl.Core.Actions.Action
   ( Action(..)
   , ActionRulebook
   , ActionProcessing(..)
+  , ActionParameterType(..)
   , InterpretAs(..)
   , WorldActions(..)
   , addAction
@@ -32,6 +33,13 @@ newtype ActionProcessing wm = ActionProcessing
     -> Eff es (Maybe Bool)
   )
 
+data ActionParameterType =
+  TakesNoParameter
+  | Optionally ActionParameterType
+  | TakesDirectionParameter
+  | TakesObjectParameter
+  | OneOf ActionParameterType ActionParameterType
+
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
 -- except that set action variables is not a rulebook.
@@ -39,7 +47,8 @@ data Action (wm :: WorldModel) where
   Action ::
     { name :: Text
     , understandAs :: [Text]
-    , matches :: [Text]
+    , goesWith :: ActionParameterType
+    , matches :: [(Text, ActionParameterType)]
     , parseArguments :: ParseArguments wm (UnverifiedArgs wm) v
     , beforeRules :: ActionRulebook wm v
     , checkRules :: ActionRulebook wm v

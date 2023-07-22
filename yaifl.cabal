@@ -121,6 +121,7 @@ library
     , megaparsec
     , prettyprinter
     , prettyprinter-ansi-terminal
+    , split
 
 test-suite yaifl-test
   import:             common-options

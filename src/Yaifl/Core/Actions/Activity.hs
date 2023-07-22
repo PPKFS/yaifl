@@ -67,7 +67,8 @@ makeActivity n rs = Activity n Nothing Nothing
 
 beginActivity ::
   forall wm v r es.
-  (RuleEffects wm es, Display v)
+  RuleEffects wm es
+  => Display v
   => Refreshable wm v
   => ActivityLens wm v r
   -> v
@@ -85,7 +86,9 @@ beginActivity acL c = do
       (handleMissingObject "beginning an activity" c)
 
 whenHandling' ::
-  (RuleEffects wm es, Display v, Display r)
+  RuleEffects wm es
+  => Display v
+  => Display r
   => Refreshable wm v
   => ActivityLens wm v r
   -> Eff es a
@@ -94,7 +97,9 @@ whenHandling' acF f = whenHandling acF (const f)
 
 whenHandling ::
   forall wm v r a es.
-  (RuleEffects wm es, Display v, Display r)
+  RuleEffects wm es
+  => Display v
+  => Display r
   => Refreshable wm v
   => ActivityLens wm v r
   -> (v -> Eff es a)
@@ -122,7 +127,8 @@ whenHandling acL f = do
 endActivity ::
   forall wm v r es.
   HasCallStack
-  => (RuleEffects wm es, Display v)
+  => RuleEffects wm es
+  => Display v
   => Refreshable wm v
   => ActivityLens wm v r
   -> Eff es (Maybe v)

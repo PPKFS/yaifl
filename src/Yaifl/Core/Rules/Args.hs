@@ -4,7 +4,7 @@
 module Yaifl.Core.Rules.Args
   ( Args(..)
   , Refreshable(..)
-  , ArgSubject(..)
+  , ActionParameter(..)
   , UnverifiedArgs(..)
   , withPlayerSource
   , getPlayer
@@ -16,9 +16,9 @@ module Yaifl.Core.Rules.Args
 import Solitude
 
 import Effectful.Optics
-import Yaifl.Core.Entity ( HasID(..), Entity )
+import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Metadata ( Timestamp, currentPlayer )
-import Yaifl.Core.Object ( Thing, Room )
+import Yaifl.Core.Object ( Thing, Room, AnyObject )
 import Yaifl.Core.Objects.Query (NoMissingObjects, getThing, getLocation)
 import Yaifl.Core.WorldModel
 import Data.Text.Display
@@ -49,30 +49,24 @@ instance Refreshable wm v => Refreshable wm (Args wm v) where
     o <- getThing (getID $ source av)
     return $ av { source = o, variables = v }
 
-data ArgSubject wm =
-  RegularSubject Entity -- GET LAMP
-  | ConceptSubject Text -- TALK TO BOB ABOUT *PHILOSOPHY*
-  | DirectionSubject (WMDirection wm) -- GO WEST
-  | MatchedSubject Text (ArgSubject wm) -- GO *THROUGH DOOR*
-  | StringLiteralSubject Text -- a fallback
-  deriving stock (Generic)
 
-deriving stock instance (WMEq wm) => Eq (ArgSubject wm)
-deriving stock instance (WMShow wm) => Show (ArgSubject wm)
-deriving stock instance (WMOrd wm) => Ord (ArgSubject wm)
-deriving stock instance (WMRead wm) => Read (ArgSubject wm)
+data ActionParameter wm =
+  NoParameter
+  | DirectionParameter (WMDirection wm)
+  | ObjectParameter (AnyObject wm)
+  deriving stock ( Generic )
 
 -- | Before 'Args' are parsed, the variable is just a command string
 -- the action has to parse them, ideally into some intermediary mix of `ArgSubject`.
 newtype UnverifiedArgs wm = UnverifiedArgs
-  { unArgs :: Args wm Text
+  { unArgs :: Args wm (ActionParameter wm, [(Text, ActionParameter wm)])
   } deriving newtype (Generic)
 
 instance Refreshable wm (UnverifiedArgs wm) where
   refreshVariables = return
 
-deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
-deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
+--deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
+--deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
 
 makeFieldLabelsNoPrefix ''Args
 
@@ -101,14 +95,12 @@ playerNoArgs ::
   => Eff es (Timestamp -> UnverifiedArgs wm)
 playerNoArgs = do
   ua <- withPlayerSource blankArgs
-  return (\ts -> ua & coercedTo @(Args wm Text) % #timestamp .~ ts)
+  return (\ts -> ua & coercedTo @(Args wm (ActionParameter wm, [(Text, ActionParameter wm)])) % #timestamp .~ ts)
 
 blankArgs ::
   Thing wm
   -> UnverifiedArgs wm
-blankArgs o = UnverifiedArgs $ Args o "" 0
+blankArgs o = UnverifiedArgs $ Args o (NoParameter, []) 0
 
 instance Functor (Args wm) where
   fmap f = #variables %~ f
-
-makePrisms ''ArgSubject

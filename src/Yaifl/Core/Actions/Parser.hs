@@ -22,22 +22,24 @@ import Yaifl.Core.WorldModel ( WMDirection, WMSayable )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Core.Rules.RuleEffects
+import Data.List.Split
+import Data.List (lookup)
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
-  => Print :> es
-  => ObjectLookup wm :> es
-  => ObjectUpdate wm :> es
-  => State Metadata :> es
-  => State (ActivityCollector wm) :> es
-  => ObjectTraverse wm :> es
-  => State (ResponseCollector wm) :> es
-  => State (AdaptiveNarrative wm) :> es
-  => Display (WMSayable wm)
-  => SayableValue (WMSayable wm) wm
   => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
+  => Display (WMSayable wm)
+  => ObjectLookup wm :> es
+  => ObjectTraverse wm :> es
+  => ObjectUpdate wm :> es
+  => Print :> es
+  => SayableValue (WMSayable wm) wm
+  => State (ActivityCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => State (ResponseCollector wm) :> es
+  => State Metadata :> es
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
@@ -82,7 +84,7 @@ findVerb cmd = do
 findSubjects ::
   forall wm es.
   ActionHandler wm :> es
-  -- => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
   => Display (WMSayable wm)
   => ObjectLookup wm :> es
@@ -108,9 +110,36 @@ findSubjects cmd a = failHorriblyIfMissing $ do
   --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
-    ua <- playerNoArgs
-    Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = cmd })
+  ua <- playerNoArgs
+  --we then go through, taking words until we hit either the end or a match word
+  --then we try to work out what it was
+  let isMatchWord = flip elem (map fst $ matches a)
+      parts = (split . whenElt) isMatchWord (words cmd)
+  parsedArgs <- case parts of
+    (_:cmdArgWords):matchedWords -> do
+      cmdArgs <- parseArgumentType @wm (goesWith a) (unwords cmdArgWords)
+      matchWords <- mapM (\case
+        [] -> error "impossible"
+        (matchWord:args) -> do
+          let v = fromMaybe (error "impossible") $ lookup matchWord (matches a)
+          parseArgumentType @wm v (unwords args)) matchedWords
+      pure (cmdArgs, matchWords)
+    xs -> error $ "impossible: should have at least one element of the command to parse " <> show xs
+  case partitionEithers parsedArgs of
+    ([], successfulMatches) -> Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = successfulMatches })
+    (fails, _) -> pure $ Left (unwords fails)
 
+
+
+parseArgumentType ::
+  forall wm es.
+  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => ActionParameterType
+  -> Text
+  -> Eff es (Either Text (ActionParameter wm))
+parseArgumentType TakesDirectionParameter t = pure $ maybe (Left "") (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
+parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
+parseArgumentType _ _ = error "not implemented yet"
 
 parseDirection ::
   forall wm.
