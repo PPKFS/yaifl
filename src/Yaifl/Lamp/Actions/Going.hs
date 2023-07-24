@@ -4,21 +4,20 @@ module Yaifl.Lamp.Actions.Going
 
 import Solitude
 
-import Yaifl.Core.Actions.Action ( makeActionRulebook, Action(Action), ActionRulebook )
-import Yaifl.Core.Direction ( WMStdDirections )
-import Yaifl.Core.Entity ( Entity, HasID(..) )
-import Yaifl.Core.Metadata (noteError, isPlayer)
+import Yaifl.Core.Actions.Action
+import Yaifl.Core.Entity ( Entity )
+import Yaifl.Core.Metadata ( isPlayer)
 import Yaifl.Core.Object ( Thing, Room, isType )
 import Yaifl.Core.Objects.Query
-import Yaifl.Core.Objects.Room ( getMapConnection )
 import Yaifl.Core.Objects.ThingData
-import Yaifl.Core.Properties.Has ( WMHasProperty )
-import Yaifl.Core.Rules.Args ( ArgSubject(..) )
+import Yaifl.Core.Rules.Args
 import Yaifl.Core.Rules.Rule
 import Yaifl.Core.Rules.Rulebook
-import Yaifl.Lamp.Properties.Door ( Door(..), getDoor )
 import Effectful.Error.Static
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Direction
+import Yaifl.Core.Properties.Has
+import Yaifl.Lamp.Properties.Door
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -39,7 +38,8 @@ goingAction ::
 goingAction = Action
   "going"
   ["go", "going"]
-  ["with", "through", "by", "to"]
+  TakesDirectionParameter
+  [("with", TakesObjectParameter), ("through", TakesObjectParameter), ("by", TakesObjectParameter), ("to", TakesObjectParameter)]
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
   (makeActionRulebook "check going rulebook" checkGoingRules)
@@ -54,7 +54,7 @@ goingActionSet ::
   (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm Door)
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
-goingActionSet a@(UnverifiedArgs Args{..}) = do
+goingActionSet (UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
   goneWith <- getMatchingThing "with"
   -- now the room gone from is the location of the actor;
@@ -115,7 +115,7 @@ goingActionSet a@(UnverifiedArgs Args{..}) = do
     Left txt -> return $ Left txt
     Right r -> return $ Right $ uncurry gav r )
     -}
-  error ""
+  pure $ Left "aaaa"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do

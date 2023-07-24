@@ -17,13 +17,14 @@ import Yaifl.Core.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Core.Objects.Query
 import Yaifl.Core.Print ( Print, printLn )
-import Yaifl.Core.Rules.Args ( playerNoArgs, UnverifiedArgs (..), Args (..) )
+import Yaifl.Core.Rules.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ActionParameter (..) )
 import Yaifl.Core.WorldModel ( WMDirection, WMSayable )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Core.Rules.RuleEffects
 import Data.List.Split
 import Data.List (lookup)
+import Effectful.Error.Static
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
@@ -104,32 +105,32 @@ findSubjects ::
 findSubjects "" a = failHorriblyIfMissing $ do
   ua <- playerNoArgs
   Right <$> tryAction a ua
-findSubjects cmd a = failHorriblyIfMissing $ do
+findSubjects cmd a = runErrorNoCallStack $ failHorriblyIfMissing $ do
   --TODO: handle other actors doing things
   --we attempt to either match some matching word from the action (e.g. go through <door>)
   --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
   ua <- playerNoArgs
+
   --we then go through, taking words until we hit either the end or a match word
   --then we try to work out what it was
   let isMatchWord = flip elem (map fst $ matches a)
       parts = (split . whenElt) isMatchWord (words cmd)
-  parsedArgs <- case parts of
-    (_:cmdArgWords):matchedWords -> do
-      cmdArgs <- parseArgumentType @wm (goesWith a) (unwords cmdArgWords)
+  (goesWithPart, parsedArgs) <- case parts of
+    cmdArgWords:matchedWords -> do
+      cmdArgs' <- parseArgumentType @wm (goesWith a) unwords cmdArgWords)
+      cmdArgs <- either throwError pure cmdArgs'
+      -- then for each run of matching words we want to try and parse the rest of the list
       matchWords <- mapM (\case
         [] -> error "impossible"
         (matchWord:args) -> do
           let v = fromMaybe (error "impossible") $ lookup matchWord (matches a)
-          parseArgumentType @wm v (unwords args)) matchedWords
+          arg <- parseArgumentType @wm v (unwords args)
+          either throwError (pure . (matchWord,)) arg) matchedWords
       pure (cmdArgs, matchWords)
     xs -> error $ "impossible: should have at least one element of the command to parse " <> show xs
-  case partitionEithers parsedArgs of
-    ([], successfulMatches) -> Right <$> tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = successfulMatches })
-    (fails, _) -> pure $ Left (unwords fails)
-
-
+  tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = (goesWithPart, parsedArgs) })
 
 parseArgumentType ::
   forall wm es.
@@ -137,7 +138,8 @@ parseArgumentType ::
   => ActionParameterType
   -> Text
   -> Eff es (Either Text (ActionParameter wm))
-parseArgumentType TakesDirectionParameter t = pure $ maybe (Left "") (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
+parseArgumentType TakesDirectionParameter t = pure $ maybe
+  (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
 parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
 parseArgumentType _ _ = error "not implemented yet"
 

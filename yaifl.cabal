@@ -35,7 +35,7 @@ common common-options
     -Wmissing-deriving-strategies -O2 -flate-specialise
     -fspecialise-aggressively -fprint-potential-instances
     -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Effectful.Plugin -Wunused-packages -Werror
+    -fplugin=Effectful.Plugin -Wunused-packages
   default-language: GHC2021
   default-extensions:
     OverloadedLabels

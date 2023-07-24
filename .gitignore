@@ -60,3 +60,4 @@ test_runs
 
 .hlint.yaml
 zipkin.jar
+traceid.temp
