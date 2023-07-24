@@ -1,18 +1,18 @@
 module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-import Yaifl.Core.Metadata
-import Yaifl.Core.Object
-import Yaifl.Core.Objects.Create
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.Print
-import Yaifl.Core.World
-import Yaifl.Core.Rules.Rule
+import Yaifl.Metadata
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Create
+import Yaifl.Model.Objects.Query
+import Yaifl.Rules.RuleEffects
+import Yaifl.Text.Print
+import Yaifl.World
+import Yaifl.Rules.Rule
 import qualified Data.Text as T
 import Solitude
 import Data.Text.Display
-import Yaifl.Core.WorldModel
+import Yaifl.Model.WorldModel
 
 isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
 isBlankDescription d = T.empty == display (d ^. #description)

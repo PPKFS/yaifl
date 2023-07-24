@@ -1,16 +1,16 @@
 module Yaifl.Test.Chapter3.SlightlyWrong where
 
 import Yaifl
-import Yaifl.Core.Metadata
-import Yaifl.Core.Objects.Create
-import Yaifl.Core.Objects.Room
+import Yaifl.Metadata
+import Yaifl.Model.Objects.Create
+import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Test.Common
 import Solitude
-import Yaifl.Core.Objects.RoomData
-import Yaifl.Core.AdaptiveNarrative
-import Yaifl.Core.Rules.Rule
-import Yaifl.Core.SayQQ
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Model.Objects.RoomData
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Rules.Rule
+import Yaifl.Text.SayQQ
+import Yaifl.Rules.RuleEffects
 
 awnN :: Text' wm
 awnN = "Awning"

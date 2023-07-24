@@ -55,63 +55,63 @@ library
   exposed-modules:
     Yaifl
 
-    Yaifl.Core.Direction
-    Yaifl.Core.Entity
-    Yaifl.Core.Metadata
-    Yaifl.Core.Object
-    Yaifl.Core.Print
-    Yaifl.Core.AdaptiveNarrative
+    Yaifl.Actions.Action
+    Yaifl.Actions.ActionProcessing
+    Yaifl.Actions.Going
+    Yaifl.Actions.Parser
 
-    Yaifl.Core.WorldModel
+    Yaifl.Actions.Looking
+    Yaifl.Actions.Looking.Locale
+    Yaifl.Actions.Looking.Visibility
 
-    Yaifl.Core.Objects.Create
-    Yaifl.Core.Objects.Move
-    Yaifl.Core.Objects.Query
-    Yaifl.Core.Objects.Room
-    Yaifl.Core.Objects.RoomData
-    Yaifl.Core.Objects.ThingData
+    Yaifl.Activities.Activity
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.ListingContents
+    Yaifl.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Activities.PrintingTheLocaleDescription
 
-    Yaifl.Core.Properties.Enclosing
-    Yaifl.Core.Properties.Has
-    Yaifl.Core.Properties.Query
-    Yaifl.Core.Properties.TH
+    Yaifl.Metadata
+    Yaifl.World
 
-    Yaifl.Core.Actions.Action
-    Yaifl.Core.Actions.Activity
-    Yaifl.Core.Actions.Parser
-    Yaifl.Core.Rules.RuleEffects
-    Yaifl.Core.Rules.ActionProcessing
-    Yaifl.Core.Rules.Args
-    Yaifl.Core.Rules.Rule
-    Yaifl.Core.Rules.Rulebook
-    Yaifl.Core.Rules.Run
-    Yaifl.Core.Rules.WhenPlayBegins
-    Yaifl.Core.SayQQ
+    Yaifl.Model.Direction
+    Yaifl.Model.Entity
+    Yaifl.Model.Object
+    Yaifl.Model.ObjectSpecifics
+    Yaifl.Model.WorldModel
 
-    Yaifl.Core.World
+    Yaifl.Model.Objects.Create
+    Yaifl.Model.Objects.Move
+    Yaifl.Model.Objects.Query
+    Yaifl.Model.Objects.RoomData
+    Yaifl.Model.Objects.ThingData
+    Yaifl.Model.Objects.RoomConnections
 
-    Yaifl.Lamp.Properties.Openable
-    Yaifl.Lamp.Properties.Container
-    Yaifl.Lamp.Properties.Supporter
-    Yaifl.Lamp.Properties.Door
-    Yaifl.Lamp.Properties.Animal
-    Yaifl.Lamp.ObjectSpecifics
-    Yaifl.Lamp.Locale
+    Yaifl.Model.Properties.Animal
+    Yaifl.Model.Properties.Container
+    Yaifl.Model.Properties.Door
+    Yaifl.Model.Properties.Enclosing
+    Yaifl.Model.Properties.Has
+    Yaifl.Model.Properties.Openable
+    Yaifl.Model.Properties.Query
+    Yaifl.Model.Properties.Supporter
+    Yaifl.Model.Properties.TH
 
-    Yaifl.Lamp.Say
-    Yaifl.Core.Verb
-    Yaifl.Lamp.ResponseCollection
-    Yaifl.Lamp.Activities.ListingContents
-    Yaifl.Lamp.ListWriter
+    Yaifl.Rules.Args
+    Yaifl.Rules.Rule
+    Yaifl.Rules.RuleEffects
+    Yaifl.Rules.Rulebook
+    Yaifl.Rules.Run
+    Yaifl.Rules.WhenPlayBegins
 
-    Yaifl.Lamp.Actions.Going
-    Yaifl.Lamp.Actions.Looking
-    Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Lamp.Activities.PrintingTheLocaleDescription
-    Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Text.AdaptiveNarrative
+    Yaifl.Text.ListWriter
+    Yaifl.Text.Print
+    Yaifl.Text.ResponseCollection
+    Yaifl.Text.Responses
+    Yaifl.Text.Say
+    Yaifl.Text.SayQQ
+    Yaifl.Text.Verb
 
-    Yaifl.Lamp.Visibility
-    Yaifl.Core.Responses
   build-depends:
     effectful-th
     , enummapset

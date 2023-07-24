@@ -22,44 +22,44 @@ import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
 import Effectful.Optics ( (?=), (%=), use, (<<%=) )
 import Effectful.Reader.Static ( runReader, Reader )
 import Effectful.Writer.Static.Local
-import Yaifl.Core.Actions.Action
-import Yaifl.Core.Actions.Activity
-import Yaifl.Core.Actions.Parser
-import Yaifl.Core.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
-import Yaifl.Core.Direction
-import Yaifl.Core.Entity
-import Yaifl.Core.Metadata
-import Yaifl.Core.Object
-import Yaifl.Core.Objects.Create
-import Yaifl.Core.Objects.Query
-import Yaifl.Core.Print
-import Yaifl.Core.Properties.Enclosing
-import Yaifl.Core.Properties.Has
-import Yaifl.Core.Rules.ActionProcessing
-import Yaifl.Core.Rules.Rule
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.Rules.WhenPlayBegins
-import Yaifl.Core.World
-import Yaifl.Core.WorldModel
+import Yaifl.Actions.Action
+import Yaifl.Activities.Activity
+import Yaifl.Actions.Parser
+import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
+import Yaifl.Model.Direction
+import Yaifl.Model.Entity
+import Yaifl.Metadata
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Create
+import Yaifl.Model.Objects.Query
+import Yaifl.Text.Print
+import Yaifl.Model.Properties.Enclosing
+import Yaifl.Model.Properties.Has
+import Yaifl.Actions.ActionProcessing
+import Yaifl.Rules.Rule
+import Yaifl.Rules.RuleEffects
+import Yaifl.Rules.WhenPlayBegins
+import Yaifl.World
+import Yaifl.Model.WorldModel
 
-import Yaifl.Lamp.Actions.Going
-import Yaifl.Lamp.Actions.Looking
-import Yaifl.Lamp.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Lamp.Activities.ListingContents
-import Yaifl.Lamp.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Lamp.Activities.PrintingTheLocaleDescription
-import Yaifl.Lamp.Locale
-import Yaifl.Lamp.ObjectSpecifics
-import Yaifl.Lamp.Properties.Container
-import Yaifl.Lamp.Properties.Door
-import Yaifl.Lamp.Properties.Openable
-import Yaifl.Lamp.ResponseCollection
-import Yaifl.Lamp.Say
-import Yaifl.Lamp.Visibility
+import Yaifl.Actions.Going
+import Yaifl.Actions.Looking
+import Yaifl.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Activities.ListingContents
+import Yaifl.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Activities.PrintingTheLocaleDescription
+import Yaifl.Actions.Looking.Locale
+import Yaifl.Model.ObjectSpecifics
+import Yaifl.Model.Properties.Container
+import Yaifl.Model.Properties.Door
+import Yaifl.Model.Properties.Openable
+import Yaifl.Text.ResponseCollection
+import Yaifl.Text.Say
+import Yaifl.Actions.Looking.Visibility
 
 import qualified Data.Map as DM
 import qualified Data.Text as T
-import Yaifl.Lamp.ListWriter
+import Yaifl.Text.ListWriter
 
 newtype Text' (wm :: WorldModel) = Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 

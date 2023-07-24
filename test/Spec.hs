@@ -12,7 +12,7 @@ import Test.Tasty.Silver
 import Test.Tasty.Options
 import qualified Data.Map as M
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
-import Yaifl.Core.Verb
+import Yaifl.Text.Verb
 import Test.Tasty.Silver.Interactive (defaultMain)
 
 newtype AllTenses = AllTenses Bool

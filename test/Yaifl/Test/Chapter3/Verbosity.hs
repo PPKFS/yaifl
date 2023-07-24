@@ -1,9 +1,9 @@
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Core.Metadata
-import Yaifl.Core.Objects.Create
-import Yaifl.Core.Objects.Room
+import Yaifl.Metadata
+import Yaifl.Model.Objects.Create
+import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Test.Common
 import Solitude
 
