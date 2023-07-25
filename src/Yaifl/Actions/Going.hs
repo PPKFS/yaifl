@@ -38,8 +38,8 @@ goingAction ::
 goingAction = Action
   "going"
   ["go", "going"]
-  TakesDirectionParameter
-  [("with", TakesObjectParameter), ("through", TakesObjectParameter), ("by", TakesObjectParameter), ("to", TakesObjectParameter)]
+  (OneOf TakesDirectionParameter TakesObjectParameter)
+  (map (,TakesObjectParameter) ["with", "through", "by", "to"])
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
   (makeActionRulebook "check going rulebook" checkGoingRules)
@@ -67,9 +67,11 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     after this, if there is a door in the way then we are clearly going through the door and our target is through the door
     and of course now the room we're going to is on the other side of the door.
   -}
- {-
-  let (n :: [ArgSubject wm]) = [] --error ""--getNouns a
   -- find all the possible targets we could mean
+  case fst variables of
+    DirectionParameter dir -> error ""
+    ObjectParameter door -> error ""
+{-}
   targets <- catMaybes <$> mapM (\case
       -- if the noun is a direction
       -- let direction D be the noun and let the target be the room-or-door direction D from the room gone from
@@ -81,7 +83,8 @@ goingActionSet (UnverifiedArgs Args{..}) = do
       -- todo: this should be a big ol' error case for the rest
       ConceptSubject _ -> pure Nothing
       MatchedSubject _ _ -> pure Nothing
-      ) n
+      ) nnnnn
+
   -- ensure we have 1 target, which is either a room (passthrough) or a door (in which case we want to go through it)
   target <- case targets of
     [] -> pure $ Left "I have no idea where you wanted to go."
@@ -110,11 +113,10 @@ goingActionSet (UnverifiedArgs Args{..}) = do
         , _gavVehicleGoneBy = vehicleGoneBy
         , _gavThingGoneWith = goneWith
         }
-
+      -}
   case target of
     Left txt -> return $ Left txt
-    Right r -> return $ Right $ uncurry gav r )
-    -}
+    Right r -> return $ Right $ uncurry gav r
   pure $ Left "aaaa"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
