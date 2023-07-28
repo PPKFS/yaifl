@@ -18,6 +18,7 @@ import Yaifl.Rules.RuleEffects
 import Yaifl.Model.Direction
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Door
+import Yaifl.Model.Objects.RoomConnections
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -69,8 +70,15 @@ goingActionSet (UnverifiedArgs Args{..}) = do
   -}
   -- find all the possible targets we could mean
   case fst variables of
-    DirectionParameter dir -> error ""
-    ObjectParameter door -> error ""
+    DirectionParameter dir -> pure $ getMapConnection @wm dir roomFrom
+    ObjectParameter door -> setDoorGoneThrough door
+    NoParameter -> do
+      doorThrough <- getDoorMaybe <$$> getMatchingThing "through"
+      case doorThrough of
+        Nothing -> error "tried to go through something that wasn't a door"
+        Just d -> setDoorGoneThrough d
+
+
 {-}
   targets <- catMaybes <$> mapM (\case
       -- if the noun is a direction
@@ -79,7 +87,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
       -- if the noun is a door, let the target be the noun;
       RegularSubject r -> setDoorGoneThrough r
       -- this is also the door case, but it matches "go through red door", whereas the above case will match "go red door"
-      MatchedSubject "through" n' -> setDoorGoneThrough n'
+      MatchedSubject "through" n' ->
       -- todo: this should be a big ol' error case for the rest
       ConceptSubject _ -> pure Nothing
       MatchedSubject _ _ -> pure Nothing
@@ -119,6 +127,9 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     Right r -> return $ Right $ uncurry gav r
   pure $ Left "aaaa"
 
+getDoorMaybe :: Thing wm1 -> Entity
+getDoorMaybe = error ""
+
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do
   e <- getMatching matchElement
@@ -126,7 +137,7 @@ getMatchingThing matchElement = do
     Nothing -> pure Nothing
     Just e' -> getThingMaybe e'
 
-setDoorGoneThrough :: Entity -> Eff (Error MissingObject : es) (Maybe Entity)
+setDoorGoneThrough :: Entity -> Eff es (Maybe Entity)
 setDoorGoneThrough = error ""
 
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
