@@ -7,7 +7,7 @@ import Solitude
 import Yaifl.Actions.Action
 import Yaifl.Model.Entity ( Entity )
 import Yaifl.Metadata ( isPlayer)
-import Yaifl.Model.Object( Thing, Room, isType )
+import Yaifl.Model.Object( Thing, Room, isType, Object )
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Args
@@ -26,7 +26,7 @@ data GoingActionVariables wm = GoingActionVariables
     --The going action has an object called the room gone to (matched as "to").
   , roomGoneTo :: Room wm
     --The going action has an object called the door gone through (matched as "through").
-  , doorGoneThrough :: Maybe (Thing wm)
+  , doorGoneThrough :: Maybe (Door wm)
     --The going action has an object called the vehicle gone by (matched as "by").
   , vehicleGoneBy :: Maybe (Thing wm)
     --The going action has an object called the thing gone with (matched as "with").
@@ -39,7 +39,7 @@ goingAction ::
 goingAction = Action
   "going"
   ["go", "going"]
-  (OneOf TakesDirectionParameter TakesObjectParameter)
+  (TakesOneOf TakesDirectionParameter TakesObjectParameter)
   (map (,TakesObjectParameter) ["with", "through", "by", "to"])
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
@@ -127,7 +127,8 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     Right r -> return $ Right $ uncurry gav r
   pure $ Left "aaaa"
 
-getDoorMaybe :: Thing wm1 -> Entity
+type Door wm = Object wm (DoorData wm)
+getDoorMaybe :: Thing wm -> Door wm
 getDoorMaybe = error ""
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))

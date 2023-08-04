@@ -38,7 +38,7 @@ data ActionParameterType =
   | Optionally ActionParameterType
   | TakesDirectionParameter
   | TakesObjectParameter
-  | TakesOneOf (Either ActionParameterType ActionParameterType)
+  | TakesOneOf ActionParameterType ActionParameterType
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
