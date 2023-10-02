@@ -23,7 +23,8 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   -- I have no idea how this works
   -- coming back to it: nope, even less idea now
   -- a third go over: nope, still no idea
-  (ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments parseArguments uv)))
+  -- fourth time: thankfully I can just delete it but leave it here for posterity
+  --(ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments parseArguments uv)))
   [ notImplementedRule "Before stage rule"
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"

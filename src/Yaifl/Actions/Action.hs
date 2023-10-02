@@ -23,6 +23,9 @@ import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook
 import Yaifl.Model.WorldModel ( WorldModel )
 import Yaifl.Rules.RuleEffects
+import Yaifl.Rules.Args
+import Yaifl.Metadata
+import Yaifl.Model.Objects.Query
 
 newtype ActionProcessing wm = ActionProcessing
   (forall es.
@@ -32,6 +35,12 @@ newtype ActionProcessing wm = ActionProcessing
     -> UnverifiedArgs wm
     -> Eff es (Maybe Bool)
   )
+
+type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
+-- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
+newtype ParseArguments wm ia v = ParseArguments
+  { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (Either Text v)
+  }
 
 data ActionParameterType =
   TakesNoParameter
@@ -58,7 +67,7 @@ data Action (wm :: WorldModel) where
 
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
-type ActionRulebook wm v = Rulebook wm (Args wm v) (Args wm v) Bool
+type ActionRulebook wm v = Rulebook wm (Args wm v) Bool
 
 makeFieldLabelsNoPrefix ''Action
 
@@ -75,11 +84,11 @@ makeActionRulebook ::
   Text -- ^ the name of the rule.
   -> [Rule o (Args o v) Bool] -- ^ the list of rules.
   -> ActionRulebook o v
-makeActionRulebook n = Rulebook n Nothing (ParseArguments $ (ignoreSpan >>) . pure . Right)
+makeActionRulebook n = Rulebook n Nothing
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { actions :: Map Text (Either InterpretAs (Action wm))
-  , whenPlayBegins :: Rulebook wm () () Bool
+  , whenPlayBegins :: Rulebook wm () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock ( Generic )
 

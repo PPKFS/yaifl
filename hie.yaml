@@ -3,6 +3,9 @@ cradle:
     - path: "src"
       component: "lib:yaifl"
 
+    - path: "yaifl-core/src"
+      component: "lib:yaifl-core"
+
     - path: "test"
       component: "yaifl:test:yaifl-test"
 
@@ -11,3 +14,6 @@ cradle:
 
     - path: "breadcrumbs"
       component: "lib:breadcrumbs"
+
+    - path: "effectful-rulebooks"
+      component: "lib:effectful-rulebooks"

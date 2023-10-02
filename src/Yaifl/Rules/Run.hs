@@ -10,10 +10,9 @@ import Solitude
 
 import Breadcrumbs
 import Data.Text.Display ( Display, display )
-import Yaifl.Metadata ( noteError )
 import Yaifl.Rules.Args ( Refreshable(..) )
 import Yaifl.Rules.Rule
-import Yaifl.Rules.Rulebook ( Rulebook(..), ParseArguments(runParseArguments) )
+import Yaifl.Rules.Rulebook ( Rulebook(..) )
 import qualified Data.Text as T
 import Yaifl.Rules.RuleEffects
 
@@ -22,8 +21,8 @@ runRulebook ::
   (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
   => Maybe SpanID
-  -> Rulebook wm ia v re
-  -> ia
+  -> Rulebook wm v re
+  -> v
   -> Eff es (Maybe re)
 runRulebook mbSpanId rb ia = do
   mvre <- runRulebookAndReturnVariables mbSpanId rb ia
@@ -34,28 +33,24 @@ runRulebook mbSpanId rb ia = do
 -- Just (v, Nothing) -> the rulebook ran successfully, but had no definite outcome
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
 runRulebookAndReturnVariables ::
-  forall wm v es ia re.
+  forall wm v es re.
   (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
   => Maybe SpanID
-  -> Rulebook wm ia v re
-  -> ia
+  -> Rulebook wm v re
+  -> v
   -> Eff es (Maybe (v, Maybe re))
 runRulebookAndReturnVariables mbSpanId Rulebook{..} args =
   -- ignore empty rulebooks to avoid logging spam
   if null rules
     then pure Nothing
     else maybe (withSpan "rulebook" name) (\f x -> x f) mbSpanId $ \rbSpan -> do
-      mbArgs <- withSpan' "parse arguments" name $ runParseArguments parseArguments args
-      whenJust (rightToMaybe mbArgs) (addTagToSpan rbSpan "arguments" . display)
-      case mbArgs of
-        Left err' -> noteError (const Nothing) err'
-        Right a -> do
-          -- run the actual rules
-          (v, r1) <- processRuleList rbSpan rules a
-          let outcome = (v, r1 <|> defaultOutcome)
-          addTagTo (Just rbSpan) "outcome" (display $ snd outcome)
-          return (Just outcome)
+      addTagToSpan rbSpan "arguments" $ display args
+      -- run the actual rules
+      (v, r1) <- processRuleList rbSpan rules args
+      let outcome = (v, r1 <|> defaultOutcome)
+      addTagTo (Just rbSpan) "outcome" (display $ snd outcome)
+      return (Just outcome)
 
 -- | Mostly this is a very complicated "run a list of functions until you get
 -- something that isn't a Nothing, or a default if you get to the end".

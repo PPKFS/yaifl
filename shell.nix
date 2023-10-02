@@ -6,7 +6,7 @@ in
   pkgs.mkShell {
     buildInputs = with pkgs; [
       cabal-install
-      haskell.compiler.ghc945
+      haskell.compiler.ghc946
       binutils
       delta
       zlib

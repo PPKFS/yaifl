@@ -17,7 +17,7 @@ import Yaifl.Text.Print ( Print, printText, setStyle )
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMHasProperty )
 import Yaifl.Rules.Rule
-import Yaifl.Rules.Rulebook ( Rulebook(..), noRulebookArguments )
+import Yaifl.Rules.Rulebook ( Rulebook(..) )
 import Yaifl.Rules.Run ( failRuleWithError )
 import Yaifl.Rules.RuleEffects
 
@@ -27,11 +27,10 @@ whenPlayBeginsName = "when play begins"
 -- | The rulebook that runs at the start of the game.
 whenPlayBeginsRules ::
   WMHasProperty wm Enclosing
-  => Rulebook wm () () Bool
+  => Rulebook wm () Bool
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
-    noRulebookArguments
     [ makeRule' "Display banner" $ sayIntroText >> rulePass
     , makeRule' "Position player in world" positionPlayer
     , makeRule' "Initial room description" initRoomDescription

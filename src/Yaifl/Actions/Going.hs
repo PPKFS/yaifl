@@ -127,7 +127,6 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     Right r -> return $ Right $ uncurry gav r
   pure $ Left "aaaa"
 
-type Door wm = Object wm (DoorData wm)
 getDoorMaybe :: Thing wm -> Door wm
 getDoorMaybe = error ""
 
