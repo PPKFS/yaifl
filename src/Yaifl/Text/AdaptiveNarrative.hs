@@ -9,6 +9,7 @@ import Yaifl.Metadata
 import Breadcrumbs
 import Yaifl.Rules.Args (getPlayer)
 import Yaifl.Text.Verb
+import Yaifl.Model.Objects.Effects
 
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };

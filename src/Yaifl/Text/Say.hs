@@ -20,6 +20,7 @@ import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell)
 import Yaifl.Metadata
 import Yaifl.Text.Verb
+import Yaifl.Model.Objects.Effects
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s

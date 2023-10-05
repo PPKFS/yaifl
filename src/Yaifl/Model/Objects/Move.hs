@@ -16,6 +16,7 @@ import Yaifl.Model.Properties.Has (WMHasProperty)
 import Yaifl.Model.Properties.Query (getEnclosing, getPropertyOrThrow, setEnclosing)
 import Yaifl.Model.WorldModel
 import qualified Data.EnumSet as ES
+import Yaifl.Model.Objects.Effects
 
 move ::
   Breadcrumbs :> es
@@ -50,4 +51,4 @@ move oObj oLoc = withoutMissingObjects moveBlock moveHandler
       tickGlobalTime True
       --at this point we know it's a success
       return True
-    moveHandler = handleMissingObject ("Failed to move " <> display (getID oObj) <> " to " <> (display $ getID oLoc)) False
+    moveHandler = handleMissingObject ("Failed to move " <> display (getID oObj) <> " to " <> display (getID oLoc)) False

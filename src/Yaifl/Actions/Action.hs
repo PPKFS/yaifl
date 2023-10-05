@@ -7,8 +7,11 @@ module Yaifl.Actions.Action
   , ActionRulebook
   , ActionProcessing(..)
   , ActionParameterType(..)
+  , ParseArguments(..)
   , InterpretAs(..)
   , WorldActions(..)
+  , WrappedAction(..)
+  , ParseArgumentEffects
   , addAction
   , runAction
   , makeActionRulebook
@@ -25,18 +28,20 @@ import Yaifl.Model.WorldModel ( WorldModel )
 import Yaifl.Rules.RuleEffects
 import Yaifl.Rules.Args
 import Yaifl.Metadata
-import Yaifl.Model.Objects.Query
+import Yaifl.Model.Objects.Effects
 
 newtype ActionProcessing wm = ActionProcessing
-  (forall es.
+  (forall es v.
     RuleEffects wm es
+    => Refreshable wm v
     => SpanID
-    -> Action wm
-    -> UnverifiedArgs wm
+    -> Action wm v
+    -> Args wm v
     -> Eff es (Maybe Bool)
   )
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
+
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (Either Text v)
@@ -52,7 +57,7 @@ data ActionParameterType =
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
 -- except that set action variables is not a rulebook.
-data Action (wm :: WorldModel) where
+data Action (wm :: WorldModel) v where
   Action ::
     { name :: Text
     , understandAs :: [Text]
@@ -63,7 +68,13 @@ data Action (wm :: WorldModel) where
     , checkRules :: ActionRulebook wm v
     , carryOutRules :: ActionRulebook wm v
     , reportRules :: ActionRulebook wm v
-    } -> Action wm
+    } -> Action wm v
+  deriving stock (Generic)
+
+data WrappedAction (wm :: WorldModel) where
+  WrappedAction ::
+    Action wm v
+    -> WrappedAction wm
 
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
@@ -72,7 +83,7 @@ type ActionRulebook wm v = Rulebook wm (Args wm v) Bool
 makeFieldLabelsNoPrefix ''Action
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
-actionName :: Lens' (Action wm) Text
+actionName :: Lens' (Action wm v) Text
 actionName = #name
 
 -- | If we should interpret some verb as another action (possibly which then points to another interpret as)
@@ -87,7 +98,7 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing
 
 data WorldActions (wm :: WorldModel) = WorldActions
-  { actions :: Map Text (Either InterpretAs (Action wm))
+  { actions :: Map Text (Either InterpretAs (WrappedAction wm))
   , whenPlayBegins :: Rulebook wm () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock ( Generic )
@@ -100,16 +111,20 @@ runAction ::
   State (WorldActions wm) :> es
   => RuleEffects wm es
   => UnverifiedArgs wm
-  -> Action wm
+  -> WrappedAction wm
   -> Eff es (Maybe Bool)
-runAction args act = withSpan "run action" (act ^. #name) $ \aSpan -> do
-  -- running an action is simply evaluating the action processing rulebook.
-  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-  ap aSpan act args
+runAction uArgs (WrappedAction act) = withSpan "run action" (act ^. #name) $ \aSpan -> do
+  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> (runParseArguments (act ^. #parseArguments) uArgs)
+  case mbArgs of
+    Left err -> noteError (const $ Just False) err
+    Right args -> do
+      -- running an action is simply evaluating the action processing rulebook.
+      (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
+      ap aSpan act args
 
 -- | Add an action to the registry.
 addAction ::
   State (WorldActions wm) :> es
-  => Action wm
+  => Action wm v
   -> Eff es ()
-addAction ac = #actions % at (ac ^. #name) ?= Right ac
+addAction ac = #actions % at (ac ^. #name) ?= Right (WrappedAction ac)

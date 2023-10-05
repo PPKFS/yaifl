@@ -19,6 +19,7 @@ import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable )
 import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Door ( Door, blankDoor )
 import Yaifl.Model.Properties.Openable ( Openable )
+import Yaifl.Model.Objects.Effects
 
 data ObjectSpecifics =
   NoSpecifics

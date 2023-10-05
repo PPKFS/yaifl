@@ -25,6 +25,7 @@ import Yaifl.Rules.RuleEffects
 import Data.List.Split
 import Data.List (lookup)
 import Effectful.Error.Static
+import Yaifl.Model.Objects.Effects
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
@@ -56,8 +57,8 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
       -- we've successfully resolved it into an action
-      [(matched, r, Right x)] -> do
-        addAnnotation $ "Action parse was successful; going with the verb " <> view actionName x <> " after matching " <> matched
+      [(matched, r, Right x@(WrappedAction a))] -> do
+        addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
     whenLeft_ ac (\t' -> noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t')
@@ -66,13 +67,13 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
 findVerb ::
   (State (WorldActions wm) :> es)
   => Text
-  -> Eff es [(Text, Text, Either InterpretAs (Action wm))]
+  -> Eff es [(Text, Text, Either InterpretAs (WrappedAction wm))]
 findVerb cmd = do
   let cmd' = T.toLower cmd
   ac <- use #actions
   --sayLn $ show $ (map (view (_2 % actionUnderstandAs)) (Map.toList ac))
   let possVerbs = mapMaybe (\case
-        (_, Right a@Action{understandAs}) ->
+        (_, Right a@(WrappedAction (Action{understandAs}))) ->
           case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') understandAs
           of
             [] -> Nothing
@@ -100,12 +101,12 @@ findSubjects ::
   => State Metadata :> es
 
   => Text
-  -> Action wm
+  -> WrappedAction wm
   -> Eff es (Either Text Bool)
-findSubjects "" a = failHorriblyIfMissing $ do
+findSubjects "" w = failHorriblyIfMissing $ do
   ua <- playerNoArgs
-  Right <$> tryAction a ua
-findSubjects cmd a = runErrorNoCallStack $ failHorriblyIfMissing $ do
+  Right <$> tryAction w ua
+findSubjects cmd w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissing $ do
   --TODO: handle other actors doing things
   --we attempt to either match some matching word from the action (e.g. go through <door>)
   --otherwise, we try to find a match of objects with increasingly large radii
@@ -130,7 +131,7 @@ findSubjects cmd a = runErrorNoCallStack $ failHorriblyIfMissing $ do
           either throwError (pure . (matchWord,)) arg) matchedWords
       pure (cmdArgs, matchWords)
     xs -> error $ "impossible: should have at least one element of the command to parse " <> show xs
-  tryAction a (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = (goesWithPart, parsedArgs) })
+  tryAction w (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = (goesWithPart, parsedArgs) })
 
 parseArgumentType ::
   forall wm es.
@@ -167,10 +168,10 @@ tryAction ::
   => State (AdaptiveNarrative wm) :> es
   => SayableValue (WMSayable wm) wm
   => Print :> es
-  => Action wm -- ^ text of command
+  => WrappedAction wm -- ^ text of command
   -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
   -> Eff es Bool
-tryAction an f = do
+tryAction an@(WrappedAction a) f = do
   ta <- getGlobalTime
-  addAnnotation $ "Trying to do the action '"<> view actionName an <> "'"
+  addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
   fromMaybe False <$> runAction (f ta) an

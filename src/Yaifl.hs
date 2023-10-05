@@ -31,7 +31,6 @@ import Yaifl.Model.Entity
 import Yaifl.Metadata
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.Query
 import Yaifl.Text.Print
 import Yaifl.Model.Properties.Enclosing
 import Yaifl.Model.Properties.Has
@@ -60,6 +59,7 @@ import Yaifl.Actions.Looking.Visibility
 import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Text.ListWriter
+import Yaifl.Model.Objects.Effects
 
 newtype Text' (wm :: WorldModel) = Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 

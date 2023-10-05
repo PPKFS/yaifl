@@ -1,13 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Yaifl.Model.Objects.Create
-  ( -- * Effect
-  ObjectCreation(..)
-  , AddObjects
-  , generateEntity
-  , addThing
-  , addRoom
-  , addThingInternal
+  ( addThingInternal
   , addRoomInternal
   , addThing'
   , addObject
@@ -20,7 +12,6 @@ import Solitude
 import Breadcrumbs
 import Data.Text.Display
 import Effectful.Optics ( (.=), use )
-import Effectful.TH ( makeEffect )
 
 import Yaifl.Model.Entity
 import Yaifl.Metadata
@@ -32,20 +23,7 @@ import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMHasProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
-
-data ObjectCreation wm :: Effect where
-  GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddThing :: Object wm ThingData -> ObjectCreation wm m ()
-  AddRoom :: Object wm (RoomData wm) -> ObjectCreation wm m ()
-
-makeEffect ''ObjectCreation
-
-type AddObjects wm es = (
-  ObjectCreation wm :> es
-  , Display (WMSayable wm)
-  , IsString (WMSayable wm)
-  , State Metadata :> es
-  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
+import Yaifl.Model.Objects.Effects
 
 makeObject ::
   ObjectCreation wm :> es
@@ -128,11 +106,6 @@ addRoomInternal name desc objtype specifics details = do
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
   return e
-
-isVoid ::
-  Entity
-  -> Bool
-isVoid = (voidID ==)
 
 addRoom' ::
   WMHasProperty wm Enclosing

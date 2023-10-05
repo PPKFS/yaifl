@@ -15,6 +15,7 @@ import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
 import Effectful.Error.Static ( Error, throwError )
+import Yaifl.Model.Objects.Effects
 
 getPropertyOrThrow ::
   HasID i

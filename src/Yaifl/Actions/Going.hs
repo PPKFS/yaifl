@@ -19,6 +19,7 @@ import Yaifl.Model.Direction
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Door
 import Yaifl.Model.Objects.RoomConnections
+import Yaifl.Model.Objects.Effects
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -26,7 +27,7 @@ data GoingActionVariables wm = GoingActionVariables
     --The going action has an object called the room gone to (matched as "to").
   , roomGoneTo :: Room wm
     --The going action has an object called the door gone through (matched as "through").
-  , doorGoneThrough :: Maybe (Door wm)
+  --, doorGoneThrough :: Maybe (Door wm)
     --The going action has an object called the vehicle gone by (matched as "by").
   , vehicleGoneBy :: Maybe (Thing wm)
     --The going action has an object called the thing gone with (matched as "with").
@@ -35,7 +36,7 @@ data GoingActionVariables wm = GoingActionVariables
 
 goingAction ::
   (WMStdDirections wm, WMHasProperty wm Door)
-  => Action wm
+  => Action wm (GoingActionVariables wm)
 goingAction = Action
   "going"
   ["go", "going"]
@@ -67,7 +68,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     if we are going to a door (my add: or through a door), then choose the door
     after this, if there is a door in the way then we are clearly going through the door and our target is through the door
     and of course now the room we're going to is on the other side of the door.
-  -}
+
   -- find all the possible targets we could mean
   case fst variables of
     DirectionParameter dir -> pure $ getMapConnection @wm dir roomFrom
@@ -78,7 +79,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
         Nothing -> error "tried to go through something that wasn't a door"
         Just d -> setDoorGoneThrough d
 
-
+  -}
 {-}
   targets <- catMaybes <$> mapM (\case
       -- if the noun is a direction
@@ -122,13 +123,13 @@ goingActionSet (UnverifiedArgs Args{..}) = do
         , _gavThingGoneWith = goneWith
         }
       -}
-  case target of
-    Left txt -> return $ Left txt
-    Right r -> return $ Right $ uncurry gav r
+  --case target of
+  --  Left txt -> return $ Left txt
+  --  Right r -> return $ Right $ uncurry gav r
   pure $ Left "aaaa"
 
-getDoorMaybe :: Thing wm -> Door wm
-getDoorMaybe = error ""
+--getDoorMaybe :: Thing wm -> Door wm
+--getDoorMaybe = error ""
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do

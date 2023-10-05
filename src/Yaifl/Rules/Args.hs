@@ -6,6 +6,7 @@ module Yaifl.Rules.Args
   , Refreshable(..)
   , ActionParameter(..)
   , UnverifiedArgs(..)
+  , ArgumentParseResult
   , withPlayerSource
   , getPlayer
   , getActorLocation
@@ -19,9 +20,11 @@ import Effectful.Optics
 import Yaifl.Model.Entity ( HasID(..) )
 import Yaifl.Metadata ( Timestamp, currentPlayer )
 import Yaifl.Model.Object ( Thing, Room, AnyObject )
-import Yaifl.Model.Objects.Query (NoMissingObjects, getThing, getLocation)
 import Yaifl.Model.WorldModel
 import Data.Text.Display
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.ObjectLike
+import Yaifl.Model.Objects.Query
 
 -- | Arguments for an action, activity, or rulebook. These are parameterised over
 -- the closed 's' universe and the variables, which are either unknown
@@ -49,6 +52,7 @@ instance Refreshable wm v => Refreshable wm (Args wm v) where
     o <- getThing (getID $ source av)
     return $ av { source = o, variables = v }
 
+type ArgumentParseResult v = Either Text v
 
 data ActionParameter wm =
   NoParameter

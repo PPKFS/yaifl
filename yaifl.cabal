@@ -79,8 +79,11 @@ library
     Yaifl.Model.ObjectSpecifics
     Yaifl.Model.WorldModel
 
+    Yaifl.Model.Objects.Effects
+
     Yaifl.Model.Objects.Create
     Yaifl.Model.Objects.Move
+    Yaifl.Model.Objects.ObjectLike
     Yaifl.Model.Objects.Query
     Yaifl.Model.Objects.RoomData
     Yaifl.Model.Objects.ThingData

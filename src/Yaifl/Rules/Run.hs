@@ -18,7 +18,8 @@ import Yaifl.Rules.RuleEffects
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::
-  (Refreshable wm v, Display v, Display re)
+  HasCallStack
+  => (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
   => Maybe SpanID
   -> Rulebook wm v re
@@ -34,7 +35,8 @@ runRulebook mbSpanId rb ia = do
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
 runRulebookAndReturnVariables ::
   forall wm v es re.
-  (Refreshable wm v, Display v, Display re)
+  HasCallStack
+  => (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
   => Maybe SpanID
   -> Rulebook wm v re

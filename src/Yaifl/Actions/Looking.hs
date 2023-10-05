@@ -23,7 +23,6 @@ import Yaifl.Model.Objects.RoomData (IsVisited(..))
 import Yaifl.Model.Objects.ThingData ( ThingData(..) )
 import Yaifl.Text.Print ( Print, setStyle, printLn )
 import Yaifl.Text.Responses
-import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
 import Yaifl.Rules.Rulebook
@@ -35,6 +34,8 @@ import Yaifl.Text.Say
 import Yaifl.Actions.Looking.Visibility
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Activities.PrintingTheLocaleDescription ( WithPrintingTheLocaleDescription )
+import Yaifl.Rules.Args
+import Yaifl.Model.Objects.Effects
 
 roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => RoomDescriptionResponses wm
 roomDescriptionResponsesImpl = RDR
@@ -46,7 +47,7 @@ roomDescriptionResponsesImpl = RDR
 
 lookingAction ::
   HasLookingProperties wm
-  => Action wm
+  => Action wm (LookingActionVariables wm)
 lookingAction = Action
   "looking"
   ["look", "looking"]

@@ -26,10 +26,10 @@ import Effectful.Writer.Static.Local
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Metadata ( Metadata )
 import Yaifl.Model.Object
-import Yaifl.Model.Objects.Query
 import Yaifl.Text.Print ( Print, printText, printLn )
 import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMSayable )
 import qualified Data.Text as T
+import Yaifl.Model.Objects.Effects
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)

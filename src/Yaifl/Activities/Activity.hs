@@ -42,9 +42,9 @@ data Activity wm v r = Activity
     { name :: Text
     , defaultOutcome :: Maybe r
     , currentVariables :: Maybe v
-    , beforeRules :: Rulebook wm v v ()
-    , carryOutRules :: Rulebook wm v v r
-    , afterRules :: Rulebook wm v v ()
+    , beforeRules :: Rulebook wm v ()
+    , carryOutRules :: Rulebook wm v r
+    , afterRules :: Rulebook wm v ()
     } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Activity

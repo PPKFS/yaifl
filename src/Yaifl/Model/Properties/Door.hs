@@ -14,6 +14,7 @@ import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.TH
+import Yaifl.Model.Objects.Effects
 
 data Door = Door
   { _backSide :: Entity

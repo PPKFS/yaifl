@@ -23,6 +23,7 @@ import Data.Text.Display
 import Yaifl.Model.WorldModel
 import Yaifl.Text.Responses
 import Yaifl.Activities.PrintingTheLocaleDescription
+import Yaifl.Model.Objects.Effects
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =

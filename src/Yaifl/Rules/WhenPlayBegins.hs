@@ -12,7 +12,7 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Metadata ( firstRoom, title,  Metadata )
 import Yaifl.Model.Objects.Move ( move )
-import Yaifl.Model.Objects.Query ( NoMissingObjects, getCurrentPlayer )
+import Yaifl.Model.Objects.Query ( getCurrentPlayer )
 import Yaifl.Text.Print ( Print, printText, setStyle )
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMHasProperty )
@@ -20,6 +20,7 @@ import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( Rulebook(..) )
 import Yaifl.Rules.Run ( failRuleWithError )
 import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Objects.Effects
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

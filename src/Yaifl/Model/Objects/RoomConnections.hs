@@ -20,6 +20,7 @@ import Yaifl.Model.Properties.TH (makeDirections)
 import Yaifl.Model.WorldModel (WMDirection, WMSayable)
 import Breadcrumbs
 import Data.Text.Display
+import Yaifl.Model.Objects.Effects
 
 hasSpecificConnectionTo ::
   WMStdDirections wm
