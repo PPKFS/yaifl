@@ -45,7 +45,7 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
-  ParseAction actionOpts t -> do
+  ParseAction actionOpts t -> withSpan' "action" t $ do
     -- print the prompt
     unless (silently actionOpts) $ printLn $ "> " <> t
     --we assume that the verb is the first thing in the command
@@ -56,8 +56,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [(matched, r, Left (InterpretAs x))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
-      -- we've successfully resolved it into an action
-      [(matched, r, Right x@(WrappedAction a))] -> do
+      -- we've successfully resolved it into an action1
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
@@ -99,7 +98,6 @@ findSubjects ::
   => State (ResponseCollector wm) :> es
   => State (WorldActions wm) :> es
   => State Metadata :> es
-
   => Text
   -> WrappedAction wm
   -> Eff es (Either Text Bool)
@@ -117,7 +115,7 @@ findSubjects cmd w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissi
   --we then go through, taking words until we hit either the end or a match word
   --then we try to work out what it was
   let isMatchWord = flip elem (map fst $ matches a)
-      parts = (split . whenElt) isMatchWord (words cmd)
+      parts = (split . whenElt) isMatchWord (words cmd)+
   (goesWithPart, parsedArgs) <- case parts of
     cmdArgWords:matchedWords -> do
       cmdArgs' <- parseArgumentType @wm (goesWith a) (unwords cmdArgWords)
@@ -142,7 +140,7 @@ parseArgumentType ::
 parseArgumentType TakesDirectionParameter t = pure $ maybe
   (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
 parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
-parseArgumentType _ _ = error "not implemented yet"
+parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 parseDirection ::
   forall wm.

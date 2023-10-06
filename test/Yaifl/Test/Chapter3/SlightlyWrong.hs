@@ -44,4 +44,4 @@ ex4World = do
     pass
 
 ex4TestMeWith :: [Text]
-ex4TestMeWith = []
+ex4TestMeWith = ["north", "south"]

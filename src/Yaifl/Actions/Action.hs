@@ -53,6 +53,7 @@ data ActionParameterType =
   | TakesDirectionParameter
   | TakesObjectParameter
   | TakesOneOf ActionParameterType ActionParameterType
+  deriving stock (Show)
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
