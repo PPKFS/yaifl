@@ -141,6 +141,11 @@ parseArgumentType ::
 parseArgumentType TakesDirectionParameter t = pure $ maybe
   (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
 parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
+parseArgumentType (TakesOneOf ap1 ap2) t = do
+  mbRes <- parseArgumentType ap1 t
+  case mbRes of
+    Left _err -> parseArgumentType ap2 t
+    Right res -> pure $ Right res
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 parseDirection ::

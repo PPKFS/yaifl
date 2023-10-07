@@ -1,9 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Properties.Door
-  ( Door(..)
+  ( DoorSpecifics(..)
   , blankDoor
-  , getDoor
+  , getDoorSpecifics
   ) where
 
 
@@ -16,13 +17,13 @@ import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.TH
 import Yaifl.Model.Objects.Effects
 
-data Door = Door
-  { _backSide :: Entity
-  , _isOneWay :: Bool
+data DoorSpecifics = Door
+  { backSide :: Entity
+  , isOneWay :: Bool
   } deriving stock (Eq, Show, Read)
 
-blankDoor :: Entity -> Door
+blankDoor :: Entity -> DoorSpecifics
 blankDoor = flip Door False
 
-makeLenses ''Door
-makeSpecificsWithout [] ''Door
+makeFieldLabelsNoPrefix ''DoorSpecifics
+makeSpecificsWithout [] ''DoorSpecifics

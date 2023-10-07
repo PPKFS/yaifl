@@ -7,7 +7,7 @@ import Solitude
 import Yaifl.Actions.Action
 import Yaifl.Model.Entity ( Entity )
 import Yaifl.Metadata ( isPlayer)
-import Yaifl.Model.Object( Thing, Room, isType, Object )
+import Yaifl.Model.Object( Thing, Room, isType, Object, AnyObject )
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Args
@@ -35,7 +35,7 @@ data GoingActionVariables wm = GoingActionVariables
   } deriving stock ( Generic )
 
 goingAction ::
-  (WMStdDirections wm, WMHasProperty wm Door)
+  (WMStdDirections wm, WMHasProperty wm DoorSpecifics)
   => Action wm (GoingActionVariables wm)
 goingAction = Action
   "going"
@@ -53,14 +53,14 @@ carryOutGoingRules = makeActionRulebook "carry out going rulebook" []
 
 goingActionSet ::
   forall wm es.
-  (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm Door)
+  (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm DoorSpecifics)
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
 goingActionSet (UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
-  goneWith <- getMatchingThing "with"
+  thingGoneWith <- getMatchingThing "with"
   -- now the room gone from is the location of the actor;
-  roomFrom <- getLocation source
+  roomGoneFrom <- getLocation source
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
   vehicleGoneBy <- actorInEnterableVehicle source
   {-
@@ -68,68 +68,35 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     if we are going to a door (my add: or through a door), then choose the door
     after this, if there is a door in the way then we are clearly going through the door and our target is through the door
     and of course now the room we're going to is on the other side of the door.
-
+  -}
   -- find all the possible targets we could mean
-  case fst variables of
-    DirectionParameter dir -> pure $ getMapConnection @wm dir roomFrom
+  target <- case fst variables of
+    -- if the noun is a direction:
+    -- let direction D be the noun;
+    -- let the target be the room-or-door direction D from the room gone from;
+    DirectionParameter dir -> pure $ getMapConnection @wm dir roomGoneFrom
+    -- if the noun is a door, let the target be the noun;
+    -- now the door gone through is the target;
+    -- now the target is the other side of the target from the room gone from;
     ObjectParameter door -> setDoorGoneThrough door
     NoParameter -> do
-      doorThrough <- getDoorMaybe <$$> getMatchingThing "through"
-      case doorThrough of
-        Nothing -> error "tried to go through something that wasn't a door"
-        Just d -> setDoorGoneThrough d
+      mbDoor <- getDoorSpecifics =<< getMatchingThing "through"
+      maybe (pure Nothing) (pure . Just . backSide) mbDoor
 
-  -}
-{-}
-  targets <- catMaybes <$> mapM (\case
-      -- if the noun is a direction
-      -- let direction D be the noun and let the target be the room-or-door direction D from the room gone from
-      DirectionSubject d -> pure $ getMapConnection @wm d roomFrom
-      -- if the noun is a door, let the target be the noun;
-      RegularSubject r -> setDoorGoneThrough r
-      -- this is also the door case, but it matches "go through red door", whereas the above case will match "go red door"
-      MatchedSubject "through" n' ->
-      -- todo: this should be a big ol' error case for the rest
-      ConceptSubject _ -> pure Nothing
-      MatchedSubject _ _ -> pure Nothing
-      ) nnnnn
+  case target of
+    Nothing -> cantGoThatWay =<< getMatchingThing "through"
+    Just t -> pure $ Right $ GoingActionVariables
+      { thingGoneWith
+      , roomGoneFrom
+      , roomGoneTo = t
+      , vehicleGoneBy
+      }
 
-  -- ensure we have 1 target, which is either a room (passthrough) or a door (in which case we want to go through it)
-  target <- case targets of
-    [] -> pure $ Left "I have no idea where you wanted to go."
-    --we have too many targets; this probably arises if we try to go east via the west door
-    (_:_:_) -> pure $ Left "I have no idea where you wanted to go; you seemed to suggest multiple directions."
-    -- this should either be a room or a door
-    [x] -> asThingOrRoomM x
-      (\thing -> do
-        --if it's not a door, then we've messed up.
-        mbDoor <- getDoor thing
-        case mbDoor of
-          Nothing -> noteError Left ""--[int|t|You said you wanted to go to the TODO which makes no sense.|]
-          Just d ->
-            --get the other side of the door. we don't check (TODO) whether the other side is indeed a room.
-            if
-              getID roomFrom == _backSide d
-            then Right . (Just thing,) <$> getLocation thing
-            else Right . (Just thing,) <$> getRoom (_backSide d)
-          )
-      -- if it's a room directly, problem solved.
-      (pure . Right . (Nothing,))
-  let gav b a' = GoingActionVariables
-        { _gavRoomFrom = roomFrom
-        , _gavRoomTo = a'
-        , _gavDoorGoneThrough = b
-        , _gavVehicleGoneBy = vehicleGoneBy
-        , _gavThingGoneWith = goneWith
-        }
-      -}
-  --case target of
-  --  Left txt -> return $ Left txt
-  --  Right r -> return $ Right $ uncurry gav r
-  pure $ Left "aaaa"
+getDoorMaybe :: Thing wm -> AnyObject wm
+getDoorMaybe = error ""
 
---getDoorMaybe :: Thing wm -> Door wm
---getDoorMaybe = error ""
+cantGoThatWay :: Maybe (Thing wm) -> Eff es (ArgumentParseResult a)
+cantGoThatWay = error ""
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do
@@ -138,7 +105,7 @@ getMatchingThing matchElement = do
     Nothing -> pure Nothing
     Just e' -> getThingMaybe e'
 
-setDoorGoneThrough :: Entity -> Eff es (Maybe Entity)
+setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe Entity)
 setDoorGoneThrough = error ""
 
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
