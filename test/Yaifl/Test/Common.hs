@@ -104,7 +104,7 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
             mconcat <$> sequence [ (do
               put (updateNarrative x y w)
               runWorld ("Tense: " <> show y <> " | Viewpoint: " <> show x)) | x <- universe, y <- universe ]
-          else runWorld "world"
+          else runWorld ""
       flush
       pure output
 

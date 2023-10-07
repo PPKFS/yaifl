@@ -56,7 +56,8 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [(matched, r, Left (InterpretAs x))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
-      -- we've successfully resolved it into an action1
+      -- we've successfully resolved it into an action
+      [(matched, r, Right x@(WrappedAction a))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
         runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
 
@@ -115,7 +116,7 @@ findSubjects cmd w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissi
   --we then go through, taking words until we hit either the end or a match word
   --then we try to work out what it was
   let isMatchWord = flip elem (map fst $ matches a)
-      parts = (split . whenElt) isMatchWord (words cmd)+
+      parts = (split . whenElt) isMatchWord (words cmd)
   (goesWithPart, parsedArgs) <- case parts of
     cmdArgWords:matchedWords -> do
       cmdArgs' <- parseArgumentType @wm (goesWith a) (unwords cmdArgWords)
