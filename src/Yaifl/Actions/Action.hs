@@ -115,9 +115,11 @@ runAction ::
   -> WrappedAction wm
   -> Eff es (Maybe Bool)
 runAction uArgs (WrappedAction act) = withSpan "run action" (act ^. #name) $ \aSpan -> do
-  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> (runParseArguments (act ^. #parseArguments) uArgs)
+  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
   case mbArgs of
-    Left err -> noteError (const $ Just False) err
+    Left err -> do
+      addAnnotation err
+      pure (Just False)
     Right args -> do
       -- running an action is simply evaluating the action processing rulebook.
       (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing

@@ -135,6 +135,7 @@ findSubjects cmd w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissi
 parseArgumentType ::
   forall wm es.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Breadcrumbs :> es
   => ActionParameterType
   -> Text
   -> Eff es (Either Text (ActionParameter wm))
@@ -144,7 +145,9 @@ parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
 parseArgumentType (TakesOneOf ap1 ap2) t = do
   mbRes <- parseArgumentType ap1 t
   case mbRes of
-    Left _err -> parseArgumentType ap2 t
+    Left err -> do
+      addAnnotation err
+      parseArgumentType ap2 t
     Right res -> pure $ Right res
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 

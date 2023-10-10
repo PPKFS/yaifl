@@ -84,7 +84,7 @@ type HasStandardProperties s = (
   , WMHasProperty s Openable
   , HasLookingProperties s
   , WMStdDirections s
-  , WMHasProperty s Door
+  , WMHasProperty s DoorSpecifics
   , HasDirectionalTerms s)
 
 blankWorld ::
@@ -175,7 +175,7 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 newWorld ::
   HasLookingProperties wm
   => WMStdDirections wm
-  => WMHasProperty wm Door
+  => WMHasProperty wm DoorSpecifics
   => Eff (EffStack wm) ()
 newWorld = do
   addBaseObjects
@@ -306,7 +306,7 @@ runGame = convertToUnderlyingStack
 addBaseActions ::
   (HasLookingProperties wm)
   => WMStdDirections wm
-  => WMHasProperty wm Door
+  => WMHasProperty wm DoorSpecifics
   => State (WorldActions wm) :> es
   => Eff es ()
 addBaseActions = do

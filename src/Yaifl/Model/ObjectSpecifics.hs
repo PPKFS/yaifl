@@ -17,7 +17,7 @@ import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable )
 import Yaifl.Model.Properties.Container
-import Yaifl.Model.Properties.Door ( Door, blankDoor )
+import Yaifl.Model.Properties.Door
 import Yaifl.Model.Properties.Openable ( Openable )
 import Yaifl.Model.Objects.Effects
 
@@ -26,7 +26,7 @@ data ObjectSpecifics =
   | EnclosingSpecifics Enclosing
   | ContainerSpecifics Container
   | OpenableSpecifics Openable
-  | DoorSpecifics Door
+  | DoorSpecifics DoorSpecifics
   deriving stock (Eq, Show, Read)
 
 makePrisms ''ObjectSpecifics
@@ -49,7 +49,7 @@ instance HasProperty ObjectSpecifics Enterable where
 instance HasProperty ObjectSpecifics Openable where
   propertyL = _OpenableSpecifics `thenATraverse` (_ContainerSpecifics % containerOpenable)
 
-instance HasProperty ObjectSpecifics Door where
+instance HasProperty ObjectSpecifics DoorSpecifics where
   propertyL = castOptic _DoorSpecifics
 
 localST ::

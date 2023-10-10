@@ -257,13 +257,6 @@ toBeAbleTo = makeVerb "do"
 toAuxiliaryHave :: Verb
 toAuxiliaryHave = makeVerb "auxiliary-have"
 
-
-{-onst $ const $ const $ \case
-  FirstPersonSingular -> "am"
-  ThirdPersonSingular -> "is"
-  _ -> "are" -}
-
-
 (#|) :: Text -> Text -> Text
 (#|) "" b = b
 (#|) a "" = a

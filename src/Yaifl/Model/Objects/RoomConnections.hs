@@ -86,6 +86,9 @@ addDirectionFromOneWay ::
   -> Eff es ()
 addDirectionFromOneWay = isDirectionFromInternal False
 
+-- | the ordering here is that r2' `isSouthOf` (for example) r1 means
+-- the connection to be made explicitly is from r1 (south) -> r2
+-- then the implicit reverse connection is r2 (opposite south) -> r1
 isDirectionFromInternal ::
   State Metadata :> es
   => Breadcrumbs :> es
@@ -97,19 +100,19 @@ isDirectionFromInternal ::
   -> Room wm
   -> Room wm
   -> Eff es ()
-isDirectionFromInternal mkRev dir r1' r2' = withoutMissingObjects (do
+isDirectionFromInternal mkRev dir r2' r1' = withoutMissingObjects (do
     let opp = opposite dir
     r1 <- refreshRoom r1'
     r2 <- refreshRoom r2'
     -- we log a warning if we're in construction and we are overriding an explicit connection
     -- apparently inform just doesn't let you do this, so...
-    -- r1 is explicitly dir of r2; it is r2 we need to check
+    -- r2 is explicitly dir of r1; it is r1 we need to check
     -- r2 is implicitly (opposite dir) of r1.
     -- e.g. if r1 `isWestOf` r2, then r2 has an explicit west connection and r1 has an implicit east connection.
-    whenConstructing (isJust $ hasSpecificConnectionTo (Just Explicit) r2 dir)
+    whenConstructing (isJust $ hasSpecificConnectionTo (Just Explicit) r1 dir)
       -- TODO: this should be a nonblocking failure
       (addAnnotation $ "Overriding an explicitly set map direction of room " <> "")--show r1)
-    modifyRoom r2 (makeConnection Explicit dir r1)
+    modifyRoom r1 (makeConnection Explicit dir r2)
     --only make the reverse if we want to
     when mkRev $ do
       -- something weird is happening if we're overriding an implicit direction with another implicit direction
@@ -117,7 +120,14 @@ isDirectionFromInternal mkRev dir r1' r2' = withoutMissingObjects (do
       whenConstructing (isJust $ hasSpecificConnectionTo (Just Implicit) r2 opp)
         (addAnnotation $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show r1)
       -- and don't bother if there's any connection at all
-      unless (isJust $ r1 ^? connectionLens opp) $ modifyRoom r1 (makeConnection Implicit dir r2)
+      if isJust $ r2 ^? connectionLens opp
+        then do
+          modifyRoom r2 (makeConnection Implicit opp r1)
+          addAnnotation $ "made implicit connection from " <> display (view #name r2) <> " going " <> show opp <> " to " <> display (view #name r1)
+        else
+          addAnnotation $ "did not make implicit connection from " <> display (view #name r2) <> " going " <> show opp <> " to " <> display (view #name r1)
+            <> " because it's already made."
+    addAnnotation $ "made connection from " <> display (view #name r1) <> " going " <> show dir <> " to " <> display (view #name r2)
     pass) (handleMissingObject "failed to make direction" ())
 
-makeDirections True ["West", "South"]
+makeDirections True ["West", "South", "North", "East"]

@@ -6,20 +6,22 @@ import Solitude
 
 import Yaifl.Actions.Action
 import Yaifl.Model.Entity ( Entity )
-import Yaifl.Metadata ( isPlayer)
-import Yaifl.Model.Object( Thing, Room, isType, Object, AnyObject )
+import Yaifl.Metadata ( isPlayer )
+import Yaifl.Model.Object( Thing, Room, isType, AnyObject )
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
-import Yaifl.Rules.Rulebook
-import Effectful.Error.Static
 import Yaifl.Rules.RuleEffects
 import Yaifl.Model.Direction
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Door
 import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Model.Objects.Effects
+import Yaifl.Text.SayQQ
+import Yaifl.Text.Say
+import Breadcrumbs
+import Yaifl.Model.Objects.Move
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -36,6 +38,7 @@ data GoingActionVariables wm = GoingActionVariables
 
 goingAction ::
   (WMStdDirections wm, WMHasProperty wm DoorSpecifics)
+  => WithPrintingNameOfSomething wm
   => Action wm (GoingActionVariables wm)
 goingAction = Action
   "going"
@@ -46,14 +49,36 @@ goingAction = Action
   (makeActionRulebook "before going rulebook" [])
   (makeActionRulebook "check going rulebook" checkGoingRules)
   carryOutGoingRules
-  (makeActionRulebook "report going rulebook" [])
+  (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])
 
-carryOutGoingRules :: ActionRulebook wm v0
-carryOutGoingRules = makeActionRulebook "carry out going rulebook" []
+describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+describeRoomGoneInto = notImplementedRule "describe room gone into rule"
+
+carryOutGoingRules :: ActionRulebook wm (GoingActionVariables wm)
+carryOutGoingRules = makeActionRulebook "carry out going rulebook"
+  [ movePlayerAndVehicle
+  , moveFloatingObjects
+  , checkLightInNewLocation
+  ]
+
+checkLightInNewLocation :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+checkLightInNewLocation = notImplementedRule "check light in new location rule"
+
+moveFloatingObjects :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+moveFloatingObjects = notImplementedRule "move floating objects rule"
+
+movePlayerAndVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \v -> do
+  moveSuccessful <- case vehicleGoneBy v of
+    Nothing -> move (source v) (roomGoneTo v)
+    Just x -> error ""
+  error ""
+
 
 goingActionSet ::
   forall wm es.
   (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm DoorSpecifics)
+  => WithPrintingNameOfSomething wm
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
 goingActionSet (UnverifiedArgs Args{..}) = do
@@ -74,29 +99,42 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     -- if the noun is a direction:
     -- let direction D be the noun;
     -- let the target be the room-or-door direction D from the room gone from;
-    DirectionParameter dir -> pure $ getMapConnection @wm dir roomGoneFrom
+    DirectionParameter dir -> do
+      addAnnotation $ "going in direction " <> show dir
+      addAnnotation $ "possible exits are " <> show (roomGoneFrom ^. #objectData % #mapConnections)
+      pure $ getMapConnection @wm dir roomGoneFrom
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
     ObjectParameter door -> setDoorGoneThrough door
     NoParameter -> do
-      mbDoor <- getDoorSpecifics =<< getMatchingThing "through"
-      maybe (pure Nothing) (pure . Just . backSide) mbDoor
-
-  case target of
-    Nothing -> cantGoThatWay =<< getMatchingThing "through"
-    Just t -> pure $ Right $ GoingActionVariables
+      mbThrough <- getMatchingThing "through"
+      mbDoor <- join <$> traverse getDoorSpecifics mbThrough
+      pure $ backSide <$> mbDoor
+  mbRoomGoneTo <- join <$> traverse getRoomMaybe target
+  addAnnotation $ "target was " <> show target
+  case mbRoomGoneTo of
+    Nothing -> cantGoThatWay source =<< getMatchingThing "through"
+    Just roomGoneTo -> pure $ Right $ GoingActionVariables
       { thingGoneWith
       , roomGoneFrom
-      , roomGoneTo = t
+      , roomGoneTo = roomGoneTo
       , vehicleGoneBy
       }
 
-getDoorMaybe :: Thing wm -> AnyObject wm
-getDoorMaybe = error ""
-
-cantGoThatWay :: Maybe (Thing wm) -> Eff es (ArgumentParseResult a)
-cantGoThatWay = error ""
+cantGoThatWay ::
+  RuleEffects wm es
+  => WithPrintingNameOfSomething wm
+  => Thing wm
+  -> Maybe (Thing wm)
+  -> Eff es (ArgumentParseResult a)
+cantGoThatWay source mbDoorThrough = do
+  whenM (isPlayer source) $
+    case mbDoorThrough of
+      -- say "[We] [can't go] that way." (A);
+      Nothing -> [saying|#{We} #{can't go} that way.|]
+      Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
+  pure $ Left "Can't go that way"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do
@@ -108,11 +146,11 @@ getMatchingThing matchElement = do
 setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe Entity)
 setDoorGoneThrough = error ""
 
+getDoorMaybe :: Thing wm -> AnyObject wm
+getDoorMaybe = error ""
+
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
 actorInEnterableVehicle _ = pure Nothing
-
-getNouns :: UnverifiedArgs wm  -> Text
-getNouns = error "" --variables . unArgs
 
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
@@ -127,12 +165,10 @@ checkGoingRules = [
   ]
 
 cantGoThroughClosedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughClosedDoors = makeRule "stand up before going" [] $ \_v -> do
-  return Nothing
+cantGoThroughClosedDoors = notImplementedRule "stand up before going"
 
 cantGoThroughUndescribedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-cantGoThroughUndescribedDoors = makeRule "stand up before going" [] $ \_v -> do
-  return Nothing
+cantGoThroughUndescribedDoors = notImplementedRule "stand up before going"
 
 cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \v -> do
