@@ -5,6 +5,7 @@ module Yaifl.Rules.Args
   ( Args(..)
   , Refreshable(..)
   , ActionParameter(..)
+  , ActionOptions(..)
   , UnverifiedArgs(..)
   , ArgumentParseResult
   , withPlayerSource
@@ -26,12 +27,16 @@ import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
 
--- | Arguments for an action, activity, or rulebook. These are parameterised over
--- the closed 's' universe and the variables, which are either unknown
--- (see 'UnverifiedArgs') or known (concrete instantation).
+data ActionOptions wm = ActionOptions
+  { silently :: Bool
+  , hidePrompt :: Bool
+  } deriving stock (Eq, Ord, Generic)
+
+-- | Arguments for an action, activity, or rulebook.
 data Args wm v = Args
   { source :: Thing wm
   , variables :: v
+  , actionOptions :: ActionOptions wm
   , timestamp :: Timestamp
   } deriving stock (Eq, Ord, Generic)
 
@@ -104,7 +109,7 @@ playerNoArgs = do
 blankArgs ::
   Thing wm
   -> UnverifiedArgs wm
-blankArgs o = UnverifiedArgs $ Args o (NoParameter, []) 0
+blankArgs o = UnverifiedArgs $ Args o(NoParameter, []) (ActionOptions False False) 0
 
 instance Functor (Args wm) where
   fmap f = #variables %~ f

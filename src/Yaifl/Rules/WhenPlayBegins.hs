@@ -21,6 +21,7 @@ import Yaifl.Rules.Rulebook ( Rulebook(..) )
 import Yaifl.Rules.Run ( failRuleWithError )
 import Yaifl.Rules.RuleEffects
 import Yaifl.Model.Objects.Effects
+import Yaifl.Rules.Args
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -66,7 +67,7 @@ initRoomDescription ::
   => ActionHandler wm :> es
   => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction (ActionOptions True Nothing) "look" >>= (\case
+  parseAction (ActionOptions True True) "look" >>= (\case
      Left txt -> addAnnotation txt
      Right True -> pass
      Right False -> error "Could not find the looking action.")

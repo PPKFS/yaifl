@@ -7,7 +7,6 @@ module Yaifl.Rules.RuleEffects
   , RuleEffects
   , ActionHandler(..)
   , parseAction
-  , ActionOptions(..)
   , ActivityCollector(..)
   , ResponseCollector(..)
   , ConcreteRuleStack
@@ -25,19 +24,14 @@ import Effectful.TH ( makeEffect )
 import Effectful.Writer.Static.Local
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Metadata ( Metadata )
-import Yaifl.Model.Object
 import Yaifl.Text.Print ( Print, printText, printLn )
 import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMSayable )
 import qualified Data.Text as T
 import Yaifl.Model.Objects.Effects
+import Yaifl.Rules.Args
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
-
-data ActionOptions wm = ActionOptions
-  { silently :: Bool
-  , actor :: Maybe (Thing wm)
-  }
 
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
 newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }

@@ -52,8 +52,13 @@ goingAction = Action
   carryOutGoingRules
   (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])
 
+-- todo: other actors moving, or if the player is moved via another actor
 describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-describeRoomGoneInto = notImplementedRule "describe room gone into rule"
+describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
+  (isPlayer (source a))
+  (when (silently . actionOptions $ a) (error "") >> error "")
+  (error "")
+
 
 carryOutGoingRules :: WMHasProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
 carryOutGoingRules = makeActionRulebook "carry out going rulebook"
@@ -72,8 +77,8 @@ movePlayerAndVehicle :: WMHasProperty wm Enclosing => Rule wm (Args wm (GoingAct
 movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{variables=v} -> do
   moveSuccessful <- case vehicleGoneBy v of
     Nothing -> move (source a) (roomGoneTo v)
-    Just x -> error "failed to move with a vehicle"
-  pure $ Just moveSuccessful
+    Just _x -> error "failed to move with a vehicle"
+  pure $ if moveSuccessful then Nothing else Just False
 
 
 goingActionSet ::

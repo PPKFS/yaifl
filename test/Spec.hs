@@ -53,7 +53,7 @@ getAndIncrementRunNumber = do
 
 makeExampleMap :: Bool -> Map String (IO Text)
 makeExampleMap allTenses = unionsWithPrefixes [
-  ("Chapter3", Chapter3.spec allTenses)
+  ("Chapter 3", Chapter3.spec allTenses)
   ]
 
 makeVerbs :: Map String (IO Text)

@@ -17,7 +17,7 @@ import Yaifl.Model.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
 import Yaifl.Model.Objects.Query
 import Yaifl.Text.Print ( Print, printLn )
-import Yaifl.Rules.Args ( playerNoArgs, UnverifiedArgs (..), Args (..), ActionParameter (..) )
+import Yaifl.Rules.Args
 import Yaifl.Model.WorldModel ( WMDirection, WMSayable )
 import qualified Data.Map as Map
 import qualified Data.Text as T
@@ -47,7 +47,7 @@ runActionHandlerAsWorldActions ::
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts t -> withSpan' "action" t $ do
     -- print the prompt
-    unless (silently actionOpts) $ printLn $ "> " <> t
+    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "> " <> t
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of
@@ -55,7 +55,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       xs:x:_ -> return $ Left $ "Did you mean " <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
       [(matched, r, Left (InterpretAs x))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
-        runActionHandlerAsWorldActions $ parseAction (actionOpts { silently = True }) (x <> r)
+        runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) (x <> r)
       -- we've successfully resolved it into an action
       [(matched, r, Right x@(WrappedAction a))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
