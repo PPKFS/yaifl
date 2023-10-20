@@ -22,6 +22,7 @@ import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
 import Breadcrumbs
 import Yaifl.Model.Objects.Move
+import Yaifl.Model.Properties.Enclosing
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -37,7 +38,7 @@ data GoingActionVariables wm = GoingActionVariables
   } deriving stock ( Generic )
 
 goingAction ::
-  (WMStdDirections wm, WMHasProperty wm DoorSpecifics)
+  (WMStdDirections wm, WMHasProperty wm DoorSpecifics, WMHasProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
   => Action wm (GoingActionVariables wm)
 goingAction = Action
@@ -54,7 +55,7 @@ goingAction = Action
 describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 describeRoomGoneInto = notImplementedRule "describe room gone into rule"
 
-carryOutGoingRules :: ActionRulebook wm (GoingActionVariables wm)
+carryOutGoingRules :: WMHasProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
 carryOutGoingRules = makeActionRulebook "carry out going rulebook"
   [ movePlayerAndVehicle
   , moveFloatingObjects
@@ -67,12 +68,12 @@ checkLightInNewLocation = notImplementedRule "check light in new location rule"
 moveFloatingObjects :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 moveFloatingObjects = notImplementedRule "move floating objects rule"
 
-movePlayerAndVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
-movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \v -> do
+movePlayerAndVehicle :: WMHasProperty wm Enclosing => Rule wm (Args wm (GoingActionVariables wm)) Bool
+movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{variables=v} -> do
   moveSuccessful <- case vehicleGoneBy v of
-    Nothing -> move (source v) (roomGoneTo v)
-    Just x -> error ""
-  error ""
+    Nothing -> move (source a) (roomGoneTo v)
+    Just x -> error "failed to move with a vehicle"
+  pure $ Just moveSuccessful
 
 
 goingActionSet ::
