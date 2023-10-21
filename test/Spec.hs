@@ -99,7 +99,7 @@ goldenTests = do
   return $ askOption $ \(AllTenses a) ->
     testGroup "Tests" [
       testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsAction
-      ((\(x, y) -> x <> "-" <> y) . bimap id (drop 1) . span (/= '/') $ k) -- test name
+      ((\(x, y) -> x <> "-" <> y) . second (drop 1) . span (/= '/') $ k) -- test name
       ("test/testcases/" <> k) -- golden file path
       v  -- action whose result is tested
       id)

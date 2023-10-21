@@ -4,7 +4,6 @@ import Yaifl
 import Yaifl.Metadata
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.Effects
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.Print
