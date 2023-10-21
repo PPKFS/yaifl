@@ -53,7 +53,8 @@ TAGS
 .DS_Store
 log.json
 *.save0
-book
+*.project.freeze
+traceid.temp
 
 test_runs
 .entangled
@@ -61,3 +62,5 @@ test_runs
 .hlint.yaml
 zipkin.jar
 traceid.temp
+breadcrumbs/
+solitude/
