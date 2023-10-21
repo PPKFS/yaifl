@@ -47,7 +47,7 @@ runActionHandlerAsWorldActions ::
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts t -> withSpan' "action" t $ do
     -- print the prompt
-    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "> " <> t
+    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "\n>" <> t
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of

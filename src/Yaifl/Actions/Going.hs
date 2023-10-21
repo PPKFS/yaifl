@@ -56,8 +56,10 @@ goingAction = Action
 describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
-  (when (silently . actionOptions $ a) (error "") >> error "")
-  (error "")
+  (unless (silently . actionOptions $ a) (void $ do
+    sayLn @Text ""
+    parseAction ((actionOptions a) { silently = True }) "look") >> rulePass)
+  (error "other actors cant report going yet")
 
 
 carryOutGoingRules :: WMHasProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
@@ -79,7 +81,6 @@ movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{vari
     Nothing -> move (source a) (roomGoneTo v)
     Just _x -> error "failed to move with a vehicle"
   pure $ if moveSuccessful then Nothing else Just False
-
 
 goingActionSet ::
   forall wm es.
@@ -150,7 +151,7 @@ getMatchingThing matchElement = do
     Just e' -> getThingMaybe e'
 
 setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe Entity)
-setDoorGoneThrough = error ""
+setDoorGoneThrough _ = pure Nothing
 
 getDoorMaybe :: Thing wm -> AnyObject wm
 getDoorMaybe = error ""

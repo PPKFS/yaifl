@@ -41,6 +41,11 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "after stage rule"
   , notImplementedRule "investigate player awareness after rule"
-  , notImplementedRule "report stage rule"
+  , Rule "report stage rule"
+      []
+        ( \v -> do
+          ignoreSpan
+          r <- runRulebookAndReturnVariables (Just aSpan) reportRules v
+          return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"
   ]) u) (handleMissingObject "" (Just False))
