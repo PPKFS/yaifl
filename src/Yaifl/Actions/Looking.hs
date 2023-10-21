@@ -51,7 +51,7 @@ lookingAction ::
 lookingAction = Action
   "looking"
   ["look", "looking"]
-  TakesNoParameter
+  (Optionally TakesConstantParameter)
   [] --todo: add "at => examine"
   (ParseArguments lookingActionSet)
   (makeActionRulebook "before looking rulebook" [])
@@ -69,12 +69,17 @@ lookingActionSet ::
   => NoMissingObjects wm es
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (LookingActionVariables wm))
-lookingActionSet (UnverifiedArgs Args{..}) = withoutMissingObjects (do
+lookingActionSet ua@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
   -- loc may be a thing (a container) or a room (the more likely case)
   loc <- getObject (source ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent source
-  return $ Right $ LookingActionVariables loc (take lightLevels vl) "looking")
+  let ac = getActionParameter ua
+  acName <- case ac of
+    NoParameter -> pure "looking"
+    ConstantParameter acName -> pure acName
+    _other -> error "impossible"
+  return $ Right $ LookingActionVariables loc (take lightLevels vl) acName)
     (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
 
 carryOutLookingRules ::

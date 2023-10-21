@@ -4,6 +4,7 @@
 module Yaifl.Text.SayQQ
   ( saying
   , sayingTell
+  , sayingLn
   ) where
 
 import Solitude
@@ -42,6 +43,16 @@ saying = QuasiQuoter {
 sayingTell :: QuasiQuoter
 sayingTell = QuasiQuoter {
     quoteExp  = compile (Proxy @'Tell)
+  , quotePat  = notHandled "patterns"
+  , quoteType = notHandled "types"
+  , quoteDec  = notHandled "declarations"
+  }
+  where notHandled things = error $
+          things <> " are not handled by the saying quasiquoter."
+
+sayingLn :: QuasiQuoter
+sayingLn = QuasiQuoter {
+    quoteExp  = \s -> compile (Proxy @'Raw) (s <> "\n")
   , quotePat  = notHandled "patterns"
   , quoteType = notHandled "types"
   , quoteDec  = notHandled "declarations"

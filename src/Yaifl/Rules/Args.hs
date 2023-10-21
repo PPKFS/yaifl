@@ -13,6 +13,8 @@ module Yaifl.Rules.Args
   , getActorLocation
   , blankArgs
   , playerNoArgs
+  , playerArgs
+  , getActionParameter
   ) where
 
 import Solitude
@@ -63,6 +65,7 @@ data ActionParameter wm =
   NoParameter
   | DirectionParameter (WMDirection wm)
   | ObjectParameter (AnyObject wm)
+  | ConstantParameter Text
   deriving stock ( Generic )
 
 -- | Before 'Args' are parsed, the variable is just a command string
@@ -106,10 +109,31 @@ playerNoArgs = do
   ua <- withPlayerSource blankArgs
   return (\ts -> ua & coercedTo @(Args wm (ActionParameter wm, [(Text, ActionParameter wm)])) % #timestamp .~ ts)
 
+-- | Some Arguments, player source.
+playerArgs ::
+  forall wm es.
+  NoMissingObjects wm es
+  => ActionParameter wm
+  -> Eff es (Timestamp -> UnverifiedArgs wm)
+playerArgs ap = do
+  ua <- withPlayerSource (argsWithArgument ap)
+  return (\ts -> ua & coercedTo @(Args wm (ActionParameter wm, [(Text, ActionParameter wm)])) % #timestamp .~ ts)
+
 blankArgs ::
   Thing wm
   -> UnverifiedArgs wm
 blankArgs o = UnverifiedArgs $ Args o(NoParameter, []) (ActionOptions False False) 0
+
+argsWithArgument ::
+  ActionParameter wm
+  -> Thing wm
+  -> UnverifiedArgs wm
+argsWithArgument ap o = UnverifiedArgs $ Args o (ap, []) (ActionOptions False False) 0
+
+getActionParameter ::
+  UnverifiedArgs wm
+  -> ActionParameter wm
+getActionParameter (UnverifiedArgs (Args{variables})) = fst variables
 
 instance Functor (Args wm) where
   fmap f = #variables %~ f

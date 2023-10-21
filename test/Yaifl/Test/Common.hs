@@ -56,7 +56,7 @@ tabsToSpaces = T.replace "\t" " "
 newlinesToWrap :: Text -> Text
 newlinesToWrap = foldl' (\acc -> \case
   "" -> acc <> "\n" <> (if fmap snd (unsnoc acc) == Just '\n' then "" else "\n")
-  x -> acc <> x) "" . lines
+  x -> if T.empty == acc || T.last acc == '\n' then acc <> x else acc <> " " <> x) "" . lines
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
@@ -90,7 +90,7 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
                 failHorriblyIfMissing (runRulebook Nothing (wa ^. #whenPlayBegins) ())
-                mapM_ (parseAction (ActionOptions False False)) actionsToDo
+                mapM_ (parseAction (ActionOptions False False) NoParameter) actionsToDo
                 (w2 :: World wm) <- get
                 let (x, _) = runPureEff $ runStateShared w2 $ do
                       -- take it down and flip it around

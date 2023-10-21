@@ -9,7 +9,7 @@ import Solitude
 
 import Breadcrumbs
 import Data.Text.Display
-import Effectful.Dispatch.Dynamic ( interpret )
+import Effectful.Dispatch.Dynamic
 import Effectful.Optics ( use )
 import Yaifl.Actions.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
@@ -45,7 +45,7 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
-  ParseAction actionOpts t -> withSpan' "action" t $ do
+  ParseAction actionOpts actionArgs t -> withSpan' "action" t $ do
     -- print the prompt
     unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "\n>" <> t
     --we assume that the verb is the first thing in the command
@@ -53,34 +53,42 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
     ac <- case possVerbs of
       [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
       xs:x:_ -> return $ Left $ "Did you mean " <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
-      [(matched, r, Left (InterpretAs x))] -> do
+      [(matched, r, Interpret (InterpretAs x params))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
-        runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) (x <> r)
+        runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
       -- we've successfully resolved it into an action
-      [(matched, r, Right x@(WrappedAction a))] -> do
+      [(matched, r, RegularAction x@(WrappedAction a))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
-        runActionHandlerAsWorldActions $ findSubjects (T.strip r) x
+        runActionHandlerAsWorldActions $ findSubjects (T.strip r) actionArgs x
+      [(matched, _, OtherAction (OutOfWorldAction name runIt))] -> do
+        addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
+        runActionHandlerAsWorldActions $ failHorriblyIfMissing runIt
+        pure $ Right True
 
-    whenLeft_ ac (\t' -> noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t')
+    whenLeft_ ac (\t' -> do
+      noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
+      runActionHandlerAsWorldActions $ failHorriblyIfMissing $ sayLn t')
     return ac
 
 findVerb ::
   (State (WorldActions wm) :> es)
   => Text
-  -> Eff es [(Text, Text, Either InterpretAs (WrappedAction wm))]
+  -> Eff es [(Text, Text, ActionPhrase wm)]
 findVerb cmd = do
   let cmd' = T.toLower cmd
   ac <- use #actions
-  --sayLn $ show $ (map (view (_2 % actionUnderstandAs)) (Map.toList ac))
   let possVerbs = mapMaybe (\case
-        (_, Right a@(WrappedAction (Action{understandAs}))) ->
+        (_, RegularAction a@(WrappedAction (Action{understandAs}))) ->
           case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') understandAs
           of
             [] -> Nothing
-            (ua, x):_ -> Just (ua, x, Right a)
-        (e, Left i@(InterpretAs _)) -> case e `T.stripPrefix` cmd' of
+            (ua, x):_ -> Just (ua, x, RegularAction a)
+        (e, Interpret i@(InterpretAs _ _)) -> case e `T.stripPrefix` cmd' of
           Nothing -> Nothing
-          Just r -> Just (e, r, Left i)) (Map.toList ac)
+          Just r -> Just (e, r, Interpret i)
+        (e, OtherAction o@(OutOfWorldAction _ _)) -> case e `T.stripPrefix` cmd' of
+          Nothing -> Nothing
+          Just r -> Just (e, r, OtherAction o)) (Map.toList ac)
   return possVerbs
 
 findSubjects ::
@@ -100,18 +108,19 @@ findSubjects ::
   => State (WorldActions wm) :> es
   => State Metadata :> es
   => Text
+  -> ActionParameter wm
   -> WrappedAction wm
   -> Eff es (Either Text Bool)
-findSubjects "" w = failHorriblyIfMissing $ do
-  ua <- playerNoArgs
+findSubjects "" actionArgs w = failHorriblyIfMissing $ do
+  ua <- playerArgs actionArgs
   Right <$> tryAction w ua
-findSubjects cmd w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissing $ do
+findSubjects cmd actionArgs w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissing $ do
   --TODO: handle other actors doing things
   --we attempt to either match some matching word from the action (e.g. go through <door>)
   --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
-  ua <- playerNoArgs
+  ua <- playerArgs actionArgs
 
   --we then go through, taking words until we hit either the end or a match word
   --then we try to work out what it was

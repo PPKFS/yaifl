@@ -8,7 +8,9 @@ module Yaifl.Actions.Action
   , ActionProcessing(..)
   , ActionParameterType(..)
   , ParseArguments(..)
+  , ActionPhrase(..)
   , InterpretAs(..)
+  , OutOfWorldAction(..)
   , WorldActions(..)
   , WrappedAction(..)
   , ParseArgumentEffects
@@ -53,6 +55,7 @@ data ActionParameterType =
   | TakesDirectionParameter
   | TakesObjectParameter
   | TakesOneOf ActionParameterType ActionParameterType
+  | TakesConstantParameter
   deriving stock (Show)
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
@@ -72,10 +75,16 @@ data Action (wm :: WorldModel) v where
     } -> Action wm v
   deriving stock (Generic)
 
+
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
     Action wm v
     -> WrappedAction wm
+
+data OutOfWorldAction wm = OutOfWorldAction
+  { name :: Text
+  , runOutOfWorldAction :: forall es. RuleEffects wm es => Eff es ()
+  }
 
 -- | 'ActionRulebook's run over specific arguments; specifically, they expect
 -- their arguments to be pre-verified; this allows for the passing of state.
@@ -88,7 +97,10 @@ actionName :: Lens' (Action wm v) Text
 actionName = #name
 
 -- | If we should interpret some verb as another action (possibly which then points to another interpret as)
-newtype InterpretAs = InterpretAs Text deriving stock (Eq, Show)
+data InterpretAs wm = InterpretAs
+  { toParseAs :: Text
+  , withArgs :: ActionParameter wm
+  }
 
 -- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
 -- we ignore the span to avoid clutter and thread the arguments through.
@@ -98,8 +110,13 @@ makeActionRulebook ::
   -> ActionRulebook o v
 makeActionRulebook n = Rulebook n Nothing
 
+data ActionPhrase wm =
+  Interpret (InterpretAs wm)
+  | RegularAction (WrappedAction wm)
+  | OtherAction (OutOfWorldAction wm)
+
 data WorldActions (wm :: WorldModel) = WorldActions
-  { actions :: Map Text (Either InterpretAs (WrappedAction wm))
+  { actions :: Map Text (ActionPhrase wm)
   , whenPlayBegins :: Rulebook wm () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock ( Generic )
@@ -130,4 +147,4 @@ addAction ::
   State (WorldActions wm) :> es
   => Action wm v
   -> Eff es ()
-addAction ac = #actions % at (ac ^. #name) ?= Right (WrappedAction ac)
+addAction ac = #actions % at (ac ^. #name) ?= RegularAction (WrappedAction ac)

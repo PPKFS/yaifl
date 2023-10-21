@@ -31,7 +31,7 @@ import Yaifl.Model.Objects.Effects
 import Yaifl.Rules.Args
 
 data ActionHandler wm :: Effect where
-  ParseAction :: ActionOptions wm -> Text -> ActionHandler wm m (Either Text Bool)
+  ParseAction :: ActionOptions wm -> ActionParameter wm -> Text -> ActionHandler wm m (Either Text Bool)
 
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
 newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }

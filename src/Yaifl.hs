@@ -60,6 +60,8 @@ import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Objects.Effects
+import Yaifl.Actions.OutOfWorld
+import Yaifl.Rules.Args
 
 newtype Text' (wm :: WorldModel) = Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 
@@ -137,7 +139,7 @@ blankStores = WorldStores
 blankMetadata :: Metadata
 blankMetadata = Metadata
   { title = "Untitled"
-  , roomDescriptions = SometimesAbbreviatedRoomDescriptions
+  , roomDescriptions = NoAbbreviatedRoomDescriptions
   , globalTime = 0
   , darknessWitnessed = False
   , currentPlayer = Entity 1
@@ -313,14 +315,36 @@ addBaseActions = do
   addAction lookingAction
   addAction goingAction
   addGoingSynonyms
+  addOutOfWorldActions
+
+-- https://github.com/ganelson/inform/blob/06cfa98854af5289170e8565d0265b316a9f3745/inform7/extensions/standard_rules/Sections/Command%20Grammar.w#L225
+addOutOfWorldActions ::
+  forall wm es.
+  State (WorldActions wm) :> es
+  => Eff es ()
+addOutOfWorldActions = do
+  addOutOfWorld ["superbrief", "short"] superbriefAction
+  addOutOfWorld ["verbose", "long"] verboseAction
+  addOutOfWorld ["brief", "normal"] briefAction
+
+addOutOfWorld ::
+  forall wm es.
+  State (WorldActions wm) :> es
+  => [Text]
+  -> OutOfWorldAction wm
+  -> Eff es ()
+addOutOfWorld cs e = forM_ cs $ \c ->
+  #actions % at c ?= OtherAction e
 
 addGoingSynonyms ::
   forall wm es.
   (State (WorldActions wm) :> es, Bounded (WMDirection wm), Enum (WMDirection wm), Show (WMDirection wm))
   => Eff es ()
-addGoingSynonyms = forM_ (universe @(WMDirection wm)) $ \dir ->
+addGoingSynonyms = do
+  forM_ (universe @(WMDirection wm)) $ \dir ->
     let dirN = (T.toLower . fromString . show) dir in
-    #actions % at dirN ?= Left (InterpretAs ("go " <> dirN))
+    #actions % at dirN ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
+  -- #actions % at "look after going" ?= Interpret (InterpretAs )
 
 makeTypeDAG :: Map ObjectType (Set ObjectType)
 makeTypeDAG = fromList

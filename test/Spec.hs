@@ -53,7 +53,7 @@ getAndIncrementRunNumber = do
 
 makeExampleMap :: Bool -> Map String (IO Text)
 makeExampleMap allTenses = unionsWithPrefixes [
-  ("Chapter 3", Chapter3.spec allTenses)
+  ("Chapter3", Chapter3.spec allTenses)
   ]
 
 makeVerbs :: Map String (IO Text)
@@ -99,7 +99,7 @@ goldenTests = do
   return $ askOption $ \(AllTenses a) ->
     testGroup "Tests" [
       testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsAction
-      k -- test name
+      ((\(x, y) -> x <> "-" <> y) . bimap id (drop 1) . span (/= '/') $ k) -- test name
       ("test/testcases/" <> k) -- golden file path
       v  -- action whose result is tested
       id)

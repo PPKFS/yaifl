@@ -64,6 +64,8 @@ library
     Yaifl.Actions.Looking.Locale
     Yaifl.Actions.Looking.Visibility
 
+    Yaifl.Actions.OutOfWorld
+
     Yaifl.Activities.Activity
     Yaifl.Activities.ChoosingNotableLocaleObjects
     Yaifl.Activities.ListingContents

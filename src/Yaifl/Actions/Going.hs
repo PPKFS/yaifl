@@ -58,7 +58,7 @@ describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
   (unless (silently . actionOptions $ a) (void $ do
     sayLn @Text ""
-    parseAction ((actionOptions a) { silently = True }) "look") >> rulePass)
+    parseAction ((actionOptions a) { silently = True }) (ConstantParameter "going") "look") >> rulePass)
   (error "other actors cant report going yet")
 
 
@@ -118,6 +118,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
       mbThrough <- getMatchingThing "through"
       mbDoor <- join <$> traverse getDoorSpecifics mbThrough
       pure $ backSide <$> mbDoor
+    ConstantParameter t -> error $ "got a " <> t
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target
   addAnnotation $ "target was " <> show target
   case mbRoomGoneTo of
