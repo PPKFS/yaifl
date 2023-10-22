@@ -22,8 +22,8 @@ module Yaifl.Model.Objects.Effects
   , ObjectCreation(..)
   , AddObjects
   , generateEntity
-  , addThing
-  , addRoom
+  , addThingToWorld
+  , addRoomToWorld
   ) where
 
 import Breadcrumbs
@@ -52,8 +52,8 @@ data ObjectTraverse (wm :: WorldModel) :: Effect where
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddThing :: Object wm ThingData -> ObjectCreation wm m ()
-  AddRoom :: Object wm (RoomData wm) -> ObjectCreation wm m ()
+  AddThingToWorld :: Object wm ThingData -> ObjectCreation wm m ()
+  AddRoomToWorld :: Object wm (RoomData wm) -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 makeEffect ''ObjectLookup

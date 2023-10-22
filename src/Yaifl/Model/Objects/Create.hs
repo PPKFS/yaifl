@@ -2,7 +2,9 @@ module Yaifl.Model.Objects.Create
   ( addThingInternal
   , addRoomInternal
   , addThing'
+  , addThing
   , addObject
+  , addRoom
   , addRoom'
   , addBaseObjects
   ) where
@@ -79,7 +81,7 @@ addThingInternal ::
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
 addThingInternal name desc objtype specifics details =
-  addObject addThing name desc objtype
+  addObject addThingToWorld name desc objtype
     True specifics (fromMaybe blankThingData details)
 
 addThing' ::
@@ -92,6 +94,14 @@ addThing' ::
 addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
     Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate)
 
+addThing ::
+  WMHasProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
+  -> Eff es (Thing wm)
+addThing n d = addThing' n d pass
+
 addRoomInternal ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
@@ -102,7 +112,7 @@ addRoomInternal ::
   -> Maybe (RoomData wm) -- ^
   -> Eff es (Room wm)
 addRoomInternal name desc objtype specifics details = do
-  e <- addObject addRoom name desc objtype False specifics (fromMaybe blankRoomData details)
+  e <- addObject addRoomToWorld name desc objtype False specifics (fromMaybe blankRoomData details)
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
   return e
@@ -117,11 +127,19 @@ addRoom' ::
 addRoom' n d rd = addRoomInternal n d (ObjectType "room")
   Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
 
+addRoom ::
+  WMHasProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> WMSayable wm -- ^ Description.
+  -> Eff es (Room wm)
+addRoom n d = addRoom' n d pass
+
 addBaseObjects ::
   WMHasProperty wm Enclosing
   => AddObjects wm es
   => Eff es ()
 addBaseObjects = do
-  addRoom' "The Void" "If you're seeing this, you did something wrong." pass
+  addRoom "The Void" "If you're seeing this, you did something wrong."
   addThing' "player" "It's you, looking handsome as always" (#described .= Undescribed)
   #firstRoom .= voidID
