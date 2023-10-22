@@ -18,6 +18,7 @@ module Yaifl.Actions.Action
   , runAction
   , makeActionRulebook
   , actionName
+  , actionsMapL
   ) where
 
 import Solitude
@@ -114,14 +115,18 @@ data ActionPhrase wm =
   Interpret (InterpretAs wm)
   | RegularAction (WrappedAction wm)
   | OtherAction (OutOfWorldAction wm)
+  deriving stock ( Generic )
 
 data WorldActions (wm :: WorldModel) = WorldActions
-  { actions :: Map Text (ActionPhrase wm)
+  { actionsMap :: Map Text (ActionPhrase wm)
   , whenPlayBegins :: Rulebook wm () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock ( Generic )
 
 makeFieldLabelsNoPrefix ''WorldActions
+
+actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
+actionsMapL = #actionsMap
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -147,4 +152,4 @@ addAction ::
   State (WorldActions wm) :> es
   => Action wm v
   -> Eff es ()
-addAction ac = #actions % at (ac ^. #name) ?= RegularAction (WrappedAction ac)
+addAction ac = #actionsMap % at (ac ^. #name) ?= RegularAction (WrappedAction ac)

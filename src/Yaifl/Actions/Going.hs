@@ -23,6 +23,10 @@ import Yaifl.Text.Say
 import Breadcrumbs
 import Yaifl.Model.Objects.Move
 import Yaifl.Model.Properties.Enclosing
+import qualified Data.Map as Map
+import qualified Data.Text as T
+import Data.Text.Display
+import Yaifl.Model.WorldModel (WMDirection)
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -122,7 +126,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target
   addAnnotation $ "target was " <> show target
   case mbRoomGoneTo of
-    Nothing -> cantGoThatWay source =<< getMatchingThing "through"
+    Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
     Just roomGoneTo -> pure $ Right $ GoingActionVariables
       { thingGoneWith
       , roomGoneFrom
@@ -132,16 +136,22 @@ goingActionSet (UnverifiedArgs Args{..}) = do
 
 cantGoThatWay ::
   RuleEffects wm es
+  => Display (WMDirection wm)
   => WithPrintingNameOfSomething wm
   => Thing wm
   -> Maybe (Thing wm)
+  -> Room wm
   -> Eff es (ArgumentParseResult a)
-cantGoThatWay source mbDoorThrough = do
-  whenM (isPlayer source) $
+cantGoThatWay source mbDoorThrough fromRoom = do
+  whenM (isPlayer source) $ do
+    let possExits = Map.keys $ getAllConnections fromRoom
     case mbDoorThrough of
       -- say "[We] [can't go] that way." (A);
-      Nothing -> [saying|#{We} #{can't go} that way.|]
-      Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
+      Nothing -> do
+        rn <- sayText (fromRoom ^. #name)
+        [saying|#{We} #{can't go} that way.|]
+        sayLn $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
+      Just door -> [sayingLn|#{We} #{can't}, since {the door} #{lead} nowhere.|]
   pure $ Left "Can't go that way"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))

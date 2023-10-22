@@ -24,6 +24,9 @@ module Yaifl.Model.Direction (
 
 import Solitude hiding (Down)
 import Yaifl.Model.WorldModel ( WMDirection, WorldModel(..) )
+import Data.Text.Display
+import qualified Data.Text as T
+import Data.Text.Lazy.Builder (fromText)
 
 -- | A *Direction* is a compass direction, in contrast to a WMDirection (which is probably just compass directions
 -- but it may include more).
@@ -41,6 +44,9 @@ data Direction =
   | Up
   | Down
   deriving stock (Eq, Show, Read, Ord, Enum, Generic, Bounded)
+
+instance Display Direction where
+  displayBuilder = fromText . T.toLower . show
 
 class HasOpposite d where
   opposite :: d -> d
@@ -74,7 +80,8 @@ type WMStdDirections (wm :: WorldModel) = (
   , Enum (WMDirection wm)
   , Show (WMDirection wm)
   , Ord (WMDirection wm)
-  , HasOpposite (WMDirection wm))
+  , HasOpposite (WMDirection wm)
+  , Display (WMDirection wm))
 
 -- | A way to get all the strings which a direction may be parsed into.
 -- This is kind of a human-facing `Show` with multiple options.
@@ -92,7 +99,7 @@ instance HasDirectionalTerms ('WorldModel s Direction b c ac r sa) where
     NorthEast -> ["ne", "northeast", "north-east", "north east"]
     SouthEast -> ["se", "southeast", "south-east", "south east"]
     SouthWest -> ["sw", "southwest", "south-west", "south west"]
-    In -> ["nw", "northwest", "north-west", "north west"]
-    Out -> ["nw", "northwest", "north-west", "north west"]
-    Up -> ["nw", "northwest", "north-west", "north west"]
-    Down -> ["nw", "northwest", "north-west", "north west"]
+    In -> ["in", "inside"]
+    Out -> ["out", "outside"]
+    Up -> ["up", "upwards", "above"]
+    Down -> ["down", "downwards", "below"]

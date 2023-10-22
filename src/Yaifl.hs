@@ -22,39 +22,39 @@ import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
 import Effectful.Optics ( (?=), (%=), use, (<<%=) )
 import Effectful.Reader.Static ( runReader, Reader )
 import Effectful.Writer.Static.Local
-import Yaifl.Actions.Action
-import Yaifl.Activities.Activity
-import Yaifl.Actions.Parser
-import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
-import Yaifl.Model.Direction
-import Yaifl.Model.Entity
-import Yaifl.Metadata
-import Yaifl.Model.Object
-import Yaifl.Model.Objects.Create
-import Yaifl.Text.Print
-import Yaifl.Model.Properties.Enclosing
-import Yaifl.Model.Properties.Has
-import Yaifl.Actions.ActionProcessing
-import Yaifl.Rules.Rule
-import Yaifl.Rules.RuleEffects
-import Yaifl.Rules.WhenPlayBegins
-import Yaifl.World
-import Yaifl.Model.WorldModel
 
+import Yaifl.Actions.Action
+import Yaifl.Actions.ActionProcessing
 import Yaifl.Actions.Going
 import Yaifl.Actions.Looking
+import Yaifl.Actions.Looking.Locale
+import Yaifl.Actions.Looking.Visibility
+import Yaifl.Actions.Parser
+import Yaifl.Activities.Activity
 import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.ListingContents
 import Yaifl.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Activities.PrintingTheLocaleDescription
-import Yaifl.Actions.Looking.Locale
+import Yaifl.Metadata
+import Yaifl.Model.Direction
+import Yaifl.Model.Entity
+import Yaifl.Model.Object
 import Yaifl.Model.ObjectSpecifics
+import Yaifl.Model.Objects.Create
 import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Door
+import Yaifl.Model.Properties.Enclosing
+import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Openable
+import Yaifl.Model.WorldModel
+import Yaifl.Rules.Rule
+import Yaifl.Rules.RuleEffects
+import Yaifl.Rules.WhenPlayBegins
+import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
+import Yaifl.Text.Print
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.Say
-import Yaifl.Actions.Looking.Visibility
+import Yaifl.World
 
 import qualified Data.Map as DM
 import qualified Data.Text as T
@@ -106,7 +106,7 @@ blankWorld mkAcColl mkRsColl = World
 
 blankActions :: HasProperty (WMObjSpecifics s) Enclosing => WorldActions s
 blankActions = WorldActions
-  { actions = DM.empty
+  { actionsMap = DM.empty
   , whenPlayBegins = whenPlayBeginsRules
   , actionProcessing = actionProcessingRules
   }
@@ -176,6 +176,7 @@ type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 newWorld ::
   HasLookingProperties wm
+  => HasDirectionalTerms wm
   => WMStdDirections wm
   => WMHasProperty wm DoorSpecifics
   => Eff (EffStack wm) ()
@@ -245,8 +246,8 @@ runCreationAsLookup ::
 runCreationAsLookup = interpret $ \_ -> \case
   GenerateEntity bThing -> if bThing then
     (#stores % #entityCounter % _1) <<%= (+1) else (#stores % #entityCounter % _2) <<%= (\x -> x-1)
-  AddRoom aRoom -> #stores % #rooms % at (getID aRoom) ?= aRoom
-  AddThing aThing -> #stores % #things % at (getID aThing) ?= aThing
+  AddRoomToWorld aRoom -> #stores % #rooms % at (getID aRoom) ?= aRoom
+  AddThingToWorld aThing -> #stores % #things % at (getID aThing) ?= aThing
 
 runQueryAsLookup ::
   HasCallStack
@@ -308,6 +309,7 @@ runGame = convertToUnderlyingStack
 addBaseActions ::
   (HasLookingProperties wm)
   => WMStdDirections wm
+  => HasDirectionalTerms wm
   => WMHasProperty wm DoorSpecifics
   => State (WorldActions wm) :> es
   => Eff es ()
@@ -334,17 +336,22 @@ addOutOfWorld ::
   -> OutOfWorldAction wm
   -> Eff es ()
 addOutOfWorld cs e = forM_ cs $ \c ->
-  #actions % at c ?= OtherAction e
+  #actionsMap % at c ?= OtherAction e
 
 addGoingSynonyms ::
   forall wm es.
-  (State (WorldActions wm) :> es, Bounded (WMDirection wm), Enum (WMDirection wm), Show (WMDirection wm))
+  State (WorldActions wm) :> es
+  => HasDirectionalTerms wm
+  => Bounded (WMDirection wm)
+  => Enum (WMDirection wm)
+  => Show (WMDirection wm)
   => Eff es ()
 addGoingSynonyms = do
-  forM_ (universe @(WMDirection wm)) $ \dir ->
-    let dirN = (T.toLower . fromString . show) dir in
-    #actions % at dirN ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
-  -- #actions % at "look after going" ?= Interpret (InterpretAs )
+  forM_ (universe @(WMDirection wm)) $ \dir -> do
+    let allTerms = toTextDir (Proxy @wm) dir
+        dirN = (T.toLower . fromString . show) dir
+    forM_ allTerms $ \term ->
+      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
 
 makeTypeDAG :: Map ObjectType (Set ObjectType)
 makeTypeDAG = fromList

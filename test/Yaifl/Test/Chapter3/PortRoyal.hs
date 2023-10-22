@@ -1,4 +1,4 @@
-module Yaifl.Test.Chapter3.PortRoyale where
+module Yaifl.Test.Chapter3.PortRoyal where
 
 import Yaifl
 import Yaifl.Metadata
@@ -9,8 +9,8 @@ import Yaifl.Model.Objects.RoomConnections
 
 -- a combination of port royale:
 -- part 1 https://ganelson.github.io/inform-website/book/WI_3_2.html
-portRoyale :: Game PlainWorldModel ()
-portRoyale = do
+portRoyalWorld :: Game PlainWorldModel ()
+portRoyalWorld = do
   setTitle "1691"
   fj <- addRoom "Fort James" [wrappedText|The enclosure of Fort James is a large, roughly hexagonal court walled with heavy stone.
 The walls face the entrance to Port Royal Harbour, and the battery of guns is prepared to destroy any enemy ship arriving.|]
@@ -55,3 +55,6 @@ There's a room upstairs for those wanting to stay the night.|]
   qse `isSouthOf` tpa
 
   pass
+
+portRoyalTestMeWith :: [Text]
+portRoyalTestMeWith = ["s", "e", "e", "e", "s", "in"]

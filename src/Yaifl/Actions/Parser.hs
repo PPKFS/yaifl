@@ -26,6 +26,7 @@ import Data.List.Split
 import Data.List (lookup)
 import Effectful.Error.Static
 import Yaifl.Model.Objects.Effects
+import Data.Char (isSpace)
 
 runActionHandlerAsWorldActions ::
   forall es wm a.
@@ -52,7 +53,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
     possVerbs <- findVerb t
     ac <- case possVerbs of
       [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
-      xs:x:_ -> return $ Left $ "Did you mean " <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
+      xs:x:_ -> return $ Left $ "Did you mean one of" <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
       [(matched, r, Interpret (InterpretAs x params))] -> do
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
@@ -76,7 +77,7 @@ findVerb ::
   -> Eff es [(Text, Text, ActionPhrase wm)]
 findVerb cmd = do
   let cmd' = T.toLower cmd
-  ac <- use #actions
+  ac <- use #actionsMap
   let possVerbs = mapMaybe (\case
         (_, RegularAction a@(WrappedAction (Action{understandAs}))) ->
           case mapMaybe (\ua -> (ua,) <$> ua `T.stripPrefix` cmd') understandAs
@@ -89,7 +90,11 @@ findVerb cmd = do
         (e, OtherAction o@(OutOfWorldAction _ _)) -> case e `T.stripPrefix` cmd' of
           Nothing -> Nothing
           Just r -> Just (e, r, OtherAction o)) (Map.toList ac)
-  return possVerbs
+      removePartialInMiddleOfWord (_matchPart, "", _) = True
+      removePartialInMiddleOfWord (_matchPart, x, _) = case T.uncons x of
+        Nothing -> True
+        Just (a, _b) -> isSpace a
+  return $ filter removePartialInMiddleOfWord possVerbs
 
 findSubjects ::
   forall wm es.

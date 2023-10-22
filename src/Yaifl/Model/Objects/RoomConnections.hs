@@ -3,12 +3,19 @@
 module Yaifl.Model.Objects.RoomConnections
   ( isWestOf
   , isSouthOf
+  , isEastOf
+  , isNorthOf
+  , isInsideFrom
+  , isOutsideFrom
+  , isAbove
+  , isBelow
   , getMapConnection
+  , getAllConnections
   ) where
 
 import qualified Data.Map as Map
 
-import Solitude
+import Solitude hiding (Down)
 
 import Yaifl.Model.Direction
 import Yaifl.Model.Entity (HasID(..), Entity)
@@ -21,6 +28,11 @@ import Yaifl.Model.WorldModel (WMDirection, WMSayable)
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
+
+getAllConnections ::
+  Room wm
+  -> Map (WMDirection wm) Connection
+getAllConnections r = r ^. #objectData % #mapConnections % coerced
 
 hasSpecificConnectionTo ::
   WMStdDirections wm
@@ -116,7 +128,7 @@ isDirectionFromInternal mkRev dir r2' r1' = withoutMissingObjects (do
     --only make the reverse if we want to
     when mkRev $ do
       -- something weird is happening if we're overriding an implicit direction with another implicit direction
-      -- but I think in general we don't bother setting an implicit one
+      -- but I think in general we don't bother setting an implicit one\
       whenConstructing (isJust $ hasSpecificConnectionTo (Just Implicit) r2 opp)
         (addAnnotation $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show r1)
       -- and don't bother if there's any connection at all
@@ -130,4 +142,48 @@ isDirectionFromInternal mkRev dir r2' r1' = withoutMissingObjects (do
     addAnnotation $ "made connection from " <> display (view #name r1) <> " going " <> show dir <> " to " <> display (view #name r2)
     pass) (handleMissingObject "failed to make direction" ())
 
-makeDirections True ["West", "South", "North", "East"]
+makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down"]
+
+isInsideFrom ::
+  Breadcrumbs :> es
+  => ObjectQuery wm es
+  => State Metadata :> es
+  => Display (WMSayable wm)
+  => WMStdDirections wm
+  => Room wm
+  -> Room wm
+  -> Eff es ()
+isInsideFrom = isInOf
+
+isOutsideFrom ::
+  Breadcrumbs :> es
+  => ObjectQuery wm es
+  => State Metadata :> es
+  => Display (WMSayable wm)
+  => WMStdDirections wm
+  => Room wm
+  -> Room wm
+  -> Eff es ()
+isOutsideFrom = isOutOf
+
+isAbove ::
+  Breadcrumbs :> es
+  => ObjectQuery wm es
+  => State Metadata :> es
+  => Display (WMSayable wm)
+  => WMStdDirections wm
+  => Room wm
+  -> Room wm
+  -> Eff es ()
+isAbove = isUpOf
+
+isBelow ::
+  Breadcrumbs :> es
+  => ObjectQuery wm es
+  => State Metadata :> es
+  => Display (WMSayable wm)
+  => WMStdDirections wm
+  => Room wm
+  -> Room wm
+  -> Eff es ()
+isBelow = isDownOf

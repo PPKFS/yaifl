@@ -154,5 +154,5 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Chapter3.SlightlyWrong
-    Yaifl.Test.Chapter3.PortRoyale
+    Yaifl.Test.Chapter3.PortRoyal
     Yaifl.Test.Common
