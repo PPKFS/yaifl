@@ -20,6 +20,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import Yaifl.Rules.Args
+import Yaifl.Model.Direction
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -78,7 +79,7 @@ testHarness ::
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
   tId <- readTraceId
-  fst <$$> runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) $ do
+  fst <$$> runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld

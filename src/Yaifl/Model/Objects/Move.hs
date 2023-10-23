@@ -7,7 +7,7 @@ import Solitude
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Entity ( HasID(..) )
-import Yaifl.Metadata (tickGlobalTime, Metadata (..))
+import Yaifl.Metadata ( Metadata(..) )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.ThingData

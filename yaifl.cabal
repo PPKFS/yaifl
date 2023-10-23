@@ -59,6 +59,7 @@ library
     Yaifl.Actions.ActionProcessing
     Yaifl.Actions.Going
     Yaifl.Actions.Parser
+    Yaifl.Actions.Collection
 
     Yaifl.Actions.Looking
     Yaifl.Actions.Looking.Locale
@@ -108,7 +109,10 @@ library
     Yaifl.Rules.Run
     Yaifl.Rules.WhenPlayBegins
 
+    Yaifl.EffectHandlers
+
     Yaifl.Text.AdaptiveNarrative
+    Yaifl.Text.DynamicText
     Yaifl.Text.ListWriter
     Yaifl.Text.Print
     Yaifl.Text.ResponseCollection

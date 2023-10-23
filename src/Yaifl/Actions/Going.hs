@@ -1,6 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 module Yaifl.Actions.Going
-  (goingAction) where
+  ( goingAction
+  , GoingActionVariables(..)
+  ) where
 
 import Solitude
 

@@ -15,7 +15,6 @@ module Yaifl.Actions.Action
   , WrappedAction(..)
   , ParseArgumentEffects
   , addAction
-  , runAction
   , makeActionRulebook
   , actionName
   , actionsMapL
@@ -24,7 +23,7 @@ module Yaifl.Actions.Action
 import Solitude
 
 import Breadcrumbs
-import Effectful.Optics ( (?=), use )
+import Effectful.Optics ( (?=) )
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook
 import Yaifl.Model.WorldModel ( WorldModel )
@@ -127,25 +126,6 @@ makeFieldLabelsNoPrefix ''WorldActions
 
 actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
-
--- | Run an action. This assumes that all parsing has been completed.
-runAction ::
-  forall wm es.
-  State (WorldActions wm) :> es
-  => RuleEffects wm es
-  => UnverifiedArgs wm
-  -> WrappedAction wm
-  -> Eff es (Maybe Bool)
-runAction uArgs (WrappedAction act) = withSpan "run action" (act ^. #name) $ \aSpan -> do
-  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
-  case mbArgs of
-    Left err -> do
-      addAnnotation err
-      pure (Just False)
-    Right args -> do
-      -- running an action is simply evaluating the action processing rulebook.
-      (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-      ap aSpan act args
 
 -- | Add an action to the registry.
 addAction ::

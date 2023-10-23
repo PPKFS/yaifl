@@ -20,7 +20,7 @@ import Solitude hiding (Down)
 import Yaifl.Model.Direction
 import Yaifl.Model.Entity (HasID(..), Entity)
 import Yaifl.Metadata (Metadata, whenConstructing)
-import Yaifl.Model.Object(Room, Object (objectData))
+import Yaifl.Model.Object( Room )
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
 import Yaifl.Model.Properties.TH (makeDirections)

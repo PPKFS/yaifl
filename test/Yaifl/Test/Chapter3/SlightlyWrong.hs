@@ -11,20 +11,21 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Rules.Rule
 import Yaifl.Text.SayQQ
 import Yaifl.Rules.RuleEffects
+import Yaifl.Text.DynamicText
 
-awnN :: Text' wm
+awnN :: DynamicText wm
 awnN = "Awning"
 
-awnDesc :: Text' wm
+awnDesc :: DynamicText wm
 awnDesc =
   [wrappedText|A tan awning is stretched on tent poles over the dig-site, providing a little shade to the workers here; you are at the bottom of a square
   twenty feet on a side, marked out with pegs and lines of string. Uncovered in the south face of this square is an awkward opening into the earth.|]
 
-swcN :: Text' wm
+swcN :: DynamicText wm
 swcN = "Slightly Wrong Chamber"
 
-swcDesc :: Text' wm
-swcDesc = Text' $ Right ("description of slightly wrong chamber", RuleLimitedEffect $ do
+swcDesc :: DynamicText wm
+swcDesc = DynamicText $ Right ("description of slightly wrong chamber", RuleLimitedEffect $ do
   obj <- view #objectData <$> getMentionedRoom
   when (isVisited obj /= Visited)
     [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]

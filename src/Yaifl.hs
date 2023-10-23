@@ -1,5 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Yaifl (
   newWorld
@@ -7,21 +8,16 @@ module Yaifl (
   , HasStandardProperties
   , PlainWorldModel
   , ActivityCollection(..)
-  , Text'(..)
+  , ActionCollection(..)
+  , blankActionCollection
   , Game
   , runGame
   ) where
 
 import Solitude hiding ( Reader, runReader )
 
-import Breadcrumbs
 
-import Data.Text.Display
-import Data.Text.Lazy.Builder (fromText)
-import Effectful.Dispatch.Dynamic ( interpret, localSeqUnlift )
-import Effectful.Optics ( (?=), (%=), use, (<<%=) )
-import Effectful.Reader.Static ( runReader, Reader )
-import Effectful.Writer.Static.Local
+import Effectful.Optics ( (?=) )
 
 import Yaifl.Actions.Action
 import Yaifl.Actions.ActionProcessing
@@ -29,7 +25,6 @@ import Yaifl.Actions.Going
 import Yaifl.Actions.Looking
 import Yaifl.Actions.Looking.Locale
 import Yaifl.Actions.Looking.Visibility
-import Yaifl.Actions.Parser
 import Yaifl.Activities.Activity
 import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.ListingContents
@@ -47,10 +42,9 @@ import Yaifl.Model.Properties.Enclosing
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Openable
 import Yaifl.Model.WorldModel
-import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
 import Yaifl.Rules.WhenPlayBegins
-import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative, blankAdaptiveNarrative)
+import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative)
 import Yaifl.Text.Print
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.Say
@@ -59,25 +53,16 @@ import Yaifl.World
 import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Text.ListWriter
-import Yaifl.Model.Objects.Effects
 import Yaifl.Actions.OutOfWorld
 import Yaifl.Rules.Args
+import Yaifl.EffectHandlers
+import Yaifl.Text.DynamicText
+import Yaifl.Actions.Collection
 
-newtype Text' (wm :: WorldModel) = Text' (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
-instance Display (Text' wm) where
-  displayBuilder (Text' (Left t)) = fromText t
-  displayBuilder (Text' (Right (n, _))) = fromText n
-
-instance IsString (Text' wm) where
-  fromString = Text' . Left . toText
-
-instance SayableValue (Text' wm) wm where
-  sayTell (Text' (Left t)) = tell t
-  sayTell (Text' (Right (_, RuleLimitedEffect e))) = inject e
-
-
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection Text'
+--instance HasDirectionalTerms PlainWorldModel where
+ -- toTextDir = toTextDir
 
 type HasStandardProperties s = (
   WMHasProperty s Enclosing
@@ -87,44 +72,41 @@ type HasStandardProperties s = (
   , HasLookingProperties s
   , WMStdDirections s
   , WMHasProperty s DoorSpecifics
-  , HasDirectionalTerms s)
+  , HasDirectionalTerms s
+  )
 
-blankWorld ::
+data ActivityCollection wm = ActivityCollection
+  { printingNameOfADarkRoom :: !(Activity wm () ())
+  , printingNameOfSomething :: !(Activity wm (AnyObject wm) Text)
+  , printingDescriptionOfADarkRoom :: !(Activity wm () ())
+  , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
+  , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
+  , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
+  , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
+  , listingContents :: !(Activity wm (ListWritingParameters wm) ())
+  , groupingTogether :: Activity wm (AnyObject wm) ()
+  , printingANumberOf :: Activity wm (Int, AnyObject wm) ()
+  } deriving stock (Generic)
+
+makeFieldLabelsNoPrefix ''ActivityCollection
+
+addStandardActions ::
+  State (ActionCollection wm) :> es
+  => State (WorldActions wm) :> es
+  => Eff es ()
+addStandardActions = do
+  ActionCollection{..} <- get
+  addAction going
+  addAction looking
+  pass
+
+blankActions ::
   HasStandardProperties wm
-  => (ActivityCollection wm -> ActivityCollector wm)
-  -> (ResponseCollection wm -> ResponseCollector wm)
-  -> World (wm :: WorldModel)
-blankWorld mkAcColl mkRsColl = World
-  { metadata = blankMetadata
-  , stores = blankStores
-  , actions = blankActions
-  , messageBuffer = blankMessageBuffer
-  , activities = mkAcColl blankActivityCollection
-  , responses = mkRsColl blankResponseCollection
-  , adaptiveNarrative = blankAdaptiveNarrative
-  }
-
-blankActions :: HasProperty (WMObjSpecifics s) Enclosing => WorldActions s
+  => WorldActions wm
 blankActions = WorldActions
   { actionsMap = DM.empty
   , whenPlayBegins = whenPlayBeginsRules
   , actionProcessing = actionProcessingRules
-  }
-
-blankActivityCollection ::
-  HasStandardProperties wm
-  => ActivityCollection wm
-blankActivityCollection = ActivityCollection
-  { printingNameOfADarkRoom = blankActivity "printing the name of a dark room"
-  , printingNameOfSomething = printingNameOfSomethingImpl
-  , printingDescriptionOfADarkRoom = blankActivity "printing the description of a dark room"
-  , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
-  , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
-  , printingTheLocaleDescription = printingTheLocaleDescriptionImpl
-  , listingNondescriptItems = blankActivity "listing nondescript items"
-  , listingContents = listingContentsImpl
-  , groupingTogether = blankActivity "grouping things together"
-  , printingANumberOf = blankActivity "printing a number of"
   }
 
 blankStores :: WorldStores s
@@ -152,170 +134,86 @@ blankMetadata = Metadata
   , oxfordCommaEnabled = True
   }
 
-type EffStack wm = '[
-  ActionHandler wm
-  , State (AdaptiveNarrative wm)
-  , State (ResponseCollector wm)
-  , State (ActivityCollector wm)
-  , ObjectTraverse wm
-  , ObjectUpdate wm
-  , ObjectLookup wm
-  , Reader [Text]
-  , State Metadata
-  , State (WorldActions wm)
-  , ObjectCreation wm
-  , Print
-  , State (World wm)
-  , Breadcrumbs
-  , IOE
-  ]
-
-type Game wm = Eff (EffStack wm)
-
-type UnderlyingEffStack wm = '[State (World wm), IOE]
-
 newWorld ::
   HasLookingProperties wm
   => HasDirectionalTerms wm
   => WMStdDirections wm
-  => WMHasProperty wm DoorSpecifics
   => Eff (EffStack wm) ()
 newWorld = do
   addBaseObjects
   addBaseActions
 
-zoomState ::
-  (State whole :> es)
-  => Lens' whole sub
-  -> (Eff (State sub ': es)) a
-  -> Eff es a
-zoomState l = interpret $ \env -> \case
-  Get      -> gets (view l)
-  Put s    -> modify (set l s)
-  State f  -> state (\s -> second (\x -> s & l .~ x) $ f (s ^. l))
-  StateM f -> localSeqUnlift env $ \unlift -> stateM
-    (\s -> do
-      newSub <- unlift $ f (s ^. l)
-      pure $ second (\x -> s & l .~ x) newSub )
+makeTypeDAG :: Map ObjectType (Set ObjectType)
+makeTypeDAG = fromList
+  [ ("object", fromList [])
+  , ("thing", fromList ["object"])
+  , ("room", fromList ["object"])
+  , ("container", fromList ["thing"])
+  , ("supporter", fromList ["thing"])
+  ]
 
-convertToUnderlyingStack ::
-  forall wm a.
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => TraceID
-  -> World wm
-  -> Eff (EffStack wm) a
-  -> IO (a, World wm)
-convertToUnderlyingStack tId w =
-  runEff
-  . runBreadcrumbs (Just tId)
-  . runStateShared w
-  . runPrintPure @(World wm)
-  . runCreationAsLookup
-  . zoomState #actions
-  . zoomState @(World wm) #metadata
-  . runReader []
-  . runQueryAsLookup
-  . runTraverseAsLookup
-  . zoomState @(World wm) #activities
-  . zoomState @(World wm) #responses
-  . zoomState @(World wm) #adaptiveNarrative
-  . runActionHandlerAsWorldActions
+blankActivityCollection ::
+  HasStandardProperties wm
+  => ActivityCollection wm
+blankActivityCollection = ActivityCollection
+  { printingNameOfADarkRoom = blankActivity "printing the name of a dark room"
+  , printingNameOfSomething = printingNameOfSomethingImpl
+  , printingDescriptionOfADarkRoom = blankActivity "printing the description of a dark room"
+  , choosingNotableLocaleObjects = choosingNotableLocaleObjectsImpl
+  , printingLocaleParagraphAbout = printingLocaleParagraphAboutImpl
+  , printingTheLocaleDescription = printingTheLocaleDescriptionImpl
+  , listingNondescriptItems = blankActivity "listing nondescript items"
+  , listingContents = listingContentsImpl
+  , groupingTogether = blankActivity "grouping things together"
+  , printingANumberOf = blankActivity "printing a number of"
+  }
 
--- TODO: there's probably a much nicer way to make these traverse lens nicely
-runTraverseAsLookup ::
-  State (World wm) :> es
-  => ObjectUpdate wm :> es
-  => Eff (ObjectTraverse wm : es) a
-  -> Eff es a
-runTraverseAsLookup = interpret $ \env -> \case
-  TraverseThings f -> do
-    m <- use $ #stores % #things
-    mapM_ (\aT -> do
-      r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
-      whenJust r setThing) m
-  TraverseRooms f -> do
-    m <- use $ #stores % #rooms
-    mapM_ (\aT -> do
-      r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
-      whenJust r setRoom) m
+blankActionCollection ::
+  HasStandardProperties wm
+  => ActionCollection wm
+blankActionCollection = ActionCollection
+  { going = goingAction
+  , looking = lookingAction
+  }
 
-runCreationAsLookup ::
-  State (World wm) :> es
-  => Eff (ObjectCreation wm : es) a
-  -> Eff es a
-runCreationAsLookup = interpret $ \_ -> \case
-  GenerateEntity bThing -> if bThing then
-    (#stores % #entityCounter % _1) <<%= (+1) else (#stores % #entityCounter % _2) <<%= (\x -> x-1)
-  AddRoomToWorld aRoom -> #stores % #rooms % at (getID aRoom) ?= aRoom
-  AddThingToWorld aThing -> #stores % #things % at (getID aThing) ?= aThing
+blankWorld ::
+  HasStandardProperties wm
+  => (ActivityCollection wm -> ActivityCollector wm)
+  -> (ResponseCollection wm -> ResponseCollector wm)
+  -> World (wm :: WorldModel)
+blankWorld mkAcColl mkRsColl = World
+  { metadata = blankMetadata
+  , stores = blankStores
+  , actions = blankActions
+  , messageBuffer = blankMessageBuffer
+  , activities = mkAcColl blankActivityCollection
+  , responses = mkRsColl blankResponseCollection
+  , adaptiveNarrative = blankAdaptiveNarrative
+  }
 
-runQueryAsLookup ::
-  HasCallStack
-  => State (World wm) :> es
-  => Eff (ObjectUpdate wm : ObjectLookup wm : es) a
-  -> Eff es a
-runQueryAsLookup = interpretLookup  . interpretUpdate
-
-interpretLookup ::
-  forall wm es a.
-  HasCallStack
-  => State (World wm) :> es
-  => Eff (ObjectLookup wm : es) a
-  -> Eff es a
-interpretLookup = do
-  let lookupHelper ::
-        Entity
-        -> Lens' (WorldStores wm) (Store (Object wm d))
-        -> Lens' (WorldStores wm) (Store (Object wm e))
-        -> Text
-        -> Text
-        -> Eff es (Either Text (Object wm d))
-      lookupHelper e l l' expected errTy = do
-            let i = getID e
-            mbObj <- use $ #stores % l % at i
-            case mbObj of
-              Nothing -> do
-                mbRoom <- use $ #stores % l' % at i
-                let (cs :: Text) = show callStack
-                case mbRoom of
-                  Nothing -> pure $ Left $ "Could not find the object " <> show i <> " as either a thing or room (Queried as a " <> show expected <> ")."
-                  Just _ -> pure $ Left $ "Tried to lookup a " <> errTy <> " as a " <> show expected <> ":" <> show i <> ". (at: " <> show cs <> ")."
-              Just ao -> pure $ Right ao
-  interpret $ \_ -> \case
-    LookupThing e -> lookupHelper (getID e) #things #rooms "thing" "room"
-    LookupRoom e -> lookupHelper (getID e) #rooms #things "room" "thing"
-
-interpretUpdate ::
-  State (World wm) :> es
-  => Eff (ObjectUpdate wm : es) a
-  -> Eff es a
-interpretUpdate = interpret $ \_ -> \case
-  SetRoom r -> #stores % #rooms % at (getID r) %= updateIt r
-  SetThing t -> #stores % #things % at (getID t) %= updateIt t
-
-updateIt :: Object wm d -> Maybe (Object wm d) -> Maybe (Object wm d)
-updateIt newObj mbExisting = case mbExisting of
-  Nothing -> Just newObj
-  Just _ -> Just newObj
-
-runGame ::
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => TraceID
-  -> World wm
-  -> Eff (EffStack wm) a
-  -> IO (a, World wm)
-runGame = convertToUnderlyingStack
+addGoingSynonyms ::
+  forall wm es.
+  State (WorldActions wm) :> es
+  => HasDirectionalTerms wm
+  => Bounded (WMDirection wm)
+  => Enum (WMDirection wm)
+  => Show (WMDirection wm)
+  => Eff es ()
+addGoingSynonyms = do
+  forM_ (universe @(WMDirection wm)) $ \dir -> do
+    let allTerms = toTextDir (Proxy @wm) dir
+        dirN = (T.toLower . fromString . show) dir
+    forM_ allTerms $ \term ->
+      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
 
 addBaseActions ::
-  (HasLookingProperties wm)
-  => WMStdDirections wm
+  WMStdDirections wm
   => HasDirectionalTerms wm
-  => WMHasProperty wm DoorSpecifics
   => State (WorldActions wm) :> es
+  => State (ActionCollection wm) :> es
   => Eff es ()
 addBaseActions = do
-  addAction lookingAction
-  addAction goingAction
+  addStandardActions
   addGoingSynonyms
   addOutOfWorldActions
 
@@ -337,42 +235,3 @@ addOutOfWorld ::
   -> Eff es ()
 addOutOfWorld cs e = forM_ cs $ \c ->
   #actionsMap % at c ?= OtherAction e
-
-addGoingSynonyms ::
-  forall wm es.
-  State (WorldActions wm) :> es
-  => HasDirectionalTerms wm
-  => Bounded (WMDirection wm)
-  => Enum (WMDirection wm)
-  => Show (WMDirection wm)
-  => Eff es ()
-addGoingSynonyms = do
-  forM_ (universe @(WMDirection wm)) $ \dir -> do
-    let allTerms = toTextDir (Proxy @wm) dir
-        dirN = (T.toLower . fromString . show) dir
-    forM_ allTerms $ \term ->
-      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
-
-makeTypeDAG :: Map ObjectType (Set ObjectType)
-makeTypeDAG = fromList
-  [ ("object", fromList [])
-  , ("thing", fromList ["object"])
-  , ("room", fromList ["object"])
-  , ("container", fromList ["thing"])
-  , ("supporter", fromList ["thing"])
-  ]
-
-data ActivityCollection wm = ActivityCollection
-  { printingNameOfADarkRoom :: !(Activity wm () ())
-  , printingNameOfSomething :: !(Activity wm (AnyObject wm) Text)
-  , printingDescriptionOfADarkRoom :: !(Activity wm () ())
-  , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
-  , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
-  , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
-  , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
-  , listingContents :: !(Activity wm (ListWritingParameters wm) ())
-  , groupingTogether :: Activity wm (AnyObject wm) ()
-  , printingANumberOf :: Activity wm (Int, AnyObject wm) ()
-  } deriving stock (Generic)
-
-makeFieldLabelsNoPrefix ''ActivityCollection

@@ -28,6 +28,25 @@ import Effectful.Error.Static
 import Yaifl.Model.Objects.Effects
 import Data.Char (isSpace)
 
+-- | Run an action. This assumes that all parsing has been completed.
+runAction ::
+  forall wm es.
+  State (WorldActions wm) :> es
+  => RuleEffects wm es
+  => UnverifiedArgs wm
+  -> WrappedAction wm
+  -> Eff es (Maybe Bool)
+runAction uArgs (WrappedAction act) = withSpan "run action" (act ^. #name) $ \aSpan -> do
+  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
+  case mbArgs of
+    Left err -> do
+      addAnnotation err
+      pure (Just False)
+    Right args -> do
+      -- running an action is simply evaluating the action processing rulebook.
+      (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
+      ap aSpan act args
+
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
