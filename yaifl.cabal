@@ -102,6 +102,7 @@ library
     Yaifl.Model.Properties.Supporter
     Yaifl.Model.Properties.TH
 
+    Yaifl.Rules.Adding
     Yaifl.Rules.Args
     Yaifl.Rules.Rule
     Yaifl.Rules.RuleEffects
@@ -159,4 +160,5 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.PortRoyal
+    Yaifl.Test.Chapter3.UpAndUp
     Yaifl.Test.Common

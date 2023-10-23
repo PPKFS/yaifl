@@ -6,7 +6,11 @@ import Yaifl.Model.Objects.Create
 import Solitude
 import Yaifl.Test.Common
 import Yaifl.Model.Objects.RoomConnections
+import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
+import Yaifl.Rules.Adding
+import Yaifl.Actions.Going
+import Yaifl.Rules.Rule
 
 upAndUp :: Game PlainWorldModel ()
 upAndUp = do
@@ -18,5 +22,9 @@ most of it is covered with trees. Far off to the southwest is a shimmering surfa
 cities or civilizations, only the lizard-skeletons.|]
   pots `isBelow` et
 
-  before (Action "going") (toTheRoom et) "" $ \_ -> do
-    [sayingLn|You climb... and climb... and climb... The sun sets. The moon rises. The wind begins to blow. You continue to climb...|]
+  before (ActionRule #going) [toTheRoom et] "before climbing rule" $ \_ -> do
+    [sayingParagraph|You climb... and climb... and climb... The sun sets. The moon rises. The wind begins to blow. You continue to climb...|]
+    rulePass
+
+upAndUpTestMeWith :: [Text]
+upAndUpTestMeWith = ["look", "up"]

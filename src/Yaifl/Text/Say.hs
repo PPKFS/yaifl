@@ -1,7 +1,17 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Yaifl.Text.Say where
+module Yaifl.Text.Say
+  ( SayArticle(..)
+  , SayModal(..)
+  , SayModalVerb(..)
+  , SayLiteral(..)
+  , say
+  , sayLn
+  , WithPrintingNameOfSomething
+  , printingNameOfSomethingImpl
+
+  ) where
 
 import Data.Text.Display
 import Solitude

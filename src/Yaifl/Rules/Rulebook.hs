@@ -13,6 +13,7 @@ module Yaifl.Rules.Rulebook
   , addRuleFirst
   , addRuleLast
   , blankRulebook
+  , getRuleNames
   ) where
 
 
@@ -28,6 +29,13 @@ data Rulebook wm v r = Rulebook
   , defaultOutcome :: Maybe r
   , rules :: [Rule wm v r]
   } deriving stock (Generic)
+
+getRuleNames ::
+  Rulebook wm v r
+  -> [Text]
+getRuleNames Rulebook{..} = map (\r -> case r ^. #name of
+  "" -> name <> " blank rule"
+  x -> x) rules
 
 blankRulebook ::
   Text

@@ -25,7 +25,11 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   -- a third go over: nope, still no idea
   -- fourth time: thankfully I can just delete it but leave it here for posterity
   --(ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <$$> (ignoreSpan >> runParseArguments parseArguments uv)))
-  [ notImplementedRule "Before stage rule"
+  [ Rule "before stage rule"
+      []
+        ( \v -> do
+          r <- runRulebookAndReturnVariables (Just aSpan) beforeRules v
+          return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
   , notImplementedRule "instead stage rule"
@@ -36,7 +40,6 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   , Rule "carry out stage rule"
       []
         ( \v -> do
-          ignoreSpan
           r <- runRulebookAndReturnVariables (Just aSpan) carryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "after stage rule"
@@ -44,7 +47,6 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
   , Rule "report stage rule"
       []
         ( \v -> do
-          ignoreSpan
           r <- runRulebookAndReturnVariables (Just aSpan) reportRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"

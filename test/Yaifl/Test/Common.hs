@@ -20,7 +20,6 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import Yaifl.Rules.Args
-import Yaifl.Model.Direction
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -78,12 +77,15 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
-  tId <- readTraceId
-  fst <$$> runGame tId (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <$$> runGame (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
           initWorld
+          -- this just moves the actions from the indexed, static, standard library collection
+          -- into the dynamic collection
+          -- we do it here because we need to copy over changes to actions and we can't modify WrappedActions directly
+          addStandardActions
         --withSpan "world verification" fullTitle $ do
         let runWorld suffix = do
               withSpan' ("run " <> suffix) fullTitle $ do

@@ -1,5 +1,6 @@
 module Yaifl.Rules.Adding
-  (
+  ( before
+  , ActionOrActivity(..)
 
   ) where
 
@@ -10,20 +11,20 @@ import Yaifl.Rules.Rule
 import Yaifl.Actions.Action
 import Yaifl.Rules.Rulebook (addRuleLast)
 import Effectful.Optics
+import Yaifl.Actions.Collection (ActionCollection)
 
-data ActionOrActivity = ActionRule Text | ActivityRule Text
-  deriving stock (Eq, Show, Ord, Generic)
+newtype ActionOrActivity wm v = ActionRule (Lens' (ActionCollection wm) (Action wm v))
+  deriving stock (Generic)
+
 before ::
-  State (WorldActions wm) :> es
-  => ActionOrActivity
+  State (ActionCollection wm) :> es
+  => ActionOrActivity wm v
   -> [Precondition wm (Args wm v)]
   -> Text
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
   -> Eff es ()
 before a precs t f = do
   let rule = makeRule t precs f
-  --let updateAction =  (\(WrappedAction wm) -> WrappedAction (wm & #beforeRules %~ addRuleLast rule ))
   case a of
-    ActionRule an -> error "" -- #actionsMapL % at an %= error ""
-    ActivityRule a -> error ""
+    ActionRule an -> an % #beforeRules %= addRuleLast rule
   pass

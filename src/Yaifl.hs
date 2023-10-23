@@ -12,6 +12,7 @@ module Yaifl (
   , blankActionCollection
   , Game
   , runGame
+  , addStandardActions
   ) where
 
 import Solitude hiding ( Reader, runReader )
@@ -58,6 +59,7 @@ import Yaifl.Rules.Args
 import Yaifl.EffectHandlers
 import Yaifl.Text.DynamicText
 import Yaifl.Actions.Collection
+import Breadcrumbs
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -91,7 +93,8 @@ data ActivityCollection wm = ActivityCollection
 makeFieldLabelsNoPrefix ''ActivityCollection
 
 addStandardActions ::
-  State (ActionCollection wm) :> es
+  Breadcrumbs :> es
+  => State (ActionCollection wm) :> es
   => State (WorldActions wm) :> es
   => Eff es ()
 addStandardActions = do
@@ -208,6 +211,7 @@ addGoingSynonyms = do
 
 addBaseActions ::
   WMStdDirections wm
+  => Breadcrumbs :> es
   => HasDirectionalTerms wm
   => State (WorldActions wm) :> es
   => State (ActionCollection wm) :> es

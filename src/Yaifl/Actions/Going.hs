@@ -2,12 +2,13 @@
 module Yaifl.Actions.Going
   ( goingAction
   , GoingActionVariables(..)
+  , toTheRoom
   ) where
 
 import Solitude
 
 import Yaifl.Actions.Action
-import Yaifl.Model.Entity ( Entity )
+import Yaifl.Model.Entity
 import Yaifl.Metadata ( isPlayer )
 import Yaifl.Model.Object( Thing, Room, isType, AnyObject )
 import Yaifl.Model.Objects.Query
@@ -231,3 +232,10 @@ getSupportersOf ::
   => Thing wm
   -> Eff es [Thing wm]
 getSupportersOf o = getContainingHierarchy o >>= filterM (`isType` "supporter")
+
+toTheRoom ::
+  HasID r
+  => r
+  -> Precondition wm (Args wm (GoingActionVariables wm))
+toTheRoom r = Precondition $ \v -> do
+  pure $ getID (roomGoneTo $ variables $ v) == getID r

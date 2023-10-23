@@ -63,14 +63,13 @@ zoomState l = interpret $ \env -> \case
 convertToUnderlyingStack ::
   forall wm a.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => TraceID
-  -> World wm
+  => World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
   -> IO (a, World wm)
-convertToUnderlyingStack tId w ac =
+convertToUnderlyingStack w ac =
   runEff
-  . runBreadcrumbs (Just tId)
+  . runBreadcrumbs Nothing
   . runStateShared w
   . runPrintPure @(World wm)
   . runCreationAsLookup
@@ -84,7 +83,6 @@ convertToUnderlyingStack tId w ac =
   . zoomState @(World wm) #responses
   . zoomState @(World wm) #adaptiveNarrative
   . runActionHandlerAsWorldActions
-
 
 -- TODO: there's probably a much nicer way to make these traverse lens nicely
 runTraverseAsLookup ::
@@ -165,8 +163,7 @@ updateIt newObj mbExisting = case mbExisting of
 
 runGame ::
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => TraceID
-  -> World wm
+  => World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
   -> IO (a, World wm)

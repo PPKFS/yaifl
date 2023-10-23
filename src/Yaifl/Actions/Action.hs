@@ -1,6 +1,7 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Yaifl.Actions.Action
   ( Action(..)
@@ -31,6 +32,7 @@ import Yaifl.Rules.RuleEffects
 import Yaifl.Rules.Args
 import Yaifl.Metadata
 import Yaifl.Model.Objects.Effects
+import qualified Data.Text as T
 
 newtype ActionProcessing wm = ActionProcessing
   (forall es v.
@@ -127,9 +129,16 @@ makeFieldLabelsNoPrefix ''WorldActions
 actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
 
+getAllRules ::
+  Action wm v
+  -> Text
+getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $ [ beforeRules, checkRules, carryOutRules, reportRules ]
+
 -- | Add an action to the registry.
 addAction ::
-  State (WorldActions wm) :> es
+  (State (WorldActions wm) :> es, Breadcrumbs :> es)
   => Action wm v
   -> Eff es ()
-addAction ac = #actionsMap % at (ac ^. #name) ?= RegularAction (WrappedAction ac)
+addAction ac = do
+  addAnnotation $ "Adding an action with the followingly named rules: " <> getAllRules ac
+  #actionsMap % at (ac ^. #name) ?= RegularAction (WrappedAction ac)
