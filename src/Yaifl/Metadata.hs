@@ -19,6 +19,7 @@ module Yaifl.Metadata (
 
   -- ** Error handling
   , noteError
+  , noteRuntimeError
   , traceGuard
   -- ** Construction
   , whenConstructing
@@ -106,15 +107,27 @@ noteError f t = do
   addAnnotation t
   pure $ f t
 
+-- | Take note of an error if we're out of the building phase (to be reported later) but continue execution.
+noteRuntimeError ::
+  WithMetadata es
+  => (Text -> a) -- ^ How to recover.
+  -> Text -- ^ Error message.
+  -> Eff es a
+noteRuntimeError f t = do
+  whenM isRuntime $ do
+    #errorLog %= (t:)
+    addAnnotation t
+  pure $ f t
+
 getGlobalTime ::
   State Metadata :> es
   => Eff es Timestamp
 getGlobalTime = use #globalTime
 
 tickGlobalTime ::
-  Bool
-  -> Eff es ()
-tickGlobalTime _ = pass
+  State Metadata :> es
+  => Eff es ()
+tickGlobalTime = #globalTime %= (+1)
 
 setTitle ::
   State Metadata :> es

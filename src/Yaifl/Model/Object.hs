@@ -87,6 +87,7 @@ data Object wm objData = Object
   , objectId :: Entity
   , objectType :: ObjectType
   , creationTime :: Timestamp
+  , modifiedTime :: Timestamp
   , specifics :: Maybe (WMObjSpecifics wm) -- ^ A 'vanilla' object has no specific additional information.
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)

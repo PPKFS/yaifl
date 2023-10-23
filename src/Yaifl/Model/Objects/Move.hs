@@ -48,7 +48,6 @@ move oObj oLoc = withoutMissingObjects moveBlock moveHandler
           (movedObj, oldLocation, newLocation) = moveObjects (getID oLoc) o' oldLocEnc loc
       setThing movedObj
       mapM_ (uncurry setEnclosing) [(c, oldLocation), (getID oLoc, newLocation)]
-      tickGlobalTime True
       --at this point we know it's a success
       return True
     moveHandler = handleMissingObject ("Failed to move " <> display (getID oObj) <> " to " <> display (getID oLoc)) False

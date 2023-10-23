@@ -37,6 +37,7 @@ import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.ThingData
+import Data.Text.Display
 
 withoutMissingObjects ::
   HasCallStack
@@ -124,15 +125,18 @@ asThingOrRoomM o tf rf = do
   else getRoom o >>= rf
 
 modifyObjectFrom ::
-  (o -> Eff es (Object wm any))
+  State Metadata :> es
+  => (o -> Eff es (Object wm any))
   -> (Object wm any -> Eff es ())
   -> o
   -> (Object wm any -> Object wm any)
   -> Eff es ()
 modifyObjectFrom g s o u = do
   obj <- g o
-  s (u obj)
-  pass
+  let newObj = u obj
+  ts <- getGlobalTime
+  s (newObj { modifiedTime = ts})
+  tickGlobalTime
 
 modifyThing ::
   NoMissingObjects wm es
@@ -188,8 +192,8 @@ refreshRoom ::
 refreshRoom r = ifM (traceGuard Medium)
   (do
     r' <- getRoom $ objectId r
-    when (r' /= r) $ noteError (const ()) $ "Refreshed room with ID" <> show (objectId r) <> " and found an outdated object"
-    return r)
+    when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed room with ID" <> show (display $ view #name r)  <> " and found an outdated object"
+    return r')
   (pure r)
 
 refreshThing ::
@@ -199,8 +203,8 @@ refreshThing ::
 refreshThing r = ifM (traceGuard Medium)
   (do
     r' <- getThing $ objectId r
-    when (r' /= r) $ noteError (const ()) $ "Refreshed thing with ID" <> show (objectId r) <> " and found an outdated object"
-    return r)
+    when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed thing with ID" <> show (display $ view #name r) <> " and found an outdated object"
+    return r')
   (pure r)
 
 getCurrentPlayer ::

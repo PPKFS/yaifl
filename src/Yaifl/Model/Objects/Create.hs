@@ -40,7 +40,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t specifics details)
+  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t t specifics details)
 
 addObject ::
   WMHasProperty wm Enclosing
@@ -60,6 +60,7 @@ addObject updWorld n d ty isT specifics details =
     updWorld obj
     addAnnotation "object added to world"
     lastRoom <- use #previousRoom
+    tickGlobalTime
     if
       isRoom e
     then

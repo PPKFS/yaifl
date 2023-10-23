@@ -29,7 +29,7 @@ is neither. It did serve in that capacity for a time, and in a measure of the vi
 Port Royal from its earliest days, it is nearly the largest building in the town.|]
   wl `isEastOf` ts
 
-  tsawb <- addRoom "Thames Street at Water Bridge" "To the southwest is the fishmarket; directly across the street is the entrance to a private alley through a brick archway."
+  tsawb <- addRoom "Thames Street at Wherry Bridge" "To the southwest is the fishmarket; directly across the street is the entrance to a private alley through a brick archway."
   tsawb `isEastOf` wl
 
   tpa <- addRoom "The Private Alley" [wrappedText|You're just outside the tavern the Feathers. To the north, under a
@@ -57,4 +57,4 @@ There's a room upstairs for those wanting to stay the night.|]
   pass
 
 portRoyalTestMeWith :: [Text]
-portRoyalTestMeWith = ["s", "e", "e", "e", "s", "in"]
+portRoyalTestMeWith = ["s", "e", "e", "s", "in"]
