@@ -8,7 +8,6 @@ module Yaifl.Actions.ActionProcessing
 
 import Solitude
 
-import Breadcrumbs
 import Yaifl.Actions.Action
 import Yaifl.Model.Objects.Query
 import Yaifl.Rules.Rule

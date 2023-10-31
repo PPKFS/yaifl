@@ -30,7 +30,11 @@ data SayingPiece (sayKind :: SayingKind) =
   | SayRegarding Text -- ^ SayRegarding_Foo; #{regarding foo}
   | SayArticle Text Text -- ^ SayArticle_Foo; {article foo}
   | SayAdapt Text Text -- ^ SayAdapt_Foo; #{adapt foo for tense/person bar}
+  | SayIf (IfPart sayKind) [IfPart sayKind] (Maybe (IfPart sayKind))
 
+data IfPart a = IfPart Text [SayingPiece a]
+
+data IfBlock
 saying :: QuasiQuoter
 saying = QuasiQuoter {
     quoteExp  = compile (Proxy @'Raw)
@@ -164,20 +168,58 @@ liftSayingWithMethod method (SayModal modal t) =
       )
       (ConE $ mkName $ isCapitalised t)
     )
+liftSayingWithMethod method (SayIf if1 ifEI ifE) =
+  let
+    mkCond c =
+    mkIfBlock (IfPart c b) = (NormalG (mkCond c), mconcat $ map (liftSayingWithMethod method) b) in
+  MultiIfE $
+    [ mkIfBlock if1
+    ] <>
+    map mkIfBlock ifEI
+    <> maybe [] (one . mkIfBlock) ifE
+
 liftSayingWithMethod _method (SayRegarding _reg) = error "todo regarding"
 liftSayingWithMethod _method (SayAdapt _adaptTo _t) = error "todo adapt to"
 
 
 sayingParser :: P.Parsec Void String [SayingPiece a]
 sayingParser = many piece <* P.eof where
-  piece = literalSub <|> sayableSub <|> lit
+  piece = ifBlock <|> literalSub <|> sayableSub <|> lit
+  endIfBlock = P.lookAhead $ P.string' "{?else" <|> P.string' "{?end if}"
+  condition = do
+    subPieces <- oneOrTwoPieces
+    case subPieces of
+      [x] -> pure x
+      x -> error $ "expected just one (bool) for an if block but got " <> mconcat x
+  ifBlock = do
+    P.string "{?if "
+    con <- condition
+    firstBlock <- P.someTill piece endIfBlock
+    elseIfs <- P.manyTill (do
+      P.string "{?else if "
+      con' <- condition
+      elseBlock <- P.someTill piece endIfBlock
+      pure (IfPart con' elseBlock)) endIfBlock
+    mbElse <- optional $ do
+      P.string "{?if "
+      con' <- condition
+      block <- P.someTill piece endIfBlock
+      pure (IfPart con' block)
+    P.string "{end if}"
+    pure (SayIf (IfPart con firstBlock) elseIfs mbElse)
+
+
   literalSub = do
     P.string "#{"
     subPieces <- oneOrTwoPieces
     case subPieces of
       [] -> error "no substitution body found"
+      --["else"] -> pure SayElse
       [x] -> pure $ SayLiteral x
       ["regarding", x] -> pure $ SayRegarding x
+      --["if", x] -> pure $ SayIf x
+      --["else", "if", x] -> pure $ SayElseIf x
+      --["end", "if"] -> pure SayEndIf
       ["adapt", v, "for", t] -> pure $ SayAdapt t v
       [modal, x] -> pure $ SayModal modal x
       _ -> error "too many substitution pieces"
