@@ -70,6 +70,18 @@ getMentionedRoom = do
     Nothing -> error "The last mentioned object was expected to be a room, but it was not"
     Just x -> pure x
 
+withRoom ::
+  forall wm es a.
+  State (AdaptiveNarrative wm) :> es
+  => State Metadata :> es
+  => ObjectLookup wm :> es
+  => Breadcrumbs :> es
+  => (Room wm -> Eff es a)
+  -> Eff es a
+withRoom f = do
+  r <- getMentionedRoom
+  f r
+
 getPersonageOfObject ::
   forall wm es.
   State Metadata :> es

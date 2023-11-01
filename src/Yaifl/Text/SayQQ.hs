@@ -30,7 +30,7 @@ data SayingPiece (sayKind :: SayingKind) =
   | SayRegarding Text -- ^ SayRegarding_Foo; #{regarding foo}
   | SayArticle Text Text -- ^ SayArticle_Foo; {article foo}
   | SayAdapt Text Text -- ^ SayAdapt_Foo; #{adapt foo for tense/person bar}
-  | SayIf (IfPart sayKind) [IfPart sayKind] (Maybe (IfPart sayKind))
+  | SayIf (IfPart sayKind) [IfPart sayKind] (Maybe [SayingPiece sayKind])
 
 data IfPart a = IfPart Text [SayingPiece a]
 
@@ -78,7 +78,7 @@ sayingParagraph = QuasiQuoter {
 compile :: forall sayKind. Lift (SayingPiece sayKind) => Proxy sayKind -> String -> ExpQ
 compile _ s =
   case P.parse @Void @String @[SayingPiece sayKind] sayingParser "" s of
-    Left  err -> fail (show err)
+    Left  err -> fail $ P.errorBundlePretty err
     Right aat -> [e| sequence_ aat |]
 
 instance Lift (SayingPiece 'Tell) where
@@ -170,13 +170,11 @@ liftSayingWithMethod method (SayModal modal t) =
     )
 liftSayingWithMethod method (SayIf if1 ifEI ifE) =
   let
-    mkCond c =
-    mkIfBlock (IfPart c b) = (NormalG (mkCond c), mconcat $ map (liftSayingWithMethod method) b) in
-  MultiIfE $
-    [ mkIfBlock if1
-    ] <>
-    map mkIfBlock ifEI
-    <> maybe [] (one . mkIfBlock) ifE
+    mkCond c = (VarE $ mkName $ toString c)
+    mkIfBlock (IfPart c b) = (NormalG (mkCond c), DoE Nothing $ map (NoBindS . liftSayingWithMethod method) b)
+    in
+  MultiIfE $ [ mkIfBlock if1 ] <> map mkIfBlock ifEI <>
+    [ (NormalG (VarE $ mkName "otherwise"), maybe (VarE $ mkName "pass") (DoE Nothing . map (NoBindS . liftSayingWithMethod method)) ifE) ]
 
 liftSayingWithMethod _method (SayRegarding _reg) = error "todo regarding"
 liftSayingWithMethod _method (SayAdapt _adaptTo _t) = error "todo adapt to"
@@ -186,6 +184,7 @@ sayingParser :: P.Parsec Void String [SayingPiece a]
 sayingParser = many piece <* P.eof where
   piece = ifBlock <|> literalSub <|> sayableSub <|> lit
   endIfBlock = P.lookAhead $ P.string' "{?else" <|> P.string' "{?end if}"
+  endIfBlock' = P.lookAhead $ P.string' "{?else}" <|> P.string' "{?end if}"
   condition = do
     subPieces <- oneOrTwoPieces
     case subPieces of
@@ -196,18 +195,15 @@ sayingParser = many piece <* P.eof where
     con <- condition
     firstBlock <- P.someTill piece endIfBlock
     elseIfs <- P.manyTill (do
-      P.string "{?else if "
+      P.try $ P.string "{?else if "
       con' <- condition
       elseBlock <- P.someTill piece endIfBlock
-      pure (IfPart con' elseBlock)) endIfBlock
+      pure (IfPart con' elseBlock)) endIfBlock'
     mbElse <- optional $ do
-      P.string "{?if "
-      con' <- condition
-      block <- P.someTill piece endIfBlock
-      pure (IfPart con' block)
-    P.string "{end if}"
+      P.string "{?else}"
+      P.someTill piece endIfBlock
+    P.string "{?end if}"
     pure (SayIf (IfPart con firstBlock) elseIfs mbElse)
-
 
   literalSub = do
     P.string "#{"
@@ -225,6 +221,7 @@ sayingParser = many piece <* P.eof where
       _ -> error "too many substitution pieces"
   sayableSub = do
     P.string "{"
+    P.notFollowedBy "?"
     subPieces <- oneOrTwoPieces
     case subPieces of
       [] -> error "no substitution body found"

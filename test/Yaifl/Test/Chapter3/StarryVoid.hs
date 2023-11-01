@@ -16,16 +16,9 @@ import Yaifl.Text.DynamicText
 import Yaifl.Text.AdaptiveNarrative
 
 boothDesc :: DynamicText wm
-boothDesc = DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $ do
-  obj <- view #objectData <$> getMentionedRoom
-  error ""
- {- case_
-    [ (playerLocatedIn obj)
+boothDesc = DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $ withRoom $ \r -> do
+  pass
 
-    ]
-  when (isVisited obj /= Visited)
-    [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]
-  [sayingTell|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|] -}
   )
 
 
