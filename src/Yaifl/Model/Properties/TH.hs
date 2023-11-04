@@ -37,7 +37,7 @@ makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
   return $ (case sf of
     GetX -> replaceTH
-      "getXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> Eff es (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
+      "getXSUBHERE :: (NoMissingRead wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> Eff es (Maybe XSUBHERE)\ngetXSUBHERE = defaultPropertyGetter"
     SetX -> replaceTH
       "setXSUBHERE :: (NoMissingObjects wm es, WMHasProperty wm XSUBHERE, ObjectLike wm o) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
     ModifyX -> replaceTH

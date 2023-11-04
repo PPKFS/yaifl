@@ -10,7 +10,7 @@ import Solitude
 import Yaifl.Actions.Action
 import Yaifl.Model.Entity
 import Yaifl.Metadata ( isPlayer )
-import Yaifl.Model.Object( Thing, Room, isType, AnyObject )
+import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Args

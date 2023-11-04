@@ -7,13 +7,11 @@ import Effectful.Optics ( (%=) )
 import Yaifl.Actions.Action ( WorldActions )
 import Yaifl.Model.Entity ( Store, Entity )
 import Yaifl.Metadata ( Metadata )
-import Yaifl.Model.Objects.RoomData ( RoomData )
-import Yaifl.Model.Objects.ThingData ( ThingData )
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( addRuleLast )
 import Yaifl.Text.Print ( Has(..), MessageBuffer )
 import Yaifl.Model.WorldModel ( WMValues, WorldModel )
-import Yaifl.Model.Object(Object)
+import Yaifl.Model.Object(Thing, Room)
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Rules.RuleEffects
 
@@ -29,8 +27,8 @@ data World (wm :: WorldModel) = World
 
 data WorldStores (wm :: WorldModel) = WorldStores
   { entityCounter :: (Entity, Entity)
-  , things :: Store (Object wm ThingData)
-  , rooms :: Store (Object wm (RoomData wm))
+  , things :: Store (Thing wm)
+  , rooms :: Store (Room wm)
   , values :: Map Text (WMValues wm)
   , concepts :: ()-- !(Store (AbstractConcept t r c))
   } deriving stock (Generic)

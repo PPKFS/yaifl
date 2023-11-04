@@ -171,7 +171,7 @@ alsoSee = Rule "You can also see" [] (\v ->
       isASupporter <- dom `isType` "supporter"
       isAnAnimal <- dom `isType` "animal"
 
-      let isInLoc = maybe False (dom `objectEquals`) plRoom
+      let isInLoc = True -- TODO TODOmaybe False (dom `objectEquals`) plRoom
       if
         --if the domain is the location: say "[We] " (A);
         | isRoom dom && isInLoc ->

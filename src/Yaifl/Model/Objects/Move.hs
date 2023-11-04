@@ -37,11 +37,10 @@ move oObj oLoc = withoutMissingObjects moveBlock moveHandler
       c' <- getObject c
       oLoc' <- getObject oLoc
       oldLocEnc <- getPropertyOrThrow "enclosing part of old location" c =<< getEnclosing c
-      addTag "object to move" (display o')
-      addTag "current location" (display c')
-      addTag "new location" (display oLoc')
-      --let f = display (_objName oObj) <> " |> " <> display (_objName c') <> " -> " <> display (_objName oLoc')
-      modifySpan (\s -> s { _spanName = display (name oObj) })
+      addTag "object to move" (display $ getID o')
+      addTag "current location" (display $ getID  c')
+      addTag "new location" (display $ getID oLoc')
+      modifySpan (\s -> s { _spanName = display (oObj ^. #name) })
       let moveObjects newId t oldLoc newLocEncl = let (newLoc', t') = nowContains newId newLocEncl t in (t', oldLoc `noLongerContains` t, newLoc')
           noLongerContains cont obj = cont & (#contents %~ ES.delete (getID obj))
           nowContains contId cont obj = (cont & (#contents %~ ES.insert (getID obj)), obj & (#objectData % #containedBy .~ contId))

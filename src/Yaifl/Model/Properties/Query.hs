@@ -36,7 +36,7 @@ defaultPropertySetter ::
 defaultPropertySetter e v = modifyObject e (#specifics % propertyL .~ v)
 
 defaultPropertyGetter ::
-  NoMissingObjects wm es
+  NoMissingRead wm es
   => WMHasProperty wm v
   => ObjectLike wm o
   => o
@@ -85,3 +85,9 @@ setEnclosing e v = if isThing (getID e)
     defaultPropertySetter e v
   else
     modifyRoom e (#objectData % #enclosing .~ v)
+
+asObject ::
+  ObjectLike wm o
+  => o
+  -> (Object wm s a)
+asObject = error ""

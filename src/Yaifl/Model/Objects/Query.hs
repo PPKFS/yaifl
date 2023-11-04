@@ -126,10 +126,10 @@ asThingOrRoomM o tf rf = do
 
 modifyObjectFrom ::
   State Metadata :> es
-  => (o -> Eff es (Object wm any))
-  -> (Object wm any -> Eff es ())
+  => (o -> Eff es (Object wm any s))
+  -> (Object wm any s -> Eff es ())
   -> o
-  -> (Object wm any -> Object wm any)
+  -> (Object wm any s -> Object wm any s)
   -> Eff es ()
 modifyObjectFrom g s o u = do
   obj <- g o
@@ -144,7 +144,7 @@ modifyThing ::
   => o
   -> (Thing wm -> Thing wm)
   -> Eff es ()
-modifyThing = modifyObjectFrom getThing setThing
+modifyThing o u = modifyObjectFrom (fmap (\(Thing a) -> a) . getThing) (setThing . Thing) o ((\(Thing a) -> a) . u . Thing)
 
 modifyRoom ::
   NoMissingObjects wm es
@@ -152,7 +152,7 @@ modifyRoom ::
   => o
   -> (Room wm -> Room wm)
   -> Eff es ()
-modifyRoom = modifyObjectFrom getRoom setRoom
+modifyRoom o u = modifyObjectFrom (fmap (\(Room a) -> a) . getRoom) (setRoom . Room) o ((\(Room a) -> a) . u . Room)
 
 modifyObject ::
   NoMissingObjects wm es
@@ -191,7 +191,7 @@ refreshRoom ::
   -> Eff es (Room wm)
 refreshRoom r = ifM (traceGuard Medium)
   (do
-    r' <- getRoom $ objectId r
+    r' <- getRoom (r ^. #objectId)
     when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed room with ID" <> show (display $ view #name r)  <> " and found an outdated object"
     return r')
   (pure r)
@@ -202,7 +202,7 @@ refreshThing ::
   -> Eff es (Thing wm)
 refreshThing r = ifM (traceGuard Medium)
   (do
-    r' <- getThing $ objectId r
+    r' <- getThing (r ^. #objectId)
     when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed thing with ID" <> show (display $ view #name r) <> " and found an outdated object"
     return r')
   (pure r)

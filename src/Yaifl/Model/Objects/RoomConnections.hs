@@ -20,7 +20,7 @@ import Solitude hiding (Down)
 import Yaifl.Model.Direction
 import Yaifl.Model.Entity (HasID(..), Entity)
 import Yaifl.Metadata (Metadata, whenConstructing)
-import Yaifl.Model.Object( Room )
+import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
 import Yaifl.Model.Properties.TH (makeDirections)
@@ -28,6 +28,8 @@ import Yaifl.Model.WorldModel (WMDirection, WMSayable)
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Properties.Door
+import Yaifl.Model.Properties.Has
 
 getAllConnections ::
   Room wm
@@ -41,7 +43,7 @@ hasSpecificConnectionTo ::
   -> WMDirection wm
   -> Maybe Entity
 hasSpecificConnectionTo mbExpl r dir = case getConnectionInDirection dir r of
-    Just (Connection ex' e)
+    Just (Connection ex' e _d)
       | maybe True (ex' ==) mbExpl -> Just e
     _ -> Nothing
 
@@ -50,7 +52,7 @@ getMapConnection ::
   => WMDirection wm
   -> Room wm
   -> Maybe Entity
-getMapConnection dir o = _connectionDestination <$> getConnectionInDirection dir o
+getMapConnection dir o = destination <$> getConnectionInDirection dir o
 
 getConnectionInDirection ::
   WMStdDirections wm
@@ -72,7 +74,7 @@ makeConnection ::
   -> WMDirection wm
   -> Room wm
   -> (Room wm -> Room wm)
-makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r)
+makeConnection expl dir r = connectionLens dir ?~ Connection expl (getID r) Nothing
 
 addDirectionFrom ::
   ObjectQuery wm es
@@ -187,3 +189,19 @@ isBelow ::
   -> Room wm
   -> Eff es ()
 isBelow = isDownOf
+
+addDoorToConnection ::
+  NoMissingObjects wm es
+  => WMHasProperty wm DoorSpecifics
+  => Thing wm
+  -> (Room wm, WMDirection wm)
+  -> (Room wm, WMDirection wm)
+  -> Eff es ()
+addDoorToConnection d (front, frontDir) (back, backDir) = do
+  -- this is probably best done as an asDoor thing TODO
+  mbDs <- getDoorSpecifics d
+  case mbDs of
+    Nothing -> error $ "Tried to add a door, except it wasn't a door " <> show (getID d)
+    Just ds -> do
+      -- so now we need to assign the sides of the door if they aren't already
+      pass

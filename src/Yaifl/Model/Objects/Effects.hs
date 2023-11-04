@@ -34,8 +34,6 @@ import Solitude
 import Yaifl.Metadata
 import Yaifl.Model.Entity
 import Yaifl.Model.Object
-import Yaifl.Model.Objects.RoomData
-import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.WorldModel
 
 data ObjectLookup (wm :: WorldModel) :: Effect where
@@ -52,8 +50,8 @@ data ObjectTraverse (wm :: WorldModel) :: Effect where
 
 data ObjectCreation wm :: Effect where
   GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddThingToWorld :: Object wm ThingData -> ObjectCreation wm m ()
-  AddRoomToWorld :: Object wm (RoomData wm) -> ObjectCreation wm m ()
+  AddThingToWorld :: Thing wm -> ObjectCreation wm m ()
+  AddRoomToWorld :: Room wm -> ObjectCreation wm m ()
 
 makeEffect ''ObjectCreation
 makeEffect ''ObjectLookup
@@ -75,4 +73,5 @@ type AddObjects wm es = (
   , Display (WMSayable wm)
   , IsString (WMSayable wm)
   , State Metadata :> es
+  , Pointed (WMObjSpecifics wm)
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)

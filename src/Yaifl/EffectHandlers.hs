@@ -12,7 +12,6 @@ import Yaifl.Actions.Parser
 import Yaifl.Metadata
 import Yaifl.Model.Direction
 import Yaifl.Model.Entity
-import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.WorldModel
 import Yaifl.Rules.RuleEffects
@@ -128,11 +127,11 @@ interpretLookup ::
 interpretLookup = do
   let lookupHelper ::
         Entity
-        -> Lens' (WorldStores wm) (Store (Object wm d))
-        -> Lens' (WorldStores wm) (Store (Object wm e))
+        -> Lens' (WorldStores wm) (Store wantedStore)
+        -> Lens' (WorldStores wm) (Store b)
         -> Text
         -> Text
-        -> Eff es (Either Text (Object wm d))
+        -> Eff es (Either Text wantedStore)
       lookupHelper e l l' expected errTy = do
             let i = getID e
             mbObj <- use $ #stores % l % at i
@@ -156,7 +155,7 @@ interpretUpdate = interpret $ \_ -> \case
   SetRoom r -> #stores % #rooms % at (getID r) %= updateIt r
   SetThing t -> #stores % #things % at (getID t) %= updateIt t
 
-updateIt :: Object wm d -> Maybe (Object wm d) -> Maybe (Object wm d)
+updateIt :: a -> Maybe a -> Maybe a
 updateIt newObj mbExisting = case mbExisting of
   Nothing -> Just newObj
   Just _ -> Just newObj

@@ -75,6 +75,7 @@ type HasStandardProperties s = (
   , WMStdDirections s
   , WMHasProperty s DoorSpecifics
   , HasDirectionalTerms s
+  , Pointed (WMObjSpecifics s)
   )
 
 data ActivityCollection wm = ActivityCollection
@@ -138,7 +139,8 @@ blankMetadata = Metadata
   }
 
 newWorld ::
-  HasLookingProperties wm
+  Pointed (WMObjSpecifics wm)
+  => HasLookingProperties wm
   => HasDirectionalTerms wm
   => WMStdDirections wm
   => Eff (EffStack wm) ()

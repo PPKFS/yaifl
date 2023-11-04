@@ -28,31 +28,33 @@ import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
 import Yaifl.Model.Objects.Effects
 
 makeObject ::
-  ObjectCreation wm :> es
+  Pointed s
+  => ObjectCreation wm :> es
   => State Metadata :> es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
   -> ObjectType
   -> Bool
-  -> Maybe (WMObjSpecifics wm) -- ^ Object details.
+  -> Maybe s -- ^ Object details.
   -> d
-  -> Eff es (Entity, Object wm d)
+  -> Eff es (Entity, Object wm d s)
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t t specifics details)
+  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
-  WMHasProperty wm Enclosing
+  Pointed s
+  => WMHasProperty wm Enclosing
   => AddObjects wm es
-  => (Object wm d -> Eff es ())
+  => (Object wm d s -> Eff es ())
   -> WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
   -> ObjectType
   -> Bool
-  -> Maybe (WMObjSpecifics wm)
+  -> Maybe s
   -> d
-  -> Eff es (Object wm d)
+  -> Eff es (Object wm d s)
 addObject updWorld n d ty isT specifics details =
   withSpan' ("new " <> if isT then "thing" else "room") (display n) $ do
     (e, obj) <- makeObject n d ty isT specifics details
@@ -82,7 +84,7 @@ addThingInternal ::
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
 addThingInternal name desc objtype specifics details =
-  addObject addThingToWorld name desc objtype
+  Thing <$> addObject (addThingToWorld . Thing) name desc objtype
     True specifics (fromMaybe blankThingData details)
 
 addThing' ::
@@ -93,7 +95,10 @@ addThing' ::
   -> Eff '[State ThingData] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
-    Nothing (Just $ snd $ runPureEff $ runStateLocal blankThingData stateUpdate)
+    Nothing (runLocalState blankThingData stateUpdate)
+
+runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
+runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
 
 addThing ::
   WMHasProperty wm Enclosing
@@ -113,10 +118,10 @@ addRoomInternal ::
   -> Maybe (RoomData wm) -- ^
   -> Eff es (Room wm)
 addRoomInternal name desc objtype specifics details = do
-  e <- addObject addRoomToWorld name desc objtype False specifics (fromMaybe blankRoomData details)
+  e <- addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details)
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
-  return e
+  return (Room e)
 
 addRoom' ::
   WMHasProperty wm Enclosing

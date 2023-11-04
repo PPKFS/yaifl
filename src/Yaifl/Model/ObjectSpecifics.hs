@@ -4,6 +4,7 @@ module Yaifl.Model.ObjectSpecifics
   ( -- * Specifics
   ObjectSpecifics(..)
   , WMHasObjSpecifics(..)
+  , addDoor
   ) where
 
 import Solitude
@@ -12,7 +13,7 @@ import Yaifl.Model.Entity ( HasID(getID) )
 import Yaifl.Metadata (previousRoom, ObjectType(..))
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.ThingData ( ThingData )
+import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable )
@@ -30,6 +31,9 @@ data ObjectSpecifics =
   deriving stock (Eq, Show, Read)
 
 makePrisms ''ObjectSpecifics
+
+instance Pointed ObjectSpecifics where
+  identityElement = NoSpecifics
 
 class WMHasObjSpecifics (wm :: WorldModel) where
   inj :: Proxy wm -> ObjectSpecifics -> WMObjSpecifics wm
@@ -78,6 +82,7 @@ addDoor ::
   -> Room wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
-addDoor n mbDes fr ba mbD = localST (#previousRoom .~ objectId fr) $ do
+addDoor n mbDes fr ba mbD = localST (#previousRoom .~ getID fr) $ do
     addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
-      (Just (inj (Proxy @wm) (DoorSpecifics (blankDoor (getID ba))))) mbD
+      (Just $ inj (Proxy @wm) $ DoorSpecifics (blankDoor (getID ba)))
+      (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe blankThingData mbD)

@@ -29,8 +29,9 @@ data ConnectionExplicitness = Explicit | Implicit
 
 -- | A connection from one room (or door) to another.
 data Connection = Connection
-  { _connectionExplicitness :: ConnectionExplicitness
-  , _connectionDestination :: Entity -- ^ The 'other side' of this connection.
+  { explicitness :: ConnectionExplicitness
+  , destination :: Entity -- ^ The 'other side' of this connection.
+  , doorThrough :: Maybe Entity
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | The connections from one room to another, stored by direction ID.

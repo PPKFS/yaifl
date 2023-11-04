@@ -160,17 +160,17 @@ instance SayableValue (SayLiteral "paragraphBreak") wm where
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"
 
-instance
-  ( ObjectLike wm (Object wm o)
+instance {-# OVERLAPPABLE #-}
+  ( ObjectLike wm a
   , WithPrintingNameOfSomething wm
-  ) => SayableValue (SayArticle "the" (Object wm o)) wm where
+  ) => SayableValue (SayArticle "the" a) wm where
   say (SayArticle c a) = if c then say (The a) else say (The_ a)
   sayTell (SayArticle c a) = if c then sayTell (The a) else sayTell (The_ a)
 
-instance
-  ( ObjectLike wm (Object wm o)
+instance {-# OVERLAPPABLE #-}
+  ( ObjectLike wm a
   , WithPrintingNameOfSomething wm
-  ) => SayableValue (SayArticle "a" (Object wm o)) wm where
+  ) => SayableValue (SayArticle "a" a) wm where
   say (SayArticle c a) = if c then say (A a) else say (A_ a)
   sayTell (SayArticle c a) = if c then sayTell (A a) else sayTell (A_ a)
 

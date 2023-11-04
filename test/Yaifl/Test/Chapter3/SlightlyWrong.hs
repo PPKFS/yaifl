@@ -2,6 +2,7 @@ module Yaifl.Test.Chapter3.SlightlyWrong where
 
 import Yaifl
 import Yaifl.Metadata
+import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
 import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Test.Common

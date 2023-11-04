@@ -14,13 +14,15 @@ is an object. Namely, there's no need for e.g. directions to be objects.
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Yaifl.Model.Object (
   -- * Objects
   Object(..)
-  , Thing
-  , Room
-  , AnyObject
+  , Pointed(..)
+  , Thing(..)
+  , Room(..)
+  , AnyObject(..)
   , NamePlurality(..)
   , NameProperness(..)
   -- ** Helpers
@@ -44,14 +46,19 @@ import Yaifl.Model.Objects.RoomData (RoomData)
 import Yaifl.Model.Objects.ThingData (ThingData)
 import Yaifl.Model.WorldModel (WMObjSpecifics, WMSayable)
 import Data.Text.Display
+import GHC.Records
+
+class Pointed s where
+  identityElement :: s
 
 -- | Determine whether an object is of a certain type.
 isType ::
   WithMetadata es
-  => Object wm d -- ^ The object.
+  => LabelOptic' "objectType" A_Lens o ObjectType
+  => o -- ^ The object.
   -> ObjectType -- ^ The type.
   -> Eff es Bool
-isType o = isTypeInternal (objectType o)
+isType o = isTypeInternal (o ^. #objectType)
   where
     isTypeInternal ::
       WithMetadata es
@@ -77,7 +84,7 @@ data NameProperness = Improper | Proper
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
 -- | A game object.
-data Object wm objData = Object
+data Object wm objData objSpecifics = Object
   { name :: WMSayable wm
   , pluralName :: Maybe (WMSayable wm)
   , indefiniteArticle :: Maybe (WMSayable wm)
@@ -88,66 +95,89 @@ data Object wm objData = Object
   , objectType :: ObjectType
   , creationTime :: Timestamp
   , modifiedTime :: Timestamp
-  , specifics :: Maybe (WMObjSpecifics wm) -- ^ A 'vanilla' object has no specific additional information.
+  , specifics :: objSpecifics -- ^ A 'vanilla' object has no specific additional information.
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
 
-type Thing wm = Object wm ThingData
-type Room wm = Object wm (RoomData wm)
-type AnyObject wm = Object wm (Either ThingData (RoomData wm))
-
-makeFieldLabelsNoPrefix ''Object
-
-instance Display (Object wm objData) where
-  displayBuilder = const "object"
-
-instance HasID (Object wm d) where
-  getID = objectId
 
 -- | By generalising `Eq`, we can compare two objects of different kinds. Trivially this is always `False`,
 -- but it does allow comparing a `Thing` and an `AnyObject`.
 objectEquals ::
-  Object wm d
-  -> Object wm d'
+  HasID a
+  => HasID b
+  => a
+  -> b
   -> Bool
-objectEquals = (. objectId) . (==) . objectId
+objectEquals = (. getID) . (==) . getID
 
-instance Eq (Object wm d) where
+instance Eq (Object wm d s) where
   (==) = objectEquals
 
 -- | Maybe I'll need this instance for something or other?
-instance Ord (Object wm d) where
+instance Ord (Object wm d s) where
   compare = (. creationTime) . compare . creationTime
 
-instance Functor (Object wm) where
-  fmap ::
-    (a -> b)
-    -> Object wm a
-    -> Object wm b
-  fmap f = #objectData %~ f
+newtype Thing wm = Thing (Object wm ThingData (WMObjSpecifics wm))
+  deriving newtype (Eq, Ord, Generic)
+newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
+  deriving newtype (Eq, Ord, Generic)
+newtype AnyObject wm = AnyObject (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm))
+  deriving newtype (Eq, Ord, Generic)
 
-instance Foldable (Object wm) where
-  foldMap ::
-    (a -> m)
-    -> Object wm a
-    -> m
-  foldMap f = f . objectData
+instance HasField x (Object wm ThingData (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
+  getField (Thing o) = getField @x o
 
-instance Traversable (Object wm) where
-  traverse ::
-    Applicative f
-    => (a -> f b)
-    -> Object wm a
-    -> f (Object wm b)
-  traverse f o = flip (set #objectData) o <$> f (objectData o)
+instance HasField x (Object wm (RoomData wm) (WMObjSpecifics wm)) a  => HasField x (Room wm) a where
+  getField (Room o) = getField @x o
+
+instance HasField x (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm)) a => HasField x (AnyObject wm) a where
+  getField (AnyObject o) = getField @x o
+
+instance Display (Object wm objData s) where
+  displayBuilder = const "object"
+
+instance Display (Room wm) where
+  displayBuilder = const "room"
+
+instance Display (Thing wm) where
+  displayBuilder = const "thing"
+
+instance Display (AnyObject wm) where
+  displayBuilder = const "object"
+
+instance HasID (Object wm d s) where
+  getID = objectId
+
+instance HasID (AnyObject wm) where
+  getID (AnyObject a) = objectId a
+
+instance HasID (Thing wm) where
+  getID (Thing a) = objectId a
+
+instance HasID (Room wm) where
+  getID (Room a) = objectId a
+
+makeFieldLabelsNoPrefix ''Object
+
+instance Bifunctor (Object wm) where
+  bimap f g o = o & #objectData %~ f & #specifics %~ g
+
+instance Bifoldable (Object wm) where
+  bifoldMap f g o = f (o ^. #objectData) <> g (o ^. #specifics)
+
+instance Bitraversable (Object wm) where
+  bitraverse f g o =
+    let d' = f (objectData o)
+        s' = g (specifics o)
+    in (\d s -> o & #objectData .~ d & #specifics .~ s) <$> d' <*> s'
 
 -- | A prism for getting a `Room` out of an `AnyObject`.
 _Room :: Prism' (AnyObject wm) (Room wm)
-_Room = prism' (fmap Right) (traverse rightToMaybe)
+_Room = prism' (AnyObject . first Right . coerce) (fmap Room . bitraverse rightToMaybe Just . (\(AnyObject a) -> a))
 
 -- | A prism for getting a `Thing` out of an `AnyObject`.
 _Thing :: Prism' (AnyObject wm) (Thing wm)
-_Thing = prism' (fmap Left) (traverse leftToMaybe)
+_Thing = prism' (AnyObject . first Left . coerce) (fmap Thing . bitraverse leftToMaybe Just . (\(AnyObject a) -> a))
 
 -- | A slightly more descriptive prism for objects specifically.
 class CanBeAny wm o where

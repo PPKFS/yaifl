@@ -82,6 +82,33 @@ withRoom f = do
   r <- getMentionedRoom
   f r
 
+getMentionedThing ::
+  forall wm es.
+  State (AdaptiveNarrative wm) :> es
+  => State Metadata :> es
+  => ObjectLookup wm :> es
+  => Breadcrumbs :> es
+  => Eff es (Thing wm)
+getMentionedThing = do
+  (mbObj :: Maybe (AnyObject wm)) <- use @(AdaptiveNarrative wm) #priorNamedObject
+  r <- join <$> forM mbObj getThingMaybe
+  case r of
+    Nothing -> error "The last mentioned object was expected to be a thing, but it was not"
+    Just x -> pure x
+
+withThing ::
+  forall wm es a.
+  State (AdaptiveNarrative wm) :> es
+  => State Metadata :> es
+  => ObjectLookup wm :> es
+  => Breadcrumbs :> es
+  => (Thing wm -> Eff es a)
+  -> Eff es a
+withThing f = do
+  r <- getMentionedThing
+  f r
+
+
 getPersonageOfObject ::
   forall wm es.
   State Metadata :> es

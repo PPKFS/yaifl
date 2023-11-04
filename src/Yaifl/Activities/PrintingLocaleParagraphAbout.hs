@@ -9,6 +9,7 @@ import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Rule ( Rule, makeRule )
 import Yaifl.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Actions.Looking.Locale
+import Yaifl.Model.Entity
 
 type WithPrintingLocaleParagraphAbout wm = WithActivity "printingLocaleParagraphAbout" wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 
@@ -47,13 +48,13 @@ setLocalePriority ::
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
-setLocalePriority e lv i = lv & #localePriorities % at (objectId e) % _Just % #priority .~ i
+setLocalePriority e lv i = lv & #localePriorities % at (getID e) % _Just % #priority .~ i
 
 removeFromLocale ::
   AnyObject s
   -> LocaleVariables v
   -> LocaleVariables v
-removeFromLocale e lv = lv & #localePriorities % at (objectId e) .~ Nothing
+removeFromLocale e lv = lv & #localePriorities % at (getID e) .~ Nothing
 {-
       [ Rule
         "don’t mention player’s supporter in room descriptions rule"

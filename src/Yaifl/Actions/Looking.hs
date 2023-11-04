@@ -165,7 +165,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             -- is true and the location is visited, continue the action;
             unless (abbrev || (someAbbrev && ac /= "looking" && loc ^. #objectData % #isVisited == Visited)) $
               -- print the location's description;
-              sayLn $ description loc
+              sayLn $ loc ^. #description
           else
             pass
       return Nothing),
