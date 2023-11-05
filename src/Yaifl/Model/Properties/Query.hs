@@ -45,7 +45,6 @@ defaultPropertyGetter e = do
   o <- getObject e
   return $ preview (#specifics % propertyL) o
 
-
 modifyProperty ::
   (o -> Eff es (Maybe p))
   -> (o -> p -> Eff es ())
@@ -86,8 +85,9 @@ setEnclosing e v = if isThing (getID e)
   else
     modifyRoom e (#objectData % #enclosing .~ v)
 
-asObject ::
+asThingKind ::
   ObjectLike wm o
   => o
+  ->
   -> (Object wm s a)
-asObject = error ""
+asKind = error ""

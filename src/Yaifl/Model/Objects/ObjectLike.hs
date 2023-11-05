@@ -1,6 +1,7 @@
-{-# LANGUAGE DefaultSignatures #-}
 module Yaifl.Model.Objects.ObjectLike
   ( ObjectLike(..)
+  , ThingLike(..)
+  , RoomLike(..)
 
   ) where
 
@@ -11,28 +12,30 @@ import Yaifl.Model.Object
 import Effectful.Error.Static
 
 class HasID o => ObjectLike wm o where
-  getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
-  default getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
-  getRoom o = throwError $ MissingObject "called getRoom on an object with no instance"  (getID o)
+  getObject :: NoMissingRead wm es => o -> Eff es (AnyObject wm)
 
+class HasID o => ThingLike wm o where
   getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
-  default getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
-  getThing o = throwError $ MissingObject "called getThing on an object with no instance"  (getID o)
+
+class HasID o => RoomLike wm o where
+  getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
 
 instance ObjectLike wm (Thing wm) where
-  getThing = pure
+  getObject = pure . toAny
 
 instance ObjectLike wm (Room wm) where
+  getObject = pure . toAny
+
+instance ThingLike wm (Thing wm) where
+  getThing = pure
+
+instance RoomLike wm (Room wm) where
   getRoom = pure
 
 instance ObjectLike wm (AnyObject wm) where
-  getThing t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a thing from " <> show (t ^. #objectId) <> " but it was a room.") (getID t))
-      (preview _Thing t))
-  getRoom t = either throwError pure
-    (maybeToRight (MissingObject ("Tried to get a room from " <> show (t ^. #objectId) <> " but it was a thing.") (getID t))
-      (preview _Room t))
+  getObject = pure
 
 instance ObjectLike wm Entity where
-  getRoom e = lookupRoom e >>= either (throwError . flip MissingObject e) return
-  getThing e = lookupThing e >>= either (throwError . flip MissingObject e) return
+  getObject e = if isThing (getID e)
+    then lookupThing e >>= either (throwError . flip MissingObject e) (return . review _Thing)
+    else lookupRoom e >>= either (throwError . flip MissingObject e) (return . review _Room)

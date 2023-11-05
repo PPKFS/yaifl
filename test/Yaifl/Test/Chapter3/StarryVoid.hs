@@ -3,9 +3,7 @@ module Yaifl.Test.Chapter3.StarryVoid where
 
 import Solitude
 import Yaifl
-import Yaifl.Actions.Going
 import Yaifl.Metadata
-import Yaifl.Model.Direction
 import Yaifl.Model.Object
 import Yaifl.Model.ObjectSpecifics
 import Yaifl.Model.Objects.Create
@@ -16,7 +14,6 @@ import Yaifl.Model.Properties.Openable
 import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
-import Yaifl.Test.Common
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ

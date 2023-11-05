@@ -70,35 +70,19 @@ failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   addAnnotation msg
   error msg)
 
-getObject ::
-  NoMissingRead wm es
-  => ObjectLike wm o
-  => o
-  -> Eff es (AnyObject wm)
-getObject e =
-  if isThing (getID e)
-    then review _Thing <$> getThing e
-    else review _Room <$> getRoom e
-
 getThingMaybe ::
   ObjectRead wm es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
-getThingMaybe e = do
-  if isThing (getID e)
-    then withoutMissingObjects (getThing e <&> Just) (const (return Nothing))
-  else return Nothing
+getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getID e)) (const $ pure Nothing)
 
 getRoomMaybe ::
   ObjectRead wm es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))
-getRoomMaybe e = do
-  if isRoom (getID e)
-    then withoutMissingObjects (getRoom e <&> Just) (const (return Nothing))
-  else return Nothing
+getRoomMaybe e = withoutMissingObjects (preview _Room <$> getObject (getID e)) (const $ pure Nothing)
 
 asThingOrRoom ::
   NoMissingObjects wm es
@@ -108,9 +92,11 @@ asThingOrRoom ::
   -> (Room wm -> a)
   -> Eff es a
 asThingOrRoom o tf rf = do
-  if isThing (getID o)
-    then tf <$> getThing o
-  else rf <$> getRoom o
+  a <- getObject o
+  case (preview _Thing a, preview _Room a) of
+    (Just x, _) -> tf <$> getThing x
+    (_, Just x) -> rf <$> getRoom x
+    _ -> error "impossible"
 
 asThingOrRoomM ::
   NoMissingObjects wm es
@@ -119,10 +105,7 @@ asThingOrRoomM ::
   -> (Thing wm -> Eff es a)
   -> (Room wm -> Eff es a)
   -> Eff es a
-asThingOrRoomM o tf rf = do
-  if isThing (getID o)
-    then getThing o >>= tf
-  else getRoom o >>= rf
+asThingOrRoomM o tf rf = join $ asThingOrRoom o tf rf
 
 modifyObjectFrom ::
   State Metadata :> es
@@ -140,7 +123,7 @@ modifyObjectFrom g s o u = do
 
 modifyThing ::
   NoMissingObjects wm es
-  => ObjectLike wm o
+  => ThingLike wm o
   => o
   -> (Thing wm -> Thing wm)
   -> Eff es ()
@@ -148,7 +131,7 @@ modifyThing o u = modifyObjectFrom (fmap (\(Thing a) -> a) . getThing) (setThing
 
 modifyRoom ::
   NoMissingObjects wm es
-  => ObjectLike wm o
+  => RoomLike wm o
   => o
   -> (Room wm -> Room wm)
   -> Eff es ()
@@ -160,10 +143,9 @@ modifyObject ::
   => o
   -> (AnyObject wm -> AnyObject wm)
   -> Eff es ()
-modifyObject e s = do
-  if isThing (getID e)
-  then modifyThing e (anyModifyToThing s)
-  else modifyRoom e (anyModifyToRoom s)
+modifyObject e s = asThingOrRoomM e
+  (`modifyThing` anyModifyToThing s)
+  (`modifyRoom` anyModifyToRoom s)
 
 anyModifyToThing ::
   (AnyObject s -> AnyObject s)
@@ -177,7 +159,7 @@ anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
 
 getLocation ::
   NoMissingObjects wm es
-  => ObjectLike wm o
+  => ThingLike wm o
   => o
   -> Eff es (Room wm)
 getLocation t = do
