@@ -15,7 +15,7 @@ module Yaifl.Model.Objects.ThingData (
 ) where
 
 import Solitude
-import Yaifl.Model.Entity ( Entity, voidID )
+import Yaifl.Model.Entity
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit
@@ -34,7 +34,7 @@ data ThingPortable = Portable | FixedInPlace
 
 -- | Properties that define a `Yaifl.Model.Object.Thing`.
 data ThingData = ThingData
-  { containedBy :: Entity
+  { containedBy :: TaggedEntity EnclosingTag
   , lit :: ThingLit
   , wearable :: ThingWearability
   , described :: ThingDescribed
@@ -44,6 +44,6 @@ data ThingData = ThingData
 
 -- | A default thing.
 blankThingData :: ThingData
-blankThingData = ThingData voidID NotLit NotWearable Described Portable True
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True
 
 makePrisms ''ThingWearability

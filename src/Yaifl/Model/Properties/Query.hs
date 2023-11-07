@@ -5,17 +5,20 @@ module Yaifl.Model.Properties.Query (
   , modifyProperty
   , getEnclosing
   , setEnclosing
+  , PropertyLike(..)
+  , EnclosingLike
 ) where
 
 import Solitude
 
-import Yaifl.Model.Entity ( HasID, getID )
+import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
 import Effectful.Error.Static ( Error, throwError )
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.ObjectLike
 
 getPropertyOrThrow ::
   HasID i
@@ -64,13 +67,9 @@ getEnclosing ::
   => ObjectLike wm o
   => o
   -> Eff es (Maybe Enclosing)
-getEnclosing e = if isThing (getID e)
-  then
-    defaultPropertyGetter e
-  else (do
-    o <- getRoom e
-    return $ Just $ o ^. #objectData % #enclosing
-  )
+getEnclosing e = asThingOrRoomM e
+  defaultPropertyGetter
+  (pure . Just . view (#objectData % #enclosing))
 
 setEnclosing ::
   NoMissingObjects wm es
@@ -79,15 +78,34 @@ setEnclosing ::
   => o
   -> Enclosing
   -> Eff es ()
-setEnclosing e v = if isThing (getID e)
-  then
-    defaultPropertySetter e v
-  else
-    modifyRoom e (#objectData % #enclosing .~ v)
+setEnclosing e v = asThingOrRoomM e
+  (`defaultPropertySetter` v)
+  (\o -> modifyRoom o (#objectData % #enclosing .~ v))
 
 asThingKind ::
-  ObjectLike wm o
-  => o
-  ->
+  o
+  -> a
   -> (Object wm s a)
-asKind = error ""
+asThingKind = error ""
+
+class PropertyLike wm prop o where
+  getAs :: (WMHasProperty wm prop, NoMissingObjects wm es) => o -> Eff es prop
+
+type EnclosingLike wm o = PropertyLike wm Enclosing o
+
+instance PropertyLike wm Enclosing Enclosing where
+  getAs = pure
+
+instance PropertyLike wm Enclosing (TaggedEntity EnclosingTag) where
+ getAs o = do
+    a <- getObject o
+    e <- getEnclosing a
+    getPropertyOrThrow "enclosing" a e
+
+instance PropertyLike wm Enclosing (TaggedEntity RoomTag) where
+ getAs o = do
+    a <- getRoom o
+    getAs a
+
+instance PropertyLike wm Enclosing (Room wm) where
+ getAs o = pure $ o ^. #objectData % #enclosing

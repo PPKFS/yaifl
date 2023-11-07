@@ -20,9 +20,8 @@ module Yaifl.Rules.Args
 import Solitude
 
 import Effectful.Optics
-import Yaifl.Model.Entity ( HasID(..) )
 import Yaifl.Metadata ( Timestamp, currentPlayer )
-import Yaifl.Model.Object ( Thing, Room, AnyObject )
+import Yaifl.Model.Object
 import Yaifl.Model.WorldModel
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
@@ -56,7 +55,7 @@ instance {-# OVERLAPPABLE #-} Refreshable wm av where
 instance Refreshable wm v => Refreshable wm (Args wm v) where
   refreshVariables av = do
     v <- refreshVariables (variables av)
-    o <- getThing (getID $ source av)
+    o <- getThing (tagThing $ source av)
     return $ av { source = o, variables = v }
 
 type ArgumentParseResult v = Either Text v

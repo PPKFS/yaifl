@@ -7,7 +7,6 @@ module Yaifl.Model.Objects.Query
   , handleMissingObject
 
   -- * Get
-  , getObject
   , getThingMaybe
   , getRoomMaybe
   , asThingOrRoom
@@ -23,6 +22,7 @@ module Yaifl.Model.Objects.Query
 
   , getCurrentPlayer
   , isVoid
+  , tagObject
   ) where
 
 import Solitude
@@ -32,7 +32,7 @@ import Effectful.Error.Static ( runError, Error )
 import Effectful.Optics ( use )
 
 import Yaifl.Metadata
-import Yaifl.Model.Entity ( HasID(..), Entity, voidID )
+import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
@@ -169,25 +169,31 @@ getLocation t = do
 
 refreshRoom ::
   NoMissingObjects wm es
-  => Room wm
+  => RoomLike wm o
+  => o
   -> Eff es (Room wm)
-refreshRoom r = ifM (traceGuard Medium)
-  (do
-    r' <- getRoom (r ^. #objectId)
-    when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed room with ID" <> show (display $ view #name r)  <> " and found an outdated object"
-    return r')
-  (pure r)
+refreshRoom tl = do
+  r <- getRoom tl
+  ifM (traceGuard Medium)
+    (do
+      r'' <- getRoom (tagRoom r)
+      when ((r'' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed room with ID" <> show (display $ view #name r) <> " and found an outdated object"
+      return r'')
+    (pure r)
 
 refreshThing ::
   NoMissingObjects wm es
-  => Thing wm
+  => ThingLike wm o
+  => o
   -> Eff es (Thing wm)
-refreshThing r = ifM (traceGuard Medium)
-  (do
-    r' <- getThing (r ^. #objectId)
-    when ((r' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed thing with ID" <> show (display $ view #name r) <> " and found an outdated object"
-    return r')
-  (pure r)
+refreshThing tl = do
+  r <- getThing tl
+  ifM (traceGuard Medium)
+    (do
+      r'' <- getThing (tagThing r)
+      when ((r'' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed thing with ID" <> show (display $ view #name r) <> " and found an outdated object"
+      return r'')
+    (pure r)
 
 getCurrentPlayer ::
   Breadcrumbs :> es
@@ -197,6 +203,15 @@ getCurrentPlayer ::
 getCurrentPlayer = failHorriblyIfMissing $ use #currentPlayer >>= getThing
 
 isVoid ::
-  Entity
+  HasID a
+  => a
   -> Bool
-isVoid = (voidID ==)
+isVoid = (unTag voidID ==) . getID
+
+tagObject ::
+  AnyObject wm
+  -> Either (TaggedEntity ThingTag) (TaggedEntity RoomTag)
+tagObject a = case (preview _Thing a, preview _Room a) of
+    (Just x, _) -> Left (tag x (a ^. #objectId))
+    (_, Just x) -> Right (tag x (a ^. #objectId))
+    _ -> error "impossible"

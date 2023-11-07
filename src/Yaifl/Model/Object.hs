@@ -33,6 +33,11 @@ module Yaifl.Model.Object (
   -- ** Optics
   , _Room
   , _Thing
+
+  , RoomTag
+  , ThingTag
+  , tagRoom
+  , tagThing
   ) where
 
 import Solitude
@@ -40,8 +45,8 @@ import Solitude
 import Data.Set (member)
 import Effectful.Optics ( use )
 
-import Yaifl.Model.Entity (Entity (..), HasID (..))
-import Yaifl.Metadata ( ObjectType, noteError, typeDAG, Timestamp, WithMetadata )
+import Yaifl.Model.Entity
+import Yaifl.Metadata
 import Yaifl.Model.Objects.RoomData (RoomData)
 import Yaifl.Model.Objects.ThingData (ThingData)
 import Yaifl.Model.WorldModel (WMObjSpecifics, WMSayable)
@@ -124,6 +129,8 @@ newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
 newtype AnyObject wm = AnyObject (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
+
+
 instance HasField x (Object wm ThingData (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
   getField (Thing o) = getField @x o
 
@@ -158,6 +165,19 @@ instance HasID (Room wm) where
   getID (Room a) = objectId a
 
 makeFieldLabelsNoPrefix ''Object
+
+instance Taggable (Room wm) RoomTag
+instance Taggable (Thing wm) ThingTag
+
+tagRoom ::
+  Room wm
+  -> TaggedEntity RoomTag
+tagRoom r = tag r (r ^. #objectId)
+
+tagThing ::
+  Thing wm
+  -> TaggedEntity ThingTag
+tagThing r = tag r (r ^. #objectId)
 
 instance Bifunctor (Object wm) where
   bimap f g o = o & #objectData %~ f & #specifics %~ g

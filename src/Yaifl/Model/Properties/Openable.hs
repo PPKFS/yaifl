@@ -3,7 +3,7 @@
 module Yaifl.Model.Properties.Openable
   ( -- * Types
     Openable(..)
-  , getOpenable
+  , getOpenableMaybe
   , isClosed
   , isOpen
   ) where
@@ -29,7 +29,7 @@ isClosed ::
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isClosed o = (Just Closed ==) <$> getOpenable o
+isClosed o = (Just Closed ==) <$> getOpenableMaybe o
 
 isOpen ::
   NoMissingRead wm es
@@ -37,4 +37,4 @@ isOpen ::
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isOpen o = (Just Open ==) <$> getOpenable o
+isOpen o = (Just Open ==) <$> getOpenableMaybe o

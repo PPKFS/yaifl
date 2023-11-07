@@ -63,15 +63,11 @@ addObject updWorld n d ty isT specifics details =
     addAnnotation "object added to world"
     lastRoom <- use #previousRoom
     tickGlobalTime
-    if
-      isRoom e
-    then
-      #previousRoom .= e
-    else
-      failHorriblyIfMissing $ do
-        t <- getThing e
-        withoutSpan $ when (t ^. #objectData % #containedBy == voidID)
-          (move t lastRoom >> pass)
+    failHorriblyIfMissing $ asThingOrRoomM e
+      (\t -> do
+        withoutSpan $ when (t ^. #objectData % #containedBy == coerceTag voidID)
+          (move t lastRoom >> pass))
+      (\r -> #previousRoom .= tagRoom r)
     pure obj
 
 addThingInternal ::
@@ -118,10 +114,10 @@ addRoomInternal ::
   -> Maybe (RoomData wm) -- ^
   -> Eff es (Room wm)
 addRoomInternal name desc objtype specifics details = do
-  e <- addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details)
+  e <- Room <$> addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details)
   md <- get
-  when (isVoid $ md ^. #firstRoom) (#firstRoom .= getID e)
-  return (Room e)
+  when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoom e)
+  return e
 
 addRoom' ::
   WMHasProperty wm Enclosing
@@ -146,6 +142,6 @@ addBaseObjects ::
   => AddObjects wm es
   => Eff es ()
 addBaseObjects = do
-  addRoom "The Void" "If you're seeing this, you did something wrong."
+  v <- addRoom "The Void" "If you're seeing this, you did something wrong."
   addThing' "player" "It's you, looking handsome as always" (#described .= Undescribed)
-  #firstRoom .= voidID
+  #firstRoom .= tagRoom v

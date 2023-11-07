@@ -123,7 +123,8 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     ObjectParameter door -> setDoorGoneThrough door
     NoParameter -> do
       mbThrough <- getMatchingThing "through"
-      mbDoor <- join <$> traverse getDoorSpecifics mbThrough
+      -- TODO: this should be a door or complain
+      mbDoor <- join <$> traverse getDoorSpecificsMaybe mbThrough
       pure $ backSide <$> mbDoor
     ConstantParameter t -> error $ "got a " <> t
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target

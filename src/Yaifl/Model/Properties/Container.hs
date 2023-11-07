@@ -7,12 +7,12 @@ module Yaifl.Model.Properties.Container
   , Enterable(..)
   , Container(..)
 
-  , getContainer
+  , getContainerMaybe
   , setContainer
   , modifyContainer
   , isOpaqueClosedContainer
 
-  , getEnterable
+  , getEnterableMaybe
   , setEnterable
   , modifyEnterable
     -- * Lenses

@@ -82,7 +82,7 @@ addDoor ::
   -> Room wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
-addDoor n mbDes fr ba mbD = localST (#previousRoom .~ getID fr) $ do
+addDoor n mbDes fr ba mbD = localST (#previousRoom .~ tagRoom fr) $ do
     addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics (blankDoor (getID ba)))
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe blankThingData mbD)

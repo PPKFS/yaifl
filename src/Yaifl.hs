@@ -60,6 +60,7 @@ import Yaifl.EffectHandlers
 import Yaifl.Text.DynamicText
 import Yaifl.Actions.Collection
 import Breadcrumbs
+import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -128,7 +129,7 @@ blankMetadata = Metadata
   , roomDescriptions = NoAbbreviatedRoomDescriptions
   , globalTime = 0
   , darknessWitnessed = False
-  , currentPlayer = Entity 1
+  , currentPlayer = defaultPlayerID
   , currentStage = Construction
   , previousRoom = voidID
   , firstRoom = voidID
@@ -144,7 +145,7 @@ newWorld ::
   => HasDirectionalTerms wm
   => WMStdDirections wm
   => Eff (EffStack wm) ()
-newWorld = do
+newWorld = failHorriblyIfMissing $ do
   addBaseObjects
   addBaseActions
 

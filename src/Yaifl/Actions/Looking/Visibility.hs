@@ -24,6 +24,7 @@ import Yaifl.Model.WorldModel
 import Yaifl.Text.Responses
 import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.ObjectLike
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
@@ -83,20 +84,18 @@ findVisibilityHolder ::
   -> Eff es (AnyObject wm)
 findVisibilityHolder e' = do
   obj <- getObject e'
-  mCont <- getContainer e'
+  mCont <- getContainerMaybe e'
   let n = obj ^. #name
-  if
-    isRoom obj || isOpaqueClosedContainer <$?> mCont
-  then
-    do
+  case (tagObject obj, isOpaqueClosedContainer <$?> mCont) of
+    -- a nonopaque or open container thing
+    (Left thingTag, False) -> do
+      t <- getThing thingTag
+      getObject (t ^. #objectData % #containedBy)
+    _ -> do
       addAnnotation $ "The visibility holder of " <> display n <> " is itself"
       --return it
       return (toAny e')
-  else
-    do
-      --get its container; we know it's a thing at this stage
-      t <- getThing e'
-      getObject (t ^. #objectData % #containedBy)
+
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -111,7 +110,7 @@ recalculateLightOfParent ::
   => o
   -> Eff es Int
 recalculateLightOfParent e = do
-  (parent :: Maybe Entity) <- view (#objectData % #containedBy) <$$> getThingMaybe e
+  (parent :: Maybe EnclosingEntity) <- view (#objectData % #containedBy) <$$> getThingMaybe e
   case parent of
     --it's a room.
     Nothing -> return 0
@@ -152,7 +151,7 @@ isSeeThrough ::
   => Thing wm
   -> Eff es Bool
 isSeeThrough e = do
-  (c, en, s) <- (,,) <$> getContainer e <*> getEnterable e <*> isSupporter e
+  (c, en, s) <- (,,) <$> getContainerMaybe e <*> getEnterableMaybe e <*> isSupporter e
   isContainer <- isType e "container"
   let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent

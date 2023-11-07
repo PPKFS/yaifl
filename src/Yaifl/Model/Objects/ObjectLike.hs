@@ -2,7 +2,6 @@ module Yaifl.Model.Objects.ObjectLike
   ( ObjectLike(..)
   , ThingLike(..)
   , RoomLike(..)
-
   ) where
 
 import Solitude
@@ -35,7 +34,20 @@ instance RoomLike wm (Room wm) where
 instance ObjectLike wm (AnyObject wm) where
   getObject = pure
 
+instance ObjectLike wm (TaggedEntity anyTag) where
+  getObject e = getObject (unTag e)
+
 instance ObjectLike wm Entity where
   getObject e = if isThing (getID e)
     then lookupThing e >>= either (throwError . flip MissingObject e) (return . review _Thing)
     else lookupRoom e >>= either (throwError . flip MissingObject e) (return . review _Room)
+
+instance ThingLike wm (TaggedEntity ThingTag) where
+  getThing o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
+
+instance RoomLike wm (TaggedEntity RoomTag) where
+  getRoom o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
+
+-- instance RoomLike wm o => PropertyLike o (RoomData wm) Enclosing where
+--  getAs o = do
+--    r <- getRoom

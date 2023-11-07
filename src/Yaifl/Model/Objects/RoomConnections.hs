@@ -199,7 +199,7 @@ addDoorToConnection ::
   -> Eff es ()
 addDoorToConnection d (front, frontDir) (back, backDir) = do
   -- this is probably best done as an asDoor thing TODO
-  mbDs <- getDoorSpecifics d
+  mbDs <- getDoorSpecificsMaybe d
   case mbDs of
     Nothing -> error $ "Tried to add a door, except it wasn't a door " <> show (getID d)
     Just ds -> do

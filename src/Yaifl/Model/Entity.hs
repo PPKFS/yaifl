@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-|
 Module      : Yaifl.Model.Entity
 Description : Object IDs and stores.
@@ -13,6 +14,13 @@ module Yaifl.Model.Entity
   ( -- * Entities
     Entity(..)
   , HasID(..)
+  , TaggedEntity(unTag)
+  , Taggable(..)
+  , ThingTag
+  , RoomTag
+  , EnclosingTag
+  , EnclosingEntity
+  , coerceTag
     -- ** Special IDs
     --
     -- | There are a handful of special IDs for objects which are created at build time and we *assume* the library user
@@ -54,9 +62,36 @@ instance Buildable Entity where
 instance Display Entity where
   displayBuilder = build
 
+newtype TaggedEntity tag = TaggedEntity { unTag :: Entity }
+  deriving stock (Show, Generic)
+  deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)
+
+instance HasID (TaggedEntity t) where
+  getID = unTag
+
+data ThingTag
+data RoomTag
+data EnclosingTag
+
+type EnclosingEntity = TaggedEntity EnclosingTag
+
+class Taggable taggableWith taggableTo where
+  tag :: taggableWith -> Entity -> TaggedEntity taggableTo
+  default tag :: taggableWith -> Entity -> TaggedEntity taggableTo
+  tag _ = TaggedEntity
+
+instance Taggable (TaggedEntity RoomTag) EnclosingTag where
+  tag = const . coerce
+
+coerceTag ::
+  Taggable (TaggedEntity a) b
+  => TaggedEntity a
+  -> TaggedEntity b
+coerceTag a = tag a (unTag a)
+
 -- | A place where new `Yaifl.Model.Objects.Thing`s are placed by default, to avoid having locations be `Maybe`.
-voidID :: Entity
-voidID = Entity (-1)
+voidID :: TaggedEntity RoomTag
+voidID = TaggedEntity $ Entity (-1)
 
 -- | An error object.
 nothingID :: Entity
@@ -64,8 +99,8 @@ nothingID = Entity 0
 
 -- | The player who is created at the start of the game. This can change (whereas e.g. the Void changing makes no
 -- sense) which is why this is named slightly differently.
-defaultPlayerID :: Entity
-defaultPlayerID = Entity 1
+defaultPlayerID :: TaggedEntity ThingTag
+defaultPlayerID = TaggedEntity $ Entity 1
 
 ---- Stores ----
 

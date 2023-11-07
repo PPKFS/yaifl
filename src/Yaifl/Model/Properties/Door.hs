@@ -4,7 +4,7 @@
 module Yaifl.Model.Properties.Door
   ( DoorSpecifics(..)
   , blankDoor
-  , getDoorSpecifics
+  , getDoorSpecificsMaybe
   ) where
 
 

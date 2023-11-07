@@ -35,7 +35,7 @@ module Yaifl.Metadata (
 import Solitude
 import Effectful.Optics ( (.=), (%=), use )
 
-import Yaifl.Model.Entity ( Entity, HasID (..) )
+import Yaifl.Model.Entity
 import Breadcrumbs
 import Data.Text.Display
 
@@ -84,10 +84,10 @@ data Metadata = Metadata
   , roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
   , globalTime :: Timestamp -- ^ See `Timestamp`.
   , darknessWitnessed :: Bool -- ^ Whether the player has seen the description of a dark room.
-  , currentPlayer :: Entity -- ^ The ID of the current player.
+  , currentPlayer :: TaggedEntity ThingTag -- ^ The ID of the current player.
   , currentStage :: CurrentStage -- ^ See `CurrentStage`.
-  , previousRoom :: Entity -- ^ The last room that was added during construction (to implicitly place new objects).
-  , firstRoom :: Entity -- ^ The starting room.
+  , previousRoom :: TaggedEntity RoomTag -- ^ The last room that was added during construction (to implicitly place new objects).
+  , firstRoom :: TaggedEntity RoomTag -- ^ The starting room.
   , errorLog :: [Text] -- ^ We keep track of noted errors for testing reasons.
   , typeDAG :: Map ObjectType (Set ObjectType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
   , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
@@ -171,4 +171,4 @@ isPlayer ::
   => State Metadata :> es
   => o
   -> Eff es Bool
-isPlayer o = (getID o ==) <$> use #currentPlayer
+isPlayer o = (getID o ==) . getID <$> use #currentPlayer
