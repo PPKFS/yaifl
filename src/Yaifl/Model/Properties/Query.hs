@@ -92,8 +92,7 @@ class PropertyLike wm prop o where
   getAs :: (WMHasProperty wm prop, NoMissingObjects wm es) => o -> Eff es prop
 
 type EnclosingLike wm o = PropertyLike wm Enclosing o
-
-instance PropertyLike wm Enclosing Enclosing where
+instance PropertyLike wm a a where
   getAs = pure
 
 instance PropertyLike wm Enclosing (TaggedEntity EnclosingTag) where

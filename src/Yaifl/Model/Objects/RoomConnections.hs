@@ -193,12 +193,12 @@ isBelow = isDownOf
 addDoorToConnection ::
   NoMissingObjects wm es
   => WMHasProperty wm DoorSpecifics
-  => Thing wm
+  => DoorLike wm d
+  => d
   -> (Room wm, WMDirection wm)
   -> (Room wm, WMDirection wm)
   -> Eff es ()
 addDoorToConnection d (front, frontDir) (back, backDir) = do
-  -- this is probably best done as an asDoor thing TODO
   mbDs <- getDoorSpecificsMaybe d
   case mbDs of
     Nothing -> error $ "Tried to add a door, except it wasn't a door " <> show (getID d)

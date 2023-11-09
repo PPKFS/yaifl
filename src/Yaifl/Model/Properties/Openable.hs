@@ -4,8 +4,6 @@ module Yaifl.Model.Properties.Openable
   ( -- * Types
     Openable(..)
   , getOpenableMaybe
-  , isClosed
-  , isOpen
   ) where
 
 
@@ -22,19 +20,3 @@ data Openable = Open | Closed
   deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeSpecificsWithout [] ''Openable
-
-isClosed ::
-  NoMissingRead wm es
-  => WMHasProperty wm Openable
-  => ObjectLike wm o
-  => o
-  -> Eff es Bool
-isClosed o = (Just Closed ==) <$> getOpenableMaybe o
-
-isOpen ::
-  NoMissingRead wm es
-  => WMHasProperty wm Openable
-  => ObjectLike wm o
-  => o
-  -> Eff es Bool
-isOpen o = (Just Open ==) <$> getOpenableMaybe o

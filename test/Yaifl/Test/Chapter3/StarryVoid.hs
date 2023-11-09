@@ -17,6 +17,7 @@ import Yaifl.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ
+import Yaifl.Model.Direction
 
 boothDesc :: WMHasProperty wm Openable => Room wm -> DynamicText wm
 boothDesc tcr = DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $ withThing $ \t -> do
@@ -35,5 +36,5 @@ starryVoid = do
   tsv <- addRoom "The Starry Void" ""
   tmb <- addDoor "The magician's booth" (Just $ boothDesc tcr) tcr tsv Nothing
   tcr `isInsideFrom` tsv
-  --addDoorToConnection tmb (Out, tcr) (In, tsv)
+  addDoorToConnection tmb (Out, tcr) (In, tsv)
   pass
