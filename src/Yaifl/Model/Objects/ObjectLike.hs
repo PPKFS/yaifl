@@ -47,7 +47,3 @@ instance ThingLike wm (TaggedEntity ThingTag) where
 
 instance RoomLike wm (TaggedEntity RoomTag) where
   getRoom o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
-
--- instance RoomLike wm o => PropertyLike o (RoomData wm) Enclosing where
---  getAs o = do
---    r <- getRoom

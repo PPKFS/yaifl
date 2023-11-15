@@ -35,10 +35,7 @@ swcDesc = DynamicText $ Right ("description of slightly wrong chamber", RuleLimi
 
 ex4World :: Game PlainWorldModel ()
 ex4World = do
-    setTitle "Verbosity"
-    -- inform7 uses superbrief, brief, and verbose as the command words
-    -- even though the BtS names are abbreviated, sometimes abbreviated, and not abbreviated
-    --roomDescriptions .= SometimesAbbreviatedRoomDescriptions
+    setTitle "Slightly Wrong"
     swc <- addRoom' swcN swcDesc pass
     awn <- addRoom' awnN awnDesc pass
 

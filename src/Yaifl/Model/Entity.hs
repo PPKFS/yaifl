@@ -20,6 +20,9 @@ module Yaifl.Model.Entity
   , RoomTag
   , EnclosingTag
   , EnclosingEntity
+  , RoomEntity
+  , DoorTag
+  , DoorEntity
   , coerceTag
     -- ** Special IDs
     --
@@ -72,13 +75,17 @@ instance HasID (TaggedEntity t) where
 data ThingTag
 data RoomTag
 data EnclosingTag
+data DoorTag
 
 type EnclosingEntity = TaggedEntity EnclosingTag
+type RoomEntity = TaggedEntity RoomTag
+type ThingEntity = TaggedEntity ThingTag
+type DoorEntity = TaggedEntity DoorTag
 
 class Taggable taggableWith taggableTo where
-  tag :: taggableWith -> Entity -> TaggedEntity taggableTo
-  default tag :: taggableWith -> Entity -> TaggedEntity taggableTo
-  tag _ = TaggedEntity
+  tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
+  default tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
+  tag _ = TaggedEntity . getID
 
 instance Taggable (TaggedEntity RoomTag) EnclosingTag where
   tag = const . coerce

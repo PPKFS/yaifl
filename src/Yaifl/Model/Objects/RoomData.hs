@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Objects.RoomData (
-  -- * Room data
-  -- ** Connections
   ConnectionExplicitness(..)
   , Connection(..)
   , MapConnections(..)
@@ -18,7 +16,7 @@ module Yaifl.Model.Objects.RoomData (
 import Solitude
 import qualified Data.Map as Map
 
-import Yaifl.Model.Entity ( Entity )
+import Yaifl.Model.Entity
 import Yaifl.Model.Properties.Enclosing ( Enclosing, blankEnclosing )
 import Yaifl.Model.WorldModel ( WMDirection )
 
@@ -27,14 +25,14 @@ import Yaifl.Model.WorldModel ( WMDirection )
 data ConnectionExplicitness = Explicit | Implicit
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
--- | A connection from one room (or door) to another.
+-- | A connection from one room to another.
 data Connection = Connection
   { explicitness :: ConnectionExplicitness
-  , destination :: Entity -- ^ The 'other side' of this connection.
-  , doorThrough :: Maybe Entity
+  , otherSide :: RoomEntity
+  , doorThrough :: Maybe DoorEntity
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
--- | The connections from one room to another, stored by direction ID.
+-- | The connections from one room to another, stored by direction.
 newtype MapConnections wm = MapConnections
   { unMapConnections :: Map.Map (WMDirection wm) Connection
   }
@@ -80,3 +78,4 @@ blankRoomData :: RoomData wm
 blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
 
 makeFieldLabelsNoPrefix ''RoomData
+makeFieldLabelsNoPrefix ''Connection

@@ -9,18 +9,20 @@ module Yaifl.Model.ObjectSpecifics
 
 import Solitude
 
-import Yaifl.Model.Entity ( HasID(getID) )
 import Yaifl.Metadata (previousRoom, ObjectType(..))
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
-import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable )
+import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
 import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Door
 import Yaifl.Model.Properties.Openable ( Openable )
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.RoomData
+import Yaifl.Model.Entity
+import Yaifl.Model.Objects.RoomConnections
 
 data ObjectSpecifics =
   NoSpecifics
@@ -79,10 +81,15 @@ addDoor ::
   => WMSayable wm -- ^ name
   -> Maybe (WMSayable wm) -- ^ description
   -> Room wm
+  -> WMDirection wm
   -> Room wm
+  -> WMDirection wm
   -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
-addDoor n mbDes fr ba mbD = localST (#previousRoom .~ tagRoom fr) $ do
-    addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
-      (Just $ inj (Proxy @wm) $ DoorSpecifics (blankDoor (getID ba)))
+addDoor n mbDes fr frDir ba baDir mbD = do
+  let ds = blankDoorSpecifics (tagRoom fr) (tagRoom ba)
+  d <- addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
+      (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe blankThingData mbD)
+  addDoorToConnection (tag ds d) fr ba
+  pure d

@@ -165,7 +165,7 @@ getMatchingThing matchElement = do
     Nothing -> pure Nothing
     Just e' -> getThingMaybe e'
 
-setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe Entity)
+setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe RoomEntity)
 setDoorGoneThrough _ = pure Nothing
 
 getDoorMaybe :: Thing wm -> AnyObject wm

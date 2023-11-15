@@ -34,7 +34,7 @@ data ThingPortable = Portable | FixedInPlace
 
 -- | Properties that define a `Yaifl.Model.Object.Thing`.
 data ThingData = ThingData
-  { containedBy :: TaggedEntity EnclosingTag
+  { containedBy :: EnclosingEntity
   , lit :: ThingLit
   , wearable :: ThingWearability
   , described :: ThingDescribed

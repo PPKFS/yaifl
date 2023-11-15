@@ -4,7 +4,7 @@
 module Yaifl.Model.Properties.Door
   ( DoorSpecifics(..)
   , DoorLike
-  , blankDoor
+  , blankDoorSpecifics
   , getDoorSpecificsMaybe
   , isOpen
   , isClosed
@@ -13,22 +13,23 @@ module Yaifl.Model.Properties.Door
 
 import Solitude
 
-import Yaifl.Model.Entity
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.TH
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Properties.Openable
+import Yaifl.Model.Entity
 
 data DoorSpecifics = Door
-  { backSide :: Entity
-  , isOneWay :: Bool
+  { isOneWay :: Bool
   , openable :: Openable
+  , frontSide :: RoomEntity
+  , backSide :: RoomEntity
   } deriving stock (Eq, Show, Read)
 
-blankDoor :: Entity -> DoorSpecifics
-blankDoor e = Door e False Closed
+blankDoorSpecifics :: RoomEntity -> RoomEntity -> DoorSpecifics
+blankDoorSpecifics = Door False Closed
 
 makeFieldLabelsNoPrefix ''DoorSpecifics
 makeSpecificsWithout [] ''DoorSpecifics

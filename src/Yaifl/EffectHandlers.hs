@@ -19,6 +19,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.World
 import Yaifl.Actions.Collection
+import Effectful.Error.Static (Error, runError)
 
 
 type EffStack (wm :: WorldModel) = '[
@@ -37,6 +38,7 @@ type EffStack (wm :: WorldModel) = '[
   , Print
   , State (World wm)
   , Breadcrumbs
+  , Error MissingObject
   , IOE
   ]
 
@@ -67,7 +69,9 @@ convertToUnderlyingStack ::
   -> Eff (EffStack wm) a
   -> IO (a, World wm)
 convertToUnderlyingStack w ac =
-  runEff
+  fmap (either (error . show) id)
+  . runEff
+  . runError
   . runBreadcrumbs Nothing
   . runStateShared w
   . runPrintPure @(World wm)
