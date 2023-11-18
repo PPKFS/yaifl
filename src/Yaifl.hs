@@ -68,13 +68,13 @@ type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityColle
  -- toTextDir = toTextDir
 
 type HasStandardProperties s = (
-  WMHasProperty s Enclosing
-  , WMHasProperty s Container
-  , WMHasProperty s Enterable
-  , WMHasProperty s Openable
+  WMWithProperty s Enclosing
+  , WMWithProperty s Container
+  , WMWithProperty s Enterable
+  , WMWithProperty s Openable
   , HasLookingProperties s
   , WMStdDirections s
-  , WMHasProperty s DoorSpecifics
+  , WMWithProperty s DoorSpecifics
   , HasDirectionalTerms s
   , Pointed (WMObjSpecifics s)
   )

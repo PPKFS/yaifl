@@ -15,6 +15,7 @@ is an object. Namely, there's no need for e.g. directions to be objects.
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Yaifl.Model.Object (
   -- * Objects
@@ -129,8 +130,6 @@ newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
 newtype AnyObject wm = AnyObject (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
-
-
 instance HasField x (Object wm ThingData (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
   getField (Thing o) = getField @x o
 
@@ -166,6 +165,7 @@ instance HasID (Room wm) where
 
 makeFieldLabelsNoPrefix ''Object
 
+instance Taggable (Room wm) EnclosingTag
 instance Taggable (Room wm) RoomTag
 instance Taggable (Thing wm) ThingTag
 
@@ -200,7 +200,7 @@ _Thing :: Prism' (AnyObject wm) (Thing wm)
 _Thing = prism' (AnyObject . first Left . coerce) (fmap Thing . bitraverse leftToMaybe Just . (\(AnyObject a) -> a))
 
 -- | A slightly more descriptive prism for objects specifically.
-class CanBeAny wm o where
+class CanBeAny wm o | o -> wm where
   toAny :: o -> AnyObject wm
   fromAny :: AnyObject wm -> Maybe o
 

@@ -23,9 +23,10 @@ import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData ( RoomData, blankRoomData )
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
-import Yaifl.Model.Properties.Has ( WMHasProperty )
+import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.ObjectLike
 
 makeObject ::
   Pointed s
@@ -45,7 +46,7 @@ makeObject n d ty isT specifics details = do
 
 addObject ::
   Pointed s
-  => WMHasProperty wm Enclosing
+  => WMWithProperty wm Enclosing
   => AddObjects wm es
   => (Object wm d s -> Eff es ())
   -> WMSayable wm -- ^ Name.
@@ -61,17 +62,21 @@ addObject updWorld n d ty isT specifics details =
     addAnnotation "object created"
     updWorld obj
     addAnnotation "object added to world"
-    lastRoom <- use #previousRoom
+    lastRoomE <- use #previousRoom
     tickGlobalTime
-    failHorriblyIfMissing $ asThingOrRoomM e
-      (\t -> do
+
+    failHorriblyIfMissing $ do
+      obj' <- getObject e
+      lastRoom <- getRoom lastRoomE
+      asThingOrRoom
+        (\t -> do
         withoutSpan $ when (t ^. #objectData % #containedBy == coerceTag voidID)
           (move t lastRoom >> pass))
-      (\r -> #previousRoom .= tagRoom r)
+        (\r -> #previousRoom .= tagRoom r) obj'
     pure obj
 
 addThingInternal ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -84,7 +89,7 @@ addThingInternal name desc objtype specifics details =
     True specifics (fromMaybe blankThingData details)
 
 addThing' ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -97,7 +102,7 @@ runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
 runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
 
 addThing ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -105,7 +110,7 @@ addThing ::
 addThing n d = addThing' n d pass
 
 addRoomInternal ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -120,7 +125,7 @@ addRoomInternal name desc objtype specifics details = do
   return e
 
 addRoom' ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -130,7 +135,7 @@ addRoom' n d rd = addRoomInternal n d (ObjectType "room")
   Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
 
 addRoom ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -138,7 +143,7 @@ addRoom ::
 addRoom n d = addRoom' n d pass
 
 addBaseObjects ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => AddObjects wm es
   => Eff es ()
 addBaseObjects = do

@@ -6,7 +6,6 @@ import Solitude
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Activities.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
-import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
@@ -28,7 +27,7 @@ import Yaifl.Model.Objects.ObjectLike
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
-  (WMHasProperty wm Enclosing, WMHasProperty wm Enterable, WMHasProperty wm Container
+  (WMWithProperty wm Enclosing, WMWithProperty wm Enterable, WMWithProperty wm Container
   , Display (WMSayable wm)
   , IsString (WMSayable wm)
   , WithPrintingNameOfADarkRoom wm
@@ -78,13 +77,10 @@ getVisibilityLevels e = do
 findVisibilityHolder ::
   NoMissingObjects wm es
   => HasLookingProperties wm
-  => CanBeAny wm o
-  => ObjectLike wm o
-  => o
+  => AnyObject wm
   -> Eff es (AnyObject wm)
-findVisibilityHolder e' = do
-  obj <- getObject e'
-  mCont <- getContainerMaybe e'
+findVisibilityHolder obj = do
+  let mCont = getContainerMaybe obj
   let n = obj ^. #name
   case (tagObject obj, isOpaqueClosedContainer <$?> mCont) of
     -- a nonopaque or open container thing
@@ -94,8 +90,7 @@ findVisibilityHolder e' = do
     _ -> do
       addAnnotation $ "The visibility holder of " <> display n <> " is itself"
       --return it
-      return (toAny e')
-
+      return obj
 
 -- Inform Designer's Manual, Page 146
 -- we recalculate the light of the immediate holder of an object
@@ -106,23 +101,21 @@ findVisibilityHolder e' = do
 recalculateLightOfParent ::
   NoMissingObjects wm es
   => HasLookingProperties wm
-  => ObjectLike wm o
+  => CanBeAny wm o
   => o
   -> Eff es Int
-recalculateLightOfParent e = do
-  (parent :: Maybe EnclosingEntity) <- view (#objectData % #containedBy) <$$> getThingMaybe e
-  case parent of
-    --it's a room.
-    Nothing -> return 0
-    Just p -> do
-      ol <- offersLight p
-      if
-        ol
-      then
-        (1+) <$> recalculateLightOfParent p
-      else
-        return 0
-
+recalculateLightOfParent = asThingOrRoom
+  (\t -> do
+    parent <- getObject (t ^. #objectData % #containedBy)
+    ol <- offersLight parent
+    if
+      ol
+    then
+      (1+) <$> recalculateLightOfParent parent
+    else
+      return 0
+  )
+  (const $ return 0) . toAny
 
 -- | An object offers light if:
 -- - it is a lit thing (lit thing or lighted room)
@@ -132,17 +125,16 @@ recalculateLightOfParent e = do
 offersLight ::
   NoMissingObjects wm es
   => HasLookingProperties wm
-  => ObjectLike wm o
-  => o
+  => AnyObject wm
   -> Eff es Bool
-offersLight e = do
-  let parentOffersLight o = offersLight (o ^. #objectData % #containedBy)
+offersLight obj = do
+  let parentOffersLight o = getObject (o ^. #objectData % #containedBy) >>= offersLight
       seeThruWithParent = maybe (return False) (\o' -> isSeeThrough o' &&^ parentOffersLight o')
-  o <- getThingMaybe e
+  t <- getThingMaybe obj
 
-  objectItselfHasLight e -- it is a lit thing (lit thing or lighted room)
-    ||^ seeThruWithParent o -- - it is see-through and its parent offers light
-    ||^ containsLitObj e -- - it contains a thing that has light
+  pure (objectItselfHasLight obj) -- it is a lit thing (lit thing or lighted room)
+    ||^ seeThruWithParent t -- - it is see-through thing and its parent offers light
+    ||^ containsLitObj obj -- - it contains a thing that has light
 
 -- | an object is see through if...
 isSeeThrough ::
@@ -151,7 +143,9 @@ isSeeThrough ::
   => Thing wm
   -> Eff es Bool
 isSeeThrough e = do
-  (c, en, s) <- (,,) <$> getContainerMaybe e <*> getEnterableMaybe e <*> isSupporter e
+  let c = getContainerMaybe e
+      en = getEnterableMaybe e
+  s <- isSupporter e
   isContainer <- isType e "container"
   let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
@@ -164,12 +158,11 @@ isSeeThrough e = do
 containsLitObj ::
   NoMissingObjects wm es
   => HasLookingProperties wm
-  => ObjectLike wm o
-  => o -- ^ the object
+  => AnyObject wm -- ^ the object
   -> Eff es Bool
-containsLitObj e = do
-  enc <- getEnclosing e
-  enc & maybe (return False) (\encs -> anyM hasLight (DES.elems $ contents encs))
+containsLitObj obj = do
+  let enc = getEnclosingMaybe obj
+  enc & maybe (return False) (\encs -> anyM (getObject >=> hasLight) (DES.elems $ contents encs))
 
 {- | (4) An object itself has light if:
   (a) it's a room with the lighted property,
@@ -177,11 +170,9 @@ containsLitObj e = do
   If you want to include transitive light, you want `hasLight`.
 -}
 objectItselfHasLight ::
-  NoMissingObjects wm es
-  => ObjectLike wm o
-  => o -- ^ the object
-  -> Eff es Bool
-objectItselfHasLight e = asThingOrRoom e
+  AnyObject wm -- ^ the object
+  -> Bool
+objectItselfHasLight = asThingOrRoom
   ((Lit ==) . view (#objectData % #lit))
   ((Lighted ==) . view (#objectData % #darkness))
 
@@ -195,11 +186,10 @@ objectItselfHasLight e = asThingOrRoom e
 hasLight ::
   NoMissingObjects wm es
   => HasLookingProperties wm
-  => ObjectLike wm o
-  => o
+  => AnyObject wm
   -> Eff es Bool
-hasLight e = do
-  ts <- getThingMaybe e
-  objectItselfHasLight e
+hasLight obj = do
+  ts <- getThingMaybe obj
+  pure (objectItselfHasLight obj)
     ||^ (maybe (return False) isSeeThrough ts
-      &&^ containsLitObj e)
+      &&^ containsLitObj obj)

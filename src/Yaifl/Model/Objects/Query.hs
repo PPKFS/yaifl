@@ -10,7 +10,6 @@ module Yaifl.Model.Objects.Query
   , getThingMaybe
   , getRoomMaybe
   , asThingOrRoom
-  , asThingOrRoomM
   , getLocation
   -- * Modify
   , modifyObject
@@ -85,27 +84,14 @@ getRoomMaybe ::
 getRoomMaybe e = withoutMissingObjects (preview _Room <$> getObject (getID e)) (const $ pure Nothing)
 
 asThingOrRoom ::
-  NoMissingObjects wm es
-  => ObjectLike wm o
-  => o
-  -> (Thing wm -> a)
+  (Thing wm -> a)
   -> (Room wm -> a)
-  -> Eff es a
-asThingOrRoom o tf rf = do
-  a <- getObject o
-  case (preview _Thing a, preview _Room a) of
-    (Just x, _) -> tf <$> getThing x
-    (_, Just x) -> rf <$> getRoom x
+  -> AnyObject wm
+  -> a
+asThingOrRoom tf rf a = case (preview _Thing a, preview _Room a) of
+    (Just x, _) -> tf x
+    (_, Just x) -> rf x
     _ -> error "impossible"
-
-asThingOrRoomM ::
-  NoMissingObjects wm es
-  => ObjectLike wm o
-  => o
-  -> (Thing wm -> Eff es a)
-  -> (Room wm -> Eff es a)
-  -> Eff es a
-asThingOrRoomM o tf rf = join $ asThingOrRoom o tf rf
 
 modifyObjectFrom ::
   State Metadata :> es
@@ -127,7 +113,7 @@ modifyThing ::
   => o
   -> (Thing wm -> Thing wm)
   -> Eff es ()
-modifyThing o u = modifyObjectFrom (fmap (\(Thing a) -> a) . getThing) (setThing . Thing) o ((\(Thing a) -> a) . u . Thing)
+modifyThing o u = modifyObjectFrom (fmap coerce refreshThing) (setThing . Thing) o ((\(Thing a) -> a) . u . Thing)
 
 modifyRoom ::
   NoMissingObjects wm es
@@ -135,17 +121,16 @@ modifyRoom ::
   => o
   -> (Room wm -> Room wm)
   -> Eff es ()
-modifyRoom o u = modifyObjectFrom (fmap (\(Room a) -> a) . getRoom) (setRoom . Room) o ((\(Room a) -> a) . u . Room)
+modifyRoom o u = modifyObjectFrom (fmap coerce refreshRoom) (setRoom . Room) o ((\(Room a) -> a) . u . Room)
 
 modifyObject ::
   NoMissingObjects wm es
-  => ObjectLike wm o
-  => o
+  => AnyObject wm
   -> (AnyObject wm -> AnyObject wm)
   -> Eff es ()
-modifyObject e s = asThingOrRoomM e
+modifyObject e s = asThingOrRoom
   (`modifyThing` anyModifyToThing s)
-  (`modifyRoom` anyModifyToRoom s)
+  (`modifyRoom` anyModifyToRoom s) e
 
 anyModifyToThing ::
   (AnyObject s -> AnyObject s)
@@ -165,7 +150,7 @@ getLocation ::
 getLocation t = do
   t' <- getThing t
   o <- getObject (t' ^. #objectData % #containedBy)
-  join $ asThingOrRoom o getLocation return
+  asThingOrRoom getLocation return o
 
 refreshRoom ::
   NoMissingObjects wm es

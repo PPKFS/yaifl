@@ -20,7 +20,7 @@ import Solitude hiding (Down)
 
 import Yaifl.Model.Direction
 import Yaifl.Model.Entity
-import Yaifl.Metadata ( whenConstructing )
+import Yaifl.Metadata ( whenConstructing, noteError )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
@@ -29,8 +29,6 @@ import Yaifl.Model.WorldModel ( WMDirection )
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Properties.Door
-import Yaifl.Model.Properties.Has
 
 getAllConnections ::
   Room wm
@@ -170,15 +168,27 @@ isBelow ::
 isBelow = isDownOf
 
 addDoorToConnection ::
-  NoMissingObjects wm es
-  => WMHasProperty wm DoorSpecifics
-  => DoorLike wm d
-  => d
+  WMStdDirections wm
+  => NoMissingObjects wm es
+  => DoorEntity
   -> (Room wm, WMDirection wm)
   -> (Room wm, WMDirection wm)
   -> Eff es ()
 addDoorToConnection d (front, frontDir) (back, backDir) = do
-  modifyAndVerifyConnection fr frDir ba (#doorThrough ?~ Just d)
-  -- check that this is a connection that exists
-  error ""
-  --verifyExistenceOfConnection front frontDir back backDir
+  modifyAndVerifyConnection front frontDir back (#doorThrough ?~ d)
+  modifyAndVerifyConnection back backDir front (#doorThrough ?~ d)
+
+modifyAndVerifyConnection ::
+  forall wm es.
+  WMStdDirections wm
+  => NoMissingObjects wm es
+  => Room wm
+  -> WMDirection wm
+  -> Room wm
+  -> (Connection -> Connection)
+  -> Eff es ()
+modifyAndVerifyConnection fromRoom fromDir dest f = do
+  if connectionInDirection Nothing fromRoom fromDir == Just (tagRoom dest)
+  then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
+  else noteError (const ()) ("Tried to add a connection to the room " <> display fromRoom <> " but it had no connection in direction "
+    <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))

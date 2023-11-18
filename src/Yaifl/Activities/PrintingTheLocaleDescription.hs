@@ -193,9 +193,9 @@ alsoSee = Rule "You can also see" [] (\v ->
       -- has a common parent and therefore we are listing the contents
       -- of something. this will happen unless the author
       -- manually adds some notable object that isn't present in the room
-      allHolders <- sequence $ DEM.foldl' (\xs li -> flip cons xs $ asThingOrRoom (localeObject li)
-          (\t -> Just $ t ^. #objectData % #containedBy)
-          (const Nothing)) [] lp
+      let allHolders = DEM.foldl' (\xs li -> flip cons xs $ asThingOrRoom
+            (\t -> Just $ t ^. #objectData % #containedBy)
+            (const Nothing) (localeObject li)) [] lp
       case allHolders of
         -- no items
         [] -> error "impossible - no items found?"

@@ -3,10 +3,11 @@ module Yaifl.Model.Properties.Query (
   , defaultPropertyGetter
   , defaultPropertySetter
   , modifyProperty
+  , getEnclosingMaybe
   , getEnclosing
   , setEnclosing
-  , PropertyLike(..)
-  , EnclosingLike
+  , HasProperty(..)
+  , EnclosingObject(..)
 ) where
 
 import Solitude
@@ -15,10 +16,9 @@ import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
-import Yaifl.Model.Properties.Has ( HasProperty(..), WMHasProperty )
+import Yaifl.Model.Properties.Has
 import Effectful.Error.Static ( Error, throwError )
 import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.ObjectLike
 
 getPropertyOrThrow ::
   HasID i
@@ -31,80 +31,73 @@ getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <>
 
 defaultPropertySetter ::
   NoMissingObjects wm es
-  => WMHasProperty wm v
-  => ObjectLike wm o
+  => WMWithProperty wm v
+  => CanBeAny wm o
   => o
   -> v
   -> Eff es ()
-defaultPropertySetter e v = modifyObject e (#specifics % propertyL .~ v)
+defaultPropertySetter e v = modifyObject (toAny e) (#specifics % propertyAT .~ v)
 
 defaultPropertyGetter ::
-  NoMissingRead wm es
-  => WMHasProperty wm v
-  => ObjectLike wm o
+  forall wm o v.
+  WMWithProperty wm v
+  => CanBeAny wm o
   => o
-  -> Eff es (Maybe v)
-defaultPropertyGetter e = do
-  o <- getObject e
-  return $ preview (#specifics % propertyL) o
+  -> Maybe v
+defaultPropertyGetter o = preview (#specifics % propertyAT) (toAny o)
 
 modifyProperty ::
-  (o -> Eff es (Maybe p))
-  -> (o -> p -> Eff es ())
+  CanBeAny wm o
+  => (AnyObject wm -> Maybe p)
+  -> (AnyObject wm -> p -> Eff es ())
   -> o
   -> (p -> p)
   -> Eff es ()
 modifyProperty g s o f = do
-  e <- g o
+  let e = g (toAny o)
   when (isNothing e) (do
     --logVerbose "Trying to modify a property of an object which does not exist"
     pass)
-  whenJust e (s o . f)
+  whenJust e (s (toAny o) . f)
 
-getEnclosing ::
-  NoMissingObjects wm es
-  => WMHasProperty wm Enclosing
-  => ObjectLike wm o
-  => o
-  -> Eff es (Maybe Enclosing)
-getEnclosing e = asThingOrRoomM e
-  defaultPropertyGetter
-  (pure . Just . view (#objectData % #enclosing))
+getEnclosingMaybe ::
+  forall wm.
+  WMWithProperty wm Enclosing
+  => AnyObject wm
+  -> Maybe Enclosing
+getEnclosingMaybe e = asThingOrRoom
+  (const $ defaultPropertyGetter e)
+  (Just . view (#objectData % #enclosing)) e
 
 setEnclosing ::
+  forall wm es o.
   NoMissingObjects wm es
-  => WMHasProperty wm Enclosing
-  => ObjectLike wm o
+  => WMWithProperty wm Enclosing
+  => CanBeAny wm o
   => o
   -> Enclosing
   -> Eff es ()
-setEnclosing e v = asThingOrRoomM e
+setEnclosing e v = asThingOrRoom
   (`defaultPropertySetter` v)
-  (\o -> modifyRoom o (#objectData % #enclosing .~ v))
+  (\o -> modifyRoom o (#objectData % #enclosing .~ v)) (toAny @wm e)
 
-asThingKind ::
-  o
-  -> a
-  -> (Object wm s a)
-asThingKind = error ""
+getEnclosing ::
+  WMWithProperty wm Enclosing
+  => EnclosingEntity
+  -> AnyObject wm
+  -> Enclosing
+getEnclosing _ = fromMaybe (error "property witness was violated") . getEnclosingMaybe
 
-class PropertyLike wm prop o where
-  getAs :: (WMHasProperty wm prop, NoMissingObjects wm es) => o -> Eff es prop
+-- | A lens that is guaranteed by witnesses
+class HasProperty w o v where
+  propertyL :: w -> Lens' o v
 
-type EnclosingLike wm o = PropertyLike wm Enclosing o
-instance PropertyLike wm a a where
-  getAs = pure
+instance MayHaveProperty o v => HasProperty w o v where
+  propertyL _ = lens (fromMaybe (error "property witness was violated") . preview propertyAT) (flip (set propertyAT))
 
-instance PropertyLike wm Enclosing (TaggedEntity EnclosingTag) where
- getAs o = do
-    a <- getObject o
-    e <- getEnclosing a
-    getPropertyOrThrow "enclosing" a e
 
-instance PropertyLike wm Enclosing (TaggedEntity RoomTag) where
- getAs o = do
-    a <- getRoom o
-    getAs a
+class Taggable o EnclosingTag => EnclosingObject o where
+  enclosingL :: Lens' o Enclosing
 
-instance PropertyLike wm Enclosing (Room wm) where
- getAs o = pure $ o ^. #objectData % #enclosing
+instance EnclosingObject (Room wm) where
+  enclosingL = #objectData % #enclosing

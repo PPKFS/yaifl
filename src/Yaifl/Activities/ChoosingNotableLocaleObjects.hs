@@ -10,8 +10,8 @@ import Yaifl.Model.Entity ( Store(..), HasID(..) )
 import Yaifl.Model.Object( Object(..), AnyObject )
 import Yaifl.Model.Objects.Query ( getObject )
 import Yaifl.Model.Properties.Enclosing ( Enclosing(..) )
-import Yaifl.Model.Properties.Has ( WMHasProperty )
-import Yaifl.Model.Properties.Query ( getEnclosing )
+import Yaifl.Model.Properties.Has ( WMWithProperty )
+import Yaifl.Model.Properties.Query ( getEnclosingMaybe )
 import Yaifl.Rules.Rule (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
@@ -21,11 +21,11 @@ import Yaifl.Actions.Looking.Locale
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm (AnyObject wm) (LocalePriorities wm))
 choosingNotableLocaleObjectsImpl ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
 choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" [makeRule "" []
   (\v -> do
-    e' <- getEnclosing v
+    let e' = getEnclosingMaybe v
     case e' of
       Nothing -> (do
         addAnnotation $ "Tried to choose notable locale objects from " <> display (v ^. #name) <> " which doesn't enclose."

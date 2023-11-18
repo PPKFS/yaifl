@@ -3,7 +3,6 @@
 
 module Yaifl.Model.Properties.Door
   ( DoorSpecifics(..)
-  , DoorLike
   , blankDoorSpecifics
   , getDoorSpecificsMaybe
   , isOpen
@@ -13,13 +12,13 @@ module Yaifl.Model.Properties.Door
 
 import Solitude
 
-import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.TH
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Entity
+import Yaifl.Model.Object
 
 data DoorSpecifics = Door
   { isOneWay :: Bool
@@ -35,20 +34,28 @@ makeFieldLabelsNoPrefix ''DoorSpecifics
 makeSpecificsWithout [] ''DoorSpecifics
 
 isClosed ::
-  NoMissingRead wm es
-  => WMHasProperty wm Openable
-  => ObjectLike wm o
+  WMWithProperty wm Openable
+  => CanBeAny wm o
   => o
-  -> Eff es Bool
-isClosed o = (Just Closed ==) <$> getOpenableMaybe o
+  -> Bool
+isClosed o = Just Closed == getOpenableMaybe o
 
 isOpen ::
-  NoMissingRead wm es
-  => WMHasProperty wm Openable
-  => ObjectLike wm o
+  WMWithProperty wm Openable
+  => CanBeAny wm o
   => o
-  -> Eff es Bool
-isOpen o = (Just Open ==) <$> getOpenableMaybe o
+  -> Bool
+isOpen o = Just Open == getOpenableMaybe o
+instance Taggable DoorSpecifics DoorTag
 
+{-}
 
 type DoorLike wm o = PropertyLike wm DoorSpecifics o
+
+
+instance PropertyLike wm DoorSpecifics DoorEntity where
+ getAs o = do
+    a <- getObject o
+    e <- getDoorSpecificsMaybe a
+    getPropertyOrThrow "door" a e
+    -}

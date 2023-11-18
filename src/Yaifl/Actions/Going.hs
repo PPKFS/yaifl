@@ -45,7 +45,7 @@ data GoingActionVariables wm = GoingActionVariables
   } deriving stock ( Generic )
 
 goingAction ::
-  (WMStdDirections wm, WMHasProperty wm DoorSpecifics, WMHasProperty wm Enclosing)
+  (WMStdDirections wm, WMWithProperty wm DoorSpecifics, WMWithProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
   => Action wm (GoingActionVariables wm)
 goingAction = Action
@@ -69,7 +69,7 @@ describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (error "other actors cant report going yet")
 
 
-carryOutGoingRules :: WMHasProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
+carryOutGoingRules :: WMWithProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
 carryOutGoingRules = makeActionRulebook "carry out going rulebook"
   [ movePlayerAndVehicle
   , moveFloatingObjects
@@ -82,7 +82,7 @@ checkLightInNewLocation = notImplementedRule "check light in new location rule"
 moveFloatingObjects :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 moveFloatingObjects = notImplementedRule "move floating objects rule"
 
-movePlayerAndVehicle :: WMHasProperty wm Enclosing => Rule wm (Args wm (GoingActionVariables wm)) Bool
+movePlayerAndVehicle :: WMWithProperty wm Enclosing => Rule wm (Args wm (GoingActionVariables wm)) Bool
 movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{variables=v} -> do
   moveSuccessful <- case vehicleGoneBy v of
     Nothing -> move (source a) (roomGoneTo v)
@@ -91,7 +91,7 @@ movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{vari
 
 goingActionSet ::
   forall wm es.
-  (ParseArgumentEffects wm es, WMStdDirections wm, WMHasProperty wm DoorSpecifics)
+  (ParseArgumentEffects wm es, WMStdDirections wm, WMWithProperty wm DoorSpecifics)
   => WithPrintingNameOfSomething wm
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
@@ -124,8 +124,9 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     NoParameter -> do
       mbThrough <- getMatchingThing "through"
       -- TODO: this should be a door or complain
-      mbDoor <- join <$> traverse getDoorSpecificsMaybe mbThrough
-      pure $ backSide <$> mbDoor
+      --mbDoor <- join <$> traverse getDoorSpecificsMaybe mbThrough
+      --pure $ backSide <$> mbDoor
+      error "aaaaa door"
     ConstantParameter t -> error $ "got a " <> t
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target
   addAnnotation $ "target was " <> show target

@@ -9,6 +9,7 @@ import Yaifl.Test.Chapter3.SlightlyWrong
 import Yaifl.Test.Chapter3.PortRoyal
 import qualified Data.Map as M
 import Yaifl.Test.Chapter3.UpAndUp
+import Yaifl.Test.Chapter3.StarryVoid
 
 spec :: Bool -> Map String (IO Text)
 spec allTenses = M.fromList
@@ -17,4 +18,5 @@ spec allTenses = M.fromList
   , ("Slightly Wrong", testHarness allTenses "Slightly Wrong" ex4TestMeWith defaultOptions ex4World)
   , ("Port Royal", testHarness allTenses "Port Royal" portRoyalTestMeWith defaultOptions portRoyalWorld)
   , ("Up and Up", testHarness allTenses "Up and Up" upAndUpTestMeWith defaultOptions upAndUp)
+  , ("Starry Void", testHarness allTenses "Starry Void" starryVoidTestMeWith defaultOptions starryVoidWorld)
   ]

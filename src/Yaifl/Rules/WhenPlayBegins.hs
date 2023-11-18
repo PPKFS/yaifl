@@ -15,20 +15,21 @@ import Yaifl.Model.Objects.Move ( move )
 import Yaifl.Model.Objects.Query ( getCurrentPlayer )
 import Yaifl.Text.Print ( Print, printText, setStyle )
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
-import Yaifl.Model.Properties.Has ( WMHasProperty )
+import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( Rulebook(..) )
 import Yaifl.Rules.Run ( failRuleWithError )
 import Yaifl.Rules.RuleEffects
 import Yaifl.Model.Objects.Effects
 import Yaifl.Rules.Args
+import Yaifl.Model.Objects.ObjectLike
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
 
 -- | The rulebook that runs at the start of the game.
 whenPlayBeginsRules ::
-  WMHasProperty wm Enclosing
+  WMWithProperty wm Enclosing
   => Rulebook wm () Bool
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
@@ -75,10 +76,11 @@ initRoomDescription = do
 
 positionPlayer ::
   NoMissingObjects wm es
-  => WMHasProperty wm Enclosing
+  => WMWithProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do
-  fr <- use #firstRoom
+  fre <- use #firstRoom
+  fr <- getRoom fre
   pl <- getCurrentPlayer
   m <- move pl fr
   if m then return Nothing else failRuleWithError "Failed to move the player."
