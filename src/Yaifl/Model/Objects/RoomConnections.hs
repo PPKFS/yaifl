@@ -187,7 +187,8 @@ modifyAndVerifyConnection ::
   -> Room wm
   -> (Connection -> Connection)
   -> Eff es ()
-modifyAndVerifyConnection fromRoom fromDir dest f = do
+modifyAndVerifyConnection fromRoom' fromDir dest f = do
+  fromRoom <- refreshRoom fromRoom'
   if connectionInDirection Nothing fromRoom fromDir == Just (tagRoom dest)
   then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
   else noteError (const ()) ("Tried to add a connection to the room " <> display fromRoom <> " but it had no connection in direction "

@@ -2,9 +2,7 @@ module Yaifl.Model.Objects.Query
   ( -- * Types
   ObjectLike(..)
   -- * Missing Objects
-  , withoutMissingObjects
   , failHorriblyIfMissing
-  , handleMissingObject
 
   -- * Get
   , getThingMaybe
@@ -49,15 +47,6 @@ withoutMissingObjects f def = do
     -- TODO: investigate what the callstack adds
     Left err' -> def (snd err')
     Right x -> return x
-
-handleMissingObject ::
-  WithMetadata es
-  => Text
-  -> a
-  -> MissingObject
-  -> Eff es a
-handleMissingObject msg def (MissingObject t o) =
-  noteError (const def) $ "When " <> show msg <> " the object with ID " <> show o <> " could not be found because " <> show t
 
 failHorriblyIfMissing ::
   HasCallStack

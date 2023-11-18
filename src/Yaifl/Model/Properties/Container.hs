@@ -30,7 +30,6 @@ import Yaifl.Model.Properties.Query ( defaultPropertySetter, defaultPropertyGett
 import Yaifl.Model.Properties.TH ( makeSpecificsWithout )
 import Yaifl.Model.Properties.Openable ( Openable(..) )
 import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Object
 
 -- | If the container is see-through.

@@ -79,17 +79,32 @@ type HasStandardProperties s = (
   , Pointed (WMObjSpecifics s)
   )
 
+-- | All the standard library activities.
+-- printing the banner text, constructing the status line, reading a command, deciding the scope
+-- clarifying the parser's scope, printing a paser error, asking which do you mean
+-- supplying a missing noun, second noun, implicitly taking, amusing a victorius player, printing obit
+-- handling final question, offering something and performing something (both dialogue)
 data ActivityCollection wm = ActivityCollection
-  { printingNameOfADarkRoom :: !(Activity wm () ())
-  , printingNameOfSomething :: !(Activity wm (AnyObject wm) Text)
-  , printingDescriptionOfADarkRoom :: !(Activity wm () ())
-  , choosingNotableLocaleObjects :: !(Activity wm (AnyObject wm) (LocalePriorities wm))
-  , printingLocaleParagraphAbout :: !(Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm))
-  , printingTheLocaleDescription :: !(Activity wm (LocaleVariables wm) ())
-  , listingNondescriptItems :: !(Activity wm (AnyObject wm) ())
-  , listingContents :: !(Activity wm (ListWritingParameters wm) ())
+  { choosingNotableLocaleObjects :: Activity wm (AnyObject wm) (LocalePriorities wm)
   , groupingTogether :: Activity wm (AnyObject wm) ()
+  , listingContents :: Activity wm (ListWritingParameters wm) ()
+  , listingNondescriptItems :: Activity wm (AnyObject wm) ()
   , printingANumberOf :: Activity wm (Int, AnyObject wm) ()
+  , printingDescriptionOfADarkRoom :: Activity wm () ()
+  , printingLocaleParagraphAbout :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+  , printingNameOfSomething :: Activity wm (AnyObject wm) Text
+  , printingTheLocaleDescription :: Activity wm (LocaleVariables wm) ()
+  , printingNameOfADarkRoom :: Activity wm () ()
+  -- TODO https://ganelson.github.io/inform/standard_rules/S-act.html#SP15
+ {- , printingRoomDescriptionDetails :: Activity wm (Thing wm) ()
+  , printingInventoryDetails :: Activity wm (Thing wm) ()
+  , writingAParagraphAbout :: Activity wm (AnyObject wm) ()
+  , printingAnnouncementOfDarkness :: Activity wm () ()
+  , printingAnnouncementOfLight :: Activity wm () ()
+  , printingRefusalToActInTheDark :: Activity wm () ()
+  , decidingConcealedPossessions :: Activity wm () ()
+  , decidingWhetherAllIncludes :: Activity wm () ()
+-}
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActivityCollection

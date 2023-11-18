@@ -124,9 +124,8 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     NoParameter -> do
       mbThrough <- getMatchingThing "through"
       -- TODO: this should be a door or complain
-      --mbDoor <- join <$> traverse getDoorSpecificsMaybe mbThrough
-      --pure $ backSide <$> mbDoor
-      error "aaaaa door"
+      let mbDoor = join $ traverse getDoorSpecificsMaybe mbThrough
+      pure $ backSide <$> mbDoor
     ConstantParameter t -> error $ "got a " <> t
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target
   addAnnotation $ "target was " <> show target
@@ -240,4 +239,4 @@ toTheRoom ::
   => r
   -> Precondition wm (Args wm (GoingActionVariables wm))
 toTheRoom r = Precondition $ \v -> do
-  pure $ getID (roomGoneTo $ variables $ v) == getID r
+  pure $ getID (roomGoneTo $ variables v) == getID r

@@ -22,7 +22,7 @@ import Breadcrumbs ( withSpan )
 import Data.Text.Display
 import Effectful.Optics ( use )
 import GHC.TypeLits
-import Yaifl.Model.Objects.Query ( withoutMissingObjects, handleMissingObject, failHorriblyIfMissing )
+import Yaifl.Model.Objects.Query ( failHorriblyIfMissing )
 import Yaifl.Rules.Args ( Refreshable )
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
@@ -76,14 +76,13 @@ beginActivity ::
 beginActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
-    withoutMissingObjects
+    failHorriblyIfMissing
       (do
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
         -- run the before rules only.
         r <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
         whenJust r $ \r' -> modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ fst r')
         pure $ maybe c fst r)
-      (handleMissingObject "beginning an activity" c)
 
 whenHandling' ::
   RuleEffects wm es
@@ -153,10 +152,10 @@ doActivity ::
   -> Eff es (Maybe r)
 doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
-  withSpan "activity" (ac ^. #name) $ \aSpan -> withoutMissingObjects (do
+  withSpan "activity" (ac ^. #name) $ \aSpan -> failHorriblyIfMissing (do
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
     x <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
     mr <- runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) (maybe c fst x)
     _ <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) (maybe c fst mr)
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
-    return $ snd =<< mr) (handleMissingObject "running an activity" Nothing)
+    return $ snd =<< mr)

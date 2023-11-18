@@ -95,7 +95,6 @@ class HasProperty w o v where
 instance MayHaveProperty o v => HasProperty w o v where
   propertyL _ = lens (fromMaybe (error "property witness was violated") . preview propertyAT) (flip (set propertyAT))
 
-
 class Taggable o EnclosingTag => EnclosingObject o where
   enclosingL :: Lens' o Enclosing
 

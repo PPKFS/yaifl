@@ -12,37 +12,39 @@ import Solitude
 import Breadcrumbs ( addTag )
 import Data.Text.Display ( display )
 import Effectful.Optics ( use )
+
 import Yaifl.Actions.Action
-import Yaifl.Activities.Activity
-import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Model.Entity ( emptyStore, HasID(..) )
-import Yaifl.Metadata
-import Yaifl.Model.Object( Object(..), AnyObject, Thing )
-import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.RoomData (IsVisited(..))
-import Yaifl.Model.Objects.ThingData ( ThingData(..) )
-import Yaifl.Text.Print ( Print, setStyle, printLn )
-import Yaifl.Text.Responses
-import Yaifl.Rules.Rule
-import Yaifl.Rules.RuleEffects
-import Yaifl.Rules.Rulebook
-import Yaifl.Text.SayQQ
 import Yaifl.Actions.Looking.Locale
+import Yaifl.Actions.Looking.Visibility
+import Yaifl.Activities.Activity
+import Yaifl.Activities.PrintingTheLocaleDescription ( WithPrintingTheLocaleDescription )
+import Yaifl.Metadata
+import Yaifl.Model.Entity ( emptyStore, HasID(..) )
+import Yaifl.Model.Object( Object(..), AnyObject, Thing, objectEquals )
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Query
+import Yaifl.Model.Objects.RoomData ( IsVisited(..) )
+import Yaifl.Model.Objects.ThingData ( ThingData(..) )
 import Yaifl.Model.Properties.Animal
 import Yaifl.Model.Properties.Supporter ( isSupporter )
-import Yaifl.Text.Say
-import Yaifl.Actions.Looking.Visibility
-import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Activities.PrintingTheLocaleDescription ( WithPrintingTheLocaleDescription )
 import Yaifl.Rules.Args
-import Yaifl.Model.Objects.Effects
+import Yaifl.Rules.Rule
+import Yaifl.Rules.RuleEffects
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.Print ( Print, setStyle, printLn )
+import Yaifl.Text.Responses
+import Yaifl.Text.Say
+import Yaifl.Text.SayQQ
+import qualified Prettyprinter.Render.Terminal as PPTTY
 
+-- STATUS: all done, except report other people looking
+-- some of the locale printing needs more work
 roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => RoomDescriptionResponses wm
 roomDescriptionResponsesImpl = RDR
-  { roomDescriptionHeadingA = roomDescriptionHeadingAImpl
-  , roomDescriptionHeadingB = roomDescriptionHeadingBImpl
-  , roomDescriptionHeadingC = roomDescriptionHeadingCImpl
-  , roomDescriptionBodyA = roomDescriptionBodyAImpl
+  { roomDescriptionHeadingA = Response $ const [sayingTell|Darkness|]
+  , roomDescriptionHeadingB = Response $ \intermediateLevel -> [sayingTell|(on {the intermediateLevel})|]
+  , roomDescriptionHeadingC = Response $ \intermediateLevel -> [sayingTell|(in {the intermediateLevel})|]
+  , roomDescriptionBodyA = Response $ const [sayingTell|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
   }
 
 lookingAction ::
@@ -69,18 +71,16 @@ lookingActionSet ::
   => NoMissingObjects wm es
   => UnverifiedArgs wm
   -> Eff es (ArgumentParseResult (LookingActionVariables wm))
-lookingActionSet ua@(UnverifiedArgs Args{..}) = withoutMissingObjects (do
+lookingActionSet ua@(UnverifiedArgs Args{..}) = do
   -- loc may be a thing (a container) or a room (the more likely case)
   loc <- getObject (source ^. #objectData % #containedBy)
   vl <- getVisibilityLevels loc
   lightLevels <- recalculateLightOfParent source
-  let ac = getActionParameter ua
-  acName <- case ac of
+  acName <- case getActionParameter ua of
     NoParameter -> pure "looking"
     ConstantParameter acName -> pure acName
     _other -> error "impossible"
-  return $ Right $ LookingActionVariables loc (take lightLevels vl) acName)
-    (handleMissingObject "Failed to set the variables for looking" $ Left "Failed to set the variables for looking")
+  return $ Right $ LookingActionVariables loc (take lightLevels vl) acName
 
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm
@@ -90,13 +90,12 @@ carryOutLookingRules ::
   => ActionRulebook wm (LookingActionVariables wm)
 carryOutLookingRules = makeActionRulebook "carry out looking" [
   makeRule "room description heading rule" forPlayer'
-    (\rb -> do
+    (\a@Args{variables=(LookingActionVariables _ lvls _)} -> do
       -- say bold type;
       setStyle (Just PPTTY.bold)
-      let (LookingActionVariables _ lvls _) = variables rb
-          mbVisCeil = viaNonEmpty last lvls
+      let mbVisCeil = viaNonEmpty last lvls
       whenJust mbVisCeil $ addTag "visibility ceiling" . display
-      loc <- getActorLocation rb
+      loc <- getActorLocation a
       case mbVisCeil of
         -- if the visibility level count is 0:
         Nothing -> do
@@ -120,6 +119,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             addTag @Text "Ceiling is not the location" ""
             --  say "[The visibility ceiling]";
             [saying|{The visCeil}|]
+      let
       -- repeat with intermediate level count running from 2 to the visibility level count:
       mapM_ foreachVisibilityHolder (drop 1 lvls)
       -- say line break;
@@ -129,16 +129,15 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
       return Nothing),
 
   makeRule "room description body rule" forPlayer'
-    (\rb -> do
-      let (LookingActionVariables _ lvls ac) = variables rb
-          mbVisCeil = viaNonEmpty last lvls
+    (\a@Args{variables=(LookingActionVariables _ lvls ac)} -> do
+      let mbVisCeil = viaNonEmpty last lvls
       roomDesc <- use @Metadata #roomDescriptions
       dw <- use @Metadata #darknessWitnessed
       addTag "darkness witnessed" dw
       addTag "room descriptions" roomDesc
       let abbrev = roomDesc == AbbreviatedRoomDescriptions
           someAbbrev = roomDesc == SometimesAbbreviatedRoomDescriptions
-      loc <- getActorLocation rb
+      loc <- getActorLocation a
       case mbVisCeil of
         -- if the visibility level count is 0:
         Nothing ->
@@ -158,16 +157,13 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
             void $ endActivity #printingDescriptionOfADarkRoom
         Just visCeil ->
           -- otherwise if the visibility ceiling is the location:
-          if getID visCeil == getID loc
-          then
+          when (visCeil `objectEquals` loc) $ do
             -- if set to abbreviated room descriptions, continue the action;
             -- if set to sometimes abbreviated room descriptions and abbreviated form allowed
             -- is true and the location is visited, continue the action;
             unless (abbrev || (someAbbrev && ac /= "looking" && loc ^. #objectData % #isVisited == Visited)) $
               -- print the location's description;
               sayLn $ loc ^. #description
-          else
-            pass
       return Nothing),
   -- because I've ignored all the junk about marked for listing or w/e, and we can do nice clean loops
   -- 19 lines down to 2. lol.
@@ -179,9 +175,8 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
       return Nothing),
 
   makeRule "check new arrival rule" forPlayer'
-    (\rb -> do
-      let (LookingActionVariables _ lvls _) = variables rb
-          mbVisCeil = viaNonEmpty last lvls
+    (\a@Args{variables=(LookingActionVariables _ lvls _)} -> do
+      let mbVisCeil = viaNonEmpty last lvls
       case mbVisCeil of
         -- if in darkness:
         Nothing ->
@@ -190,7 +185,7 @@ carryOutLookingRules = makeActionRulebook "carry out looking" [
         Just _ -> do
           -- if the location is a room, now the location is visited;
           -- except...a location is always a room.
-          loc <- getActorLocation rb
+          loc <- getActorLocation a
           modifyRoom loc (#objectData % #isVisited .~ Visited)  >> rulePass
       )
   ]
@@ -215,22 +210,6 @@ foreachVisibilityHolder e = do
     (sayResponse (#roomDescriptions % #roomDescriptionHeadingB) e)
     -- say " (in [the intermediate level])" (C);    
     (sayResponse (#roomDescriptions % #roomDescriptionHeadingC) e)
-
-roomDescriptionHeadingAImpl :: Response wm ()
-roomDescriptionHeadingAImpl = Response $ const [sayingTell|Darkness|]
-
-roomDescriptionHeadingBImpl ::
-  WithPrintingNameOfSomething wm
-  => Response wm (AnyObject wm)
-roomDescriptionHeadingBImpl = Response $ \intermediateLevel -> [sayingTell|(on {the intermediateLevel})|]
-
-roomDescriptionHeadingCImpl ::
-  WithPrintingNameOfSomething wm
-  => Response wm (AnyObject wm)
-roomDescriptionHeadingCImpl = Response $ \intermediateLevel -> [sayingTell|(in {the intermediateLevel})|]
-
-roomDescriptionBodyAImpl :: Response wm ()
-roomDescriptionBodyAImpl = Response $ const [saying|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
 
 otherPeopleLookingAImpl ::
   WithPrintingNameOfSomething wm

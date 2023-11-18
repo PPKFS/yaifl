@@ -29,7 +29,7 @@ move ::
   => Thing wm
   -> l
   -> Eff es Bool
-move objectToMove oLoc = withoutMissingObjects moveBlock moveHandler
+move objectToMove oLoc = failHorriblyIfMissing moveBlock
   where
     moveBlock = withSpan' "move" ""$ do
       objectToMove' <- refreshThing objectToMove
@@ -48,7 +48,6 @@ move objectToMove oLoc = withoutMissingObjects moveBlock moveHandler
       setEnclosing oLoc' newLocation
       --at this point we know it's a success
       return True
-    moveHandler = handleMissingObject ("Failed to move " <> display (getID objectToMove) <> " to " <> display (getID oLoc)) False
 
 moveObjects :: EnclosingEntity -> Thing wm -> Enclosing -> Enclosing -> (Thing wm, Enclosing, Enclosing)
 moveObjects newId t oldLoc newLocEncl = let (newLoc', t') = nowContains newId newLocEncl t in (t', oldLoc `noLongerContains` t, newLoc')

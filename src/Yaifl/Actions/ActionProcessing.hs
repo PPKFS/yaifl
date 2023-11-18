@@ -16,7 +16,7 @@ import Yaifl.Rules.Run
 
 
 actionProcessingRules :: ActionProcessing wm
-actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissingObjects (runRulebook (Just aSpan) (Rulebook
+actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> failHorriblyIfMissing (runRulebook (Just aSpan) (Rulebook
   "action processing"
   (Just True)
   -- I have no idea how this works
@@ -49,4 +49,4 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> withoutMissing
           r <- runRulebookAndReturnVariables (Just aSpan) reportRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"
-  ]) u) (handleMissingObject "" (Just False))
+  ]) u)
