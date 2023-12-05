@@ -4,7 +4,7 @@ module Main ( main ) where
 
 import Solitude
 
-import Data.Aeson ( decodeFileStrict, encodeFile )
+import Data.Aeson
 import Breadcrumbs
 import System.Directory
 import Test.Tasty hiding (defaultMain)
@@ -19,6 +19,7 @@ newtype AllTenses = AllTenses Bool
 
 instance IsOption AllTenses where
   defaultValue = AllTenses False
+
   parseValue = fmap AllTenses . safeRead
   optionName = return "alltenses"
   optionHelp = return "Run the examples in all tenses and viewpoints"

@@ -13,12 +13,12 @@ import Yaifl.Rules.Rulebook (addRuleLast)
 import Effectful.Optics
 import Yaifl.Actions.Collection (ActionCollection)
 
-newtype ActionOrActivity wm v = ActionRule (Lens' (ActionCollection wm) (Action wm v))
+newtype ActionOrActivity wm goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm goesWith v))
   deriving stock (Generic)
 
 before ::
   State (ActionCollection wm) :> es
-  => ActionOrActivity wm v
+  => ActionOrActivity wm goesWith v
   -> [Precondition wm (Args wm v)]
   -> Text
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.

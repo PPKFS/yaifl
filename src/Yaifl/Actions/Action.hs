@@ -7,7 +7,6 @@ module Yaifl.Actions.Action
   ( Action(..)
   , ActionRulebook
   , ActionProcessing(..)
-  , ActionParameterType(..)
   , ParseArguments(..)
   , ActionPhrase(..)
   , InterpretAs(..)
@@ -35,11 +34,11 @@ import Yaifl.Model.Objects.Effects
 import qualified Data.Text as T
 
 newtype ActionProcessing wm = ActionProcessing
-  (forall es v.
+  (forall es goesWith v.
     RuleEffects wm es
     => Refreshable wm v
     => SpanID
-    -> Action wm v
+    -> Action wm goesWith v
     -> Args wm v
     -> Eff es (Maybe Bool)
   )
@@ -51,36 +50,26 @@ newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (Either Text v)
   }
 
-data ActionParameterType =
-  TakesNoParameter
-  | Optionally ActionParameterType
-  | TakesDirectionParameter
-  | TakesObjectParameter
-  | TakesOneOf ActionParameterType ActionParameterType
-  | TakesConstantParameter
-  deriving stock (Show)
-
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
 -- Pretty much all of it is lifted directly from the Inform concept of an action,
 -- except that set action variables is not a rulebook.
-data Action (wm :: WorldModel) v where
+data Action (wm :: WorldModel) (goesWith :: ActionParameterType) v where
   Action ::
     { name :: Text
     , understandAs :: [Text]
-    , goesWith :: ActionParameterType
     , matches :: [(Text, ActionParameterType)]
-    , parseArguments :: ParseArguments wm (UnverifiedArgs wm) v
+    , parseArguments :: ParseArguments wm (UnverifiedArgs wm goesWith) v
     , beforeRules :: ActionRulebook wm v
     , checkRules :: ActionRulebook wm v
     , carryOutRules :: ActionRulebook wm v
     , reportRules :: ActionRulebook wm v
-    } -> Action wm v
+    } -> Action wm goesWith v
   deriving stock (Generic)
-
 
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
-    Action wm v
+    GoesWith goesWith
+    => Action wm goesWith v
     -> WrappedAction wm
 
 data OutOfWorldAction wm = OutOfWorldAction
@@ -95,13 +84,13 @@ type ActionRulebook wm v = Rulebook wm (Args wm v) Bool
 makeFieldLabelsNoPrefix ''Action
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
-actionName :: Lens' (Action wm v) Text
+actionName :: Lens' (Action wm goesWith v) Text
 actionName = #name
 
 -- | If we should interpret some verb as another action (possibly which then points to another interpret as)
 data InterpretAs wm = InterpretAs
   { toParseAs :: Text
-  , withArgs :: ActionParameter wm
+  , withArgs :: [NamedActionParameter wm]
   }
 
 -- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
@@ -112,7 +101,7 @@ makeActionRulebook ::
   -> ActionRulebook o v
 makeActionRulebook n = Rulebook n Nothing
 
-data ActionPhrase wm =
+data ActionPhrase (wm :: WorldModel) =
   Interpret (InterpretAs wm)
   | RegularAction (WrappedAction wm)
   | OtherAction (OutOfWorldAction wm)
@@ -130,14 +119,15 @@ actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
 
 getAllRules ::
-  Action wm v
+  Action wm goesWith v
   -> Text
 getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $ [ beforeRules, checkRules, carryOutRules, reportRules ]
 
 -- | Add an action to the registry.
 addAction ::
   (State (WorldActions wm) :> es, Breadcrumbs :> es)
-  => Action wm v
+  => GoesWith goesWith
+  => Action wm goesWith v
   -> Eff es ()
 addAction ac = do
   addAnnotation $ "Adding an action with the followingly named rules: " <> getAllRules ac

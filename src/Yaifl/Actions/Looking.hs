@@ -49,38 +49,34 @@ roomDescriptionResponsesImpl = RDR
 
 lookingAction ::
   HasLookingProperties wm
-  => Action wm (LookingActionVariables wm)
+  => Action wm ('Optionally 'TakesConstantParameter) (LookingActionVariables wm)
 lookingAction = Action
   "looking"
   ["look", "looking"]
-  (Optionally TakesConstantParameter)
   [] --todo: add "at => examine"
-  (ParseArguments lookingActionSet)
+  -- if we have no source, then we have no idea where we are looking 'from'; return nothing
+-- lightLevels (recalc light) is how many levels we can actually see because of light
+-- vl is how many levels we could see in perfect light.
+-- so if there's no light at all, then we take none of the levels - even if we could potentially see
+-- 100 up.
+  (ParseArguments $ \ua@(UnverifiedArgs Args{..}) -> do
+    -- loc may be a thing (a container) or a room (the more likely case)
+    loc <- getObject (source ^. #objectData % #containedBy)
+    vl <- getVisibilityLevels loc
+    lightLevels <- recalculateLightOfParent source
+    acName <- case getActionParameter ua of
+      NoParameter -> pure "looking"
+      ConstantParameter acName -> pure acName
+      _other -> error "impossible"
+    return $ Right $ LookingActionVariables loc (take lightLevels vl) acName)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
   carryOutLookingRules
   (makeActionRulebook "report looking rulebook" [])
 
--- if we have no source, then we have no idea where we are looking 'from'; return nothing
--- lightLevels (recalc light) is how many levels we can actually see because of light
--- vl is how many levels we could see in perfect light.
--- so if there's no light at all, then we take none of the levels - even if we could potentially see
--- 100 up.
-lookingActionSet ::
-  HasLookingProperties wm
-  => NoMissingObjects wm es
-  => UnverifiedArgs wm
-  -> Eff es (ArgumentParseResult (LookingActionVariables wm))
-lookingActionSet ua@(UnverifiedArgs Args{..}) = do
-  -- loc may be a thing (a container) or a room (the more likely case)
-  loc <- getObject (source ^. #objectData % #containedBy)
-  vl <- getVisibilityLevels loc
-  lightLevels <- recalculateLightOfParent source
-  acName <- case getActionParameter ua of
-    NoParameter -> pure "looking"
-    ConstantParameter acName -> pure acName
-    _other -> error "impossible"
-  return $ Right $ LookingActionVariables loc (take lightLevels vl) acName
+getActionParameter :: UnverifiedArgs wm ('Optionally 'TakesConstantParameter) -> NamedActionParameter wm
+getActionParameter = error ""
+
 
 carryOutLookingRules ::
   WithPrintingNameOfADarkRoom wm

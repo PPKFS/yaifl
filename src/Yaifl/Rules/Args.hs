@@ -1,20 +1,24 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Rules.Args
   ( Args(..)
   , Refreshable(..)
-  , ActionParameter(..)
+  , ActionParameter
+  , NamedActionParameter(..)
   , ActionOptions(..)
   , UnverifiedArgs(..)
   , ArgumentParseResult
-  , withPlayerSource
+  , ActionParameterType(..)
+  , GoesWith(..)
+  --, withPlayerSource
   , getPlayer
   , getActorLocation
-  , blankArgs
-  , playerNoArgs
-  , playerArgs
-  , getActionParameter
+  --, blankArgs
+  --, playerArgs
+  --, getActionParameter
+  --, getNoun
   ) where
 
 import Solitude
@@ -27,6 +31,50 @@ import Data.Text.Display
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
+
+data ActionParameterType =
+  TakesNoParameter
+  | Optionally ActionParameterType
+  | TakesDirectionParameter
+  | TakesObjectParameter
+  | TakesOneOf ActionParameterType ActionParameterType
+  | TakesConstantParameter
+  deriving stock (Show)
+
+data NamedActionParameter wm =
+  NoParameter
+  | DirectionParameter (WMDirection wm)
+  | ObjectParameter (AnyObject wm)
+  | ConstantParameter Text
+  deriving stock ( Generic )
+
+type family ActionParameter (goesWith :: ActionParameterType) where
+  ActionParameter TakesNoParameter = ()
+  ActionParameter (Optionally goesWith) = Maybe (ActionParameter goesWith)
+
+class GoesWith (g :: ActionParameterType) where
+  goesWithA :: Proxy g -> ActionParameterType
+  tryParseArguments :: Proxy g -> Set (NamedActionParameter wm) -> Maybe (ActionParameter g)
+  default tryParseArguments :: Proxy g -> Set (NamedActionParameter wm) -> Maybe (ActionParameter g)
+  tryParseArguments _ _ = Nothing
+
+instance GoesWith 'TakesNoParameter where
+  goesWithA _ = TakesNoParameter
+
+instance GoesWith a => GoesWith ('Optionally a) where
+  goesWithA _ = Optionally (goesWithA (Proxy @a))
+
+instance GoesWith 'TakesDirectionParameter where
+  goesWithA _ = TakesDirectionParameter
+
+instance GoesWith 'TakesObjectParameter where
+  goesWithA _ = TakesObjectParameter
+
+instance GoesWith 'TakesConstantParameter where
+  goesWithA _ = TakesConstantParameter
+
+instance (GoesWith a, GoesWith b) => GoesWith ('TakesOneOf a b) where
+  goesWithA _ = TakesOneOf (goesWithA (Proxy @a)) (goesWithA (Proxy @b))
 
 data ActionOptions wm = ActionOptions
   { silently :: Bool
@@ -60,20 +108,13 @@ instance Refreshable wm v => Refreshable wm (Args wm v) where
 
 type ArgumentParseResult v = Either Text v
 
-data ActionParameter wm =
-  NoParameter
-  | DirectionParameter (WMDirection wm)
-  | ObjectParameter (AnyObject wm)
-  | ConstantParameter Text
-  deriving stock ( Generic )
-
 -- | Before 'Args' are parsed, the variable is just a command string
 -- the action has to parse them, ideally into some intermediary mix of `ArgSubject`.
-newtype UnverifiedArgs wm = UnverifiedArgs
-  { unArgs :: Args wm (ActionParameter wm, [(Text, ActionParameter wm)])
+newtype UnverifiedArgs wm (goesWith :: ActionParameterType) = UnverifiedArgs
+  { unArgs :: Args wm (ActionParameter goesWith, [(Text, NamedActionParameter wm)])
   } deriving newtype (Generic)
 
-instance Refreshable wm (UnverifiedArgs wm) where
+instance Refreshable wm (UnverifiedArgs wm goesWith) where
   refreshVariables = return
 
 --deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
@@ -81,11 +122,10 @@ instance Refreshable wm (UnverifiedArgs wm) where
 
 makeFieldLabelsNoPrefix ''Args
 
-withPlayerSource ::
-  NoMissingObjects wm es
-  => (Thing wm -> UnverifiedArgs wm)
-  -> Eff es (UnverifiedArgs wm)
-withPlayerSource = flip fmap getPlayer
+getNoun ::
+  UnverifiedArgs wm goesWith
+  -> ActionParameter goesWith
+getNoun = fst . variables . unArgs
 
 -- | This should be moved somewhere else I guess TODO
 getPlayer ::
@@ -98,41 +138,38 @@ getActorLocation ::
   => Args wm v
   -> Eff es (Room wm)
 getActorLocation args = getLocation $ source args
+{-
+withPlayerSource ::
+  NoMissingObjects wm es
+  => (Thing wm -> ActionParameter goesWith -> UnverifiedArgs wm goesWith)
+  -> Eff es (Timestamp -> (ActionParameter goesWith, [NamedActionParameter wm]) -> UnverifiedArgs wm goesWith)
+withPlayerSource = flip fmap getPlayer
 
 -- | No Arguments, player source.
-playerNoArgs ::
-  forall wm es.
-  NoMissingObjects wm es
-  => Eff es (Timestamp -> UnverifiedArgs wm)
-playerNoArgs = do
-  ua <- withPlayerSource blankArgs
-  return (\ts -> ua & coercedTo @(Args wm (ActionParameter wm, [(Text, ActionParameter wm)])) % #timestamp .~ ts)
-
--- | Some Arguments, player source.
 playerArgs ::
   forall wm es.
   NoMissingObjects wm es
-  => ActionParameter wm
-  -> Eff es (Timestamp -> UnverifiedArgs wm)
-playerArgs ap = do
-  ua <- withPlayerSource (argsWithArgument ap)
-  return (\ts -> ua & coercedTo @(Args wm (ActionParameter wm, [(Text, ActionParameter wm)])) % #timestamp .~ ts)
+  => Eff es (Timestamp -> ActionParameter goesWith ->  UnverifiedArgs wm goesWith)
+playerArgs = do
+  ua <- withPlayerSource blankArgs
+  return (\ts a -> UnverifiedArgs { unArgs = ua ts (a, []) } )
 
 blankArgs ::
   Thing wm
-  -> UnverifiedArgs wm
-blankArgs o = UnverifiedArgs $ Args o(NoParameter, []) (ActionOptions False False) 0
+  -> ActionParameter goesWith
+  -> UnverifiedArgs wm goesWith
+blankArgs o g = UnverifiedArgs $ Args o (g, []) (ActionOptions False False) 0
 
 argsWithArgument ::
-  ActionParameter wm
+  ActionParameter goesWith
   -> Thing wm
-  -> UnverifiedArgs wm
+  -> UnverifiedArgs wm goesWith
 argsWithArgument ap o = UnverifiedArgs $ Args o (ap, []) (ActionOptions False False) 0
 
 getActionParameter ::
-  UnverifiedArgs wm
-  -> ActionParameter wm
+  UnverifiedArgs wm goesWith
+  -> ActionParameter goesWith
 getActionParameter (UnverifiedArgs (Args{variables})) = fst variables
-
+-}
 instance Functor (Args wm) where
   fmap f = #variables %~ f

@@ -30,13 +30,13 @@ import Data.Char (isSpace)
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
-  forall wm es.
+  forall wm es goesWith v.
   State (WorldActions wm) :> es
   => RuleEffects wm es
-  => UnverifiedArgs wm
-  -> WrappedAction wm
+  => UnverifiedArgs wm goesWith
+  -> Action wm goesWith v
   -> Eff es (Maybe Bool)
-runAction uArgs (WrappedAction act) = withSpan "run action" (act ^. #name) $ \aSpan -> do
+runAction uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
   mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
   case mbArgs of
     Left err -> do
@@ -65,7 +65,7 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
-  ParseAction actionOpts actionArgs t -> withSpan' "action" t $ do
+  ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ do
     -- print the prompt
     unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "\n>" <> t
     --we assume that the verb is the first thing in the command
@@ -79,7 +79,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       -- we've successfully resolved it into an action
       [(matched, r, RegularAction x@(WrappedAction a))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
-        runActionHandlerAsWorldActions $ findSubjects (T.strip r) actionArgs x
+        runActionHandlerAsWorldActions $ findSubjects (T.strip r) additionalArgs x
       [(matched, _, OtherAction (OutOfWorldAction name runIt))] -> do
         addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
         runActionHandlerAsWorldActions $ failHorriblyIfMissing runIt
@@ -132,19 +132,18 @@ findSubjects ::
   => State (WorldActions wm) :> es
   => State Metadata :> es
   => Text
-  -> ActionParameter wm
+  -> [NamedActionParameter wm]
   -> WrappedAction wm
   -> Eff es (Either Text Bool)
-findSubjects "" actionArgs w = failHorriblyIfMissing $ do
-  ua <- playerArgs actionArgs
-  Right <$> tryAction w ua
-findSubjects cmd actionArgs w@(WrappedAction a) = runErrorNoCallStack $ failHorriblyIfMissing $ do
-  --TODO: handle other actors doing things
+findSubjects cmd actionArgs w@(WrappedAction (a :: Action wm goesWith v)) = failHorriblyIfMissing $ do
+  --TODO: handle other actors doing things#
+  actor <- getPlayer
+  ts <- getGlobalTime
   --we attempt to either match some matching word from the action (e.g. go through <door>)
   --otherwise, we try to find a match of objects with increasingly large radii
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
-  ua <- playerArgs actionArgs
+  --ua <- playerArgs actionArgs
 
   --we then go through, taking words until we hit either the end or a match word
   --then we try to work out what it was
@@ -152,7 +151,7 @@ findSubjects cmd actionArgs w@(WrappedAction a) = runErrorNoCallStack $ failHorr
       parts = (split . whenElt) isMatchWord (words cmd)
   (goesWithPart, parsedArgs) <- case parts of
     cmdArgWords:matchedWords -> do
-      cmdArgs' <- parseArgumentType @wm (goesWith a) (unwords cmdArgWords)
+      cmdArgs' <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
       cmdArgs <- either throwError pure cmdArgs'
       -- then for each run of matching words we want to try and parse the rest of the list
       matchWords <- mapM (\case
@@ -171,7 +170,7 @@ parseArgumentType ::
   => Breadcrumbs :> es
   => ActionParameterType
   -> Text
-  -> Eff es (Either Text (ActionParameter wm))
+  -> Eff es (Either Text (NamedActionParameter wm))
 parseArgumentType TakesDirectionParameter t = pure $ maybe
   (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
 parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
@@ -209,9 +208,10 @@ tryAction ::
   => SayableValue (WMSayable wm) wm
   => Print :> es
   => WrappedAction wm -- ^ text of command
-  -> (Timestamp -> UnverifiedArgs wm) -- ^ Arguments without a timestamp
+  -> [NamedActionParameter wm]
+  -> (Timestamp -> UnverifiedArgs wm goesWith) -- ^ Arguments without a timestamp
   -> Eff es Bool
-tryAction an@(WrappedAction a) f = do
+tryAction an@(WrappedAction a) additionalArgs f = do
   ta <- getGlobalTime
   addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
   fromMaybe False <$> runAction (f ta) an

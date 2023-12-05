@@ -47,11 +47,11 @@ data GoingActionVariables wm = GoingActionVariables
 goingAction ::
   (WMStdDirections wm, WMWithProperty wm DoorSpecifics, WMWithProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
-  => Action wm (GoingActionVariables wm)
+  => Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (GoingActionVariables wm)
 goingAction = Action
   "going"
   ["go", "going"]
-  (TakesOneOf TakesDirectionParameter TakesObjectParameter)
+
   (map (,TakesObjectParameter) ["with", "through", "by", "to"])
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])

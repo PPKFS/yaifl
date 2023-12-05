@@ -68,7 +68,7 @@ initRoomDescription ::
   => ActionHandler wm :> es
   => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction (ActionOptions True True) NoParameter "look" >>= (\case
+  parseAction (ActionOptions True True) [NoParameter] "look" >>= (\case
      Left txt -> addAnnotation txt
      Right True -> pass
      Right False -> error "Could not find the looking action.")
