@@ -63,7 +63,7 @@ zoomState l = interpret $ \env -> \case
 
 convertToUnderlyingStack ::
   forall wm a.
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
+  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
   => World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
@@ -165,7 +165,7 @@ updateIt newObj mbExisting = case mbExisting of
   Just _ -> Just newObj
 
 runGame ::
-  (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
+  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
   => World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a

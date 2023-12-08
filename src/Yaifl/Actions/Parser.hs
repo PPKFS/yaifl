@@ -14,7 +14,7 @@ import Effectful.Optics ( use )
 import Yaifl.Actions.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Direction ( HasDirectionalTerms(..) )
-import Yaifl.Metadata ( Timestamp, Metadata, noteError, getGlobalTime )
+import Yaifl.Metadata ( Metadata, noteError, getGlobalTime )
 import Yaifl.Model.Objects.Query
 import Yaifl.Text.Print ( Print, printLn )
 import Yaifl.Rules.Args
@@ -27,11 +27,13 @@ import Data.List (lookup)
 import Effectful.Error.Static
 import Yaifl.Model.Objects.Effects
 import Data.Char (isSpace)
+import qualified Data.Set as S
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
   forall wm es goesWith v.
-  State (WorldActions wm) :> es
+  Refreshable wm v
+  => State (WorldActions wm) :> es
   => RuleEffects wm es
   => UnverifiedArgs wm goesWith
   -> Action wm goesWith v
@@ -50,7 +52,7 @@ runAction uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
-  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
   => Display (WMSayable wm)
   => ObjectLookup wm :> es
@@ -118,7 +120,7 @@ findVerb cmd = do
 findSubjects ::
   forall wm es.
   ActionHandler wm :> es
-  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
   => Display (WMSayable wm)
   => ObjectLookup wm :> es
@@ -135,7 +137,7 @@ findSubjects ::
   -> [NamedActionParameter wm]
   -> WrappedAction wm
   -> Eff es (Either Text Bool)
-findSubjects cmd actionArgs w@(WrappedAction (a :: Action wm goesWith v)) = failHorriblyIfMissing $ do
+findSubjects cmd actionArgs (WrappedAction (a :: Action wm goesWith v)) = runErrorNoCallStack $ failHorriblyIfMissing $ do
   --TODO: handle other actors doing things#
   actor <- getPlayer
   ts <- getGlobalTime
@@ -144,12 +146,10 @@ findSubjects cmd actionArgs w@(WrappedAction (a :: Action wm goesWith v)) = fail
   --todo: properly expand the search; consider the most likely items and then go off that
   --but for now, we'll just check everything.
   --ua <- playerArgs actionArgs
-
-  --we then go through, taking words until we hit either the end or a match word
-  --then we try to work out what it was
   let isMatchWord = flip elem (map fst $ matches a)
       parts = (split . whenElt) isMatchWord (words cmd)
   (goesWithPart, parsedArgs) <- case parts of
+    [] -> pure (NoParameter, [])
     cmdArgWords:matchedWords -> do
       cmdArgs' <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
       cmdArgs <- either throwError pure cmdArgs'
@@ -161,8 +161,10 @@ findSubjects cmd actionArgs w@(WrappedAction (a :: Action wm goesWith v)) = fail
           arg <- parseArgumentType @wm v (unwords args)
           either throwError (pure . (matchWord,)) arg) matchedWords
       pure (cmdArgs, matchWords)
-    xs -> error $ "impossible: should have at least one element of the command to parse " <> show xs
-  tryAction w (\t -> let (UnverifiedArgs u) = ua t in UnverifiedArgs $ u { variables = (goesWithPart, parsedArgs) })
+  let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ goesWithPart:actionArgs)
+  case v of
+    Nothing -> throwError (("Argument mismatch because we got " <> show (S.fromList $ goesWithPart:actionArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+    Just v' -> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
 
 parseArgumentType ::
   forall wm es.
@@ -181,6 +183,11 @@ parseArgumentType (TakesOneOf ap1 ap2) t = do
       addAnnotation err
       parseArgumentType ap2 t
     Right res -> pure $ Right res
+parseArgumentType (Optionally a) t = do
+  mbRes <- parseArgumentType a t
+  case mbRes of
+    Left _err -> pure $ Right NoParameter
+    Right r -> pure $ Right r
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 parseDirection ::
@@ -199,6 +206,7 @@ parseDirection p cmd =
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
   NoMissingObjects wm es
+  => Refreshable wm v
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
   => State (WorldActions wm) :> es
@@ -207,11 +215,9 @@ tryAction ::
   => State (AdaptiveNarrative wm) :> es
   => SayableValue (WMSayable wm) wm
   => Print :> es
-  => WrappedAction wm -- ^ text of command
-  -> [NamedActionParameter wm]
-  -> (Timestamp -> UnverifiedArgs wm goesWith) -- ^ Arguments without a timestamp
+  => Action wm goesWith v -- ^ text of command
+  -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp
   -> Eff es Bool
-tryAction an@(WrappedAction a) additionalArgs f = do
-  ta <- getGlobalTime
+tryAction a f = do
   addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
-  fromMaybe False <$> runAction (f ta) an
+  fromMaybe False <$> runAction f a

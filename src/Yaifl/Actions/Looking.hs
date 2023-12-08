@@ -59,23 +59,19 @@ lookingAction = Action
 -- vl is how many levels we could see in perfect light.
 -- so if there's no light at all, then we take none of the levels - even if we could potentially see
 -- 100 up.
-  (ParseArguments $ \ua@(UnverifiedArgs Args{..}) -> do
+  (ParseArguments $ \(UnverifiedArgs Args{..}) -> do
     -- loc may be a thing (a container) or a room (the more likely case)
     loc <- getObject (source ^. #objectData % #containedBy)
     vl <- getVisibilityLevels loc
     lightLevels <- recalculateLightOfParent source
-    acName <- case getActionParameter ua of
-      NoParameter -> pure "looking"
-      ConstantParameter acName -> pure acName
-      _other -> error "impossible"
+    acName <- case fst variables of
+      Nothing -> pure "looking"
+      Just acName -> pure acName
     return $ Right $ LookingActionVariables loc (take lightLevels vl) acName)
   (makeActionRulebook "before looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
   carryOutLookingRules
   (makeActionRulebook "report looking rulebook" [])
-
-getActionParameter :: UnverifiedArgs wm ('Optionally 'TakesConstantParameter) -> NamedActionParameter wm
-getActionParameter = error ""
 
 
 carryOutLookingRules ::

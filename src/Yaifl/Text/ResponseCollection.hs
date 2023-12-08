@@ -9,7 +9,6 @@ import Yaifl.Text.Say
 import Yaifl.Actions.Looking
 import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Text.ListWriter
-import Yaifl.Actions.Examining
 
 data ResponseCollection wm = ResponseCollection
   { roomDescriptions :: RoomDescriptionResponses wm

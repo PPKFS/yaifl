@@ -225,7 +225,7 @@ addGoingSynonyms = do
     let allTerms = toTextDir (Proxy @wm) dir
         dirN = (T.toLower . fromString . show) dir
     forM_ allTerms $ \term ->
-      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) NoParameter)
+      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) [NoParameter])
 
 addBaseActions ::
   WMStdDirections wm

@@ -47,7 +47,7 @@ data GoingActionVariables wm = GoingActionVariables
 goingAction ::
   (WMStdDirections wm, WMWithProperty wm DoorSpecifics, WMWithProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
-  => Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (GoingActionVariables wm)
+  => Action wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter)) (GoingActionVariables wm)
 goingAction = Action
   "going"
   ["go", "going"]
@@ -65,7 +65,7 @@ describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
   (unless (silently . actionOptions $ a) (void $ do
     sayLn @Text ""
-    parseAction ((actionOptions a) { silently = True }) (ConstantParameter "going") "look") >> rulePass)
+    parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look") >> rulePass)
   (error "other actors cant report going yet")
 
 
@@ -93,7 +93,7 @@ goingActionSet ::
   forall wm es.
   (ParseArgumentEffects wm es, WMStdDirections wm, WMWithProperty wm DoorSpecifics)
   => WithPrintingNameOfSomething wm
-  => UnverifiedArgs wm
+  => UnverifiedArgs wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter))
   -> Eff es (ArgumentParseResult (GoingActionVariables wm))
 goingActionSet (UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
@@ -113,20 +113,19 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     -- if the noun is a direction:
     -- let direction D be the noun;
     -- let the target be the room-or-door direction D from the room gone from;
-    DirectionParameter dir -> do
+    Just (Left dir) -> do
       addAnnotation $ "going in direction " <> show dir
       addAnnotation $ "possible exits are " <> show (roomGoneFrom ^. #objectData % #mapConnections)
       pure $ getMapConnection @wm dir roomGoneFrom
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
-    ObjectParameter door -> setDoorGoneThrough door
-    NoParameter -> do
+    Just (Right door) -> setDoorGoneThrough door
+    Nothing -> do
       mbThrough <- getMatchingThing "through"
       -- TODO: this should be a door or complain
       let mbDoor = join $ traverse getDoorSpecificsMaybe mbThrough
       pure $ backSide <$> mbDoor
-    ConstantParameter t -> error $ "got a " <> t
   mbRoomGoneTo <- join <$> traverse getRoomMaybe target
   addAnnotation $ "target was " <> show target
   case mbRoomGoneTo of
