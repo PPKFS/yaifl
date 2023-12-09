@@ -27,7 +27,9 @@ import Yaifl.Model.Objects.ObjectLike
 
 -- | An easier way to describe the 3 requirements to look.
 type HasLookingProperties wm =
-  (WMWithProperty wm Enclosing, WMWithProperty wm Enterable, WMWithProperty wm Container
+  ( WMWithProperty wm Enclosing
+  , WMWithProperty wm Enterable
+  , WMWithProperty wm Container
   , Display (WMSayable wm)
   , IsString (WMSayable wm)
   , WithPrintingNameOfADarkRoom wm

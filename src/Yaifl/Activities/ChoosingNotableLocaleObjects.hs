@@ -20,13 +20,13 @@ import Data.Text.Display
 import Yaifl.Actions.Looking.Locale
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm (AnyObject wm) (LocalePriorities wm))
+
 choosingNotableLocaleObjectsImpl ::
   WMWithProperty wm Enclosing
   => Activity wm (AnyObject wm) (LocalePriorities wm)
 choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects" [makeRule "" []
   (\v -> do
-    let e' = getEnclosingMaybe v
-    case e' of
+    case getEnclosingMaybe v of
       Nothing -> (do
         addAnnotation $ "Tried to choose notable locale objects from " <> display (v ^. #name) <> " which doesn't enclose."
         return Nothing)

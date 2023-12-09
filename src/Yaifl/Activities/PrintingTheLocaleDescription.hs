@@ -71,19 +71,19 @@ printingTheLocaleDescriptionImpl ::
   WithPrintingTheLocaleDescription wm
   => Activity wm (LocaleVariables wm) ()
 printingTheLocaleDescriptionImpl = Activity "Printing the locale description of something" Nothing Nothing
-  (blankRulebook "Before printing the locale description")
-  ((blankRulebook "Carry out printing the locale description")
+  ((blankRulebook "before printing the locale description") { rules = [ findNotable ] })
+  ((blankRulebook "carry out printing the locale description")
     { rules =
-      [ findNotable
-      , interestingLocale
-      , alsoSee]
+      [ interestingLocale
+      , alsoSee
+      ]
     })
   (blankRulebook "After printing the locale description")
 
 findNotable ::
   WithChoosingNotableLocaleObjects wm
   => Rule wm (LocaleVariables wm) r
-findNotable = Rule "Find notable objects" [] (\v ->
+findNotable = Rule "find notable objects" [] (\v ->
   do
     -- carry out the choosing notable locale objects activity with the domain;
     o <- doActivity #choosingNotableLocaleObjects (v ^. #domain)
