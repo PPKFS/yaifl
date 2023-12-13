@@ -123,20 +123,20 @@ instance Eq (Object wm d s) where
 instance Ord (Object wm d s) where
   compare = (. creationTime) . compare . creationTime
 
-newtype Thing wm = Thing (Object wm ThingData (WMObjSpecifics wm))
+newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
-newtype AnyObject wm = AnyObject (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm))
+newtype AnyObject wm = AnyObject (Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
-instance HasField x (Object wm ThingData (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
+instance HasField x (Object wm (ThingData wm) (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
   getField (Thing o) = getField @x o
 
 instance HasField x (Object wm (RoomData wm) (WMObjSpecifics wm)) a  => HasField x (Room wm) a where
   getField (Room o) = getField @x o
 
-instance HasField x (Object wm (Either ThingData (RoomData wm)) (WMObjSpecifics wm)) a => HasField x (AnyObject wm) a where
+instance HasField x (Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)) a => HasField x (AnyObject wm) a where
   getField (AnyObject o) = getField @x o
 
 instance Display (Object wm objData s) where

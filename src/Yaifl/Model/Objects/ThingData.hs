@@ -1,5 +1,6 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Objects.ThingData (
   -- * Thing data
@@ -16,6 +17,7 @@ module Yaifl.Model.Objects.ThingData (
 
 import Solitude
 import Yaifl.Model.Entity
+import Yaifl.Model.WorldModel
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit
@@ -33,17 +35,22 @@ data ThingPortable = Portable | FixedInPlace
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
 -- | Properties that define a `Yaifl.Model.Object.Thing`.
-data ThingData = ThingData
+data ThingData wm = ThingData
   { containedBy :: EnclosingEntity
   , lit :: ThingLit
   , wearable :: ThingWearability
   , described :: ThingDescribed
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
-  } deriving stock (Eq, Show, Read, Ord, Generic)
+  , initialAppearance :: Maybe (WMSayable wm)
+  } deriving stock (Generic)
 
+deriving stock instance (Eq (WMSayable wm)) => Eq (ThingData wm)
+deriving stock instance (Show (WMSayable wm)) => Show (ThingData wm)
+
+makeFieldLabelsNoPrefix ''ThingData
 -- | A default thing.
-blankThingData :: ThingData
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True
+blankThingData :: ThingData wm
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True Nothing
 
 makePrisms ''ThingWearability

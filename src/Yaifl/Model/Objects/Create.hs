@@ -82,7 +82,7 @@ addThingInternal ::
   -> WMSayable wm -- ^ Description.
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
-  -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
 addThingInternal name desc objtype specifics details =
   Thing <$> addObject (addThingToWorld . Thing) name desc objtype
@@ -93,7 +93,7 @@ addThing' ::
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
-  -> Eff '[State ThingData] r -- ^ Build your own thing monad!
+  -> Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
 addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
     Nothing (runLocalState blankThingData stateUpdate)

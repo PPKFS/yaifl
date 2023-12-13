@@ -59,6 +59,25 @@ goingAction = Action
   carryOutGoingRules
   (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])
 
+checkGoingRules ::
+  [Rule wm (Args wm (GoingActionVariables wm)) Bool]
+checkGoingRules = [
+  standUpBeforeGoing
+  , cantTravelInNotAVehicle
+  , cantGoThroughUndescribedDoors
+  , cantGoThroughClosedDoors
+  -- we've already done the checking the direction bit, but maybe we'll need to do it again?
+  -- determine map connction
+  -- can't go that way
+  ]
+
+carryOutGoingRules :: WMWithProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
+carryOutGoingRules = makeActionRulebook "carry out going rulebook"
+  [ movePlayerAndVehicle
+  , moveFloatingObjects
+  , checkLightInNewLocation
+  ]
+
 -- todo: other actors moving, or if the player is moved via another actor
 describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
@@ -67,14 +86,6 @@ describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
     sayLn @Text ""
     parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look") >> rulePass)
   (error "other actors cant report going yet")
-
-
-carryOutGoingRules :: WMWithProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
-carryOutGoingRules = makeActionRulebook "carry out going rulebook"
-  [ movePlayerAndVehicle
-  , moveFloatingObjects
-  , checkLightInNewLocation
-  ]
 
 checkLightInNewLocation :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 checkLightInNewLocation = notImplementedRule "check light in new location rule"
@@ -175,15 +186,6 @@ actorInEnterableVehicle _ = pure Nothing
 
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
-
-checkGoingRules ::
-  [Rule wm (Args wm (GoingActionVariables wm)) Bool]
-checkGoingRules = [
-  standUpBeforeGoing
-  , cantTravelInNotAVehicle
-  , cantGoThroughUndescribedDoors
-  , cantGoThroughClosedDoors
-  ]
 
 cantGoThroughClosedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
 cantGoThroughClosedDoors = notImplementedRule "stand up before going"

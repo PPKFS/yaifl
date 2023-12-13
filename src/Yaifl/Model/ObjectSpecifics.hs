@@ -85,7 +85,7 @@ addDoor ::
   -> Maybe (WMSayable wm) -- ^ description
   -> (Room wm, WMDirection wm)
   -> (Room wm, WMDirection wm)
-  -> Maybe ThingData -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
 addDoor n mbDes f b mbD = do
   let ds = blankDoorSpecifics (tagRoom (fst f)) (tagRoom (fst b))
