@@ -42,7 +42,7 @@ data ThingData wm = ThingData
   , described :: ThingDescribed
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
-  , initialAppearance :: Maybe (WMSayable wm)
+  , initialAppearance :: WMSayable wm
   } deriving stock (Generic)
 
 deriving stock instance (Eq (WMSayable wm)) => Eq (ThingData wm)
@@ -50,7 +50,7 @@ deriving stock instance (Show (WMSayable wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
 -- | A default thing.
-blankThingData :: ThingData wm
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True Nothing
+blankThingData :: WMSayable wm -> ThingData wm
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True
 
 makePrisms ''ThingWearability

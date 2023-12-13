@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import Solitude
 import Data.Text.Display
 import Yaifl.Model.WorldModel
+import Named
 
 isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
 isBlankDescription d = T.empty == display (d ^. #description)
@@ -20,12 +21,11 @@ isBlankDescription d = T.empty == display (d ^. #description)
 ex2World :: Game PlainWorldModel ()
 ex2World = do
   setTitle "Bic"
-  addRoom' "The Staff Break Room" "" pass
-  addThing' "Bic pen" "" pass
-  addThing' "orange" "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." pass
-  addThing' "napkin" "Slightly crumpled." pass
-  pass
-  addWhenPlayBegins $ makeRule' "run property checks at the start of play" $
+  addRoom "The Staff Break Room" ""
+  addThing "Bic pen" ! defaults
+  addThing "orange" ! #description "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." ! defaults
+  addThing "napkin" ! #description "Slightly crumpled." ! defaults
+  addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" $
     do
       traverseThings (\t -> do
         when (isBlankDescription t) (do

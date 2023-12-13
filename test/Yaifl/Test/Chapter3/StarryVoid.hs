@@ -38,7 +38,7 @@ starryVoidWorld = do
   tcr <- addRoom "The Centre Ring" ""
   tsv <- addRoom "The Starry Void" ""
   tsv `isInsideFrom` tcr
-  tmb <- addDoor "The magician's booth" (Just $ boothDesc tcr) (tsv, Out) (tcr, In) Nothing
+  tmb <- addDoor "The magician's booth" (boothDesc tcr) "" (tsv, Out) (tcr, In) Nothing
   pass
 
 starryVoidTestMeWith :: [Text]

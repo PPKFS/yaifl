@@ -25,6 +25,7 @@ common common-options
     , containers
     , effectful-plugin
     , effectful-core
+    , named
     , template-haskell
     , text
     , text-display

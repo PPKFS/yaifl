@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 module Yaifl.Model.Objects.Create
   ( addThingInternal
   , addRoomInternal
@@ -27,6 +28,7 @@ import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
+import Named
 
 makeObject ::
   Pointed s
@@ -64,7 +66,6 @@ addObject updWorld n d ty isT specifics details =
     addAnnotation "object added to world"
     lastRoomE <- use #previousRoom
     tickGlobalTime
-
     failHorriblyIfMissing $ do
       obj' <- getObject e
       lastRoom <- getRoom lastRoomE
@@ -79,35 +80,51 @@ addThingInternal ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
+  -> WMSayable wm
   -> WMSayable wm -- ^ Description.
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
-  -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
+  -> Maybe (ThingData wm)
   -> Eff es (Thing wm)
-addThingInternal name desc objtype specifics details =
+addThingInternal name ia desc objtype specifics details =
   Thing <$> addObject (addThingToWorld . Thing) name desc objtype
-    True specifics (fromMaybe blankThingData details)
+    True specifics (fromMaybe (blankThingData ia) details)
 
 addThing' ::
+  forall wm es r.
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
-  -> Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm -- ^ Description.
+  -> "specifics" :? WMObjSpecifics wm
+  -> "build" :! Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
   -> Eff es (Thing wm)
-addThing' n d stateUpdate = addThingInternal n d (ObjectType "thing")
-    Nothing (runLocalState blankThingData stateUpdate)
+addThing' n
+  (argDef #initialAppearance "" -> ia)
+  (argDef #description "" -> d)
+  (argF #specifics -> s)
+  (arg #build -> stateUpdate) = addThingInternal n ia d (ObjectType "thing") s (runLocalState (blankThingData ia) stateUpdate)
 
 runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
 runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
 
 addThing ::
+  forall wm es.
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm -- ^ Description.
+  -> "specifics" :? WMObjSpecifics wm
   -> Eff es (Thing wm)
-addThing n d = addThing' n d pass
+addThing n (argDef #initialAppearance "" -> ia) (argDef #description "" -> d) (argDef #specifics identityElement -> s) =
+  addThing' @wm n
+    ! #initialAppearance ia
+    ! #description d
+    ! #specifics s
+    ! #build pass
+    ! defaults
 
 addRoomInternal ::
   WMWithProperty wm Enclosing
@@ -148,5 +165,5 @@ addBaseObjects ::
   => Eff es ()
 addBaseObjects = do
   v <- addRoom "The Void" "If you're seeing this, you did something wrong."
-  addThing' "player" "It's you, looking handsome as always" (#described .= Undescribed)
+  addThing' "player" ! #description "It's you, looking handsome as always" ! #build (#described .= Undescribed) ! defaults
   #firstRoom .= tagRoom v

@@ -10,7 +10,6 @@ import Yaifl.Model.Entity
 import Yaifl.Metadata ( Metadata(..) )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
@@ -31,7 +30,7 @@ move ::
   -> Eff es Bool
 move objectToMove oLoc = failHorriblyIfMissing moveBlock
   where
-    moveBlock = withSpan' "move" ""$ do
+    moveBlock = withSpan' "move" "" $ do
       objectToMove' <- refreshThing objectToMove
       let loc :: Enclosing = oLoc ^. enclosingL
       let (c :: EnclosingEntity) = objectToMove' ^. #objectData % #containedBy

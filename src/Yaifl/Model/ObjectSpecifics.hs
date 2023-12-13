@@ -82,15 +82,16 @@ addDoor ::
   => NoMissingObjects wm es
   => AddObjects wm es
   => WMSayable wm -- ^ name
-  -> Maybe (WMSayable wm) -- ^ description
+  -> WMSayable wm -- ^ initial appearance
+  -> WMSayable wm -- ^ description
   -> (Room wm, WMDirection wm)
   -> (Room wm, WMDirection wm)
   -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es (Thing wm)
-addDoor n mbDes f b mbD = do
+addDoor n ia des f b mbD = do
   let ds = blankDoorSpecifics (tagRoom (fst f)) (tagRoom (fst b))
-  d <- addThingInternal n (fromMaybe "" mbDes) (ObjectType "door")
+  d <- addThingInternal n ia des (ObjectType "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
-      (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe blankThingData mbD)
+      (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
   addDoorToConnection (tag @DoorSpecifics @DoorTag ds d) f b
   pure d

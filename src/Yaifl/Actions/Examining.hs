@@ -25,7 +25,6 @@ data ExaminingResponses wm = ER
 data ExaminingActionVariables wm = EAV
   { examining :: Either (WMDirection wm) (AnyObject wm)
   , examiningTextPrinted :: Bool
-
   }
 
 type ExaminingAction wm = WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
@@ -34,8 +33,8 @@ examiningAction = Action
   "examining"
   ["examine", "examining", "look closely at"]
   []
-  (ParseArguments (\args -> do
-    let examining = case getNoun args of
+  (ParseArguments (\(UnverifiedArgs Args{..}) -> do
+    let examining = case fst variables of
           DirectionParameter d -> Left d
           ObjectParameter a -> Right a
           _ -> error "impossible"
@@ -58,19 +57,20 @@ actionRequiresLight = notImplementedRule "action requires light"
 
 examineUndescribed :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExamineRule wm
 examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \Args{..} -> do
-  error ""--unless variables $ sayResponse (#examiningResponses % #examineUndescribedA)
+  unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) ()
+  rulePass
 
 examineDevices :: ExamineRule wm
-examineDevices = notImplementedRule "action requires light"
+examineDevices = notImplementedRule "examine devices rule"
 
 examineSupporters :: ExamineRule wm
-examineSupporters = notImplementedRule "action requires light"
+examineSupporters = notImplementedRule "examine supporters rule"
 
 examineContainers :: ExamineRule wm
-examineContainers = notImplementedRule "action requires light"
+examineContainers = notImplementedRule "examine containers rule"
 
 examineDirections :: ExamineRule wm
-examineDirections = notImplementedRule "action requires light"
+examineDirections = notImplementedRule "examine directions rule"
 
 standardExamining :: ExamineRule wm
 standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
