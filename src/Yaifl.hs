@@ -61,6 +61,8 @@ import Yaifl.Text.DynamicText
 import Yaifl.Actions.Collection
 import Breadcrumbs
 import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
+import Yaifl.Actions.Examining
+import Yaifl.Text.Responses
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -73,6 +75,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Enterable
   , WMWithProperty s Openable
   , HasLookingProperties s
+  , WithResponseSet s "examiningResponses" (ExaminingResponses s)
   , WMStdDirections s
   , WMWithProperty s DoorSpecifics
   , HasDirectionalTerms s
@@ -118,6 +121,7 @@ addStandardActions = do
   ActionCollection{..} <- get
   addAction going
   addAction looking
+  addAction examining
   pass
 
 blankActions ::
@@ -195,6 +199,7 @@ blankActionCollection ::
 blankActionCollection = ActionCollection
   { going = goingAction
   , looking = lookingAction
+  , examining = examiningAction
   }
 
 blankWorld ::

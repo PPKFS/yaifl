@@ -22,22 +22,20 @@ data ExaminingResponses wm = ER
   , examineUndescribedA :: Response wm (Thing wm)
   } deriving stock (Generic)
 
+examiningResponsesImpl = error ""
 data ExaminingActionVariables wm = EAV
   { examining :: Either (WMDirection wm) (AnyObject wm)
   , examiningTextPrinted :: Bool
   }
 
-type ExaminingAction wm = WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
-examiningAction :: ExaminingAction wm
+type ExaminingAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
+examiningAction :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExaminingAction wm
 examiningAction = Action
   "examining"
   ["examine", "examining", "look closely at"]
   []
   (ParseArguments (\(UnverifiedArgs Args{..}) -> do
-    let examining = case fst variables of
-          DirectionParameter d -> Left d
-          ObjectParameter a -> Right a
-          _ -> error "impossible"
+    let examining = fst variables
     return $ Right $ EAV {examining, examiningTextPrinted = False}))
   (makeActionRulebook "before examining rulebook" [])
   (makeActionRulebook "check examining rulebook" [ actionRequiresLight ])
@@ -57,7 +55,7 @@ actionRequiresLight = notImplementedRule "action requires light"
 
 examineUndescribed :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExamineRule wm
 examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \Args{..} -> do
-  unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) ()
+  unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) (error "")
   rulePass
 
 examineDevices :: ExamineRule wm

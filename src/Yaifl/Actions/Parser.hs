@@ -188,7 +188,15 @@ parseArgumentType (Optionally a) t = do
   case mbRes of
     Left _err -> pure $ Right NoParameter
     Right r -> pure $ Right r
+parseArgumentType TakesObjectParameter t = tryFindingObject t
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
+
+tryFindingObject :: Text -> Eff es (Either Text (NamedActionParameter wm))
+tryFindingObject t = do
+  -- look at the current player's room and see if the word matches any:
+  -- - of the objects' names
+  -- - or is a substring of any objects' name
+  pure $ Left $ "I can't see anything called \"" <> t <> "\"."
 
 parseDirection ::
   forall wm.

@@ -61,6 +61,7 @@ library
     Yaifl.Actions.Going
     Yaifl.Actions.Parser
     Yaifl.Actions.Collection
+    Yaifl.Actions.Examining
 
     Yaifl.Actions.Looking
     Yaifl.Actions.Looking.Locale
