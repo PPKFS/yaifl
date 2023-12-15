@@ -28,6 +28,7 @@ import Effectful.Error.Static
 import Yaifl.Model.Objects.Effects
 import Data.Char (isSpace)
 import qualified Data.Set as S
+import Yaifl.Model.Object
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -169,7 +170,11 @@ findSubjects cmd actionArgs (WrappedAction (a :: Action wm goesWith v)) = runErr
 parseArgumentType ::
   forall wm es.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => Display (WMSayable wm)
   => Breadcrumbs :> es
+  => ObjectLookup wm :> es
+  => ObjectUpdate wm :> es
+  => State Metadata :> es
   => ActionParameterType
   -> Text
   -> Eff es (Either Text (NamedActionParameter wm))
@@ -191,12 +196,27 @@ parseArgumentType (Optionally a) t = do
 parseArgumentType TakesObjectParameter t = tryFindingObject t
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
-tryFindingObject :: Text -> Eff es (Either Text (NamedActionParameter wm))
-tryFindingObject t = do
-  -- look at the current player's room and see if the word matches any:
-  -- - of the objects' names
-  -- - or is a substring of any objects' name
-  pure $ Left $ "I can't see anything called \"" <> t <> "\"."
+tryFindingObject ::
+  Breadcrumbs :> es
+  => ObjectLookup wm :> es
+  => ObjectUpdate wm :> es
+  => Display (WMSayable wm)
+  => State Metadata :> es
+  => Text
+  -> Eff es (Either Text (NamedActionParameter wm))
+tryFindingObject t = failHorriblyIfMissing $ do
+  pl <- getCurrentPlayer
+  playerLoc <- getLocation pl
+  allItems <- getAllObjectsInRoom IncludeScenery IncludeDoors playerLoc
+  let scores = zip (map (scoreParserMatch t) allItems) allItems
+  match <- (\x -> filter (\y -> fst y > x) scores) <$> use #parserMatchThreshold
+  case match of
+    [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
+    [x] -> pure $ Right (ObjectParameter (toAny $ snd x))
+    (_x:_xs) -> pure $ Left "I saw too many things that could be that."
+
+scoreParserMatch :: Text -> Thing wm -> Double
+scoreParserMatch = error ""
 
 parseDirection ::
   forall wm.

@@ -20,6 +20,10 @@ module Yaifl.Model.Objects.Query
   , getCurrentPlayer
   , isVoid
   , tagObject
+
+  , getAllObjectsInRoom
+  , IncludeDoors(..)
+  , IncludeScenery(..)
   ) where
 
 import Solitude
@@ -33,7 +37,6 @@ import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
-import Yaifl.Model.Objects.ThingData
 import Data.Text.Display
 
 withoutMissingObjects ::
@@ -189,3 +192,15 @@ tagObject a = case (preview _Thing a, preview _Room a) of
     (Just x, _) -> Left (tag x (a ^. #objectId))
     (_, Just x) -> Right (tag x (a ^. #objectId))
     _ -> error "impossible"
+
+data IncludeScenery = IncludeScenery | ExcludeScenery
+data IncludeDoors = IncludeDoors | ExcludeDoors
+
+getAllObjectsInRoom ::
+  RoomLike wm o
+  => IncludeScenery
+  -> IncludeDoors
+  -> o
+  -> Eff es [Thing wm]
+getAllObjectsInRoom incScenery incDoors r = do
+  pure []

@@ -1,10 +1,5 @@
-{-|
-Module      : Yaifl.Metadata
-Description : A record of various metadata that we keep around.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
--}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Metadata (
   -- * Metadata
@@ -92,8 +87,11 @@ data Metadata = Metadata
   , typeDAG :: Map ObjectType (Set ObjectType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
   , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
   , oxfordCommaEnabled :: Bool -- ^ should we use the oxford comma in lists?
+  , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
   -- more to come I guess
   } deriving stock (Generic)
+
+makeFieldLabelsNoPrefix ''Metadata
 
 type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
 -- | Take note of an error (to be reported later) but continue execution.

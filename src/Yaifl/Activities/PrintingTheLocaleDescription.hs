@@ -15,7 +15,6 @@ import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
 import Yaifl.Model.Entity ( Store(unStore) )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.ThingData
 import Yaifl.Text.Responses
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
