@@ -47,15 +47,3 @@ isOpen ::
   -> Bool
 isOpen o = Just Open == getOpenableMaybe o
 instance Taggable DoorSpecifics DoorTag
-
-{-}
-
-type DoorLike wm o = PropertyLike wm DoorSpecifics o
-
-
-instance PropertyLike wm DoorSpecifics DoorEntity where
- getAs o = do
-    a <- getObject o
-    e <- getDoorSpecificsMaybe a
-    getPropertyOrThrow "door" a e
-    -}

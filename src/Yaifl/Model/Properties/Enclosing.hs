@@ -1,4 +1,5 @@
-{-# LANGUAGE StrictData #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Properties.Enclosing (
   -- * Enclosing
@@ -9,13 +10,15 @@ module Yaifl.Model.Properties.Enclosing (
 import Solitude
 
 import Data.EnumSet ( EnumSet, empty )
-import Yaifl.Model.Entity ( Entity, Taggable, EnclosingTag )
+import Yaifl.Model.Entity
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing
-  { contents :: EnumSet Entity -- ^ The contained objects.
+  { contents :: EnumSet (TaggedEntity ThingTag) -- ^ The contained objects.
   , capacity :: Maybe Int -- ^ An optional number of items that can be contained.
   } deriving stock (Eq, Show, Read, Ord, Generic)
+
+makeFieldLabelsNoPrefix ''Enclosing
 
 -- | An enclosing component with nothing in it.
 blankEnclosing :: Enclosing

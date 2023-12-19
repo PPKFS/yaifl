@@ -50,7 +50,7 @@ move objectToMove oLoc = failHorriblyIfMissing moveBlock
 
 moveObjects :: EnclosingEntity -> Thing wm -> Enclosing -> Enclosing -> (Thing wm, Enclosing, Enclosing)
 moveObjects newId t oldLoc newLocEncl = let (newLoc', t') = nowContains newId newLocEncl t in (t', oldLoc `noLongerContains` t, newLoc')
-noLongerContains :: HasID n => Enclosing -> n -> Enclosing
-noLongerContains cont obj = cont & (#contents %~ ES.delete (getID obj))
+noLongerContains :: Enclosing -> Thing wm -> Enclosing
+noLongerContains cont obj = cont & (#contents %~ ES.delete (tagThing obj))
 nowContains :: EnclosingEntity -> Enclosing -> Thing wm -> (Enclosing, Thing wm)
-nowContains contId cont obj = (cont & (#contents %~ ES.insert (getID obj)), obj & (#objectData % #containedBy .~ contId))
+nowContains contId cont obj = (cont & (#contents %~ ES.insert (tagThing obj)), obj & (#objectData % #containedBy .~ contId))

@@ -38,6 +38,7 @@ import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Data.Text.Display
+import qualified Data.EnumSet as ES
 
 withoutMissingObjects ::
   HasCallStack
@@ -197,10 +198,22 @@ data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors
 
 getAllObjectsInRoom ::
-  RoomLike wm o
+  ObjectLookup wm :> es
+  => RoomLike wm o
+  => NoMissingObjects wm es
   => IncludeScenery
   -> IncludeDoors
   -> o
   -> Eff es [Thing wm]
 getAllObjectsInRoom incScenery incDoors r = do
-  pure []
+  room <- getRoom r
+  let allItemIDs = ES.toList $ room ^. #objectData % #enclosing % #contents
+  allItems <- mapM getThing allItemIDs
+  allItems2 <- (allItems <>) <$> case incDoors of
+    IncludeDoors -> getAllDoorsForRoom room
+    ExcludeDoors -> pure []
+  -- todo: work out how tf doors fit in here
+  pure allItems
+
+getAllDoorsForRoom :: Room wm -> Eff es [Thing wm]
+getAllDoorsForRoom = error ""

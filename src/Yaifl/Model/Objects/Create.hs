@@ -44,7 +44,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing Nothing SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
+  return (e, Object n Nothing Nothing [] SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
   Pointed s

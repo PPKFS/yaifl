@@ -170,11 +170,7 @@ findSubjects cmd actionArgs (WrappedAction (a :: Action wm goesWith v)) = runErr
 parseArgumentType ::
   forall wm es.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => Display (WMSayable wm)
-  => Breadcrumbs :> es
-  => ObjectLookup wm :> es
-  => ObjectUpdate wm :> es
-  => State Metadata :> es
+  => RuleEffects wm es
   => ActionParameterType
   -> Text
   -> Eff es (Either Text (NamedActionParameter wm))
@@ -197,11 +193,7 @@ parseArgumentType TakesObjectParameter t = tryFindingObject t
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 tryFindingObject ::
-  Breadcrumbs :> es
-  => ObjectLookup wm :> es
-  => ObjectUpdate wm :> es
-  => Display (WMSayable wm)
-  => State Metadata :> es
+  RuleEffects wm es
   => Text
   -> Eff es (Either Text (NamedActionParameter wm))
 tryFindingObject t = failHorriblyIfMissing $ do
@@ -209,14 +201,26 @@ tryFindingObject t = failHorriblyIfMissing $ do
   playerLoc <- getLocation pl
   allItems <- getAllObjectsInRoom IncludeScenery IncludeDoors playerLoc
   let scores = zip (map (scoreParserMatch t) allItems) allItems
-  match <- (\x -> filter (\y -> fst y > x) scores) <$> use #parserMatchThreshold
+  threshold <- use @Metadata #parserMatchThreshold
+  match <- filterM (\(f, _) -> f >>= \x -> pure (x > threshold)) scores
   case match of
     [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
     [x] -> pure $ Right (ObjectParameter (toAny $ snd x))
     (_x:_xs) -> pure $ Left "I saw too many things that could be that."
 
-scoreParserMatch :: Text -> Thing wm -> Double
-scoreParserMatch = error ""
+scoreParserMatch ::
+  RuleEffects wm es
+  => Text -> Thing wm -> Eff es Double
+scoreParserMatch phrase thing = do
+  let phraseSet = S.fromList . words $ phrase
+  -- a total match between the phrase and either the thing's name or any of the thing's understand as gives 1
+  -- otherwise, we see how many of the words of the phrase are represented in the above
+  -- then the match is how many words of the phrase were successfully matched
+  matchingAgainst <- (:(thing ^. #understandAs)) . S.fromList . words <$> sayText (thing ^. #name)
+  -- for each set, keep only the words that match
+  let filterSets = S.unions $ map (S.intersection phraseSet) matchingAgainst
+  pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))
+
 
 parseDirection ::
   forall wm.
