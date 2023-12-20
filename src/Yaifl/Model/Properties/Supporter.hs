@@ -8,7 +8,6 @@ import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.Effects
 
-
 isSupporter ::
   NoMissingObjects wm es
   => ObjectLike wm o

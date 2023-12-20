@@ -9,20 +9,25 @@ module Yaifl.Model.ObjectSpecifics
 
 import Solitude
 
-import Yaifl.Metadata ( ObjectType(..) )
+import Yaifl.Metadata ( ObjectType(..), noteError )
+import Yaifl.Model.Direction (WMStdDirections)
+import Yaifl.Model.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Move
+import Yaifl.Model.Objects.ObjectLike
+import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Model.Objects.ThingData
-import Yaifl.Model.Properties.Enclosing ( Enclosing )
-import Yaifl.Model.Properties.Has ( MayHaveProperty(..), WMWithProperty )
-import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
 import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Door
+import Yaifl.Model.Properties.Enclosing ( Enclosing )
+import Yaifl.Model.Properties.Has ( MayHaveProperty(..), WMWithProperty )
+import Yaifl.Model.Properties.MultiLocated
 import Yaifl.Model.Properties.Openable ( Openable )
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.Objects.RoomConnections
-import Yaifl.Model.Direction (WMStdDirections)
+import Yaifl.Model.Properties.Query
+import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
+import qualified Data.Set as S
 
 data ObjectSpecifics =
   NoSpecifics
@@ -45,6 +50,9 @@ instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
 
 instance MayHaveProperty ObjectSpecifics Enclosing where
   propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing)
+
+instance MayHaveProperty ObjectSpecifics MultiLocated where
+  propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
 
 instance MayHaveProperty ObjectSpecifics Container where
   propertyAT = castOptic _ContainerSpecifics
@@ -79,6 +87,7 @@ addDoor ::
   WMHasObjSpecifics wm
   => WMWithProperty wm Enclosing
   => WMStdDirections wm
+  => WMWithProperty wm MultiLocated
   => NoMissingObjects wm es
   => AddObjects wm es
   => WMSayable wm -- ^ name
@@ -93,5 +102,21 @@ addDoor n ia des f b mbD = do
   d <- addThingInternal n ia des (ObjectType "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
+      (Just (coerceTag $ tagRoom $ fst f))
+  updateMultiLocatedObject d
   addDoorToConnection (tag @DoorSpecifics @DoorTag ds d) f b
   pure d
+
+updateMultiLocatedObject ::
+  WMWithProperty wm MultiLocated
+  => WMWithProperty wm Enclosing
+  => NoMissingObjects wm es
+  => Thing wm -> Eff es ()
+updateMultiLocatedObject t = do
+  case getMultiLocatedMaybe t of
+    Nothing -> noteError (const ()) "the object had no multilocated component"
+    Just ml -> mapM_ (\x -> do
+      obj <- getObject x
+      let enc = getEnclosing x obj
+      updateToContain obj enc t) (S.toList $ ml ^. #locations)
+

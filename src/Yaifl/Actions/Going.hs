@@ -12,7 +12,6 @@ import Yaifl.Model.Entity
 import Yaifl.Metadata ( isPlayer )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects

@@ -156,6 +156,7 @@ blankMetadata = Metadata
   , typeDAG = makeTypeDAG
   , traceAnalysisLevel = Maximal
   , oxfordCommaEnabled = True
+  , parserMatchThreshold = 0.66
   }
 
 newWorld ::

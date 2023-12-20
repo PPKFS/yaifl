@@ -9,7 +9,6 @@ module Yaifl.Model.Properties.Door
   , isClosed
   ) where
 
-
 import Solitude
 
 import Yaifl.Model.Properties.Has
@@ -19,16 +18,19 @@ import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Entity
 import Yaifl.Model.Object
+import Yaifl.Model.Properties.MultiLocated
+import qualified Data.Set as S
 
 data DoorSpecifics = Door
   { isOneWay :: Bool
   , openable :: Openable
   , frontSide :: RoomEntity
   , backSide :: RoomEntity
+  , multiLocated :: MultiLocated
   } deriving stock (Eq, Show, Read)
 
 blankDoorSpecifics :: RoomEntity -> RoomEntity -> DoorSpecifics
-blankDoorSpecifics = Door False Closed
+blankDoorSpecifics x y = Door False Closed x y (MultiLocated $ S.fromList [coerceTag x, coerceTag y])
 
 makeFieldLabelsNoPrefix ''DoorSpecifics
 makeSpecificsWithout [] ''DoorSpecifics

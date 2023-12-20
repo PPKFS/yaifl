@@ -10,7 +10,7 @@ import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
-import Yaifl.Metadata ( firstRoom, title,  Metadata )
+import Yaifl.Metadata ( Metadata )
 import Yaifl.Model.Objects.Move ( move )
 import Yaifl.Model.Objects.Query ( getCurrentPlayer )
 import Yaifl.Text.Print ( Print, printText, setStyle )

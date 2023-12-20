@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 module Yaifl.Model.Properties.Query (
   getPropertyOrThrow
   , defaultPropertyGetter
@@ -12,13 +13,13 @@ module Yaifl.Model.Properties.Query (
 
 import Solitude
 
+import Effectful.Error.Static ( Error, throwError )
 import Yaifl.Model.Entity
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has
-import Effectful.Error.Static ( Error, throwError )
-import Yaifl.Model.Objects.Effects
 
 getPropertyOrThrow ::
   HasID i
@@ -95,8 +96,11 @@ class HasProperty w o v where
 instance MayHaveProperty o v => HasProperty w o v where
   propertyL _ = lens (fromMaybe (error "property witness was violated") . preview propertyAT) (flip (set propertyAT))
 
-class Taggable o EnclosingTag => EnclosingObject o where
+class EnclosingObject o where
   enclosingL :: Lens' o Enclosing
 
 instance EnclosingObject (Room wm) where
   enclosingL = #objectData % #enclosing
+
+instance WMWithProperty wm Enclosing => EnclosingObject (EnclosingEntity, Thing wm) where
+  enclosingL = lens (\(e, o) -> getEnclosing e (toAny o)) (\(e, o) enc -> (e, o & (#specifics % propertyAT .~ enc)))

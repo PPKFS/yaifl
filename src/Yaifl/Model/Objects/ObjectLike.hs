@@ -42,6 +42,9 @@ instance ObjectLike wm Entity where
     then lookupThing e >>= either (throwError . flip MissingObject e) (return . review _Thing)
     else lookupRoom e >>= either (throwError . flip MissingObject e) (return . review _Room)
 
+instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
+  getObject = getObject . snd
+
 instance ThingLike wm (TaggedEntity ThingTag) where
   getThing o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
 

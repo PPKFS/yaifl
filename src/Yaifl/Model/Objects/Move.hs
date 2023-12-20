@@ -1,5 +1,6 @@
 module Yaifl.Model.Objects.Move
   ( move
+  , updateToContain
   ) where
 
 import Solitude
@@ -54,3 +55,13 @@ noLongerContains :: Enclosing -> Thing wm -> Enclosing
 noLongerContains cont obj = cont & (#contents %~ ES.delete (tagThing obj))
 nowContains :: EnclosingEntity -> Enclosing -> Thing wm -> (Enclosing, Thing wm)
 nowContains contId cont obj = (cont & (#contents %~ ES.insert (tagThing obj)), obj & (#objectData % #containedBy .~ contId))
+
+updateToContain ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Enclosing
+  => AnyObject wm
+  -> Enclosing
+  -> Thing wm
+  -> Eff es ()
+updateToContain cont enc obj = do
+  setEnclosing cont (enc & (#contents %~ ES.insert (tagThing obj)))

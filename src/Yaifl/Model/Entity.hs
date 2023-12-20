@@ -72,6 +72,9 @@ newtype TaggedEntity tag = TaggedEntity { unTag :: Entity }
 instance HasID (TaggedEntity t) where
   getID = unTag
 
+instance HasID (TaggedEntity e, o) where
+  getID = getID . fst
+
 data ThingTag
 data RoomTag
 data EnclosingTag

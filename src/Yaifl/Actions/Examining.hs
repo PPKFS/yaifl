@@ -22,7 +22,19 @@ data ExaminingResponses wm = ER
   , examineUndescribedA :: Response wm (Thing wm)
   } deriving stock (Generic)
 
-examiningResponsesImpl = error ""
+notImplementedResponse :: Text -> Response wm a
+notImplementedResponse t = Response $ const (sayTell t)
+
+examiningResponsesImpl :: ExaminingResponses wm
+examiningResponsesImpl = ER
+  { examineDirectionA = notImplementedResponse "directionA"
+  , examineContainerA = notImplementedResponse "containerA"
+  , examineContainerB = notImplementedResponse "containerB"
+  , examineSupporterA = notImplementedResponse "supporterA"
+  , examineDeviceA = notImplementedResponse "deviceA"
+  , examineUndescribedA = notImplementedResponse "undescribedA"
+}
+
 data ExaminingActionVariables wm = EAV
   { examining :: Either (WMDirection wm) (AnyObject wm)
   , examiningTextPrinted :: Bool
@@ -73,11 +85,11 @@ examineDirections = notImplementedRule "examine directions rule"
 standardExamining :: ExamineRule wm
 standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
   -- if the noun provides the property description and the description of the noun is not "":
-  r <- whenRight Nothing (examining variables) $ \obj -> do
+  _r <- whenRight Nothing (examining variables) $ \obj -> do
     desc <- sayText (view #description obj)
     -- say "[description of the noun][line break]";
     -- now examine text printed is true.
-    if (desc /= "") then
+    if desc /= "" then
        do
         [sayingLn|{desc}|]
         pure $ Just True
@@ -85,4 +97,4 @@ standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
   pure (Nothing, Nothing)
 
 reportOtherPeopleExamining :: ExamineRule wm
-reportOtherPeopleExamining = error ""
+reportOtherPeopleExamining = notImplementedRule "report others examining rule"

@@ -198,22 +198,13 @@ data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors
 
 getAllObjectsInRoom ::
-  ObjectLookup wm :> es
-  => RoomLike wm o
+  RoomLike wm o
   => NoMissingObjects wm es
   => IncludeScenery
   -> IncludeDoors
   -> o
   -> Eff es [Thing wm]
-getAllObjectsInRoom incScenery incDoors r = do
+getAllObjectsInRoom _incScenery _incDoors r = do
   room <- getRoom r
   let allItemIDs = ES.toList $ room ^. #objectData % #enclosing % #contents
-  allItems <- mapM getThing allItemIDs
-  allItems2 <- (allItems <>) <$> case incDoors of
-    IncludeDoors -> getAllDoorsForRoom room
-    ExcludeDoors -> pure []
-  -- todo: work out how tf doors fit in here
-  pure allItems
-
-getAllDoorsForRoom :: Room wm -> Eff es [Thing wm]
-getAllDoorsForRoom = error ""
+  mapM getThing allItemIDs

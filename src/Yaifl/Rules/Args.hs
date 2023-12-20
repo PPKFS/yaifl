@@ -25,7 +25,7 @@ module Yaifl.Rules.Args
 import Solitude hiding (show)
 
 import Effectful.Optics
-import Yaifl.Metadata ( Timestamp, currentPlayer )
+import Yaifl.Metadata ( Timestamp )
 import Yaifl.Model.Object
 import Yaifl.Model.WorldModel
 import Data.Text.Display

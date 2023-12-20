@@ -1,21 +1,7 @@
-{-|
-Module      : Yaifl.Model.Object
-Description : A game object.
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
 
-Not everything is an object (like in Inform), but anything that can be interacted with or goes through the motions
-is an object. Namely, there's no need for e.g. directions to be objects.
--}
-
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Object (
   -- * Objects

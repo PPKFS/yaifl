@@ -39,16 +39,20 @@ common common-options
     -fplugin=Effectful.Plugin -Wunused-packages
   default-language: GHC2021
   default-extensions:
-    OverloadedLabels
-    DuplicateRecordFields
-    DerivingStrategies
-    TypeFamilies
-    OverloadedStrings
-    NoImplicitPrelude
-    QuasiQuotes
-    LambdaCase
     DataKinds
+    DefaultSignatures
+    DeriveAnyClass
+    DerivingStrategies
+    DuplicateRecordFields
+    FunctionalDependencies
+    InstanceSigs
+    LambdaCase
     MultiWayIf
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    QuasiQuotes
+    TypeFamilies
 
 library
   import: common-options
@@ -58,10 +62,12 @@ library
 
     Yaifl.Actions.Action
     Yaifl.Actions.ActionProcessing
-    Yaifl.Actions.Going
+
     Yaifl.Actions.Parser
     Yaifl.Actions.Collection
+
     Yaifl.Actions.Examining
+    Yaifl.Actions.Going
 
     Yaifl.Actions.Looking
     Yaifl.Actions.Looking.Locale
@@ -90,15 +96,16 @@ library
     Yaifl.Model.Objects.Move
     Yaifl.Model.Objects.ObjectLike
     Yaifl.Model.Objects.Query
+    Yaifl.Model.Objects.RoomConnections
     Yaifl.Model.Objects.RoomData
     Yaifl.Model.Objects.ThingData
-    Yaifl.Model.Objects.RoomConnections
 
     Yaifl.Model.Properties.Animal
     Yaifl.Model.Properties.Container
     Yaifl.Model.Properties.Door
     Yaifl.Model.Properties.Enclosing
     Yaifl.Model.Properties.Has
+    Yaifl.Model.Properties.MultiLocated
     Yaifl.Model.Properties.Openable
     Yaifl.Model.Properties.Query
     Yaifl.Model.Properties.Supporter
@@ -142,13 +149,11 @@ test-suite yaifl-test
   main-is:            Spec.hs
   build-depends:
     , tasty
-    --, tasty-golden
     , yaifl
     , aeson
     , directory
     , effectful-plugin
     , tasty-silver
-    --, optparse-applicative
 
   ghc-options: -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
   default-extensions:
@@ -159,9 +164,9 @@ test-suite yaifl-test
   other-modules:
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
-    Yaifl.Test.Chapter3.Verbosity
-    Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.PortRoyal
-    Yaifl.Test.Chapter3.UpAndUp
+    Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.StarryVoid
+    Yaifl.Test.Chapter3.UpAndUp
+    Yaifl.Test.Chapter3.Verbosity
     Yaifl.Test.Common

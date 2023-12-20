@@ -23,7 +23,6 @@ import Yaifl.Model.Object( Object(..), AnyObject, Thing, objectEquals )
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData ( IsVisited(..) )
-import Yaifl.Model.Objects.ThingData ( ThingData(..) )
 import Yaifl.Model.Properties.Animal
 import Yaifl.Model.Properties.Supporter ( isSupporter )
 import Yaifl.Rules.Args

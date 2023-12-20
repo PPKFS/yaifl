@@ -1,5 +1,3 @@
-{-# LANGUAGE DefaultSignatures #-}
-
 module Yaifl.Model.Properties.Has (
   -- * Has
     MayHaveProperty(..)

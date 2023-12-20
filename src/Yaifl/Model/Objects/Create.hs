@@ -57,8 +57,9 @@ addObject ::
   -> Bool
   -> Maybe s
   -> d
+  -> Maybe EnclosingEntity
   -> Eff es (Object wm d s)
-addObject updWorld n d ty isT specifics details =
+addObject updWorld n d ty isT specifics details mbLocation =
   withSpan' ("new " <> if isT then "thing" else "room") (display n) $ do
     (e, obj) <- makeObject n d ty isT specifics details
     addAnnotation "object created"
@@ -71,8 +72,15 @@ addObject updWorld n d ty isT specifics details =
       lastRoom <- getRoom lastRoomE
       asThingOrRoom
         (\t -> do
-        withoutSpan $ when (t ^. #objectData % #containedBy == coerceTag voidID)
-          (move t lastRoom >> pass))
+          case mbLocation of
+            Nothing -> move t lastRoom >> pass
+            Just loc -> do
+              encLoc <- getObject loc
+              asThingOrRoom
+                (void . move t . (loc,))
+                (void . move t)
+                encLoc
+        )
         (\r -> #previousRoom .= tagRoom r) obj'
     pure obj
 
@@ -85,10 +93,11 @@ addThingInternal ::
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (ThingData wm)
+  -> Maybe EnclosingEntity
   -> Eff es (Thing wm)
-addThingInternal name ia desc objtype specifics details =
+addThingInternal name ia desc objtype specifics details mbLoc =
   Thing <$> addObject (addThingToWorld . Thing) name desc objtype
-    True specifics (fromMaybe (blankThingData ia) details)
+    True specifics (fromMaybe (blankThingData ia) details) mbLoc
 
 addThing' ::
   forall wm es r.
@@ -99,12 +108,15 @@ addThing' ::
   -> "description" :? WMSayable wm -- ^ Description.
   -> "specifics" :? WMObjSpecifics wm
   -> "build" :! Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
+  -> "location" :? EnclosingEntity
   -> Eff es (Thing wm)
 addThing' n
   (argDef #initialAppearance "" -> ia)
   (argDef #description "" -> d)
   (argF #specifics -> s)
-  (arg #build -> stateUpdate) = addThingInternal n ia d (ObjectType "thing") s (runLocalState (blankThingData ia) stateUpdate)
+  (arg #build -> stateUpdate)
+  (argF #location -> loc) =
+    addThingInternal n ia d (ObjectType "thing") s (runLocalState (blankThingData ia) stateUpdate) loc
 
 runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
 runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
@@ -136,7 +148,7 @@ addRoomInternal ::
   -> Maybe (RoomData wm) -- ^
   -> Eff es (Room wm)
 addRoomInternal name desc objtype specifics details = do
-  e <- Room <$> addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details)
+  e <- Room <$> addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoom e)
   return e

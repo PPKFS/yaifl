@@ -9,10 +9,10 @@ module Yaifl.Model.Properties.TH
 ) where
 
 import Solitude
-import Language.Haskell.Meta ( parseDecsWithMode )
 import Data.Text (replace)
-import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
+import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
+import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase)
 
 data SpecificsFunctions =
