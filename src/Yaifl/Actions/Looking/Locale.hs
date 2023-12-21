@@ -6,6 +6,7 @@ import Yaifl.Model.Object
 import Solitude
 import Data.Text.Display
 import Yaifl.Model.Entity
+import Yaifl.Rules.Args
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables

@@ -166,7 +166,7 @@ roomDescriptionBody = makeRule "room description body rule" forPlayer'
             -- if handling the printing the description of a dark room activity:
             whenHandling' #printingDescriptionOfADarkRoom $ do
               -- now the prior named object is nothing;
-              regarding Nothing
+              regardingNothing
               -- say "[It] [are] pitch dark, and [we] [can't see] a thing." (A);
               sayResponse (#roomDescriptions % #roomDescriptionBodyA) ()
             -- end the printing the description of a dark room activity;

@@ -10,13 +10,15 @@ module Yaifl.Rules.Rule
   , RuleLimitedEffect(..)
   , forPlayer'
   , forPlayer
-  --, runRuleLimitedEffect
   , parseAction
   , notImplementedRule
   , makeRule
   , makeRule'
   , rulePass
-  , sayText
+  , ruleWhenJustM
+  , ruleGuard
+  , ruleGuardM
+  , forThing
   ) where
 
 import Solitude
@@ -24,6 +26,9 @@ import Solitude
 import Breadcrumbs ( ignoreSpan, addAnnotation )
 import Yaifl.Rules.Args ( Refreshable, Args, getPlayer )
 import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Query
+import Yaifl.Model.Objects.Effects
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (RuleConstraints wm => Eff (es : ConcreteRuleStack wm) a)
 
@@ -75,5 +80,36 @@ rulePass ::
   Monad m
   => m (Maybe a)
 rulePass = return Nothing
+
+ruleGuard ::
+  Monad m
+  => Bool
+  -> m (Maybe b, Maybe r)
+  -> m (Maybe b, Maybe r)
+ruleGuard cond f = if cond then f else pure (Nothing, Nothing)
+
+ruleGuardM ::
+  Monad m
+  => m Bool
+  -> m (Maybe b, Maybe r)
+  -> m (Maybe b, Maybe r)
+ruleGuardM cond f = ifM cond f $ pure (Nothing, Nothing)
+
+ruleWhenJustM ::
+  Monad m
+  => m (Maybe a)
+  -> (a -> m (Maybe b, Maybe r))
+  -> m (Maybe b, Maybe r)
+ruleWhenJustM mb f = do
+  m' <- mb
+  maybe (pure (Nothing, Nothing)) f m'
+
+forThing ::
+  NoMissingObjects wm es
+  => ObjectLike wm a
+  => a
+  -> (Thing wm -> Eff es (Maybe b, Maybe r))
+  -> Eff es (Maybe b, Maybe r)
+forThing e = ruleWhenJustM (getThingMaybe e)
 
 makeFieldLabelsNoPrefix ''Rule

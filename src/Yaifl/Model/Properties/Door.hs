@@ -27,7 +27,7 @@ data DoorSpecifics = Door
   , frontSide :: RoomEntity
   , backSide :: RoomEntity
   , multiLocated :: MultiLocated
-  } deriving stock (Eq, Show, Read)
+  } deriving stock (Eq, Show, Read, Generic)
 
 blankDoorSpecifics :: RoomEntity -> RoomEntity -> DoorSpecifics
 blankDoorSpecifics x y = Door False Closed x y (MultiLocated $ S.fromList [coerceTag x, coerceTag y])

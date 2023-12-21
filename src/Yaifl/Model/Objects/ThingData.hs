@@ -9,6 +9,7 @@ module Yaifl.Model.Objects.ThingData (
   , ThingDescribed(..)
   , ThingData(..)
   , ThingPortable(..)
+  , ThingHandled(..)
   , blankThingData
   -- ** Optics
   , _Wearable
@@ -34,12 +35,16 @@ data ThingDescribed = Undescribed | Described
 data ThingPortable = Portable | FixedInPlace
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
+data ThingHandled = Handled | NotHandled
+  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+
 -- | Properties that define a `Yaifl.Model.Object.Thing`.
 data ThingData wm = ThingData
   { containedBy :: EnclosingEntity
   , lit :: ThingLit
   , wearable :: ThingWearability
   , described :: ThingDescribed
+  , handled :: ThingHandled
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
   , initialAppearance :: WMSayable wm
@@ -51,6 +56,6 @@ deriving stock instance (Show (WMSayable wm)) => Show (ThingData wm)
 makeFieldLabelsNoPrefix ''ThingData
 -- | A default thing.
 blankThingData :: WMSayable wm -> ThingData wm
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described Portable True
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True
 
 makePrisms ''ThingWearability

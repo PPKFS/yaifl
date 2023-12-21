@@ -229,4 +229,7 @@ sayingParser = many piece <* P.eof where
       [art, x] -> pure $ SayArticle art x
       _ -> error "too many substitution pieces"
   oneOrTwoPieces = toText <$$> many (P.takeWhile1P Nothing (\x -> x `notElem` ['}', ' ']) <* optional (P.single ' ')) <* P.char '}'
-  lit = RegularText . toText <$> P.takeWhile1P Nothing (\x -> x `notElem` ['{', '#'])
+  lit = RegularText . stripNewlines . toText <$> P.takeWhile1P Nothing (\x -> x `notElem` ['{', '#'])
+
+stripNewlines :: Text -> Text
+stripNewlines = T.replace "¬\n" ""

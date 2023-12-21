@@ -97,7 +97,6 @@ interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
         --sort the Table of Locale Priorities in locale description priority order;
         sorted = sortBy (compare `on` priority) (toList $ unStore tb)
     addTag "interesting things" (length sorted)
-    -- carry out the printing a locale paragraph about activity with the notable-object entry;
     -- for each thing, we offer it to write a paragraph
     -- then it is either no longer needed to be written about (Just Mentioned)
     -- mentioned, but still hanging around (Just Unmentioned)

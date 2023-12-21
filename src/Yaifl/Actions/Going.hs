@@ -201,7 +201,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
     _outAction <- ifM (nonVehicle `isType` "supporter") (pure ("off" :: String)) (pure "out of")
-   -- let dir = "[We] [would have] to get off [the nonvehicle] first."
+    -- let dir = "[We] [would have] to get off [the nonvehicle] first."
     pass
   rulePass
 

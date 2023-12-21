@@ -7,8 +7,8 @@ import Solitude
 import Yaifl.Rules.Rule
 import Effectful.Writer.Static.Local (Writer, tell)
 import Data.Text.Display
-import Yaifl.Rules.RuleEffects
 import Data.Text.Lazy.Builder (fromText)
+import Yaifl.Text.Say
 
 newtype DynamicText (wm :: WorldModel) = DynamicText (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 

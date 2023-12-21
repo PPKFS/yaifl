@@ -38,9 +38,15 @@ blankAdaptiveNarrative = AdaptiveNarrative
 
 regarding ::
   State (AdaptiveNarrative wm) :> es
-  => Maybe (AnyObject wm)
+  => CanBeAny wm a
+  => Maybe a
   -> Eff es ()
-regarding mbObj = #priorNamedObject .= mbObj
+regarding mbObj = #priorNamedObject .= (toAny <$> mbObj)
+
+regardingNothing ::
+  State (AdaptiveNarrative wm) :> es
+  => Eff es ()
+regardingNothing = regarding (Nothing :: Maybe (AnyObject wm))
 
 regardingThePlayer ::
   forall wm es.
@@ -85,6 +91,7 @@ withRoom f = do
 getMentionedThing ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
+  => HasCallStack
   => State Metadata :> es
   => ObjectLookup wm :> es
   => Breadcrumbs :> es
@@ -107,7 +114,6 @@ withThing ::
 withThing f = do
   r <- getMentionedThing
   f r
-
 
 getPersonageOfObject ::
   forall wm es.

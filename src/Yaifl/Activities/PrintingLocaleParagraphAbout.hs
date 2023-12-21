@@ -7,14 +7,17 @@ import Solitude
 
 import Yaifl.Activities.Activity
 import Yaifl.Model.Object
-import Yaifl.Model.Objects.Query (getThingMaybe)
 import Yaifl.Model.Objects.ThingData
-import Yaifl.Rules.Rule ( Rule, makeRule, notImplementedRule )
+import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Actions.Looking.Locale
 import Yaifl.Model.Entity
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Enclosing
+import Yaifl.Text.SayQQ
+import Yaifl.Rules.RuleEffects
+import Yaifl.Text.Say
+import Yaifl.Text.AdaptiveNarrative
 
 setLocalePriority ::
   AnyObject s
@@ -24,15 +27,31 @@ setLocalePriority ::
 setLocalePriority e lv i = lv & #localePriorities % at (getID e) % _Just % #priority .~ i
 
 removeFromLocale ::
-  AnyObject s
+  Applicative m
+  => AnyObject v
   -> LocaleVariables v
+  -> LocaleInfo v
+  -> m (Maybe (LocaleVariables v, LocaleInfo v), Maybe (LocaleVariables v))
+removeFromLocale e lv li = do
+  pure (Just (lv & #localePriorities % at (getID e) .~ Nothing, li & #priority .~ 0), Nothing)
+
+mentionItemAndIncreaseParagraphCount ::
+  Applicative m
+  => AnyObject v
   -> LocaleVariables v
-removeFromLocale e lv = lv & #localePriorities % at (getID e) .~ Nothing
+  -> LocaleInfo v
+  -> m (Maybe (LocaleVariables v, LocaleInfo v), Maybe (LocaleVariables v))
+mentionItemAndIncreaseParagraphCount e lv li = do
+  let nowMentionedItem = li & #isMentioned .~ True
+  pure (Just (lv &
+    #localePriorities % at (getID e) ?~ nowMentionedItem
+    & #paragraphCount %~ (+1), nowMentionedItem), Nothing)
 
 type WithPrintingLocaleParagraphAbout wm =
   ( WithActivity "printingLocaleParagraphAbout" wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
   , WMWithProperty wm Enclosing
   )
+
 type LocaleParagraphAboutRule wm = Rule wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 {-
   (a) Print a paragraph about the item and mark it as mentioned — this is good for interesting items deserving a paragraph of their own.
@@ -53,54 +72,63 @@ printingLocaleParagraphAboutImpl = Activity "printing a locale paragraph about s
       , describeOnScenery
       , setPronounsFromItems
       , useInitialAppearanceOnSupporters
+      -- TODO: this needs to be forced last.
+      , finishActivity
       ]
     })
   (blankRulebook "after printing a locale paragraph")
 
 -- normally this just removes "you can see yourself"
 dontMentionUndescribed :: LocaleParagraphAboutRule wm
-dontMentionUndescribed = makeRule "don’t mention undescribed items in room descriptions rule" []
-        (\(v, LocaleInfo _ e _) -> do
-          asThing <- getThingMaybe e
-          let isDesc = asThing ^? _Just % #objectData % #described
-          if
-            isDesc == Just Undescribed
-          then
-            return . Just $ removeFromLocale e v
-          else
-            return Nothing
+dontMentionUndescribed = Rule "don’t mention undescribed items in room descriptions rule" []
+        (\(v, li@(LocaleInfo _ e _)) ->
+          forThing e $ \thing ->
+          ruleGuard ((thing ^. #objectData % #described) == Undescribed) $ do
+            removeFromLocale e v li
         )
 
 dontMentionSupporter :: LocaleParagraphAboutRule wm
-dontMentionSupporter = makeRule "don't mention player's supporter in room descriptions rule" []
-  (\(v, LocaleInfo _ e _) -> do
-          asThing <- getThingMaybe e
-          let isDesc = asThing ^? _Just % #objectData % #described
-          if
-            isDesc == Just Undescribed
-          then
-            return . Just $ removeFromLocale e v --setLocalePriority e v 0
-          else
-            return Nothing
-  )
+dontMentionSupporter = notImplementedRule "don't mention player's supporter in room descriptions rule"
 
 dontMentionScenery :: LocaleParagraphAboutRule wm
-dontMentionScenery = makeRule "don't mention scenery in room descriptions rule" []
-  (\(v, LocaleInfo _ e _) -> do
-          isScenery <- e `isType` "scenery"
-          if
-            isScenery
-          then
-            return . Just $ removeFromLocale e v
-          else
-            return Nothing
-  )
+dontMentionScenery = Rule "don't mention scenery in room descriptions rule" []
+  (\(v, li@(LocaleInfo _ e _)) -> ruleGuardM (e `isType` "scenery") $ removeFromLocale e v li)
 
 offerItems :: LocaleParagraphAboutRule wm
 offerItems = notImplementedRule "offer items to writing a paragraph about rule"
 
 useInitialAppearance :: LocaleParagraphAboutRule wm
-useInitialAppearance = notImplementedRule "use initial appearance in room descriptions rule"
+useInitialAppearance = Rule "use initial appearance in room descriptions rule" []
+  (\(v, li@(LocaleInfo _ e isMentioned)) ->
+    forThing e $ \thing ->
+    ruleGuard (not isMentioned) $ do
+      regarding (Just thing)
+      ia <- sayText $ thing ^. #objectData % #initialAppearance
+      -- if the item provides the property initial appearance and the
+      -- item is not handled and the initial appearance of the item is not "":
+      ruleGuard ((thing ^. #objectData % #handled == NotHandled) && (ia /= "")) $ do
+        -- say "[initial appearance of the item]";
+        [saying|{ia}|]
+        -- say "[paragraph break]";
+        [saying|#{paragraphBreak}|]
+
+        {-
+        TODO:
+        -- if a locale-supportable thing is on the item:
+        repeat with possibility running through things on the item:
+                  now the possibility is marked for listing;
+                  if the possibility is mentioned:
+                      now the possibility is not marked for listing;
+              say "On [the item] " (A);
+              list the contents of the item, as a sentence, including contents,
+                  giving brief inventory information, tersely, not listing
+                  concealed items, prefacing with is/are, listing marked items only;
+              say ".[paragraph break]";
+        -}
+        -- increase the locale paragraph count by 1;
+        -- now the item is mentioned;
+        mentionItemAndIncreaseParagraphCount e v li
+  )
 
 useInitialAppearanceOnSupporters :: LocaleParagraphAboutRule wm
 useInitialAppearanceOnSupporters = notImplementedRule "initial appearance on supporters rule"
@@ -113,3 +141,7 @@ describeOnMentionedSupporters = notImplementedRule "describe what's on mentioned
 
 setPronounsFromItems :: LocaleParagraphAboutRule wm
 setPronounsFromItems = notImplementedRule "set pronouns from items in room descriptions rule"
+
+finishActivity :: LocaleParagraphAboutRule wm
+finishActivity = Rule "finish printing locale paragraph about rule" []
+  (\(v, li) -> pure (Just (v, li), Just v))

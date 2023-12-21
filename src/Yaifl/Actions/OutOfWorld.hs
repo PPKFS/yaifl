@@ -8,8 +8,8 @@ import Solitude
 import Yaifl.Metadata
 import Effectful.Optics
 import Yaifl.Text.SayQQ
-import Yaifl.Rules.RuleEffects
 import Yaifl.Actions.Action
+import Yaifl.Text.Say
 
 changeRoomAbbreviations ::
   State Metadata :> es

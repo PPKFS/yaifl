@@ -17,6 +17,7 @@ import Effectful.Optics
 import GHC.TypeLits
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.SayQQ
+import Yaifl.Text.Say
 
 newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 

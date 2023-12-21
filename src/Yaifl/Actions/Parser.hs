@@ -241,11 +241,11 @@ tryAction ::
   => Refreshable wm v
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
+  => SayableValue (WMSayable wm) wm
   => State (WorldActions wm) :> es
   => State (ActivityCollector wm) :> es
   => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
-  => SayableValue (WMSayable wm) wm
   => Print :> es
   => Action wm goesWith v -- ^ text of command
   -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp

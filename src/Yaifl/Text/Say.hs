@@ -6,7 +6,8 @@ module Yaifl.Text.Say
   , SayModal(..)
   , SayModalVerb(..)
   , SayLiteral(..)
-  , say
+  , SayableValue(..)
+  , sayText
   , sayLn
   , WithPrintingNameOfSomething
   , printingNameOfSomethingImpl
@@ -130,7 +131,7 @@ instance SayableValue (SayLiteral "we") wm where
 
 instance SayableValue (SayLiteral "it") wm where
   sayTell (SayLiteral cap) = do
-    regarding Nothing
+    regardingNothing
     withCapitalisation cap "it"
 
 instance SayableValue (SayLiteral "see") wm where

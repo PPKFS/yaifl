@@ -10,7 +10,7 @@ import Yaifl.Text.Responses
 import Yaifl.Model.Object
 import Yaifl.Model.Direction
 import Yaifl.Model.WorldModel
-import Yaifl.Rules.RuleEffects (SayableValue(..))
+import Yaifl.Text.Say (SayableValue(..), sayText)
 import Yaifl.Text.SayQQ
 
 data ExaminingResponses wm = ER

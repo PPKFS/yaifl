@@ -27,10 +27,9 @@ boothDesc tcr = DynamicText $ Right ("description of magician's booth door", Rul
     p <- getPlayer
     picr <- (== tcr) <$> getLocation p
     let cl = isClosed t
-    [sayingTell|{?if picr}A magician's booth stands in the corner, painted dark blue with glittering gold stars.
-    {?else if cl} A crack of light indicates the way back out to the center ring.
-    {?else} The door stands open to the outside.{?end if}|]
-    )
+    [sayingTell|{?if picr}A magician's booth stands in the corner, painted dark blue with glittering gold stars.¬
+{?else if cl}A crack of light indicates the way back out to the center ring.¬
+{?else}The door stands open to the outside.{?end if}|])
 
 starryVoidWorld :: Game PlainWorldModel ()
 starryVoidWorld = do
