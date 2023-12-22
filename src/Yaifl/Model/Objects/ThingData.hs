@@ -1,19 +1,21 @@
-{-# LANGUAGE StrictData #-}
+{-|
+Module      : Yaifl.Model.Objects.ThingData
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
-{-# LANGUAGE UndecidableInstances #-}
+Properties that all `Yaifl.Model.Objects.Thing`s have.
+-}
 
 module Yaifl.Model.Objects.ThingData (
-  -- * Thing data
+  -- * Thing data components
     ThingLit(..)
   , ThingWearability(..)
   , ThingDescribed(..)
-  , ThingData(..)
   , ThingPortable(..)
   , ThingHandled(..)
+  , ThingData(..)
   , blankThingData
-  -- ** Optics
-  , _Wearable
-  , _NotWearable
 ) where
 
 import Solitude
@@ -33,9 +35,11 @@ data ThingWearability = NotWearable | Wearable (Maybe Entity)
 data ThingDescribed = Undescribed | Described
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
+-- | If the thing is able to be picked up or not.
 data ThingPortable = Portable | FixedInPlace
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
+-- | If the thing has been picked up or otherwise interacted with by the player.
 data ThingHandled = Handled | NotHandled
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
@@ -49,14 +53,14 @@ data ThingData wm = ThingData
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
   , initialAppearance :: WMSayable wm
+
   } deriving stock (Generic)
 
 deriving stock instance (Eq (WMSayable wm)) => Eq (ThingData wm)
 deriving stock instance (Show (WMSayable wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
--- | A default thing.
+
+-- | A default thing (when given an initial appearance).
 blankThingData :: WMSayable wm -> ThingData wm
 blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True
-
-makePrisms ''ThingWearability

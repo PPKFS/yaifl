@@ -1,39 +1,47 @@
+{-|
+Module      : Yaifl.Metadata
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
+General game-specific metadata (user settings and configs, object type information,
+and helpers for the construction phase). Should not be dependent on anything major
+because most things rely on this in some form.
+-}
 
 module Yaifl.Metadata (
-  -- * Metadata
-    Metadata(..)
-  -- ** Components
-  , RoomDescriptions(..)
+  -- * Metadata Components
+  RoomDescriptions(..)
   , Timestamp(..)
   , CurrentStage(..)
   , AnalysisLevel(..)
   , ObjectType(..)
+  -- * Metadata
+  , Metadata(..)
   , WithMetadata
-
-  -- ** Error handling
+  -- * Error handling
   , noteError
   , noteRuntimeError
   , traceGuard
-  -- ** Construction
+  -- * Construction helpers
   , whenConstructing
   , whenConstructingM
   , setTitle
   , isRuntime
+  -- * Querying
   , isPlayer
   -- ** Timestamps
   , getGlobalTime
   , tickGlobalTime
   ) where
 
-import Solitude
-import Effectful.Optics ( (.=), (%=), use )
-
-import Yaifl.Model.Objects.Entity
 import Breadcrumbs
 import Data.Text.Display
+import Effectful.Optics ( (.=), (%=), use )
+import Solitude
+import Yaifl.Model.Objects.Entity
 
--- | Copy of Inform7's room description verbosity.
+-- | Whether the room descriptions should be printed verbosely sometimes, all the time, or never.
 data RoomDescriptions =
   SometimesAbbreviatedRoomDescriptions -- ^ Print full descriptions when visiting a room for the first time only.
   | AbbreviatedRoomDescriptions -- ^ Never print full descriptions (except when looking).
@@ -45,11 +53,11 @@ instance Display RoomDescriptions where
   displayBuilder NoAbbreviatedRoomDescriptions = "Never abbreviated"
   displayBuilder AbbreviatedRoomDescriptions = "Always abbreviated"
 
--- | A `Timestamp` is used to date events or to keep track of when objects were last cached.
--- This probably introduces more overhead in checks than saves, but oh well.
+-- | A `Timestamp` is used to date events that modify, add, or remove objects.
+-- Currently these aren't...used for anything.
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
-  } deriving stock   (Show, Read, Generic)
+  } deriving stock (Show, Read, Generic)
     deriving newtype (Eq, Num, Enum, Ord, Real, Integral)
 
 -- | The status of the build-verify-run process.
@@ -89,10 +97,12 @@ data Metadata = Metadata
   , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
   -- more to come I guess
   } deriving stock (Generic)
-
 makeFieldLabelsNoPrefix ''Metadata
 
+-- | As basically everywhere where we need the `Metadata` probably uses logging, this type synonym
+-- makes it a bit easier.
 type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
+
 -- | Take note of an error (to be reported later) but continue execution.
 noteError ::
   WithMetadata es
@@ -116,27 +126,34 @@ noteRuntimeError f t = do
     addAnnotation t
   pure $ f t
 
+-- | Retrieve the global timestamp.
 getGlobalTime ::
   State Metadata :> es
   => Eff es Timestamp
 getGlobalTime = use #globalTime
 
+-- | Increase the global timestamp.
 tickGlobalTime ::
   State Metadata :> es
   => Eff es ()
 tickGlobalTime = #globalTime %= (+1)
 
+-- | Modify the title of the game.
 setTitle ::
   State Metadata :> es
   => Text -- ^ New title.
   -> Eff es ()
 setTitle = (#title .=)
 
+-- | Determine if we are in the construction phase or in runtime,
+-- for the sake of things which should be errors or ignored during construction
+-- but should loudly complain when actually playing the game.
 isRuntime ::
   State Metadata :> es
   => Eff es Bool
 isRuntime = (Runtime ==) <$> use #currentStage
 
+-- | Run something only during construction, where the condition is monadic.
 whenConstructingM ::
   State Metadata :> es
   => Eff es Bool
@@ -147,6 +164,7 @@ whenConstructingM cond =
     cs <- use #currentStage
     return $ cs == Construction, cond])
 
+-- | Run something only during construction.
 whenConstructing ::
   State Metadata :> es
   => Bool
@@ -157,12 +175,15 @@ whenConstructing cond =
     cs <- use #currentStage
     return $ cs == Construction, pure cond])
 
+-- | A guard for construction or when the analysis level enabled is greater than the specified
+-- level.
 traceGuard ::
   State Metadata :> es
   => AnalysisLevel
   -> Eff es Bool
 traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
 
+-- | If some `Entity` represents the current player.
 isPlayer ::
   HasID o
   => State Metadata :> es

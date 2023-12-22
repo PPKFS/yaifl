@@ -1,12 +1,19 @@
-{-# LANGUAGE DataKinds #-}
+{-|
+Module      : Yaifl.Model.Properties.TH
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Template Haskell generation of property queries (get, set, and modify) and directions (isDirectionOf
+and isDirectionOfOneWay).
+-}
 
 module Yaifl.Model.Properties.TH
-(
-    makeSpecificsWithout
+  ( makeSpecificsWithout
   , makePropertyFunction
   , SpecificsFunctions(..)
   , makeDirections
-) where
+  ) where
 
 import Solitude
 import Data.Text (replace)
@@ -15,6 +22,10 @@ import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase)
 
+-- | The functions we *don't* want to autogenerate for a given property
+-- because we want to do something special with them (e.g. see `Yaifl.Model.Properties.Enclosing`
+-- in `Yaifl.Model.Properties.Query` where @getEnclosingMaybe@ does something special with
+-- rooms).
 data SpecificsFunctions =
   GetX
   | SetX
@@ -28,11 +39,16 @@ myDefaultParseMode = defaultParseMode
   , extensions = map EnableExtension [DataKinds, ExplicitForAll, ScopedTypeVariables ]
   }
 
-makeSpecificsWithout :: [SpecificsFunctions] -> Name -> Q [Dec]
+-- | Generate 0-3 of @getPropMaybe@, @setProp@, and @modifyProp@.
+makeSpecificsWithout ::
+  [SpecificsFunctions]
+  -> Name
+  -> Q [Dec]
 makeSpecificsWithout l prop = do
   v <- mapM (makePropertyFunction prop) (universeSans l)
   return $ join v
 
+-- | Generate one of @getPropMaybe@, @setProp@, and @modifyProp@.
 makePropertyFunction :: Name -> SpecificsFunctions -> Q [Dec]
 makePropertyFunction n sf = do
   return $ (case sf of
@@ -47,7 +63,11 @@ makePropertyFunction n sf = do
 replaceTH :: Text -> Text -> [Dec]
 replaceTH y x = either (\x' -> [error $ toText x']) id (parseDecsWithMode myDefaultParseMode $ toString $ replace "XSUBHERE" x y)
 
-makeDirections :: Bool -> [Text] -> Q [Dec]
+-- | Generate @isDirOf@ and @isDirOfOneWay@ for the base directions if @std@ is True, and for `Yaifl.Model.WorldModel.WMDirection` if False.
+makeDirections ::
+  Bool -- ^ Whether the directions should have an `Yaifl.Model.Direction.injectDirection` wrapper if dealing with a supertype.
+  -> [Text]
+  -> Q [Dec]
 makeDirections std dirs = do
   v <- mapM (\n -> do
     let replaceTH' y x = if std then replaceTH (replace "XSUBHERE2" "(injectDirection XSUBHERE)" y) x else replaceTH (replace "XSUBHERE2" "XSUBHERE" y) x

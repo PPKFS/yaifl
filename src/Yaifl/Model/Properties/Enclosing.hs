@@ -1,5 +1,11 @@
+{-|
+Module      : Yaifl.Model.Properties.Enclosing
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
-{-# LANGUAGE UndecidableInstances #-}
+A property component for things that can contain other things (rooms, supporters, containers, etc).
+-}
 
 module Yaifl.Model.Properties.Enclosing (
   -- * Enclosing
@@ -15,14 +21,17 @@ import Yaifl.Model.Objects.Tag
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing
-  { contents :: EnumSet (TaggedEntity ThingTag) -- ^ The contained objects.
-  , capacity :: Maybe Int -- ^ An optional number of items that can be contained.
+  { contents :: EnumSet ThingEntity -- ^ The contained objects.
+  , capacity :: Maybe Int -- ^ An optional number of items that can be contained. Nothing = infinite.
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeFieldLabelsNoPrefix ''Enclosing
 
 -- | An enclosing component with nothing in it.
 blankEnclosing :: Enclosing
-blankEnclosing = Enclosing Data.EnumSet.empty Nothing
+blankEnclosing = Enclosing
+  { contents = Data.EnumSet.empty
+  , capacity = Nothing
+  }
 
 instance Taggable Enclosing EnclosingTag

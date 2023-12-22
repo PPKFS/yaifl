@@ -1,3 +1,12 @@
+{-|
+Module      : Yaifl.Model.Properties.Has
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Optics for accessing a property from the sum type of object specifics.
+-}
+
 module Yaifl.Model.Properties.Has (
   -- * Has
     MayHaveProperty(..)
@@ -8,7 +17,9 @@ import Solitude
 import Yaifl.Model.WorldModel ( WMObjSpecifics )
 
 -- | An `AffineTraversal` is an optic that focuses on 0-1 objects; it's a `Prism` without
--- the condition that you can build it back up again.
+-- the condition that you can build it back up again..which works great for the possibility
+-- that our world model instantiation of object specifics may contain many possible pathways
+-- for any individual property but there's no way to do the Prism review.
 class MayHaveProperty o v where
   default propertyAT :: AffineTraversal' o v
   propertyAT = atraversal Left const
@@ -27,5 +38,5 @@ instance MayHaveProperty a v => MayHaveProperty (Maybe a) v where
       Nothing -> const Nothing
       Just a -> \v -> Just $ a & propertyAT .~ v)
 
--- | A helper to define that a world model `wm` has a Property.
+-- | A helper to define that a world model @wm@ has a Property.
 type WMWithProperty wm v = MayHaveProperty (WMObjSpecifics wm) v

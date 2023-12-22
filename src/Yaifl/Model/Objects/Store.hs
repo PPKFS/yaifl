@@ -19,7 +19,7 @@ import Yaifl.Model.Objects.Entity
 import qualified Data.EnumMap as EM
 import qualified Data.IntMap as IM
 
--- | An `EnumMap` specialised over `Entity`s.
+-- | An `EM.EnumMap` specialised over `Entity`s.
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   } deriving stock (Show, Generic)
