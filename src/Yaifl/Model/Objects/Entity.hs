@@ -68,9 +68,9 @@ instance HasID (TaggedEntity t) where
 instance HasID (TaggedEntity e, o) where
   getID = getID . fst
 
--- | Phantom type for tagging `Thing`s.
+-- | Phantom type for tagging `Yaifl.Model.Objects.Thing`s.
 data ThingTag
--- | Phantom type for tagging `Room`s.
+-- | Phantom type for tagging `Yaifl.Model.Objects.Room`s.
 data RoomTag
 -- | Phantom type for tagging objects that enclose something.
 data EnclosingTag

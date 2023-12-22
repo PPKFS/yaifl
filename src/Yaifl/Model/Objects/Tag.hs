@@ -1,3 +1,13 @@
+{-|
+Module      : Yaifl.Model.Objects.Tag
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Machinery to tag entities given a witness such that we can safely avoid Maybe when
+doing queries. For example, we can require that the object reference of the object
+that contains something is an object with an enclosing property.
+-}
 module Yaifl.Model.Objects.Tag
   ( -- * Tagging things
     Taggable(..)
@@ -18,7 +28,7 @@ class Taggable taggableWith taggableTo where
 instance Taggable (TaggedEntity RoomTag) EnclosingTag where
   tag = const . coerce
 
--- | If we can tag a `TaggedEntity a` as a `b`, we can just coerce the entity
+-- | If we can tag a `TaggedEntity a` as a @b@, we can just coerce the entity
 -- rather than passing it twice.
 coerceTag ::
   Taggable (TaggedEntity a) b

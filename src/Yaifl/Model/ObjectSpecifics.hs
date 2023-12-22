@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+
 
 module Yaifl.Model.ObjectSpecifics
   ( -- * Specifics

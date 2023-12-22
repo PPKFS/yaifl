@@ -1,5 +1,5 @@
 
-{-# LANGUAGE TemplateHaskell #-}
+
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Text.ResponseCollection where

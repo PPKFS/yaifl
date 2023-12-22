@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+
 
 module Yaifl.Model.Objects.Effects
   ( ObjectQuery

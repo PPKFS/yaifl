@@ -1,5 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Yaifl (

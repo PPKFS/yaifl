@@ -1,5 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
+
 
 module Yaifl.Actions.Collection
   ( ActionCollection(..)

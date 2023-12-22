@@ -1,5 +1,5 @@
 {-# LANGUAGE StrictData #-}
-{-# LANGUAGE TemplateHaskell #-}
+
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Model.Objects.ThingData (

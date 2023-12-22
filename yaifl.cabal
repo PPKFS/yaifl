@@ -52,7 +52,10 @@ common common-options
     OverloadedLabels
     OverloadedStrings
     QuasiQuotes
+    StrictData
+    TemplateHaskell
     TypeFamilies
+    UndecidableInstances
 
 library
   import: common-options

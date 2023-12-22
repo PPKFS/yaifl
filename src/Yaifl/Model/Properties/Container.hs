@@ -1,5 +1,5 @@
 {-# LANGUAGE StrictData #-}
-{-# LANGUAGE TemplateHaskell #-}
+
 
 module Yaifl.Model.Properties.Container
   ( -- * Types
