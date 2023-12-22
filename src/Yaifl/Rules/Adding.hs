@@ -28,3 +28,16 @@ before a precs t f = do
   case a of
     ActionRule an -> an % #beforeRules %= addRuleLast rule
   pass
+
+insteadOf ::
+  State (ActionCollection wm) :> es
+  => ActionOrActivity wm goesWith v
+  -> [Precondition wm (Args wm v)]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
+  -> Eff es ()
+insteadOf a precs t f = do
+  let rule = makeRule t precs f
+  case a of
+    ActionRule an -> an % #insteadRules %= addRuleLast rule
+  pass

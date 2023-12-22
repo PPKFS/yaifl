@@ -68,6 +68,7 @@ lookingAction = Action
       Just acName -> pure acName
     return $ Right $ LookingActionVariables loc (take lightLevels vl) acName)
   (makeActionRulebook "before looking rulebook" [])
+  (makeActionRulebook "instead of looking rulebook" [])
   (makeActionRulebook "check looking rulebook" [])
   (makeActionRulebook "carry out looking"
     [ roomDescriptionHeading

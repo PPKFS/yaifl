@@ -38,7 +38,11 @@ starryVoidWorld = do
   tsv <- addRoom "The Starry Void" ""
   tsv `isInsideFrom` tcr
   tmb <- addDoor "The magician's booth" (boothDesc tcr) "" (tsv, Out) (tcr, In) Nothing
+  insteadOf #examining $ Rule
   pass
+
+insteadOf :: t0 -> a0 -> Eff wm a1
+insteadOf = _
 
 starryVoidTestMeWith :: [Text]
 starryVoidTestMeWith = ["examine booth", "open door of the booth", "in", "examine door", "close door", "look", "examine crack of light"]

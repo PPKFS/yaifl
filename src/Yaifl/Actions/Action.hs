@@ -43,6 +43,16 @@ newtype ActionProcessing wm = ActionProcessing
     -> Eff es (Maybe Bool)
   )
 
+newtype InsteadRules wm = InsteadRules
+  (forall es goesWith v.
+    RuleEffects wm es
+    => Refreshable wm v
+    => SpanID
+    -> Action wm goesWith v
+    -> Args wm v
+    -> Eff es Bool
+  )
+
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
@@ -60,6 +70,7 @@ data Action (wm :: WorldModel) (goesWith :: ActionParameterType) v where
     , matches :: [(Text, ActionParameterType)]
     , parseArguments :: ParseArguments wm (UnverifiedArgs wm goesWith) v
     , beforeRules :: ActionRulebook wm v
+    , insteadRules :: ActionRulebook wm v
     , checkRules :: ActionRulebook wm v
     , carryOutRules :: ActionRulebook wm v
     , reportRules :: ActionRulebook wm v
