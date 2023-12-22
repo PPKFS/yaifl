@@ -30,7 +30,7 @@ module Yaifl.Metadata (
 import Solitude
 import Effectful.Optics ( (.=), (%=), use )
 
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Breadcrumbs
 import Data.Text.Display
 

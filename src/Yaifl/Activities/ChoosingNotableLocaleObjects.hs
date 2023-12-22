@@ -6,7 +6,8 @@ module Yaifl.Activities.ChoosingNotableLocaleObjects
 import Solitude
 
 import Yaifl.Activities.Activity hiding (name)
-import Yaifl.Model.Entity ( Store(..), HasID(..) )
+import Yaifl.Model.Objects.Entity ( HasID(..) )
+import Yaifl.Model.Objects.Store
 import Yaifl.Model.Object( Object(..), AnyObject )
 import Yaifl.Model.Objects.Query ( getObject )
 import Yaifl.Model.Properties.Enclosing ( Enclosing(..) )

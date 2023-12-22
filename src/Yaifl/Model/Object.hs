@@ -32,13 +32,14 @@ import Solitude
 import Data.Set (member)
 import Effectful.Optics ( use )
 
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata
 import Yaifl.Model.Objects.RoomData (RoomData)
 import Yaifl.Model.Objects.ThingData (ThingData)
 import Yaifl.Model.WorldModel (WMObjSpecifics, WMSayable)
 import Data.Text.Display
 import GHC.Records
+import Yaifl.Model.Objects.Tag
 
 class Pointed s where
   identityElement :: s

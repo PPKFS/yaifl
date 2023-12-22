@@ -5,8 +5,7 @@ module Yaifl.Actions.Looking.Locale where
 import Yaifl.Model.Object
 import Solitude
 import Data.Text.Display
-import Yaifl.Model.Entity
-import Yaifl.Rules.Args
+import Yaifl.Model.Objects.Store
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables

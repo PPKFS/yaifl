@@ -33,12 +33,13 @@ import Effectful.Error.Static ( runError, Error )
 import Effectful.Optics ( use )
 
 import Yaifl.Metadata
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Data.Text.Display
 import qualified Data.EnumSet as ES
+import Yaifl.Model.Objects.Tag
 
 withoutMissingObjects ::
   HasCallStack

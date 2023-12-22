@@ -10,3 +10,9 @@ packages:
   ./yaifl.cabal
   solitude/solitude.cabal
   breadcrumbs/breadcrumbs.cabal
+
+documentation: true
+haddock-internal: true
+haddock-hoogle: true
+haddock-html: true
+haddock-hyperlink-source: true

@@ -12,7 +12,7 @@ import Data.Text.Display
 
 import Yaifl.Activities.Activity
 import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
-import Yaifl.Model.Entity ( Store(unStore) )
+import Yaifl.Model.Objects.Store ( Store(unStore) )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Text.Responses

@@ -10,7 +10,8 @@ module Yaifl.Model.Properties.Enclosing (
 import Solitude
 
 import Data.EnumSet ( EnumSet, empty )
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
+import Yaifl.Model.Objects.Tag
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing

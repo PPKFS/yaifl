@@ -50,6 +50,7 @@ examiningAction = Action
     let examining = fst variables
     return $ Right $ EAV {examining, examiningTextPrinted = False}))
   (makeActionRulebook "before examining rulebook" [])
+  (makeActionRulebook "instead of examining rulebook" [])
   (makeActionRulebook "check examining rulebook" [ actionRequiresLight ])
   (makeActionRulebook "carry out examining rulebook" [
     standardExamining

@@ -8,7 +8,7 @@ module Yaifl.Actions.Going
 import Solitude
 
 import Yaifl.Actions.Action
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata ( isPlayer )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
@@ -54,6 +54,7 @@ goingAction = Action
   (map (,TakesObjectParameter) ["with", "through", "by", "to"])
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
+  (makeActionRulebook "instead of going rulebook" [])
   (makeActionRulebook "check going rulebook" checkGoingRules)
   carryOutGoingRules
   (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])

@@ -14,7 +14,7 @@ module Yaifl.Model.Properties.Query (
 import Solitude
 
 import Effectful.Error.Static ( Error, throwError )
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.Query

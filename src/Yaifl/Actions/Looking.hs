@@ -18,7 +18,7 @@ import Yaifl.Actions.Looking.Locale
 import Yaifl.Actions.Looking.Visibility
 import Yaifl.Activities.Activity
 import Yaifl.Metadata
-import Yaifl.Model.Entity ( emptyStore, HasID(..) )
+import Yaifl.Model.Objects.Entity ( HasID(..) )
 import Yaifl.Model.Object( Object(..), AnyObject, Thing, objectEquals )
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.Query
@@ -34,6 +34,7 @@ import Yaifl.Text.Responses
 import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
 import qualified Prettyprinter.Render.Terminal as PPTTY
+import Yaifl.Model.Objects.Store
 
 -- STATUS: all done, except report other people looking
 roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => RoomDescriptionResponses wm

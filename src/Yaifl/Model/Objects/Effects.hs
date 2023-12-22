@@ -32,7 +32,7 @@ import Effectful.Error.Static
 import Effectful.TH
 import Solitude
 import Yaifl.Metadata
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.WorldModel
 

@@ -11,7 +11,7 @@ import Solitude
 
 import Yaifl.Metadata ( ObjectType(..), noteError )
 import Yaifl.Model.Direction (WMStdDirections)
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Create
 import Yaifl.Model.Objects.Effects
@@ -28,6 +28,7 @@ import Yaifl.Model.Properties.Openable ( Openable )
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
 import qualified Data.Set as S
+import Yaifl.Model.Objects.Tag
 
 data ObjectSpecifics =
   NoSpecifics

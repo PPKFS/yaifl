@@ -11,7 +11,7 @@ import Yaifl.Actions.Action
 import Yaifl.Actions.Parser
 import Yaifl.Metadata
 import Yaifl.Model.Direction
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.WorldModel
 import Yaifl.Rules.RuleEffects
@@ -20,6 +20,7 @@ import Yaifl.Text.Print
 import Yaifl.World
 import Yaifl.Actions.Collection
 import Effectful.Error.Static (Error, runError)
+import Yaifl.Model.Objects.Store
 
 
 type EffStack (wm :: WorldModel) = '[

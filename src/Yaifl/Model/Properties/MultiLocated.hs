@@ -9,7 +9,7 @@ module Yaifl.Model.Properties.MultiLocated
   ) where
 
 import qualified Data.Set as S
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Properties.TH
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query

@@ -5,7 +5,7 @@ module Yaifl.Model.Objects.ObjectLike
   ) where
 
 import Solitude
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Object
 import Effectful.Error.Static

@@ -19,7 +19,7 @@ import qualified Data.Map as Map
 import Solitude hiding (Down)
 
 import Yaifl.Model.Direction
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata ( whenConstructing, noteError )
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query

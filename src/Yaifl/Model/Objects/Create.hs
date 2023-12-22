@@ -16,7 +16,7 @@ import Breadcrumbs
 import Data.Text.Display
 import Effectful.Optics ( (.=), use )
 
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Move ( move )

@@ -16,7 +16,7 @@ module Yaifl.Model.Objects.RoomData (
 import Solitude
 import qualified Data.Map as Map
 
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Properties.Enclosing ( Enclosing, blankEnclosing )
 import Yaifl.Model.WorldModel ( WMDirection )
 

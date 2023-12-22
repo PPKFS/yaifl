@@ -5,7 +5,8 @@ import Solitude
 import Effectful.Optics ( (%=) )
 
 import Yaifl.Actions.Action ( WorldActions )
-import Yaifl.Model.Entity ( Store, Entity )
+import Yaifl.Model.Objects.Entity ( Entity )
+import Yaifl.Model.Objects.Store
 import Yaifl.Metadata ( Metadata )
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( addRuleLast )

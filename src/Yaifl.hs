@@ -33,7 +33,7 @@ import Yaifl.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Metadata
 import Yaifl.Model.Direction
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.ObjectSpecifics
 import Yaifl.Model.Objects.Create
@@ -63,6 +63,7 @@ import Breadcrumbs
 import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
 import Yaifl.Actions.Examining
 import Yaifl.Text.Responses
+import Yaifl.Model.Objects.Store
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 

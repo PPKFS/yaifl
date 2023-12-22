@@ -1,6 +1,6 @@
 cabal-version:   3.6
 name:            yaifl
-version:         0.0.0.1
+version:         0.0.6.281
 synopsis:        Yet another interactive fiction library.
 description:     Yet another interactive fiction library.
 homepage:        https://github.com/PPKFS/yaifl
@@ -8,10 +8,10 @@ bug-reports:     https://github.com/PPKFS/yaifl/issues
 license:         MIT
 author:          Avery
 maintainer:      Avery <thecommunistduck@hotmail.co.uk>
-copyright:       2022 Avery
+copyright:       2022-2023 Avery
 category:        Game Development
 build-type:      Simple
-tested-with: GHC == 9.2.4
+tested-with: GHC == 9.4.7
 
 source-repository head
   type:     git
@@ -85,7 +85,7 @@ library
     Yaifl.World
 
     Yaifl.Model.Direction
-    Yaifl.Model.Entity
+    Yaifl.Model.Objects.Entity
     Yaifl.Model.Object
     Yaifl.Model.ObjectSpecifics
     Yaifl.Model.WorldModel
@@ -98,6 +98,8 @@ library
     Yaifl.Model.Objects.Query
     Yaifl.Model.Objects.RoomConnections
     Yaifl.Model.Objects.RoomData
+    Yaifl.Model.Objects.Store
+    Yaifl.Model.Objects.Tag
     Yaifl.Model.Objects.ThingData
 
     Yaifl.Model.Properties.Animal
@@ -134,7 +136,6 @@ library
   build-depends:
     effectful-th
     , enummapset
-    , formatting
     , haskell-src-exts
     , haskell-src-meta
     , megaparsec

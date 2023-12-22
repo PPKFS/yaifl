@@ -11,7 +11,7 @@ import Yaifl.Model.Objects.ThingData
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Actions.Looking.Locale
-import Yaifl.Model.Entity
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Enclosing
 import Yaifl.Text.SayQQ
