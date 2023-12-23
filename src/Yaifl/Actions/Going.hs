@@ -3,6 +3,7 @@ module Yaifl.Actions.Going
   ( goingAction
   , GoingActionVariables(..)
   , toTheRoom
+  , throughTheDoor
   ) where
 
 import Solitude
@@ -29,6 +30,7 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import Data.Text.Display
 import Yaifl.Model.WorldModel (WMDirection)
+import Yaifl.Model.Objects.Tag
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -36,7 +38,7 @@ data GoingActionVariables wm = GoingActionVariables
     --The going action has an object called the room gone to (matched as "to").
   , roomGoneTo :: Room wm
     --The going action has an object called the door gone through (matched as "through").
-  --, doorGoneThrough :: Maybe (Door wm)
+  , doorGoneThrough :: Maybe DoorEntity
     --The going action has an object called the vehicle gone by (matched as "by").
   , vehicleGoneBy :: Maybe (Thing wm)
     --The going action has an object called the thing gone with (matched as "with").
@@ -120,33 +122,39 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     and of course now the room we're going to is on the other side of the door.
   -}
   -- find all the possible targets we could mean
-  target <- case fst variables of
+  mbTargetAndConn <- case fst variables of
     -- if the noun is a direction:
     -- let direction D be the noun;
     -- let the target be the room-or-door direction D from the room gone from;
     Just (Left dir) -> do
       addAnnotation $ "going in direction " <> show dir
       addAnnotation $ "possible exits are " <> show (roomGoneFrom ^. #objectData % #mapConnections)
-      pure $ getMapConnection @wm dir roomGoneFrom
+      pure $ getConnection @wm dir roomGoneFrom
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
-    Just (Right door) -> setDoorGoneThrough door
+    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tag ds (getID door)) roomGoneFrom) =<< getDoorSpecificsMaybe door
     Nothing -> do
       mbThrough <- getMatchingThing "through"
-      -- TODO: this should be a door or complain
-      let mbDoor = join $ traverse getDoorSpecificsMaybe mbThrough
-      pure $ backSide <$> mbDoor
-  mbRoomGoneTo <- join <$> traverse getRoomMaybe target
-  addAnnotation $ "target was " <> show target
-  case mbRoomGoneTo of
+      pure $ do
+            door <- mbThrough
+            ds <- getDoorSpecificsMaybe door
+            getConnectionViaDoor (tag ds (getID door)) roomGoneFrom
+  case mbTargetAndConn of
     Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
-    Just roomGoneTo -> pure $ Right $ GoingActionVariables
-      { thingGoneWith
-      , roomGoneFrom
-      , roomGoneTo = roomGoneTo
-      , vehicleGoneBy
-      }
+    Just (target, conn) -> do
+      mbRoomGoneTo <- getRoomMaybe target
+      case mbRoomGoneTo of
+        Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
+        Just roomGoneTo -> do
+          addAnnotation $ "target was " <> show target
+          pure $ Right $ GoingActionVariables
+            { thingGoneWith
+            , roomGoneFrom
+            , doorGoneThrough = conn ^. #doorThrough
+            , roomGoneTo = roomGoneTo
+            , vehicleGoneBy
+            }
 
 cantGoThatWay ::
   RuleEffects wm es
@@ -218,22 +226,22 @@ standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> do error ""
       parseAction (ActionOptions True (Just $ v ^. #source)) "exit")
   if any isLeft res then return $ Just False else rulePass-}
 
-getContainingHierarchy ::
+getContainingThingHierarchy ::
   NoMissingObjects wm es
   => Thing wm
   -> Eff es [Thing wm]
-getContainingHierarchy o = do
+getContainingThingHierarchy o = do
   cont <- getThingMaybe (o ^. #objectData % #containedBy)
   case cont of
     --no objects, just a room
     Nothing -> return []
-    Just ob -> (ob:) <$> getContainingHierarchy ob
+    Just ob -> (ob:) <$> getContainingThingHierarchy ob
 
 getSupportersOf ::
   NoMissingObjects wm es
   => Thing wm
   -> Eff es [Thing wm]
-getSupportersOf o = getContainingHierarchy o >>= filterM (`isType` "supporter")
+getSupportersOf o = getContainingThingHierarchy o >>= filterM (`isType` "supporter")
 
 toTheRoom ::
   HasID r
@@ -241,3 +249,11 @@ toTheRoom ::
   -> Precondition wm (Args wm (GoingActionVariables wm))
 toTheRoom r = Precondition $ \v -> do
   pure $ getID (roomGoneTo $ variables v) == getID r
+
+throughTheDoor ::
+  forall d wm.
+  TaggedAs d DoorTag
+  => d
+  -> Precondition wm (Args wm (GoingActionVariables wm))
+throughTheDoor d = Precondition $ \v -> do
+  pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)

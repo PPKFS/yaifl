@@ -3,6 +3,8 @@
 module Yaifl.Model.Object (
   -- * Objects
   Object(..)
+  , TaggedObject(unTagObject)
+  , unsafeTagObject
   , Pointed(..)
   , Thing(..)
   , Room(..)
@@ -90,6 +92,19 @@ data Object wm objData objSpecifics = Object
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
 
+newtype TaggedObject o tag = TaggedObject { unTagObject :: o }
+  deriving stock (Generic)
+
+instance HasID o => HasID (TaggedObject o tag) where
+  getID = getID . unTagObject
+
+unsafeTagObject ::
+  o
+  -> TaggedObject o tag
+unsafeTagObject = TaggedObject
+
+instance HasID o => TaggedAs (TaggedObject o tag) tag where
+  toTag = unsafeTagEntity . getID . unTagObject
 
 -- | By generalising `Eq`, we can compare two objects of different kinds. Trivially this is always `False`,
 -- but it does allow comparing a `Thing` and an `AnyObject`.
@@ -153,6 +168,12 @@ makeFieldLabelsNoPrefix ''Object
 instance Taggable (Room wm) EnclosingTag
 instance Taggable (Room wm) RoomTag
 instance Taggable (Thing wm) ThingTag
+
+instance (TaggedAs (Room wm) RoomTag) where
+  toTag = tagRoom
+
+instance (TaggedAs (Room wm) EnclosingTag) where
+  toTag = coerceTag . tagRoom
 
 tagRoom ::
   Room wm

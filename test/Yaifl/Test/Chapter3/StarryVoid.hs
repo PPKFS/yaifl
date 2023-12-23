@@ -19,6 +19,8 @@ import Yaifl.Text.SayQQ
 import Yaifl.Model.Properties.Door
 import Yaifl.Model.Direction
 import Yaifl.Rules.Args (getPlayer)
+import Yaifl.Rules.Adding
+import Yaifl.Actions.Going
 
 boothDesc :: WMWithProperty wm Openable => Room wm -> DynamicText wm
 boothDesc tcr = DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $
@@ -38,11 +40,19 @@ starryVoidWorld = do
   tsv <- addRoom "The Starry Void" ""
   tsv `isInsideFrom` tcr
   tmb <- addDoor "The magician's booth" (boothDesc tcr) "" (tsv, Out) (tcr, In) Nothing
-  insteadOf #examining $ Rule
-  pass
 
-insteadOf :: t0 -> a0 -> Eff wm a1
-insteadOf = _
+  insteadOf (ActionRule #examining) [theObject tmb, whenIn tcr] "" $ \_ -> do
+    [sayingParagraph|It is dark blue and glittering with gold stars. [if the booth is open]The door currently stands open[otherwise]It has been firmly shut[end if].|]
+
+  insteadOf (ActionRule #examining) [theObject tmb, whenIn tsv] "" $ \_ -> do
+    [sayingParagraph|The booth door is [if the magician's booth is open]wide open[otherwise]shut, admitting only a thin crack of light[end if].|]
+
+  --tmb `isUnderstoodAs` ["door", "of", "the", "light", "crack", "thin crack"]
+  before (ActionRule #going) [throughTheDoor tmb] "" $ \_ -> do
+    --say "(first opening the door of the booth)[command clarification break]"
+    say ("silently try opening the booth." :: Text)
+    rulePass
+  pass
 
 starryVoidTestMeWith :: [Text]
 starryVoidTestMeWith = ["examine booth", "open door of the booth", "in", "examine door", "close door", "look", "examine crack of light"]

@@ -1,10 +1,9 @@
-
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE DefaultSignatures #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module Yaifl.Rules.Args
   ( Args(..)
+  , ArgsHaveMainObject(..)
+  , ArgsMightHaveMainObject(..)
   , Refreshable(..)
   , ActionParameter
   , NamedActionParameter(..)
@@ -153,6 +152,17 @@ newtype UnverifiedArgs wm (goesWith :: ActionParameterType) = UnverifiedArgs
 
 makeFieldLabelsNoPrefix ''Args
 
+class ArgsHaveMainObject argVars obj | argVars -> obj where
+  argsMainObject :: Lens' argVars obj
+
+class ArgsMightHaveMainObject argVars obj | argVars -> obj where
+  argsMainObjectMaybe :: AffineTraversal' argVars obj
+
+instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject vars o where
+  argsMainObjectMaybe = castOptic argsMainObject
+
+-- alas, this throws issues with type families in instances
+-- instance ArgsHaveMainObject (UnverifiedArgs wm goesWith) (ActionParameter wm goesWith)
 getNoun ::
   UnverifiedArgs wm goesWith
   -> ActionParameter wm goesWith

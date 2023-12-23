@@ -3,10 +3,12 @@
 
 module Yaifl.Model.Properties.Door
   ( DoorSpecifics(..)
+  , TaggedDoor
   , blankDoorSpecifics
   , getDoorSpecificsMaybe
   , isOpen
   , isClosed
+  , tagDoorObject
   ) where
 
 import Solitude
@@ -49,4 +51,13 @@ isOpen ::
   => o
   -> Bool
 isOpen o = Just Open == getOpenableMaybe o
+
 instance Taggable DoorSpecifics DoorTag
+
+type TaggedDoor wm = TaggedObject (Thing wm) DoorTag
+
+tagDoorObject ::
+  DoorSpecifics
+  -> Thing wm
+  -> TaggedObject (Thing wm) DoorTag
+tagDoorObject _ds = unsafeTagObject

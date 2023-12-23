@@ -20,7 +20,7 @@ module Yaifl.Model.Objects.Query
   , getCurrentPlayer
   , isVoid
   , tagObject
-
+  , getContainingHierarchy
   , getAllObjectsInRoom
   , IncludeDoors(..)
   , IncludeScenery(..)
@@ -40,6 +40,7 @@ import Yaifl.Model.Objects.ObjectLike
 import Data.Text.Display
 import qualified Data.EnumSet as ES
 import Yaifl.Model.Objects.Tag
+import Data.List.NonEmpty as NE (cons)
 
 withoutMissingObjects ::
   HasCallStack
@@ -209,3 +210,19 @@ getAllObjectsInRoom _incScenery _incDoors r = do
   room <- getRoom r
   let allItemIDs = ES.toList $ room ^. #objectData % #enclosing % #contents
   mapM getThing allItemIDs
+
+getContainingHierarchy ::
+  NoMissingObjects wm es
+  => Thing wm
+  -> Eff es (NonEmpty EnclosingEntity)
+getContainingHierarchy tLike = do
+  let getHierarchy obj = do
+        let enc = obj ^. #objectData % #containedBy
+        o' <- getObject enc
+        asThingOrRoom
+          (\v -> do
+            rs <- getHierarchy v
+            pure (enc `NE.cons` rs)
+          )
+          (\r -> pure $ coerceTag (tagRoom r) :| []) o'
+  getHierarchy tLike

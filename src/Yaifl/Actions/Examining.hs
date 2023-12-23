@@ -35,20 +35,28 @@ examiningResponsesImpl = ER
   , examineUndescribedA = notImplementedResponse "undescribedA"
 }
 
+newtype ExaminingTarget wm = ET { unwrapTarget :: Either (WMDirection wm) (AnyObject wm) }
+
 data ExaminingActionVariables wm = EAV
-  { examining :: Either (WMDirection wm) (AnyObject wm)
+  { examiningSubject :: ExaminingTarget wm
   , examiningTextPrinted :: Bool
-  }
+  } deriving stock (Generic)
+
+makeFieldLabelsNoPrefix ''ExaminingActionVariables
+
+instance ArgsMightHaveMainObject (ExaminingActionVariables wm) (AnyObject wm) where
+  argsMainObjectMaybe = #examiningSubject % coerced @(ExaminingTarget wm) @(Either (WMDirection wm) (AnyObject wm)) % _Right
 
 type ExaminingAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
+
 examiningAction :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExaminingAction wm
 examiningAction = Action
   "examining"
   ["examine", "examining", "look closely at"]
   []
   (ParseArguments (\(UnverifiedArgs Args{..}) -> do
-    let examining = fst variables
-    return $ Right $ EAV {examining, examiningTextPrinted = False}))
+    let examiningSubject = ET $ fst variables
+    return $ Right $ EAV {examiningSubject, examiningTextPrinted = False}))
   (makeActionRulebook "before examining rulebook" [])
   (makeActionRulebook "instead of examining rulebook" [])
   (makeActionRulebook "check examining rulebook" [ actionRequiresLight ])
@@ -86,7 +94,7 @@ examineDirections = notImplementedRule "examine directions rule"
 standardExamining :: ExamineRule wm
 standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
   -- if the noun provides the property description and the description of the noun is not "":
-  _r <- whenRight Nothing (examining variables) $ \obj -> do
+  _r <- whenRight Nothing (unwrapTarget $ examiningSubject variables) $ \obj -> do
     desc <- sayText (view #description obj)
     -- say "[description of the noun][line break]";
     -- now examine text printed is true.

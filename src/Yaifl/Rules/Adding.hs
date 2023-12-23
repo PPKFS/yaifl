@@ -1,7 +1,9 @@
 module Yaifl.Rules.Adding
   ( before
+  , insteadOf
+  , theObject
+  , whenIn
   , ActionOrActivity(..)
-
   ) where
 
 import Solitude
@@ -12,6 +14,12 @@ import Yaifl.Actions.Action
 import Yaifl.Rules.Rulebook (addRuleLast)
 import Effectful.Optics
 import Yaifl.Actions.Collection (ActionCollection)
+import Yaifl.Model.Properties.Query
+import Yaifl.Model.Objects.ObjectLike
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Query
+import Yaifl.Model.Objects.Tag
+import Yaifl.Model.Objects.Entity
 
 newtype ActionOrActivity wm goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm goesWith v))
   deriving stock (Generic)
@@ -34,10 +42,27 @@ insteadOf ::
   => ActionOrActivity wm goesWith v
   -> [Precondition wm (Args wm v)]
   -> Text
-  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
+  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' a) -- ^ Rule function.
   -> Eff es ()
 insteadOf a precs t f = do
-  let rule = makeRule t precs f
+  let rule = makeRule t precs (fmap (\v -> v >> pure (Just True)) f)
   case a of
     ActionRule an -> an % #insteadRules %= addRuleLast rule
   pass
+
+theObject ::
+  ArgsMightHaveMainObject v (AnyObject wm)
+  => ObjectLike wm o
+  => o
+  -> Precondition wm (Args wm v)
+theObject o = Precondition (\args -> do
+  o' <- getObject o
+  pure $ args ^? #variables % argsMainObjectMaybe == Just o')
+
+whenIn ::
+  TaggedAs e EnclosingTag
+  => e
+  -> Precondition wm (Args wm v)
+whenIn e = Precondition $ \args -> do
+  hierarchy <- getContainingHierarchy (args ^. #source)
+  pure $ elem (toTag e) hierarchy

@@ -10,8 +10,10 @@ module Yaifl.Model.Objects.RoomConnections
   , isAbove
   , isBelow
   , getMapConnection
+  , getConnection
   , getAllConnections
   , addDoorToConnection
+  , getConnectionViaDoor
   ) where
 
 import qualified Data.Map as Map
@@ -29,6 +31,7 @@ import Yaifl.Model.WorldModel ( WMDirection )
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
+import qualified Data.Map as M
 
 getAllConnections ::
   Room wm
@@ -41,8 +44,8 @@ connectionInDirection ::
   -> Room wm
   -> WMDirection wm
   -> Maybe RoomEntity
-connectionInDirection mbExpl r dir = case getConnectionInDirection dir r of
-    Just c
+connectionInDirection mbExpl r dir = case getConnection dir r of
+    Just (_, c)
       | maybe True ((c ^. #explicitness) ==) mbExpl -> Just (c ^. #otherSide)
     _ -> Nothing
 
@@ -51,14 +54,20 @@ getMapConnection ::
   => WMDirection wm
   -> Room wm
   -> Maybe RoomEntity
-getMapConnection dir o = view #otherSide <$> getConnectionInDirection dir o
+getMapConnection dir o = fst <$> getConnection dir o
 
-getConnectionInDirection ::
+getConnection ::
   WMStdDirections wm
   => WMDirection wm
   -> Room wm
-  -> Maybe Connection
-getConnectionInDirection dir = preview (connectionLens dir % _Just)
+  -> Maybe (RoomEntity, Connection)
+getConnection dir = (view #otherSide &&& id) <$$> preview (connectionLens dir % _Just)
+
+getConnectionViaDoor ::
+  DoorEntity
+  -> Room wm
+  -> Maybe (RoomEntity, Connection)
+getConnectionViaDoor door = ((view #otherSide &&& id) <$$> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
 
 connectionLens ::
   forall wm.

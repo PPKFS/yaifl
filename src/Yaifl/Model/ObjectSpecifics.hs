@@ -99,7 +99,7 @@ addDoor ::
   -> (Room wm, WMDirection wm)
   -> (Room wm, WMDirection wm)
   -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Eff es (Thing wm)
+  -> Eff es (TaggedObject (Thing wm) DoorTag)
 addDoor n ia des f b mbD = do
   let ds = blankDoorSpecifics (tagRoom (fst f)) (tagRoom (fst b))
   d <- addThingInternal n ia des (ObjectType "door")
@@ -107,8 +107,9 @@ addDoor n ia des f b mbD = do
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
       (Just (coerceTag $ tagRoom $ fst f))
   updateMultiLocatedObject d
-  addDoorToConnection (tag @DoorSpecifics @DoorTag ds d) f b
-  pure d
+  let tagged = tag @DoorSpecifics @DoorTag ds d
+  addDoorToConnection tagged f b
+  pure (tagDoorObject ds d)
 
 updateMultiLocatedObject ::
   WMWithProperty wm MultiLocated

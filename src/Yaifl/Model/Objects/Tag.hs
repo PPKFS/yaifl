@@ -11,6 +11,7 @@ that contains something is an object with an enclosing property.
 module Yaifl.Model.Objects.Tag
   ( -- * Tagging things
     Taggable(..)
+  , TaggedAs(..)
   , coerceTag
   ) where
 
@@ -23,6 +24,13 @@ class Taggable taggableWith taggableTo where
   tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
   default tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
   tag _ = unsafeTagEntity . getID
+
+-- | An @a@ that is already tagged does not need a witness.
+class TaggedAs a taggedAs where
+  toTag :: a -> TaggedEntity taggedAs
+
+instance TaggedAs (TaggedEntity a) a where
+  toTag = id
 
 -- | Weakening the tag on a room to an enclosing
 instance Taggable (TaggedEntity RoomTag) EnclosingTag where
