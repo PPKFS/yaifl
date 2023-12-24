@@ -32,11 +32,13 @@ import Yaifl.Model.Objects.Effects
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (RuleConstraints wm => Eff (es : ConcreteRuleStack wm) a)
 
-newtype Precondition wm v = Precondition
-  { checkPrecondition :: forall es. RuleEffects wm es => v -> Eff es Bool }
+data Precondition wm v = Precondition
+  { preconditionName :: forall es. RuleEffects wm es => Eff es Text
+  , checkPrecondition :: forall es. RuleEffects wm es => v -> Eff es Bool
+  }
 
 forPlayer :: Precondition wm (Args wm v)
-forPlayer = Precondition $ \v -> do
+forPlayer = Precondition (pure "actor is the player") $ \v -> do
   p <- getPlayer
   pure $ p == v ^. #source
 

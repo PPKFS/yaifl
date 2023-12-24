@@ -32,6 +32,7 @@ import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Model.Objects.Effects
 import qualified Data.Map as M
+import Yaifl.Model.Objects.ObjectLike
 
 getAllConnections ::
   Room wm
@@ -88,8 +89,8 @@ addDirectionFrom ::
   WMStdDirections wm
   => NoMissingObjects wm es
   => WMDirection wm
-  -> Room wm
-  -> Room wm
+  -> RoomEntity
+  -> RoomEntity
   -> Eff es ()
 addDirectionFrom = isDirectionFromInternal True
 
@@ -97,8 +98,8 @@ addDirectionFromOneWay ::
   WMStdDirections wm
   => NoMissingObjects wm es
   => WMDirection wm
-  -> Room wm
-  -> Room wm
+  -> RoomEntity
+  -> RoomEntity
   -> Eff es ()
 addDirectionFromOneWay = isDirectionFromInternal False
 
@@ -110,8 +111,8 @@ isDirectionFromInternal ::
   => NoMissingObjects wm es
   => Bool
   -> WMDirection wm
-  -> Room wm
-  -> Room wm
+  -> RoomEntity
+  -> RoomEntity
   -> Eff es ()
 isDirectionFromInternal mkRev dir r2' r1' = do
     let opp = opposite dir
@@ -147,32 +148,32 @@ makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down"
 isInsideFrom ::
   WMStdDirections wm
   => NoMissingObjects wm es
-  => Room wm
-  -> Room wm
+  => RoomEntity
+  -> RoomEntity
   -> Eff es ()
 isInsideFrom = isInOf
 
 isOutsideFrom ::
   WMStdDirections wm
   => NoMissingObjects wm es
-  => Room wm
-  -> Room wm
+  => RoomEntity
+  -> RoomEntity
   -> Eff es ()
 isOutsideFrom = isOutOf
 
 isAbove ::
   WMStdDirections wm
   => NoMissingObjects wm es
-  => Room wm
-  -> Room wm
+  => RoomEntity
+  -> RoomEntity
   -> Eff es ()
 isAbove = isUpOf
 
 isBelow ::
   WMStdDirections wm
   => NoMissingObjects wm es
-  => Room wm
-  -> Room wm
+  => RoomEntity
+  -> RoomEntity
   -> Eff es ()
 isBelow = isDownOf
 
@@ -180,25 +181,27 @@ addDoorToConnection ::
   WMStdDirections wm
   => NoMissingObjects wm es
   => DoorEntity
-  -> (Room wm, WMDirection wm)
-  -> (Room wm, WMDirection wm)
+  -> (RoomEntity, WMDirection wm)
+  -> (RoomEntity, WMDirection wm)
   -> Eff es ()
 addDoorToConnection d (front, frontDir) (back, backDir) = do
   modifyAndVerifyConnection front frontDir back (#doorThrough ?~ d)
   modifyAndVerifyConnection back backDir front (#doorThrough ?~ d)
 
+-- | Check that a connection exists from a given room and, if it does, then modify it.
+-- this only modifies the forward direction!
 modifyAndVerifyConnection ::
   forall wm es.
   WMStdDirections wm
   => NoMissingObjects wm es
-  => Room wm
+  => RoomEntity
   -> WMDirection wm
-  -> Room wm
+  -> RoomEntity
   -> (Connection -> Connection)
   -> Eff es ()
-modifyAndVerifyConnection fromRoom' fromDir dest f = do
-  fromRoom <- refreshRoom fromRoom'
-  if connectionInDirection Nothing fromRoom fromDir == Just (tagRoom dest)
+modifyAndVerifyConnection fromRoomE' fromDir destE f = do
+  fromRoom <- getRoom fromRoomE'
+  if connectionInDirection Nothing fromRoom fromDir == Just destE
   then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
   else noteError (const ()) ("Tried to add a connection to the room " <> display fromRoom <> " but it had no connection in direction "
     <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))

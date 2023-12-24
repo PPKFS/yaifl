@@ -80,7 +80,7 @@ data Object wm objData objSpecifics = Object
   { name :: WMSayable wm
   , pluralName :: Maybe (WMSayable wm)
   , indefiniteArticle :: Maybe (WMSayable wm)
-  , understandAs :: [Set Text]
+  , understandAs :: Set (Set Text)
   , namePlurality :: NamePlurality
   , nameProperness :: NameProperness
   , description :: WMSayable wm

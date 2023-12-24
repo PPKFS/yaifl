@@ -23,6 +23,7 @@ module Yaifl.Model.Objects.Query
   , getContainingHierarchy
   , getAllObjectsInRoom
   , IncludeDoors(..)
+  , isUnderstoodAs
   , IncludeScenery(..)
   ) where
 
@@ -41,6 +42,7 @@ import Data.Text.Display
 import qualified Data.EnumSet as ES
 import Yaifl.Model.Objects.Tag
 import Data.List.NonEmpty as NE (cons)
+import qualified Data.Set as S
 
 withoutMissingObjects ::
   HasCallStack
@@ -120,12 +122,15 @@ modifyRoom o u = modifyObjectFrom (fmap coerce refreshRoom) (setRoom . Room) o (
 
 modifyObject ::
   NoMissingObjects wm es
-  => AnyObject wm
+  => ObjectLike wm o
+  => o
   -> (AnyObject wm -> AnyObject wm)
   -> Eff es ()
-modifyObject e s = asThingOrRoom
-  (`modifyThing` anyModifyToThing s)
-  (`modifyRoom` anyModifyToRoom s) e
+modifyObject e s = do
+  o <- getObject e
+  asThingOrRoom
+    (`modifyThing` anyModifyToThing s)
+    (`modifyRoom` anyModifyToRoom s) o
 
 anyModifyToThing ::
   (AnyObject s -> AnyObject s)
@@ -226,3 +231,15 @@ getContainingHierarchy tLike = do
           )
           (\r -> pure $ coerceTag (tagRoom r) :| []) o'
   getHierarchy tLike
+
+isUnderstoodAs ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> [Text]
+  -> Eff es ()
+isUnderstoodAs o ls = do
+  modifyObject o (#understandAs %~ S.union (makeUnderstandAsSets ls))
+
+makeUnderstandAsSets :: [Text] -> Set (Set Text)
+makeUnderstandAsSets = S.fromList . map (S.fromList . words)

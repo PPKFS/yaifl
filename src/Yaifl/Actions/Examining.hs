@@ -48,7 +48,6 @@ instance ArgsMightHaveMainObject (ExaminingActionVariables wm) (AnyObject wm) wh
   argsMainObjectMaybe = #examiningSubject % coerced @(ExaminingTarget wm) @(Either (WMDirection wm) (AnyObject wm)) % _Right
 
 type ExaminingAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
-
 examiningAction :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExaminingAction wm
 examiningAction = Action
   "examining"
@@ -99,7 +98,7 @@ standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
     -- say "[description of the noun][line break]";
     -- now examine text printed is true.
     if desc /= "" then
-       do
+      do
         [sayingLn|{desc}|]
         pure $ Just True
       else pure Nothing

@@ -31,7 +31,11 @@ actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> failHorriblyIf
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
-  , notImplementedRule "instead stage rule"
+  ,  Rule "instead stage rule"
+      []
+        ( \v -> do
+          r <- runRulebookAndReturnVariables (Just aSpan) insteadRules v
+          return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "requested actions require persuasion rule"
   , notImplementedRule "carry out requested actions rule"
   , notImplementedRule "investigate player awareness rule"

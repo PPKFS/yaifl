@@ -216,7 +216,7 @@ scoreParserMatch phrase thing = do
   -- a total match between the phrase and either the thing's name or any of the thing's understand as gives 1
   -- otherwise, we see how many of the words of the phrase are represented in the above
   -- then the match is how many words of the phrase were successfully matched
-  matchingAgainst <- (:(thing ^. #understandAs)) . S.fromList . words <$> sayText (thing ^. #name)
+  matchingAgainst <- (:(toList $ thing ^. #understandAs)) . S.fromList . words <$> sayText (thing ^. #name)
   -- for each set, keep only the words that match
   let filterSets = S.unions $ map (S.intersection phraseSet) matchingAgainst
   pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))

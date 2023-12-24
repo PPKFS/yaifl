@@ -53,7 +53,6 @@ data ThingData wm = ThingData
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
   , initialAppearance :: WMSayable wm
-
   } deriving stock (Generic)
 
 deriving stock instance (Eq (WMSayable wm)) => Eq (ThingData wm)

@@ -67,6 +67,7 @@ sayingLn = QuasiQuoter {
 
 sayingParagraph :: QuasiQuoter
 sayingParagraph = QuasiQuoter {
+  -- TODO: maybe this should be 1 newline
     quoteExp  = \s -> compile (Proxy @'Raw) (s <> "\n\n")
   , quotePat  = notHandled "patterns"
   , quoteType = notHandled "types"

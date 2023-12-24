@@ -15,6 +15,7 @@ module Yaifl.Rules.Args
   --, withPlayerSource
   , getPlayer
   , getActorLocation
+  , silentAction
   --, blankArgs
   --, playerArgs
   --, getActionParameter
@@ -110,6 +111,9 @@ data ActionOptions wm = ActionOptions
   { silently :: Bool
   , hidePrompt :: Bool
   } deriving stock (Eq, Ord, Generic)
+
+silentAction :: ActionOptions wm
+silentAction = ActionOptions True True
 
 -- | Arguments for an action, activity, or rulebook.
 data Args wm v = Args

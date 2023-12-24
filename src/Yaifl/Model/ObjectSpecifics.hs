@@ -96,27 +96,30 @@ addDoor ::
   => WMSayable wm -- ^ name
   -> WMSayable wm -- ^ initial appearance
   -> WMSayable wm -- ^ description
-  -> (Room wm, WMDirection wm)
-  -> (Room wm, WMDirection wm)
+  -> (RoomEntity, WMDirection wm)
+  -> (RoomEntity, WMDirection wm)
   -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
-  -> Eff es (TaggedObject (Thing wm) DoorTag)
+  -> Eff es DoorEntity
 addDoor n ia des f b mbD = do
-  let ds = blankDoorSpecifics (tagRoom (fst f)) (tagRoom (fst b))
+  let ds = blankDoorSpecifics (fst f) (fst b)
   d <- addThingInternal n ia des (ObjectType "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
-      (Just (coerceTag $ tagRoom $ fst f))
+      (Just (coerceTag $ fst f))
   updateMultiLocatedObject d
   let tagged = tag @DoorSpecifics @DoorTag ds d
   addDoorToConnection tagged f b
-  pure (tagDoorObject ds d)
+  pure (tag ds d)
 
 updateMultiLocatedObject ::
   WMWithProperty wm MultiLocated
   => WMWithProperty wm Enclosing
   => NoMissingObjects wm es
-  => Thing wm -> Eff es ()
-updateMultiLocatedObject t = do
+  => ThingLike wm tl
+  => tl
+  -> Eff es ()
+updateMultiLocatedObject tl = do
+  t <- getThing tl
   case getMultiLocatedMaybe t of
     Nothing -> noteError (const ()) "the object had no multilocated component"
     Just ml -> mapM_ (\x -> do

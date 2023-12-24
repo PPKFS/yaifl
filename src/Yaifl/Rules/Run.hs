@@ -65,12 +65,12 @@ processRuleList ::
   -> Eff es (v, Maybe re)
 processRuleList _ [] v = return (v, Nothing)
 processRuleList rbSpan (Rule{..} : xs) args = do
-  mbRes <- (if T.null name then id else withSpan' "rule" name) $ do
+  mbRes <- (if T.null name then withSpan' "rule" "some unnamed rule" else withSpan' "rule" name) $ do
     reqsMet <- checkPreconditions args preconditions
     if reqsMet then Right <$> runRule args else pure (Left ())
   case mbRes of
-    -- we failed the precondition
-    Left _ ->  pure (args, Nothing)
+    -- we failed the precondition, so we just keep going
+    Left _ -> processRuleList rbSpan xs args
     Right (v, res) -> do
       whenJust v (\v' -> addAnnotationTo (Just rbSpan) $ "Updated rulebook variables to " <> display v')
       newArgs <- refreshVariables $ fromMaybe args v
@@ -81,7 +81,12 @@ processRuleList rbSpan (Rule{..} : xs) args = do
           return (newArgs, Just r)
 
 checkPreconditions :: RuleEffects wm es => v -> [Precondition wm v] -> Eff es Bool
-checkPreconditions v = allM (\p -> inject $ p `checkPrecondition` v)
+checkPreconditions v conds = do
+  failedConds <- filterM (\p -> fmap not $ inject $ p `checkPrecondition` v) conds
+  if null failedConds then pure True else do
+      ns <- mapM (\c -> inject $ preconditionName c) failedConds
+      addAnnotation $ mconcat $ ["failed to meet preconditions: "] <> ns
+      pure False
 
 -- | Return a failure (Just False) from a rule and log a string to the
 -- debug log.

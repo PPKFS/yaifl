@@ -244,10 +244,10 @@ getSupportersOf ::
 getSupportersOf o = getContainingThingHierarchy o >>= filterM (`isType` "supporter")
 
 toTheRoom ::
-  HasID r
+  ObjectLike wm r
   => r
   -> Precondition wm (Args wm (GoingActionVariables wm))
-toTheRoom r = Precondition $ \v -> do
+toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> do
   pure $ getID (roomGoneTo $ variables v) == getID r
 
 throughTheDoor ::
@@ -255,5 +255,5 @@ throughTheDoor ::
   TaggedAs d DoorTag
   => d
   -> Precondition wm (Args wm (GoingActionVariables wm))
-throughTheDoor d = Precondition $ \v -> do
+throughTheDoor d = Precondition (pure "through a specific door") $ \v -> do
   pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)

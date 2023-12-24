@@ -20,6 +20,7 @@ import Yaifl.Model.Object
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Objects.Entity
+import Data.Text.Display
 
 newtype ActionOrActivity wm goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm goesWith v))
   deriving stock (Generic)
@@ -41,11 +42,10 @@ insteadOf ::
   State (ActionCollection wm) :> es
   => ActionOrActivity wm goesWith v
   -> [Precondition wm (Args wm v)]
-  -> Text
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' a) -- ^ Rule function.
   -> Eff es ()
-insteadOf a precs t f = do
-  let rule = makeRule t precs (fmap (\v -> v >> pure (Just True)) f)
+insteadOf a precs f = do
+  let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
   case a of
     ActionRule an -> an % #insteadRules %= addRuleLast rule
   pass
@@ -55,14 +55,25 @@ theObject ::
   => ObjectLike wm o
   => o
   -> Precondition wm (Args wm v)
-theObject o = Precondition (\args -> do
-  o' <- getObject o
-  pure $ args ^? #variables % argsMainObjectMaybe == Just o')
+theObject o = Precondition
+  { preconditionName = do
+      e <- getObject o
+      pure $ "to the object " <> display (e ^. #name)
+  , checkPrecondition = \args -> do
+      o' <- getObject o
+      pure $ args ^? #variables % argsMainObjectMaybe == Just o'
+  }
 
 whenIn ::
   TaggedAs e EnclosingTag
+  => ObjectLike wm e
   => e
   -> Precondition wm (Args wm v)
-whenIn e = Precondition $ \args -> do
-  hierarchy <- getContainingHierarchy (args ^. #source)
-  pure $ elem (toTag e) hierarchy
+whenIn e = Precondition
+  { preconditionName = do
+      e' <- getObject e
+      pure $ "when in the location " <> display (e' ^. #name)
+  , checkPrecondition = \args -> do
+      hierarchy <- getContainingHierarchy (args ^. #source)
+      pure $ elem (toTag e) hierarchy
+  }

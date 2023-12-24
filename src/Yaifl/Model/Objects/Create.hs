@@ -29,6 +29,7 @@ import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 import Named
+import qualified Data.Set as S
 
 makeObject ::
   Pointed s
@@ -44,7 +45,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing Nothing [] SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
+  return (e, Object n Nothing Nothing S.empty SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
   Pointed s
@@ -94,10 +95,11 @@ addThingInternal ::
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (ThingData wm)
   -> Maybe EnclosingEntity
-  -> Eff es (Thing wm)
-addThingInternal name ia desc objtype specifics details mbLoc =
-  Thing <$> addObject (addThingToWorld . Thing) name desc objtype
-    True specifics (fromMaybe (blankThingData ia) details) mbLoc
+  -> Eff es ThingEntity
+addThingInternal name ia desc objtype specifics details mbLoc = do
+  t <- Thing <$> addObject (addThingToWorld . Thing) name desc objtype
+        True specifics (fromMaybe (blankThingData ia) details) mbLoc
+  pure (tagThing t)
 
 addThing' ::
   forall wm es r.
@@ -109,7 +111,7 @@ addThing' ::
   -> "specifics" :? WMObjSpecifics wm
   -> "build" :! Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
   -> "location" :? EnclosingEntity
-  -> Eff es (Thing wm)
+  -> Eff es ThingEntity
 addThing' n
   (argDef #initialAppearance "" -> ia)
   (argDef #description "" -> d)
@@ -129,7 +131,7 @@ addThing ::
   -> "initialAppearance" :? WMSayable wm
   -> "description" :? WMSayable wm -- ^ Description.
   -> "specifics" :? WMObjSpecifics wm
-  -> Eff es (Thing wm)
+  -> Eff es ThingEntity
 addThing n (argDef #initialAppearance "" -> ia) (argDef #description "" -> d) (argDef #specifics identityElement -> s) =
   addThing' @wm n
     ! #initialAppearance ia
@@ -146,12 +148,12 @@ addRoomInternal ::
   -> ObjectType -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
-  -> Eff es (Room wm)
+  -> Eff es RoomEntity
 addRoomInternal name desc objtype specifics details = do
   e <- Room <$> addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoom e)
-  return e
+  return (tagRoom e)
 
 addRoom' ::
   WMWithProperty wm Enclosing
@@ -159,7 +161,7 @@ addRoom' ::
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
   -> Eff '[State (RoomData wm)] v
-  -> Eff es (Room wm)
+  -> Eff es RoomEntity
 addRoom' n d rd = addRoomInternal n d (ObjectType "room")
   Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
 
@@ -168,7 +170,7 @@ addRoom ::
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
-  -> Eff es (Room wm)
+  -> Eff es RoomEntity
 addRoom n d = addRoom' n d pass
 
 addBaseObjects ::
@@ -178,4 +180,4 @@ addBaseObjects ::
 addBaseObjects = do
   v <- addRoom "The Void" "If you're seeing this, you did something wrong."
   addThing' "player" ! #description "It's you, looking handsome as always" ! #build (#described .= Undescribed) ! defaults
-  #firstRoom .= tagRoom v
+  #firstRoom .= v
