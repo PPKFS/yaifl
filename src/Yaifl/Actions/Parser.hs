@@ -32,12 +32,12 @@ import Yaifl.Model.Object
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
-  forall wm es goesWith v.
+  forall wm es goesWith resps v.
   Refreshable wm v
   => State (WorldActions wm) :> es
   => RuleEffects wm es
   => UnverifiedArgs wm goesWith
-  -> Action wm goesWith v
+  -> Action wm resps goesWith v
   -> Eff es (Maybe Bool)
 runAction uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
   mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
@@ -138,7 +138,7 @@ findSubjects ::
   -> [NamedActionParameter wm]
   -> WrappedAction wm
   -> Eff es (Either Text Bool)
-findSubjects cmd actionArgs (WrappedAction (a :: Action wm goesWith v)) = runErrorNoCallStack $ failHorriblyIfMissing $ do
+findSubjects cmd actionArgs (WrappedAction (a :: Action wm resps goesWith v)) = runErrorNoCallStack $ failHorriblyIfMissing $ do
   --TODO: handle other actors doing things#
   actor <- getPlayer
   ts <- getGlobalTime
@@ -190,6 +190,7 @@ parseArgumentType (Optionally a) t = do
     Left _err -> pure $ Right NoParameter
     Right r -> pure $ Right r
 parseArgumentType TakesObjectParameter t = tryFindingObject t
+parseArgumentType TakesThingParameter t = tryFindingObject t
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 tryFindingObject ::
@@ -247,7 +248,7 @@ tryAction ::
   => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Print :> es
-  => Action wm goesWith v -- ^ text of command
+  => Action wm resps goesWith v -- ^ text of command
   -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp
   -> Eff es Bool
 tryAction a f = do

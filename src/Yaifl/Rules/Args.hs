@@ -40,6 +40,7 @@ data ActionParameterType =
   | Optionally ActionParameterType
   | TakesDirectionParameter
   | TakesObjectParameter
+  | TakesThingParameter
   | TakesOneOf ActionParameterType ActionParameterType
   | TakesConstantParameter
   deriving stock (Show)
@@ -48,15 +49,18 @@ data NamedActionParameter wm =
   NoParameter
   | DirectionParameter (WMDirection wm)
   | ObjectParameter (AnyObject wm)
+  | ThingParameter (Thing wm)
   | ConstantParameter Text
   deriving stock ( Generic)
 
 instance Show (NamedActionParameter wm) where
   show = \case
+  -- todo: better named stuff
     NoParameter -> "No parameter"
     DirectionParameter _ -> "direction"
     ObjectParameter _ -> "object"
     ConstantParameter t -> show t
+    ThingParameter _ -> "thing"
 deriving stock instance Eq (WMDirection wm) => Eq (NamedActionParameter wm)
 deriving stock instance Ord (WMDirection wm) => Ord (NamedActionParameter wm)
 
@@ -65,6 +69,7 @@ type family ActionParameter wm (goesWith :: ActionParameterType) where
   ActionParameter wm (Optionally goesWith) = Maybe (ActionParameter wm goesWith)
   ActionParameter wm TakesDirectionParameter = WMDirection wm
   ActionParameter wm TakesObjectParameter = AnyObject wm
+  ActionParameter wm TakesThingParameter = Thing wm
   ActionParameter wm TakesConstantParameter = Text
   ActionParameter wm (TakesOneOf goesWith1 goesWith2) = Either (ActionParameter wm goesWith1) (ActionParameter wm goesWith2)
 
@@ -94,6 +99,13 @@ instance GoesWith 'TakesObjectParameter where
   tryParseArguments _ s = if S.size s == 1
     then (case S.findMin s of
       ObjectParameter d -> Just d
+      _ -> Nothing) else Nothing
+
+instance GoesWith 'TakesThingParameter where
+  goesWithA _ = TakesThingParameter
+  tryParseArguments _ s = if S.size s == 1
+    then (case S.findMin s of
+      ThingParameter d -> Just d
       _ -> Nothing) else Nothing
 
 instance GoesWith 'TakesConstantParameter where
@@ -148,12 +160,6 @@ newtype UnverifiedArgs wm (goesWith :: ActionParameterType) = UnverifiedArgs
   { unArgs :: Args wm (ActionParameter wm goesWith, [(Text, NamedActionParameter wm)])
   } deriving newtype (Generic)
 
---instance Refreshable wm (UnverifiedArgs wm goesWith) where
---  refreshVariables = return
-
---deriving stock instance (WMEq wm) => Eq (UnverifiedArgs wm)
---deriving newtype instance (WMOrd wm) => Ord (UnverifiedArgs wm)
-
 makeFieldLabelsNoPrefix ''Args
 
 class ArgsHaveMainObject argVars obj | argVars -> obj where
@@ -183,38 +189,6 @@ getActorLocation ::
   => Args wm v
   -> Eff es (Room wm)
 getActorLocation args = getLocation $ source args
-{-
-withPlayerSource ::
-  NoMissingObjects wm es
-  => (Thing wm -> ActionParameter goesWith -> UnverifiedArgs wm goesWith)
-  -> Eff es (Timestamp -> (ActionParameter goesWith, [NamedActionParameter wm]) -> UnverifiedArgs wm goesWith)
-withPlayerSource = flip fmap getPlayer
 
--- | No Arguments, player source.
-playerArgs ::
-  forall wm es.
-  NoMissingObjects wm es
-  => Eff es (Timestamp -> ActionParameter goesWith ->  UnverifiedArgs wm goesWith)
-playerArgs = do
-  ua <- withPlayerSource blankArgs
-  return (\ts a -> UnverifiedArgs { unArgs = ua ts (a, []) } )
-
-blankArgs ::
-  Thing wm
-  -> ActionParameter goesWith
-  -> UnverifiedArgs wm goesWith
-blankArgs o g = UnverifiedArgs $ Args o (g, []) (ActionOptions False False) 0
-
-argsWithArgument ::
-  ActionParameter goesWith
-  -> Thing wm
-  -> UnverifiedArgs wm goesWith
-argsWithArgument ap o = UnverifiedArgs $ Args o (ap, []) (ActionOptions False False) 0
-
-getActionParameter ::
-  UnverifiedArgs wm goesWith
-  -> ActionParameter goesWith
-getActionParameter (UnverifiedArgs (Args{variables})) = fst variables
--}
 instance Functor (Args wm) where
   fmap f = #variables %~ f

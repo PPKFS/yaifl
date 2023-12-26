@@ -25,7 +25,7 @@ import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.ObjectLike
 
--- | An easier way to describe the 3 requirements to look.
+-- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =
   ( WMWithProperty wm Enclosing
   , WMWithProperty wm Enterable
@@ -35,14 +35,7 @@ type HasLookingProperties wm =
   , WithPrintingNameOfADarkRoom wm
   , WithPrintingTheLocaleDescription wm
   , WithPrintingDescriptionOfADarkRoom wm
-  , WithResponseSet wm "roomDescriptions" (RoomDescriptionResponses wm))
-
-data RoomDescriptionResponses wm = RDR
-  { roomDescriptionHeadingA :: Response wm ()
-  , roomDescriptionHeadingB :: Response wm (AnyObject wm)
-  , roomDescriptionHeadingC :: Response wm (AnyObject wm)
-  , roomDescriptionBodyA :: Response wm ()
-  } deriving stock (Generic)
+  )
 
 data LookingActionVariables wm = LookingActionVariables
   { lookingFrom :: AnyObject wm

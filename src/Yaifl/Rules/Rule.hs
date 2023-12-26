@@ -8,6 +8,7 @@ module Yaifl.Rules.Rule
   ( Rule(..)
   , Precondition(..)
   , RuleLimitedEffect(..)
+  , Unconstrained
   , forPlayer'
   , forPlayer
   , parseAction
@@ -47,16 +48,19 @@ forPlayer' = [forPlayer]
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
-data Rule wm v r = Rule
+data Rule wm (x :: [Effect] -> Constraint) v r = Rule
   { name :: Text
   , preconditions :: [Precondition wm v]
-  , runRule :: forall es. (RuleEffects wm es, Refreshable wm v) => v -> Eff es (Maybe v, Maybe r)
+  , runRule :: forall es. (RuleEffects wm es, Refreshable wm v, x es) => v -> Eff es (Maybe v, Maybe r)
   }
+
+class Unconstrained t
+instance Unconstrained t
 
 -- | A helper for rules which are not implemented and therefore blank.
 notImplementedRule ::
   Text
-  -> Rule wm v r
+  -> Rule wm x v r
 notImplementedRule n = makeRule' n (do
   ignoreSpan -- this will discard the rule span
   addAnnotation $ "Rule " <> n <> " needs implementing"
@@ -66,15 +70,15 @@ notImplementedRule n = makeRule' n (do
 makeRule ::
   Text -- ^ Rule name.
   -> [Precondition wm v]
-  -> (forall es. (RuleEffects wm es, Refreshable wm v) => v -> Eff es (Maybe r)) -- ^ Rule function.
-  -> Rule wm v r
+  -> (forall es. (RuleEffects wm es, Refreshable wm v, x es) => v -> Eff es (Maybe r)) -- ^ Rule function.
+  -> Rule wm x v r
 makeRule n c f = Rule n c (fmap (Nothing, ) . f)
 
 -- | Make a rule that has no arguments. this is more convenient to avoid \() ->...
 makeRule' ::
   Text -- ^ Rule name.
-  -> (forall es. RuleEffects wm es => Eff es (Maybe r)) -- ^ Rule function.
-  -> Rule wm v r
+  -> (forall es. (RuleEffects wm es, x es) => Eff es (Maybe r)) -- ^ Rule function.
+  -> Rule wm x v r
 makeRule' n f = makeRule n [] (const f)
 
 -- | Remove any unwanted return values from a `Rule`.

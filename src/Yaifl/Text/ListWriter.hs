@@ -11,7 +11,7 @@ module Yaifl.Text.ListWriter
   ) where
 
 import Yaifl.Model.Object
-import Solitude
+import Solitude hiding (Reader, runReader)
 import Yaifl.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Text.Say
@@ -23,15 +23,17 @@ import Effectful.Optics
 import Yaifl.Metadata
 import qualified Data.Text as T
 import Yaifl.Text.SayQQ
+import Effectful.Reader.Static
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
-  , WithActivity "listingContents" wm (ListWritingParameters wm) ()
-  , WithActivity "groupingTogether" wm (AnyObject wm) ()
-  , WithActivity "printingANumberOf" wm (Int, AnyObject wm) ()
-  , WithResponseSet wm "listWriterResponses" (ListWriterResponses wm)
+  , WithActivity "listingContents" wm () (ListWritingParameters wm) ()
+  , WithActivity "groupingTogether" wm () (AnyObject wm) ()
+  , WithActivity "printingANumberOf" wm () (Int, AnyObject wm) ()
+  , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   )
 
+newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm () } deriving stock (Generic)
 data ListWritingItem wm =
   SingleObject (AnyObject wm)
   -- a group may contain equivalence classes of objects
@@ -185,26 +187,29 @@ instance WithListWriting wm => SayableValue (ListWritingParameters wm) wm where
           }
 
 writeListOfThings ::
+  forall wm es.
   WithListWriting wm
   => RuleEffects wm es
   => Writer Text :> es
   => ListWritingParameters wm
   -> Eff es ()
-writeListOfThings lwp = evalStateLocal (LWV
-  { fromStart = True
-  , depth = 0
-  , margin = if withExtraIndentation lwp then 1 else 0
-  , lwp = lwp
-  }) $ do
-  case contents lwp of
-    [] -> do
-      if prefacingWithIsAre lwp
-      then sayTellListWriterResponse #w ()
-      else sayTellListWriterResponse #y ()
-      when (withNewlines lwp) $ tell "\n"
-    _
-      | not (asListingActivity lwp) -> writeListR
-    _ -> void $ doActivity #listingContents lwp
+writeListOfThings lwp = do
+  lr <- use @(ResponseCollector wm) (#responseCollection % #listWriterResponses)
+  runReader (LW lr) $ evalStateLocal (LWV
+    { fromStart = True
+    , depth = 0
+    , margin = if withExtraIndentation lwp then 1 else 0
+    , lwp = lwp
+    }) $ do
+    case contents lwp of
+      [] -> do
+        if prefacingWithIsAre lwp
+        then sayTellResponse W ()
+        else sayTellResponse Y ()
+        when (withNewlines lwp) $ tell "\n"
+      _
+        | not (asListingActivity lwp) -> writeListR
+      _ -> void $ doActivity #listingContents lwp
 
 -- so inform has two different ways to write a list - one that is a list of arbitrary items (markedlistiterator)
 -- and objecttreeiterator. this seems like it's all a giant pain so...we have a list, let's just print that
@@ -214,6 +219,7 @@ writeListR ::
   Writer Text :> es
   => RuleEffects wm es
   => WithListWriting wm
+  => Reader (ListWriting wm) :> es
   => State (ListWritingVariables wm) :> es
   => Eff es ()
 writeListR = do
@@ -221,7 +227,7 @@ writeListR = do
   ListWritingParameters{..} <- use @(ListWritingVariables wm) #lwp
   let adjustedList = if fromStart then coalesceList contents else contents
   when prefacingWithIsAre $ do
-    sayTellListWriterResponse #v ()
+    sayTellResponse V ()
     if withNewlines
     then tell ":\n"
     else tell " "
@@ -240,7 +246,7 @@ writeListR = do
       when (i == (length adjustedList - 1) && oxfordComma) $ do
         -- and we have more than 2 items in the list
         when (length adjustedList > 2) $ tell @Text ","
-        sayTellListWriterResponse #c ()
+        sayTellResponse C ()
       when (i < (length adjustedList - 1)) $ tell ", "
 
 singleClassGroup ::
@@ -287,6 +293,7 @@ multiClassGroup ::
   => Writer Text :> es
   => State (ListWritingVariables wm) :> es
   => RuleEffects wm es
+  => Reader (ListWriting wm) :> es
   => NonEmpty (ListWritingItem wm)
   -> Eff es ()
 multiClassGroup groupOfThings = do
@@ -309,31 +316,15 @@ multiClassGroup groupOfThings = do
     put o
   void $ endActivity #groupingTogether
 
+data ListWriterResponses = C | W | V | Y
 
-data ListWriterResponses wm = LWR
-  { c :: Response wm ()
-  , w :: Response wm ()
-  , v :: Response wm ()
-  , y :: Response wm ()
-  } deriving stock ( Generic )
-
-listWriterResponsesImpl :: ListWriterResponses wm
-listWriterResponsesImpl = LWR
-  { c = constResponse " and "
+listWriterResponsesImpl :: ListWriterResponses -> Response wm ()
+listWriterResponsesImpl = \case
+  C -> constResponse " and "
   -- "[regarding list writer internals][are] nothing" (W) TODO
-  , w = constResponse "is nothing"
+  W -> constResponse "is nothing"
   -- "[regarding list writer internals][are]" (V) TODO
-  , v = constResponse "is"
-  , y = constResponse "nothing"
-  }
-
-sayTellListWriterResponse ::
-  WithResponseSet wm "listWriterResponses" (ListWriterResponses wm)
-  => Writer Text :> es
-  => RuleEffects wm es
-  => Lens' (ListWriterResponses wm) (Response wm v)
-  -> v
-  -> Eff es ()
-sayTellListWriterResponse l = sayTellResponse  (#listWriterResponses % l)
+  V -> constResponse "is"
+  Y -> constResponse "nothing"
 
 -- what else...probably want a test *now* for grouping items and for coalescing the list correctly

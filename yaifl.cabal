@@ -71,8 +71,10 @@ library
 
     Yaifl.Actions.Examining
     Yaifl.Actions.Going
-
+    Yaifl.Actions.Opening
+    Yaifl.Actions.Closing
     Yaifl.Actions.Looking
+
     Yaifl.Actions.Looking.Locale
     Yaifl.Actions.Looking.Visibility
 

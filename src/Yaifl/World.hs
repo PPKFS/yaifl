@@ -39,6 +39,6 @@ instance Has (World wm) MessageBuffer where
 
 addWhenPlayBegins ::
   State (WorldActions wm) :> es
-  => Rule wm () Bool
+  => Rule wm Unconstrained () Bool
   -> Eff es ()
 addWhenPlayBegins r = #whenPlayBegins %= addRuleLast r

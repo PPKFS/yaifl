@@ -4,23 +4,26 @@
 module Yaifl.Text.Responses
   ( Response(..)
   , constResponse
+  , notImplementedResponse
   , sayResponse
   , sayTellResponse
   , WithResponseSet
-  , WithResponse
   ) where
 
-import Solitude
+import Solitude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
 import Yaifl.Model.WorldModel
-import Effectful.Optics
 import GHC.TypeLits
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.SayQQ
+import Effectful.Reader.Static
 
 newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 
 makeFieldLabelsNoPrefix ''Response
+
+notImplementedResponse :: Text -> Response wm a
+notImplementedResponse t = Response $ const (sayTell t)
 
 constResponse ::
   Text
@@ -28,27 +31,32 @@ constResponse ::
 constResponse t = Response $ const [sayingTell|{t}|]
 
 sayResponse ::
-  forall wm v es.
   RuleEffects wm es
-  => Lens' (WMResponses wm) (Response wm v)
+  => Reader a :> es
+  => Is k A_Lens
+  => LabelOptic' "responses" k a (resp -> Response wm v)
+  => resp
   -> v
   -> Eff es ()
 sayResponse aL v = do
-  Response t <- use @(ResponseCollector wm) $ #responseCollection % aL
-  r <- execWriter $ t v
+  c <- ask
+  let (Response res) = (c ^. castOptic @A_Lens #responses) aL
+  r <- execWriter (res v)
   say r
 
 sayTellResponse ::
-  forall wm v es.
   RuleEffects wm es
+  => Reader a :> es
   => Writer Text :> es
-  => Lens' (WMResponses wm) (Response wm v)
+  => Is k A_Lens
+  => LabelOptic' "responses" k a (resp -> Response wm v)
+  => resp
   -> v
   -> Eff es ()
 sayTellResponse aL v = do
-  Response t <- use @(ResponseCollector wm) $ #responseCollection % aL
-  r <- execWriter $ t v
+  c <- ask
+  let (Response res) = (c ^. castOptic @A_Lens #responses) aL
+  r <- execWriter (res v)
   sayTell r
 
-type WithResponseSet wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) v
-type WithResponse wm (name :: Symbol) v = LabelOptic' name A_Lens (WMResponses wm) (Response wm v)
+type WithResponseSet wm k (name :: Symbol) v = (Is k A_Lens, LabelOptic' name k (WMResponses wm) v)

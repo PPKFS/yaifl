@@ -18,6 +18,7 @@ import Yaifl.Text.SayQQ
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.Responses
 
 setLocalePriority ::
   AnyObject s
@@ -48,19 +49,20 @@ mentionItemAndIncreaseParagraphCount e lv li = do
     & #paragraphCount %~ (+1), nowMentionedItem), Nothing)
 
 type WithPrintingLocaleParagraphAbout wm =
-  ( WithActivity "printingLocaleParagraphAbout" wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+  ( WithActivity "printingLocaleParagraphAbout" wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
   , WMWithProperty wm Enclosing
   )
 
-type LocaleParagraphAboutRule wm = Rule wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+type LocaleParagraphAboutRule wm = ActivityRule wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 {-
   (a) Print a paragraph about the item and mark it as mentioned — this is good for interesting items deserving a paragraph of their own.
   (b) Print a paragraph, but do not mark it as mentioned — this is only likely to be useful if we want to print information related to the item without mentioning the thing itself. (For instance, if the presence of a mysterious parcel resulted in a ticking noise, we could print a paragraph about the ticking noise without mentioning the parcel, which would then appear later.)
   (c) Mark the item as mentioned but print nothing — this gets rid of the item, ensuring that it will not appear in the final "you can also see" sentence, and will not be considered by subsequent rules.
   (d) Do nothing at all — the item then becomes "nondescript" and appears in the final "you can also see" sentence, unless somebody else mentions it in the mean time.
 -}
-printingLocaleParagraphAboutImpl :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+printingLocaleParagraphAboutImpl :: Activity wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "printing a locale paragraph about something" Nothing Nothing
+  (const $ notImplementedResponse "localeparagraph")
   (blankRulebook "before printing a locale paragraph")
   ((blankRulebook "carry out printing a locale paragraph")
     { rules =

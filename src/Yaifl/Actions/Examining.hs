@@ -8,32 +8,18 @@ import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Text.Responses
 import Yaifl.Model.Object
-import Yaifl.Model.Direction
 import Yaifl.Model.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText)
 import Yaifl.Text.SayQQ
 
-data ExaminingResponses wm = ER
-  { examineDirectionA :: Response wm Direction
-  , examineContainerA :: Response wm (Thing wm)
-  , examineContainerB :: Response wm (Thing wm)
-  , examineSupporterA :: Response wm (Thing wm)
-  , examineDeviceA :: Response wm (Thing wm)
-  , examineUndescribedA :: Response wm (Thing wm)
-  } deriving stock (Generic)
-
-notImplementedResponse :: Text -> Response wm a
-notImplementedResponse t = Response $ const (sayTell t)
-
-examiningResponsesImpl :: ExaminingResponses wm
-examiningResponsesImpl = ER
-  { examineDirectionA = notImplementedResponse "directionA"
-  , examineContainerA = notImplementedResponse "containerA"
-  , examineContainerB = notImplementedResponse "containerB"
-  , examineSupporterA = notImplementedResponse "supporterA"
-  , examineDeviceA = notImplementedResponse "deviceA"
-  , examineUndescribedA = notImplementedResponse "undescribedA"
-}
+data ExaminingResponses =
+  ExamineDirectionA
+  | ExamineContainerA
+  | ExamineContainerB
+  | ExamineSupporterA
+  | ExamineDeviceA
+  | ExamineUndescribedA
+  deriving stock (Generic)
 
 newtype ExaminingTarget wm = ET { unwrapTarget :: Either (WMDirection wm) (AnyObject wm) }
 
@@ -47,12 +33,13 @@ makeFieldLabelsNoPrefix ''ExaminingActionVariables
 instance ArgsMightHaveMainObject (ExaminingActionVariables wm) (AnyObject wm) where
   argsMainObjectMaybe = #examiningSubject % coerced @(ExaminingTarget wm) @(Either (WMDirection wm) (AnyObject wm)) % _Right
 
-type ExaminingAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
-examiningAction :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExaminingAction wm
+type ExaminingAction wm = Action wm ExaminingResponses ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
+examiningAction :: ExaminingAction wm
 examiningAction = Action
   "examining"
   ["examine", "examining", "look closely at"]
   []
+  (\x -> notImplementedResponse "ex")
   (ParseArguments (\(UnverifiedArgs Args{..}) -> do
     let examiningSubject = ET $ fst variables
     return $ Right $ EAV {examiningSubject, examiningTextPrinted = False}))
@@ -69,13 +56,14 @@ examiningAction = Action
   ])
   (makeActionRulebook "report examining rulebook" [ reportOtherPeopleExamining ])
 
-type ExamineRule wm = Rule wm (Args wm (ExaminingActionVariables wm)) Bool
+type ExamineRule wm = ActionRule wm (ExaminingAction wm) (ExaminingActionVariables wm)
+
 actionRequiresLight :: ExamineRule wm
 actionRequiresLight = notImplementedRule "action requires light"
 
-examineUndescribed :: WithResponseSet wm "examiningResponses" (ExaminingResponses wm) => ExamineRule wm
+examineUndescribed :: ExamineRule wm
 examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \Args{..} -> do
-  unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) (error "")
+  --unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) (error "")
   rulePass
 
 examineDevices :: ExamineRule wm

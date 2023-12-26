@@ -6,17 +6,19 @@ module Yaifl.Actions.ActionProcessing
   ( actionProcessingRules
   ) where
 
-import Solitude
+import Solitude hiding (runReader, Reader)
 
 import Yaifl.Actions.Action
 import Yaifl.Model.Objects.Query
 import Yaifl.Rules.Rule
 import Yaifl.Rules.Rulebook
 import Yaifl.Rules.Run
+import Effectful.Reader.Static
 
 
-actionProcessingRules :: ActionProcessing wm
-actionProcessingRules = ActionProcessing $ \aSpan Action{..} u -> failHorriblyIfMissing (runRulebook (Just aSpan) (Rulebook
+actionProcessingRules :: forall wm. ActionProcessing wm
+actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm resp goesWith v) u ->
+  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) (Just aSpan) (Rulebook @wm
   "action processing"
   (Just True)
   -- I have no idea how this works

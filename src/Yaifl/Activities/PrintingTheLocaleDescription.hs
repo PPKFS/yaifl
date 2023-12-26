@@ -8,7 +8,6 @@ module Yaifl.Activities.PrintingTheLocaleDescription
 import Solitude
 
 import Breadcrumbs
-import Data.Text.Display
 
 import Yaifl.Activities.Activity
 import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
@@ -20,7 +19,6 @@ import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
 import Yaifl.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Text.SayQQ
-import Yaifl.Model.WorldModel
 import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Actions.Looking.Locale
@@ -28,48 +26,44 @@ import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
 
-data YouCanAlsoSeeResponses wm = YCAS
-  { youCanAlsoSeeA :: Response wm ()
-  , youCanAlsoSeeB :: Response wm (AnyObject wm)
-  , youCanAlsoSeeC :: Response wm (AnyObject wm)
-  , youCanAlsoSeeD :: Response wm ()
-  , youCanAlsoSeeE :: Response wm ()
-  , youCanAlsoSeeF :: Response wm ()
-  } deriving stock (Generic)
+data YouCanAlsoSeeResponses =
+  YouCanAlsoSeeA
+  | YouCanAlsoSeeB
+  | YouCanAlsoSeeC
+  | YouCanAlsoSeeD
+  | YouCanAlsoSeeE
+  | YouCanAlsoSeeF
+  deriving stock (Generic)
 
 type WithPrintingTheLocaleDescription wm = (
   WithChoosingNotableLocaleObjects wm
   , WithListWriting wm
   , WithListingNondescriptItems wm
   , WithPrintingLocaleParagraphAbout wm
-  , WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
-  , WithActivity "printingTheLocaleDescription" wm (LocaleVariables wm) ()
+  , WithActivity "printingTheLocaleDescription" wm YouCanAlsoSeeResponses (LocaleVariables wm) ()
   )
 
 youCanAlsoSeeResponsesImpl ::
   WithPrintingNameOfSomething wm
-  => YouCanAlsoSeeResponses wm
-youCanAlsoSeeResponsesImpl = YCAS
-  { youCanAlsoSeeA = youCanAlsoSeeAImpl
-  , youCanAlsoSeeB = youCanAlsoSeeBImpl
-  , youCanAlsoSeeC = youCanAlsoSeeCImpl
-  , youCanAlsoSeeD = youCanAlsoSeeDImpl
-  , youCanAlsoSeeE = youCanAlsoSeeEImpl
-  , youCanAlsoSeeF = youCanAlsoSeeFImpl
-  }
-
-sayYCASResponse ::
-  WithResponseSet wm "youCanAlsoSee" (YouCanAlsoSeeResponses wm)
-  => RuleEffects wm es
-  => Lens' (YouCanAlsoSeeResponses wm) (Response wm v)
-  -> v
-  -> Eff es ()
-sayYCASResponse l = sayResponse (#youCanAlsoSee % l)
+  => YouCanAlsoSeeResponses
+  -> Response wm (LocaleVariables wm)
+youCanAlsoSeeResponsesImpl = \case
+  YouCanAlsoSeeA -> Response $ const [sayingTell|#{We} |]
+  YouCanAlsoSeeB -> Response $ \LocaleVariables{domain} -> [sayingTell|On {the domain} #{we} |]
+  YouCanAlsoSeeC -> Response $ \LocaleVariables{domain} -> [sayingTell|In {the domain} #{we} |]
+  YouCanAlsoSeeD -> Response $ const $ do
+    regardingThePlayer
+    [sayingTell|#{can} also see |]
+  YouCanAlsoSeeE -> Response $ const $ do
+    regardingThePlayer
+    [sayingTell|#{can} see |]
+  YouCanAlsoSeeF -> Response $ const [sayingTell| here|]
 
 printingTheLocaleDescriptionImpl ::
   WithPrintingTheLocaleDescription wm
-  => Activity wm (LocaleVariables wm) ()
+  => Activity wm YouCanAlsoSeeResponses (LocaleVariables wm) ()
 printingTheLocaleDescriptionImpl = Activity "Printing the locale description of something" Nothing Nothing
+  youCanAlsoSeeResponsesImpl
   ((blankRulebook "before printing the locale description") { rules = [ findNotable ] })
   ((blankRulebook "carry out printing the locale description")
     { rules =
@@ -81,7 +75,7 @@ printingTheLocaleDescriptionImpl = Activity "Printing the locale description of 
 
 findNotable ::
   WithChoosingNotableLocaleObjects wm
-  => Rule wm (LocaleVariables wm) r
+  => ActivityRule wm YouCanAlsoSeeResponses (LocaleVariables wm) r
 findNotable = Rule "find notable objects" [] (\v ->
   do
     -- carry out the choosing notable locale objects activity with the domain;
@@ -90,7 +84,7 @@ findNotable = Rule "find notable objects" [] (\v ->
 
 interestingLocale ::
   WithPrintingLocaleParagraphAbout wm
-  => Rule wm (LocaleVariables wm) r
+  => ActivityRule wm YouCanAlsoSeeResponses (LocaleVariables wm) r
 interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
   do
     let tb = v ^. #localePriorities
@@ -109,37 +103,9 @@ interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
     addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ localePriorities newP))
     return (Just newP, Nothing))
 
-youCanAlsoSeeAImpl :: Response wm ()
-youCanAlsoSeeAImpl = Response $ const [sayingTell|#{We} |]
-
-youCanAlsoSeeBImpl ::
-  WithPrintingNameOfSomething wm
-  => Response wm (AnyObject wm)
-youCanAlsoSeeBImpl = Response $ \domain -> [sayingTell|On {the domain} #{we} |]
-
-youCanAlsoSeeCImpl ::
-  WithPrintingNameOfSomething wm
-  => Response wm (AnyObject wm)
-youCanAlsoSeeCImpl = Response $ \domain -> [sayingTell|In {the domain} #{we} |]
-
-youCanAlsoSeeDImpl :: Response wm ()
-youCanAlsoSeeDImpl = Response $ const $ do
-  regardingThePlayer
-  [sayingTell|#{can} also see |]
-
-youCanAlsoSeeEImpl ::
-  Display (WMSayable wm)
-  => Response wm ()
-youCanAlsoSeeEImpl = Response $ const $ do
-  regardingThePlayer
-  [sayingTell|#{can} see |]
-
-youCanAlsoSeeFImpl :: Response wm ()
-youCanAlsoSeeFImpl = Response $ const [sayingTell| here|]
-
 alsoSee ::
   WithPrintingTheLocaleDescription wm
-  => Rule wm (LocaleVariables wm) r
+  => ActivityRule wm YouCanAlsoSeeResponses (LocaleVariables wm) r
 alsoSee = Rule "You can also see" [] (\v ->
   do
     -- lp is everything that has a locale priority
@@ -173,20 +139,20 @@ alsoSee = Rule "You can also see" [] (\v ->
       if
         --if the domain is the location: say "[We] " (A);
         | isInLoc ->
-          sayYCASResponse #youCanAlsoSeeA ()
+          sayResponse YouCanAlsoSeeA v
         -- otherwise if the domain is a supporter or the domain is an animal:
         -- say "On [the domain] [we] " (B);
         | isASupporter || isAnAnimal ->
-          sayYCASResponse #youCanAlsoSeeB dom
+          sayResponse YouCanAlsoSeeB v
         -- otherwise: say "In [the domain] [we] " (C);
         | otherwise ->
-          sayYCASResponse #youCanAlsoSeeC dom
+          sayResponse YouCanAlsoSeeC v
       -- if the locale paragraph count is greater than 0:
       if paragraphCount > 0
         --say "[regarding the player][can] also see " (D);
-        then sayYCASResponse #youCanAlsoSeeD ()
+        then sayResponse YouCanAlsoSeeD v
         -- otherwise: say "[regarding the player][can] see " (E);
-        else sayYCASResponse #youCanAlsoSeeE ()
+        else sayResponse YouCanAlsoSeeE v
       -- there is a big mess of looping to see if everything
       -- has a common parent and therefore we are listing the contents
       -- of something. this will happen unless the author
@@ -214,7 +180,7 @@ alsoSee = Rule "You can also see" [] (\v ->
             let listWithContents = (withContents objects) { asListingActivity = False } in
             [saying|{aListWithContents listWithContents}|]
       --if the domain is the location, say " here" (F);
-      when (isRoom dom && isInLoc) $ sayYCASResponse #youCanAlsoSeeF ()
+      when (isRoom dom && isInLoc) $ sayResponse YouCanAlsoSeeF v
       --say ".[paragraph break]";
       [saying|.#{paragraphBreak}|]
     endActivity #listingNondescriptItems

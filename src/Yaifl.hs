@@ -64,11 +64,10 @@ import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
 import Yaifl.Actions.Examining
 import Yaifl.Text.Responses
 import Yaifl.Model.Objects.Store
+import Yaifl.Actions.Closing
+import Yaifl.Actions.Opening
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
-
---instance HasDirectionalTerms PlainWorldModel where
- -- toTextDir = toTextDir
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
@@ -76,7 +75,6 @@ type HasStandardProperties s = (
   , WMWithProperty s Enterable
   , WMWithProperty s Openable
   , HasLookingProperties s
-  , WithResponseSet s "examiningResponses" (ExaminingResponses s)
   , WMStdDirections s
   , WMWithProperty s DoorSpecifics
   , HasDirectionalTerms s
@@ -89,18 +87,18 @@ type HasStandardProperties s = (
 -- supplying a missing noun, second noun, implicitly taking, amusing a victorius player, printing obit
 -- handling final question, offering something and performing something (both dialogue)
 data ActivityCollection wm = ActivityCollection
-  { choosingNotableLocaleObjects :: Activity wm (AnyObject wm) (LocalePriorities wm)
-  , groupingTogether :: Activity wm (AnyObject wm) ()
-  , listingContents :: Activity wm (ListWritingParameters wm) ()
-  , listingNondescriptItems :: Activity wm (AnyObject wm) ()
-  , printingANumberOf :: Activity wm (Int, AnyObject wm) ()
-  , printingDescriptionOfADarkRoom :: Activity wm () ()
-  , printingLocaleParagraphAbout :: Activity wm (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
-  , printingNameOfSomething :: Activity wm (AnyObject wm) Text
-  , printingTheLocaleDescription :: Activity wm (LocaleVariables wm) ()
-  , printingNameOfADarkRoom :: Activity wm () ()
+  { choosingNotableLocaleObjects :: Activity wm () (AnyObject wm) (LocalePriorities wm)
+  , groupingTogether :: Activity wm () (AnyObject wm) ()
+  , listingContents :: Activity wm () (ListWritingParameters wm) ()
+  , listingNondescriptItems :: Activity wm () (AnyObject wm) ()
+  , printingANumberOf :: Activity wm () (Int, AnyObject wm) ()
+  , printingDescriptionOfADarkRoom :: Activity wm () () ()
+  , printingLocaleParagraphAbout :: Activity wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+  , printingNameOfSomething :: Activity wm () (AnyObject wm) Text
+  , printingTheLocaleDescription :: Activity wm YouCanAlsoSeeResponses (LocaleVariables wm) ()
+  , printingNameOfADarkRoom :: Activity wm () () ()
   -- TODO https://ganelson.github.io/inform/standard_rules/S-act.html#SP15
- {- , printingRoomDescriptionDetails :: Activity wm (Thing wm) ()
+{- , printingRoomDescriptionDetails :: Activity wm (Thing wm) ()
   , printingInventoryDetails :: Activity wm (Thing wm) ()
   , writingAParagraphAbout :: Activity wm (AnyObject wm) ()
   , printingAnnouncementOfDarkness :: Activity wm () ()
@@ -123,6 +121,8 @@ addStandardActions = do
   addAction going
   addAction looking
   addAction examining
+  addAction opening
+  addAction closing
   pass
 
 blankActions ::
@@ -177,6 +177,7 @@ makeTypeDAG = fromList
   , ("room", fromList ["object"])
   , ("container", fromList ["thing"])
   , ("supporter", fromList ["thing"])
+  , ("door", fromList ["thing"])
   ]
 
 blankActivityCollection ::
@@ -202,6 +203,8 @@ blankActionCollection = ActionCollection
   { going = goingAction
   , looking = lookingAction
   , examining = examiningAction
+  , opening = openingAction
+  , closing = closingAction
   }
 
 blankWorld ::

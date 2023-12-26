@@ -2,6 +2,7 @@
 module Yaifl.Actions.Going
   ( goingAction
   , GoingActionVariables(..)
+  , GoingResponses
   , toTheRoom
   , throughTheDoor
   ) where
@@ -45,15 +46,19 @@ data GoingActionVariables wm = GoingActionVariables
   , thingGoneWith :: Maybe (Thing wm)
   } deriving stock ( Generic )
 
+data GoingResponses = GR ()
+
+type GoingAction wm = Action wm GoingResponses ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter)) (GoingActionVariables wm)
+type GoingRule wm = ActionRule wm (GoingAction wm) (GoingActionVariables wm)
 goingAction ::
   (WMStdDirections wm, WMWithProperty wm DoorSpecifics, WMWithProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
-  => Action wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter)) (GoingActionVariables wm)
+  => GoingAction wm
 goingAction = Action
   "going"
   ["go", "going"]
-
   (map (,TakesObjectParameter) ["with", "through", "by", "to"])
+  (\x -> error "")
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
   (makeActionRulebook "instead of going rulebook" [])
@@ -62,7 +67,7 @@ goingAction = Action
   (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])
 
 checkGoingRules ::
-  [Rule wm (Args wm (GoingActionVariables wm)) Bool]
+  [GoingRule wm]
 checkGoingRules = [
   standUpBeforeGoing
   , cantTravelInNotAVehicle
@@ -73,7 +78,7 @@ checkGoingRules = [
   -- can't go that way
   ]
 
-carryOutGoingRules :: WMWithProperty wm Enclosing => ActionRulebook wm (GoingActionVariables wm)
+carryOutGoingRules :: WMWithProperty wm Enclosing => ActionRulebook wm (GoingAction wm) (GoingActionVariables wm)
 carryOutGoingRules = makeActionRulebook "carry out going rulebook"
   [ movePlayerAndVehicle
   , moveFloatingObjects
@@ -81,7 +86,7 @@ carryOutGoingRules = makeActionRulebook "carry out going rulebook"
   ]
 
 -- todo: other actors moving, or if the player is moved via another actor
-describeRoomGoneInto :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+describeRoomGoneInto :: GoingRule wm
 describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
   (unless (silently . actionOptions $ a) (void $ do
@@ -89,13 +94,13 @@ describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
     parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look") >> rulePass)
   (error "other actors cant report going yet")
 
-checkLightInNewLocation :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+checkLightInNewLocation :: GoingRule wm
 checkLightInNewLocation = notImplementedRule "check light in new location rule"
 
-moveFloatingObjects :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+moveFloatingObjects :: GoingRule wm
 moveFloatingObjects = notImplementedRule "move floating objects rule"
 
-movePlayerAndVehicle :: WMWithProperty wm Enclosing => Rule wm (Args wm (GoingActionVariables wm)) Bool
+movePlayerAndVehicle :: WMWithProperty wm Enclosing => GoingRule wm
 movePlayerAndVehicle = makeRule "move player and vehicle rule" [] $ \a@Args{variables=v} -> do
   moveSuccessful <- case vehicleGoneBy v of
     Nothing -> move (source a) (roomGoneTo v)
@@ -195,13 +200,13 @@ actorInEnterableVehicle _ = pure Nothing
 getMatching :: Text -> Eff es (Maybe Entity)
 getMatching = const $ return Nothing
 
-cantGoThroughClosedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+cantGoThroughClosedDoors :: GoingRule wm
 cantGoThroughClosedDoors = notImplementedRule "stand up before going"
 
-cantGoThroughUndescribedDoors :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+cantGoThroughUndescribedDoors :: GoingRule wm
 cantGoThroughUndescribedDoors = notImplementedRule "stand up before going"
 
-cantTravelInNotAVehicle :: Rule wm (Args wm (GoingActionVariables wm)) Bool
+cantTravelInNotAVehicle :: GoingRule wm
 cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \v -> do
   nonVehicle <- getObject $ v ^. #source % #objectData % #containedBy
   let _vehcGoneBy = v ^. #variables % #vehicleGoneBy
@@ -214,8 +219,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
     pass
   rulePass
 
-standUpBeforeGoing ::
-  Rule wm (Args wm (GoingActionVariables wm)) Bool
+standUpBeforeGoing :: GoingRule wm
 standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> do error ""
   {-chaises <- error ""--ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do

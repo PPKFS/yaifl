@@ -21,8 +21,9 @@ runRulebook ::
   HasCallStack
   => (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
+  => x es
   => Maybe SpanID
-  -> Rulebook wm v re
+  -> Rulebook wm x v re
   -> v
   -> Eff es (Maybe re)
 runRulebook mbSpanId rb ia = do
@@ -34,12 +35,13 @@ runRulebook mbSpanId rb ia = do
 -- Just (v, Nothing) -> the rulebook ran successfully, but had no definite outcome
 -- Just (v, Just re) -> the rulebook ran successfully with outcome re
 runRulebookAndReturnVariables ::
-  forall wm v es re.
+  forall wm x v es re.
   HasCallStack
   => (Refreshable wm v, Display v, Display re)
+  => x es
   => RuleEffects wm es
   => Maybe SpanID
-  -> Rulebook wm v re
+  -> Rulebook wm x v re
   -> v
   -> Eff es (Maybe (v, Maybe re))
 runRulebookAndReturnVariables mbSpanId Rulebook{..} args =
@@ -59,8 +61,9 @@ runRulebookAndReturnVariables mbSpanId Rulebook{..} args =
 processRuleList ::
   (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
+  => x es
   => SpanID
-  -> [Rule wm v re]
+  -> [Rule wm x v re]
   -> v
   -> Eff es (v, Maybe re)
 processRuleList _ [] v = return (v, Nothing)

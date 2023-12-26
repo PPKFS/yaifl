@@ -15,7 +15,7 @@ type WithListingContents wm = (
   WithListWriting wm
   )
 
-listingContentsImpl :: WithListingContents wm => Activity wm (ListWritingParameters wm) ()
+listingContentsImpl :: WithListingContents wm => Activity wm () (ListWritingParameters wm) ()
 listingContentsImpl = makeActivity "Listing contents of something" [makeRule "standard listing contents" []
   (\objs -> do
     -- giving brief inventory information, tersely, not listing

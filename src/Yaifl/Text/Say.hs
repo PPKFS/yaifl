@@ -200,7 +200,7 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
         A a -> (a, False, True)
         A_ a -> (a, False, False)
 
-type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm (AnyObject wm) Text)
+type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm () (AnyObject wm) Text)
 -- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
   NoMissingObjects wm es
@@ -219,7 +219,7 @@ printName o = do
   t <- doActivity #printingNameOfSomething e
   printText (fromMaybe "" t)
 
-printingNameOfSomethingImpl :: Activity s (AnyObject s) Text
+printingNameOfSomethingImpl :: Activity s () (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
     [makeRule "" [] (\o -> do
       regarding (Just o)

@@ -3,6 +3,8 @@
 
 module Yaifl.Activities.Activity
   ( Activity(..)
+  , ActivityRule
+  , ActivityRule'
   , WithActivity
   , WithPrintingDescriptionOfADarkRoom
   , WithPrintingNameOfADarkRoom
@@ -16,7 +18,7 @@ module Yaifl.Activities.Activity
   , whenHandling'
   ) where
 
-import Solitude
+import Solitude hiding ( Reader, runReader )
 
 import Breadcrumbs ( withSpan )
 import Data.Text.Display
@@ -30,47 +32,53 @@ import Yaifl.Rules.Rulebook ( Rulebook(..), blankRulebook )
 import Yaifl.Rules.Run ( runRulebookAndReturnVariables )
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Object
+import Yaifl.Text.Responses
+import Effectful.Reader.Static
 
 -- | A nicer wrapper around label optics for activities.
-type WithActivity (name :: Symbol) wm v r = LabelOptic' name A_Lens (WMActivities wm) (Activity wm v r)
+type WithActivity (name :: Symbol) wm resps v r = LabelOptic' name A_Lens (WMActivities wm) (Activity wm resps v r)
 
-type WithPrintingNameOfADarkRoom wm = (WithActivity "printingNameOfADarkRoom" wm () ())
-type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () ()
-type WithListingNondescriptItems wm = WithActivity "listingNondescriptItems" wm (AnyObject wm) ()
+type WithPrintingNameOfADarkRoom wm = (WithActivity "printingNameOfADarkRoom" wm () () ())
+type WithPrintingDescriptionOfADarkRoom wm = WithActivity "printingDescriptionOfADarkRoom" wm () () ()
+type WithListingNondescriptItems wm = WithActivity "listingNondescriptItems" wm () (AnyObject wm) ()
 
-data Activity wm v r = Activity
+type ActivityRulebook wm resps v re r = Rulebook wm ((:>) (Reader (Activity wm resps v re))) v r
+type ActivityRule wm resps v r = ActivityRule' wm resps v r r
+type ActivityRule' wm resps v re r = Rule wm ((:>) (Reader (Activity wm resps v re))) v r
+data Activity wm resps v r = Activity
     { name :: Text
     , defaultOutcome :: Maybe r
     , currentVariables :: Maybe v
-    , beforeRules :: Rulebook wm v ()
-    , carryOutRules :: Rulebook wm v r
-    , afterRules :: Rulebook wm v ()
+    , responses :: resps -> Response wm v
+    , beforeRules :: ActivityRulebook wm resps v r ()
+    , carryOutRules :: ActivityRulebook wm resps v r r
+    , afterRules :: ActivityRulebook wm resps v r ()
     } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Activity
 
-type ActivityLens wm v r = Lens' (WMActivities wm) (Activity wm v r)
+type ActivityLens wm resps v r = Lens' (WMActivities wm) (Activity wm resps v r)
 
 blankActivity ::
   Text
-  -> Activity wm v r
+  -> Activity wm resps v r
 blankActivity n = makeActivity n []
 
 makeActivity ::
   Text
-  -> [Rule wm v r]
-  -> Activity wm v r
-makeActivity n rs = Activity n Nothing Nothing
+  -> [Rule wm ((:>) (Reader (Activity wm resps v r))) v r]
+  -> Activity wm resps v r
+makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "")
   (blankRulebook ("Before " <> n))
   ((blankRulebook ("Carry Out " <> n)) { rules = rs })
   (blankRulebook ("After " <> n))
 
 beginActivity ::
-  forall wm v r es.
+  forall wm resps v r es.
   RuleEffects wm es
   => Display v
   => Refreshable wm v
-  => ActivityLens wm v r
+  => ActivityLens wm resps v r
   -> v
   -> Eff es v
 beginActivity acL c = do
@@ -80,7 +88,7 @@ beginActivity acL c = do
       (do
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
         -- run the before rules only.
-        r <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
+        r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
         whenJust r $ \r' -> modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ fst r')
         pure $ maybe c fst r)
 
@@ -89,18 +97,18 @@ whenHandling' ::
   => Display v
   => Display r
   => Refreshable wm v
-  => ActivityLens wm v r
+  => ActivityLens wm resps v r
   -> Eff es a
   -> Eff es (Either a (Maybe r))
 whenHandling' acF f = whenHandling acF (const f)
 
 whenHandling ::
-  forall wm v r a es.
+  forall wm resps v r a es.
   RuleEffects wm es
   => Display v
   => Display r
   => Refreshable wm v
-  => ActivityLens wm v r
+  => ActivityLens wm resps v r
   -> (v -> Eff es a)
   -> Eff es (Either a (Maybe r))
 whenHandling acL f = do
@@ -109,7 +117,7 @@ whenHandling acL f = do
     case currentVariables ac of
       Nothing -> pure (Right Nothing)
       Just c -> do
-        r <- failHorriblyIfMissing $ runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) c
+        r <- failHorriblyIfMissing $ runReader ac $ runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) c
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
         let runBlock = do
               a <- f c
@@ -124,12 +132,12 @@ whenHandling acL f = do
           Just (_, Just x) -> pure (Right (Just x))
 
 endActivity ::
-  forall wm v r es.
+  forall wm resps v r es.
   HasCallStack
   => RuleEffects wm es
   => Display v
   => Refreshable wm v
-  => ActivityLens wm v r
+  => ActivityLens wm resps v r
   -> Eff es (Maybe v)
 endActivity acF = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acF)
@@ -139,20 +147,20 @@ endActivity acF = do
         case currentVariables ac of
           Nothing -> pure Nothing
           Just c -> do
-            r <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) c
+            r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) (afterRules ac) c
             modify @(ActivityCollector wm) (#activityCollection % acF % #currentVariables .~ Nothing)
             pure $ maybe (Just c) (Just . fst) r)
 
 doActivity ::
-  forall wm r v es.
+  forall wm resps r v es.
   (RuleEffects wm es, Display r, Display v)
   => Refreshable wm v
-  => ActivityLens wm v r
+  => ActivityLens wm resps v r
   -> v
   -> Eff es (Maybe r)
 doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
-  withSpan "activity" (ac ^. #name) $ \aSpan -> failHorriblyIfMissing (do
+  withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac $ failHorriblyIfMissing (do
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
     x <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
     mr <- runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) (maybe c fst x)

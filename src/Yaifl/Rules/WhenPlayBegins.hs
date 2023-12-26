@@ -30,7 +30,7 @@ whenPlayBeginsName = "when play begins"
 -- | The rulebook that runs at the start of the game.
 whenPlayBeginsRules ::
   WMWithProperty wm Enclosing
-  => Rulebook wm () Bool
+  => Rulebook wm Unconstrained () Bool
 whenPlayBeginsRules = Rulebook
     whenPlayBeginsName
     Nothing
