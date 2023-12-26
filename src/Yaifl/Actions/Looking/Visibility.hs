@@ -142,7 +142,7 @@ isSeeThrough e = do
       en = getEnterableMaybe e
   s <- isSupporter e
   isContainer <- isType e "container"
-  let isOpenContainer = fmap _containerOpenable c == Just Open && isContainer
+  let isOpenContainer = fmap (opened . _containerOpenable) c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer
   return $ s --if it's a supporter

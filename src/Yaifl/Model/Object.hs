@@ -185,6 +185,9 @@ tagThing ::
   -> TaggedEntity ThingTag
 tagThing r = tag r (r ^. #objectId)
 
+instance Functor (Object wm d) where
+  fmap f = #specifics %~ f
+
 instance Bifunctor (Object wm) where
   bimap f g o = o & #objectData %~ f & #specifics %~ g
 

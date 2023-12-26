@@ -24,7 +24,7 @@ import Yaifl.Model.Properties.Door
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Model.Properties.MultiLocated
-import Yaifl.Model.Properties.Openable ( Openable )
+import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
 import qualified Data.Set as S
@@ -34,7 +34,7 @@ data ObjectSpecifics =
   NoSpecifics
   | EnclosingSpecifics Enclosing
   | ContainerSpecifics Container
-  | OpenableSpecifics Openable
+  | OpenabilitySpecifics Openability
   | DoorSpecifics DoorSpecifics
   deriving stock (Eq, Show, Read)
 
@@ -61,10 +61,10 @@ instance MayHaveProperty ObjectSpecifics Container where
 instance MayHaveProperty ObjectSpecifics Enterable where
   propertyAT = _ContainerSpecifics % containerEnterable
 
-instance MayHaveProperty ObjectSpecifics Openable where
-  propertyAT = _OpenableSpecifics
+instance MayHaveProperty ObjectSpecifics Openability where
+  propertyAT = _OpenabilitySpecifics
     `thenATraverse` (_ContainerSpecifics % containerOpenable)
-    `thenATraverse` (_DoorSpecifics % #openable)
+    `thenATraverse` (_DoorSpecifics % #opened)
 
 instance MayHaveProperty ObjectSpecifics DoorSpecifics where
   propertyAT = castOptic _DoorSpecifics

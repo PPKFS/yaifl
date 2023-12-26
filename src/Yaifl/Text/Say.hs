@@ -155,6 +155,12 @@ instance SayableValue (SayLiteral "can") wm where
 instance SayableValue (SayLiteral "look") wm where
   sayTell = sayVerb @"look"
 
+instance SayableValue (SayLiteral "open") wm where
+  sayTell = sayVerb @"open"
+
+instance SayableValue (SayLiteral "close") wm where
+  sayTell = sayVerb @"close"
+
 instance SayableValue (SayLiteral "paragraphBreak") wm where
   sayTell _ = tell "\n\n"
 

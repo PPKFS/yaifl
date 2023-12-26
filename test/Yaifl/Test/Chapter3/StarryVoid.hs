@@ -25,7 +25,7 @@ starryVoidWorld = do
   tcr <- addRoom "The Centre Ring" ""
   tsv <- addRoom "The Starry Void" ""
   tsv `isInsideFrom` tcr
-  tmb <- addDoor "The magician's booth"
+  tmb <- addDoor "magician's booth"
     (DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $
         withThing $ \t ->
         do
@@ -49,7 +49,7 @@ starryVoidWorld = do
 
   tmb `isUnderstoodAs` ["door", "of", "the", "light", "crack", "thin crack"]
 
-  before (ActionRule #going) [throughTheDoor tmb] "" $ \_ -> do
+  before (ActionRule #going) [throughTheClosedDoor tmb] "" $ \_ -> do
     [sayingLn|(first opening the door of the booth)|]
     Nothing <$ parseAction silentAction [] "open door"
   pass

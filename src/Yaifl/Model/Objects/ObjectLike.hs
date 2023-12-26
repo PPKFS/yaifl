@@ -9,6 +9,7 @@ import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Object
 import Effectful.Error.Static
+import Yaifl.Model.Objects.Tag
 
 class HasID o => ObjectLike wm o where
   getObject :: NoMissingRead wm es => o -> Eff es (AnyObject wm)
@@ -45,6 +46,9 @@ instance ObjectLike wm (AnyObject wm) where
 
 instance ObjectLike wm (TaggedEntity anyTag) where
   getObject e = getObject (unTag e)
+
+instance ThingLike wm DoorEntity where
+  getThing = getThing . (toTag @_ @ThingTag)
 
 instance ObjectLike wm Entity where
   getObject e = if isThing (getID e)

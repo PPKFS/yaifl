@@ -28,7 +28,7 @@ import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Model.Properties.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.Properties.TH ( makeSpecificsWithout )
-import Yaifl.Model.Properties.Openable ( Openable(..) )
+import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Object
 
@@ -44,7 +44,7 @@ data Enterable = Enterable | NotEnterable
 data Container = Container
   { _containerOpacity :: Opacity
   , _containerEnclosing :: Enclosing
-  , _containerOpenable :: Openable
+  , _containerOpenable :: Openability
   , _containerEnterable :: Enterable
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
@@ -55,4 +55,4 @@ makeSpecificsWithout [] ''Enterable
 isOpaqueClosedContainer ::
   Container
   -> Bool
-isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == Closed)
+isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == defaultContainerOpenability)

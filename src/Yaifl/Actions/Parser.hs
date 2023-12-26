@@ -1,6 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-
 module Yaifl.Actions.Parser
   ( runActionHandlerAsWorldActions
   ) where
@@ -189,14 +186,27 @@ parseArgumentType (Optionally a) t = do
   case mbRes of
     Left _err -> pure $ Right NoParameter
     Right r -> pure $ Right r
-parseArgumentType TakesObjectParameter t = tryFindingObject t
-parseArgumentType TakesThingParameter t = tryFindingObject t
+parseArgumentType TakesObjectParameter t = tryFindingAnyObject t
+parseArgumentType TakesThingParameter t = do
+  o <- tryFindingObject t
+  case fromAny <$> o of
+    Left err -> pure $ Left err
+    Right Nothing -> pure $ Left "got room not thing"
+    Right (Just x) -> pure $ Right $ ThingParameter x
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
+
+tryFindingAnyObject ::
+  RuleEffects wm es
+  => Text
+  -> Eff es (Either Text (NamedActionParameter wm))
+tryFindingAnyObject t = do
+  o <- tryFindingObject t
+  pure $ ObjectParameter <$> o
 
 tryFindingObject ::
   RuleEffects wm es
   => Text
-  -> Eff es (Either Text (NamedActionParameter wm))
+  -> Eff es (Either Text (AnyObject wm))
 tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
   playerLoc <- getLocation pl
@@ -206,7 +216,7 @@ tryFindingObject t = failHorriblyIfMissing $ do
   match <- filterM (\(f, _) -> f >>= \x -> pure (x > threshold)) scores
   case match of
     [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
-    [x] -> pure $ Right (ObjectParameter (toAny $ snd x))
+    [x] -> pure $ Right (toAny $ snd x)
     (_x:_xs) -> pure $ Left "I saw too many things that could be that."
 
 scoreParserMatch ::

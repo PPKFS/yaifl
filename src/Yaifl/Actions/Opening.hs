@@ -4,33 +4,85 @@ module Yaifl.Actions.Opening where
 import Yaifl.Actions.Action
 import Solitude
 import Yaifl.Rules.Args
-import Yaifl.Text.Responses
 import Yaifl.Model.Object
-import Yaifl.Actions.Examining
+import Yaifl.Rules.Rule
+import Yaifl.Model.Properties.Openable
+import Yaifl.Model.Properties.Has
+import Yaifl.Metadata
+import Yaifl.Text.Responses
+import Yaifl.Text.SayQQ
+import Yaifl.Text.Say
 
-{- data OpeningResponses wm = OR
-  { unlessOpenableResponseA :: Response wm (Thing wm)
-  , cantOpenLockedResponseA :: Response wm (Thing wm)
-  , ifAlreadyOpenResponseA :: Response wm (Thing wm)
-  , revealNewInteriorResponseA :: Response wm (Thing wm)
-  , reportOpeningResponseA :: Response wm (Thing wm)
-  , reportOpeningResponseB :: Response wm (Thing wm, Thing wm)
-  , reportOpeningResponseC :: Response wm (Thing wm)
-  } -}
-
-type OpeningResponses = ()
+data OpeningResponses =
+  UnlessOpenableResponseA
+  | CantOpenLockedResponseA
+  | IfAlreadyOpenResponseA
+  | RevealNewInteriorResponseA
+  | ReportOpeningResponseA
+  | ReportOpeningResponseB
+  | ReportOpeningResponseC
+  deriving stock (Generic)
 
 type OpeningAction wm = Action wm OpeningResponses 'TakesThingParameter (Thing wm)
-openingAction :: OpeningAction wm
+
+openingResponses :: WithPrintingNameOfSomething wm => OpeningResponses -> Response wm (Args wm (Thing wm))
+openingResponses = \case
+  -- say "[We] [open] [the noun]." (A);
+  ReportOpeningResponseA -> Response $ \Args{variables=noun} -> [sayingTell|#{We} #{open} {the noun}.|]
+  _ -> error ""
+
+openingAction :: WithPrintingNameOfSomething wm => WMWithProperty wm Openability => OpeningAction wm
 openingAction = Action
   { name = "opening"
   , understandAs = ["open", "opening"]
   , matches = []
-  , responses = (\() -> error "")
+  , responses = openingResponses
   , parseArguments = actionOnOneThing
   , beforeRules = makeActionRulebook "before opening rulebook" []
   , insteadRules = makeActionRulebook "instead of opening rulebook" []
-  , checkRules = makeActionRulebook "check opening rulebook" []
-  , carryOutRules = makeActionRulebook "carry out opening rulebook" []
-  , reportRules = makeActionRulebook "report opening rulebook" []
+  , checkRules = makeActionRulebook "check opening rulebook"
+      [ cantOpenUnlessOpenable
+      , cantOpenIfLocked
+      , cantOpenIfOpen
+      ]
+  , carryOutRules = makeActionRulebook "carry out opening rulebook" [ standardOpening ]
+  , reportRules = makeActionRulebook "report opening rulebook" [ revealNewInterior, standardReport ]
   }
+
+cantOpenUnlessOpenable :: ActionRule wm (OpeningAction wm) (Thing wm)
+cantOpenUnlessOpenable = notImplementedRule "can't open nonopenable things"
+
+cantOpenIfLocked :: ActionRule wm (OpeningAction wm) (Thing wm)
+cantOpenIfLocked = notImplementedRule "can't open nonopenable things"
+
+cantOpenIfOpen :: ActionRule wm (OpeningAction wm) (Thing wm)
+cantOpenIfOpen = notImplementedRule "can't open nonopenable things"
+
+standardReport :: ActionRule wm (OpeningAction wm) (Thing wm)
+standardReport = makeRule "standard report opening rule" [] $ \args -> do
+  -- if the actor is the player:
+  pl <- isPlayer (source args)
+  -- if the action is not silent:
+  if pl && not (silently . actionOptions $ args)
+  then
+    -- say "[We] [open] [the noun]." (A);
+    sayResponse ReportOpeningResponseA args
+  else
+    pass
+
+  {-
+    otherwise if the player can see the actor:
+        say "[The actor] [open] [the noun]." (B);
+    otherwise:
+        say "[The noun] [open]." (C);
+  -}
+  rulePass
+
+revealNewInterior :: ActionRule wm (OpeningAction wm) (Thing wm)
+revealNewInterior = notImplementedRule "can't open nonopenable things"
+
+standardOpening :: WMWithProperty wm Openability => ActionRule wm (OpeningAction wm) (Thing wm)
+standardOpening = makeRule "standard opening rule" [] $ \thing -> do
+  -- now the noun is open.
+  openIt (variables thing)
+  rulePass

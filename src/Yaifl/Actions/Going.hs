@@ -5,6 +5,7 @@ module Yaifl.Actions.Going
   , GoingResponses
   , toTheRoom
   , throughTheDoor
+  , throughTheClosedDoor
   ) where
 
 import Solitude
@@ -32,6 +33,8 @@ import qualified Data.Text as T
 import Data.Text.Display
 import Yaifl.Model.WorldModel (WMDirection)
 import Yaifl.Model.Objects.Tag
+import Yaifl.Model.Objects.ObjectLike
+import Yaifl.Model.Properties.Openable
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -261,3 +264,16 @@ throughTheDoor ::
   -> Precondition wm (Args wm (GoingActionVariables wm))
 throughTheDoor d = Precondition (pure "through a specific door") $ \v -> do
   pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)
+
+throughTheClosedDoor ::
+  forall d wm.
+  TaggedAs d DoorTag
+  => WMWithProperty wm Openability
+  => ThingLike wm d
+  => d
+  -> Precondition wm (Args wm (GoingActionVariables wm))
+throughTheClosedDoor d = Precondition (pure "through a specific closed door") $ \v -> do
+  o <- getThing d
+  pure $
+    isClosed o &&
+    (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)

@@ -26,31 +26,31 @@ import Yaifl.Model.Objects.Tag
 
 data DoorSpecifics = Door
   { isOneWay :: Bool
-  , openable :: Openable
+  , opened :: Openability
   , frontSide :: RoomEntity
   , backSide :: RoomEntity
   , multiLocated :: MultiLocated
   } deriving stock (Eq, Show, Read, Generic)
 
 blankDoorSpecifics :: RoomEntity -> RoomEntity -> DoorSpecifics
-blankDoorSpecifics x y = Door False Closed x y (MultiLocated $ S.fromList [coerceTag x, coerceTag y])
+blankDoorSpecifics x y = Door False defaultDoorOpenability x y (MultiLocated $ S.fromList [coerceTag x, coerceTag y])
 
 makeFieldLabelsNoPrefix ''DoorSpecifics
 makeSpecificsWithout [] ''DoorSpecifics
 
 isClosed ::
-  WMWithProperty wm Openable
+  WMWithProperty wm Openability
   => CanBeAny wm o
   => o
   -> Bool
-isClosed o = Just Closed == getOpenableMaybe o
+isClosed o = Just Closed == (Yaifl.Model.Properties.Openable.opened <$> getOpenabilityMaybe o)
 
 isOpen ::
-  WMWithProperty wm Openable
+  WMWithProperty wm Openability
   => CanBeAny wm o
   => o
   -> Bool
-isOpen o = Just Open == getOpenableMaybe o
+isOpen o = Just Open == (Yaifl.Model.Properties.Openable.opened <$> getOpenabilityMaybe o)
 
 instance Taggable DoorSpecifics DoorTag
 

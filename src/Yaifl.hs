@@ -62,7 +62,6 @@ import Yaifl.Actions.Collection
 import Breadcrumbs
 import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
 import Yaifl.Actions.Examining
-import Yaifl.Text.Responses
 import Yaifl.Model.Objects.Store
 import Yaifl.Actions.Closing
 import Yaifl.Actions.Opening
@@ -71,9 +70,9 @@ type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityColle
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
+  , WMWithProperty s Openability
   , WMWithProperty s Container
   , WMWithProperty s Enterable
-  , WMWithProperty s Openable
   , HasLookingProperties s
   , WMStdDirections s
   , WMWithProperty s DoorSpecifics
