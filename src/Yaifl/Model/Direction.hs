@@ -101,5 +101,5 @@ instance HasDirectionalTerms ('WorldModel s Direction b c ac r sa) where
     SouthWest -> ["sw", "southwest", "south-west", "south west"]
     In -> ["in", "inside"]
     Out -> ["out", "outside"]
-    Up -> ["up", "upwards", "above"]
-    Down -> ["down", "downwards", "below"]
+    Up -> ["up", "upwards", "above", "u"]
+    Down -> ["down", "downwards", "below", "d"]

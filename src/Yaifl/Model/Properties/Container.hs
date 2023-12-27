@@ -1,6 +1,3 @@
-{-# LANGUAGE StrictData #-}
-
-
 module Yaifl.Model.Properties.Container
   ( -- * Types
     Opacity(..)

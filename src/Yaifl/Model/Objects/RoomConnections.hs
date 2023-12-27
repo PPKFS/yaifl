@@ -5,10 +5,15 @@ module Yaifl.Model.Objects.RoomConnections
   , isSouthOf
   , isEastOf
   , isNorthOf
+  , isWestOfOneWay
+  , isSouthOfOneWay
+  , isEastOfOneWay
+  , isNorthOfOneWay
   , isInsideFrom
   , isOutsideFrom
   , isAbove
   , isBelow
+  , isNowhere
   , getMapConnection
   , getConnection
   , getAllConnections
@@ -207,3 +212,14 @@ modifyAndVerifyConnection fromRoomE' fromDir destE f = do
   then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
   else noteError (const ()) ("Tried to add a connection to the room " <> display fromRoom <> " but it had no connection in direction "
     <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))
+
+isNowhere ::
+  forall wm es.
+  WMStdDirections wm
+  => NoMissingObjects wm es
+  => RoomEntity
+  -> WMDirection wm
+  -> Eff es ()
+isNowhere r d = do
+  fromRoom <- getRoom r
+  modifyRoom @wm fromRoom (connectionLens d .~ Nothing)
