@@ -1,4 +1,13 @@
-{-# LANGUAGE UndecidableInstances #-}
+{-|
+Module      : Yaifl.Model.Properties.Query
+Copyright   : (c) Avery 2022-2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Typeclasses for things which are XLike (can be resolved into an X in an @Eff es@ context with relevant
+constraints/effects).
+-}
+
 module Yaifl.Model.Properties.Query (
   getPropertyOrThrow
   , defaultPropertyGetter

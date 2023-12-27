@@ -1,4 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
 module Yaifl.Model.Objects.Create
   ( addThingInternal
   , addRoomInternal
@@ -11,24 +10,25 @@ module Yaifl.Model.Objects.Create
   ) where
 
 import Solitude
-
 import Breadcrumbs
+
 import Data.Text.Display
 import Effectful.Optics ( (.=), use )
+import Named
 
-import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Move ( move )
+import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData ( RoomData, blankRoomData )
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.ObjectLike
-import Named
+
 import qualified Data.Set as S
 
 makeObject ::

@@ -1,3 +1,13 @@
+{-|
+Module      : Yaifl.Model.Objects.Query
+Copyright   : (c) Avery 2022-2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Typeclasses for things which are XLike (can be resolved into an X in an @Eff es@ context with relevant
+constraints/effects).
+-}
+
 module Yaifl.Model.Objects.Query
   ( -- * Types
   ObjectLike(..)
@@ -28,53 +38,34 @@ module Yaifl.Model.Objects.Query
   ) where
 
 import Solitude
-
 import Breadcrumbs
+
+import Data.List.NonEmpty as NE (cons)
+import Data.Text.Display
 import Effectful.Error.Static ( runError, Error )
 import Effectful.Optics ( use )
 
 import Yaifl.Metadata
-import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.ObjectLike
-import Data.Text.Display
-import qualified Data.EnumSet as ES
 import Yaifl.Model.Objects.Tag
-import Data.List.NonEmpty as NE (cons)
+
+import qualified Data.EnumSet as ES
 import qualified Data.Set as S
 
-withoutMissingObjects ::
-  HasCallStack
-  => (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
-  -> (HasCallStack => MissingObject -> Eff es a)  -- ^ the handler, which is basically always just "nothing"
-  -> Eff es a
-withoutMissingObjects f def = do
-  r <- runError f
-  case r of
-    -- TODO: investigate what the callstack adds
-    Left err' -> def (snd err')
-    Right x -> return x
-
-failHorriblyIfMissing ::
-  HasCallStack
-  => Breadcrumbs :> es
-  => (HasCallStack => Eff (Error MissingObject ': es) a)
-  -> Eff es a
-failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
-  let msg = "the object with ID " <> show o <> " could not be found because " <> show t <> ". We are failing horribly and erroring out because we can't recover."
-  addAnnotation msg
-  error msg)
-
 getThingMaybe ::
-  ObjectRead wm es
+  ObjectLookup wm :> es
+  => WithMetadata es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
 getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getID e)) (const $ pure Nothing)
 
 getRoomMaybe ::
-  ObjectRead wm es
+  ObjectLookup wm :> es
+  => WithMetadata es
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))

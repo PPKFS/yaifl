@@ -13,16 +13,16 @@ module Yaifl.Model.Properties.Door
 
 import Solitude
 
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
+import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Properties.Has
+import Yaifl.Model.Properties.MultiLocated
+import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.TH
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Properties.Openable
-import Yaifl.Model.Objects.Entity
-import Yaifl.Model.Object
-import Yaifl.Model.Properties.MultiLocated
 import qualified Data.Set as S
-import Yaifl.Model.Objects.Tag
 
 data DoorSpecifics = Door
   { isOneWay :: Bool

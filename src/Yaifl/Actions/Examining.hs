@@ -39,7 +39,7 @@ examiningAction = Action
   "examining"
   ["examine", "examining", "look closely at"]
   []
-  (\x -> notImplementedResponse "ex")
+  (\_x -> notImplementedResponse "ex")
   (ParseArguments (\(UnverifiedArgs Args{..}) -> do
     let examiningSubject = ET $ fst variables
     return $ Right $ EAV {examiningSubject, examiningTextPrinted = False}))

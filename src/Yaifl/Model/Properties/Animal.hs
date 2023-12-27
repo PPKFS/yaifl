@@ -1,9 +1,9 @@
 module Yaifl.Model.Properties.Animal where
 
 import Solitude
-import Yaifl.Model.Objects.Query
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Query
 
 isAnimal ::
   NoMissingObjects wm es

@@ -1,52 +1,65 @@
+{-|
+Module      : Yaifl.Model.Object
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
+A game object (a thing or a room).
+-}
 
 module Yaifl.Model.Object (
+  -- * Pointed sets
+  Pointed(..)
   -- * Objects
-  Object(..)
-  , TaggedObject(unTagObject)
-  , unsafeTagObject
-  , Pointed(..)
+  -- ** Components
+  , NamePlurality(..)
+  , NameProperness(..)
+  -- ** Objects
+  , Object(..)
   , Thing(..)
   , Room(..)
   , AnyObject(..)
-  , NamePlurality(..)
-  , NameProperness(..)
-  -- ** Helpers
   , objectEquals
   , isType
-  , IsObject(..)
-  , CanBeAny(..)
-  -- ** Optics
-  , _Room
-  , _Thing
-
-  , RoomTag
-  , ThingTag
+  -- ** Tagging
   , tagRoom
   , tagThing
+  , TaggedObject(unTagObject)
+  , unsafeTagObject
+  -- * CanBeAny
+  , IsObject(..)
+  , CanBeAny(..)
+  , _Room
+  , _Thing
   ) where
 
 import Solitude
 
 import Data.Set (member)
+import Data.Text.Display
 import Effectful.Optics ( use )
+import GHC.Records
 
-import Yaifl.Model.Objects.Entity
 import Yaifl.Metadata
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.RoomData (RoomData)
+import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Objects.ThingData (ThingData)
 import Yaifl.Model.WorldModel (WMObjSpecifics, WMSayable)
-import Data.Text.Display
-import GHC.Records
-import Yaifl.Model.Objects.Tag
 
+-- | Pointed set class; Monoid without the operation, or the dreaded default typeclass.
 class Pointed s where
   identityElement :: s
 
--- | Determine whether an object is of a certain type.
+instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
+  identityElement = mempty
+
+-- | Determine whether an object is of a certain type. This is separate to anything on Haskell's side
+-- and the type system.
 isType ::
   WithMetadata es
-  => LabelOptic' "objectType" A_Lens o ObjectType
+  => Is k A_Getter
+  => LabelOptic' "objectType" k o ObjectType
   => o -- ^ The object.
   -> ObjectType -- ^ The type.
   -> Eff es Bool
@@ -69,9 +82,11 @@ isType o = isTypeInternal (o ^. #objectType)
           else
             anyM (`isTypeInternal` e') iv
 
+-- | If the object has a pluralised name.
 data NamePlurality = SingularNamed | PluralNamed
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
+-- | If the object should have an indefinite article or not.
 data NameProperness = Improper | Proper
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
@@ -88,16 +103,20 @@ data Object wm objData objSpecifics = Object
   , objectType :: ObjectType
   , creationTime :: Timestamp
   , modifiedTime :: Timestamp
-  , specifics :: objSpecifics -- ^ A 'vanilla' object has no specific additional information.
+  , specifics :: objSpecifics -- ^ A @vanilla@ object has no specific additional information; this is a @Pointed@ constraint.
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
 
+-- | Because tagging object entities is a headache to marshall between `AnyObject` and not, this is an Object
+-- level equivalent to `TaggedEntity`; it allows for witnessed property lookups without `Maybe`.
+-- (e.g. a `TaggedObject (Thing wm) DoorTag` can have `Yaifl.Model.Properties.Door.getDoorSpecifics` rather than `Yaifl.Model.Properties.Door.getDoorSpecificsMaybe`).
 newtype TaggedObject o tag = TaggedObject { unTagObject :: o }
   deriving stock (Generic)
 
 instance HasID o => HasID (TaggedObject o tag) where
   getID = getID . unTagObject
 
+-- | Unsafely tag an object when we know it's sensible.
 unsafeTagObject ::
   o
   -> TaggedObject o tag
@@ -123,10 +142,14 @@ instance Eq (Object wm d s) where
 instance Ord (Object wm d s) where
   compare = (. creationTime) . compare . creationTime
 
+-- | An `Object` with `ThingData`.
 newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
+-- | An `Object` with `RoomData`.
 newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
+-- | Either a room or a thing. The `Either` is over the object data so it's easier to
+-- do things with the other fields.
 newtype AnyObject wm = AnyObject (Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
@@ -175,11 +198,13 @@ instance (TaggedAs (Room wm) RoomTag) where
 instance (TaggedAs (Room wm) EnclosingTag) where
   toTag = coerceTag . tagRoom
 
+-- | Tag a room entity.
 tagRoom ::
   Room wm
   -> TaggedEntity RoomTag
 tagRoom r = tag r (r ^. #objectId)
 
+-- | Tag a thing entity.
 tagThing ::
   Thing wm
   -> TaggedEntity ThingTag
@@ -225,6 +250,7 @@ instance CanBeAny wm (AnyObject wm) where
   toAny = id
   fromAny = Just
 
+-- | If something is a thing or a room.,
 class IsObject o where
   isThing :: o -> Bool
   isRoom :: o -> Bool
@@ -242,5 +268,6 @@ instance IsObject (Thing wm) where
 instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
 
+-- | This is safe as long as we only ever generate object IDs under the right principle.
 instance IsObject Entity where
   isThing = (> 0) . unID

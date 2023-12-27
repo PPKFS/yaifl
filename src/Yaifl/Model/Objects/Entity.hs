@@ -51,7 +51,7 @@ instance Display Entity where
 
 -- | An entity tagged with a phantom @tag@ for keeping some semblance of type safety
 -- when indirectly storing references to other objects. The tagging mechanisms are in
--- `Yaifl.Model.Objects.Tag`.
+-- @Yaifl.Model.Objects.Tag@.
 newtype TaggedEntity tag = TaggedEntity { unTag :: Entity }
   deriving stock (Show, Generic)
   deriving newtype (Eq, Num, Read, Bounded, Hashable, Enum, Ord, Real, Integral)

@@ -8,7 +8,6 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
 import Yaifl.Actions.Action
-import Yaifl.Metadata
 import Yaifl.Model.Objects.Query
 import Yaifl.Rules.Run
 import Yaifl.Text.ResponseCollection

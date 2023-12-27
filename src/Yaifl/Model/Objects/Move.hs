@@ -4,20 +4,22 @@ module Yaifl.Model.Objects.Move
   ) where
 
 import Solitude
-
 import Breadcrumbs
+
 import Data.Text.Display
-import Yaifl.Model.Objects.Entity
+
 import Yaifl.Metadata ( Metadata(..) )
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Query
+import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Properties.Enclosing
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
 import Yaifl.Model.WorldModel
+
 import qualified Data.EnumSet as ES
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.Tag
 
 move ::
   Breadcrumbs :> es

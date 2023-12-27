@@ -1,5 +1,11 @@
+{-|
+Module      : Yaifl.Model.Objects.RoomData
+Copyright   : (c) Avery 2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
-{-# LANGUAGE UndecidableInstances #-}
+Properties that all `Yaifl.Model.Objects.Room`s have.
+-}
 
 module Yaifl.Model.Objects.RoomData (
   ConnectionExplicitness(..)

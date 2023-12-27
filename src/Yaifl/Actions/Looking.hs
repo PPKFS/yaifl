@@ -12,16 +12,18 @@ import Breadcrumbs ( addTag )
 import Data.Text.Display ( display )
 import Effectful.Optics ( use )
 
+import Effectful.Reader.Static
 import Yaifl.Actions.Action
 import Yaifl.Actions.Looking.Locale
 import Yaifl.Actions.Looking.Visibility
 import Yaifl.Activities.Activity
 import Yaifl.Metadata
-import Yaifl.Model.Objects.Entity ( HasID(..) )
 import Yaifl.Model.Object( Object(..), AnyObject, Thing, objectEquals )
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity ( HasID(..) )
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData ( IsVisited(..) )
+import Yaifl.Model.Objects.Store
 import Yaifl.Model.Properties.Animal
 import Yaifl.Model.Properties.Supporter ( isSupporter )
 import Yaifl.Rules.Args
@@ -33,8 +35,6 @@ import Yaifl.Text.Responses
 import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Model.Objects.Store
-import Effectful.Reader.Static
 
 data LookingResponses wm =
   RoomDescriptionHeadingA

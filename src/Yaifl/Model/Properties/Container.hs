@@ -24,13 +24,13 @@ module Yaifl.Model.Properties.Container
 
 import Solitude
 
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMWithProperty )
+import Yaifl.Model.Properties.Openable
 import Yaifl.Model.Properties.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.Properties.TH ( makeSpecificsWithout )
-import Yaifl.Model.Properties.Openable
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Object
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent

@@ -6,24 +6,23 @@ import Solitude
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Activities.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
+import Data.Text.Display
+import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
 import Yaifl.Model.Objects.ThingData
+import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Enclosing
 import Yaifl.Model.Properties.Has
-import Yaifl.Model.Properties.Query
-import Yaifl.Rules.Args
-import Yaifl.Model.Properties.Container
 import Yaifl.Model.Properties.Openable
+import Yaifl.Model.Properties.Query
 import Yaifl.Model.Properties.Supporter
-import qualified Data.EnumSet as DES
-import Data.Text.Display
 import Yaifl.Model.WorldModel
-import Yaifl.Text.Responses
-import Yaifl.Activities.PrintingTheLocaleDescription
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.ObjectLike
+import Yaifl.Rules.Args
+import qualified Data.EnumSet as DES
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

@@ -19,20 +19,22 @@ module Yaifl.Model.Objects.RoomConnections
 import qualified Data.Map as Map
 
 import Solitude hiding (Down)
+import Breadcrumbs
 
-import Yaifl.Model.Direction
-import Yaifl.Model.Objects.Entity
+import Data.Text.Display
+
 import Yaifl.Metadata ( whenConstructing, noteError )
+import Yaifl.Model.Direction
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
+import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomData
-import Yaifl.Model.Properties.TH (makeDirections)
+import Yaifl.Model.Properties.TH ( makeDirections )
 import Yaifl.Model.WorldModel ( WMDirection )
-import Breadcrumbs
-import Data.Text.Display
-import Yaifl.Model.Objects.Effects
+
 import qualified Data.Map as M
-import Yaifl.Model.Objects.ObjectLike
 
 getAllConnections ::
   Room wm

@@ -35,6 +35,7 @@ import Yaifl.Model.WorldModel (WMDirection)
 import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Properties.Openable
+import Yaifl.Text.Responses (notImplementedResponse)
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -61,7 +62,7 @@ goingAction = Action
   "going"
   ["go", "going"]
   (map (,TakesObjectParameter) ["with", "through", "by", "to"])
-  (\x -> error "")
+  (\_ -> notImplementedResponse "going")
   (ParseArguments goingActionSet)
   (makeActionRulebook "before going rulebook" [])
   (makeActionRulebook "instead of going rulebook" [])

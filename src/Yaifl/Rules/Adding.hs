@@ -7,20 +7,19 @@ module Yaifl.Rules.Adding
   ) where
 
 import Solitude
-import Yaifl.Rules.RuleEffects
-import Yaifl.Rules.Args
-import Yaifl.Rules.Rule
-import Yaifl.Actions.Action
-import Yaifl.Rules.Rulebook (addRuleLast)
+import Data.Text.Display
 import Effectful.Optics
+import Yaifl.Actions.Action
 import Yaifl.Actions.Collection (ActionCollection)
-import Yaifl.Model.Properties.Query
-import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Object
+import Yaifl.Model.Objects.Entity
+import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.Tag
-import Yaifl.Model.Objects.Entity
-import Data.Text.Display
+import Yaifl.Rules.Args
+import Yaifl.Rules.Rule
+import Yaifl.Rules.RuleEffects
+import Yaifl.Rules.Rulebook (addRuleLast)
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)

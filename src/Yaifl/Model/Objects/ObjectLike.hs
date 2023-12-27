@@ -1,3 +1,13 @@
+{-|
+Module      : Yaifl.Model.Objects.ObjectLike
+Copyright   : (c) Avery 2022-2023
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Typeclasses for things which are XLike (can be resolved into an X in an @Eff es@ context with relevant
+constraints/effects).
+-}
+
 module Yaifl.Model.Objects.ObjectLike
   ( ObjectLike(..)
   , ThingLike(..)
@@ -5,18 +15,23 @@ module Yaifl.Model.Objects.ObjectLike
   ) where
 
 import Solitude
-import Yaifl.Model.Objects.Entity
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Object
+
 import Effectful.Error.Static
+
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Entity
 import Yaifl.Model.Objects.Tag
 
+-- | Something which can be resolved into an `AnyObject`.
 class HasID o => ObjectLike wm o where
   getObject :: NoMissingRead wm es => o -> Eff es (AnyObject wm)
 
+-- | Something which can be resolved into a `Thing`.
 class HasID o => ThingLike wm o where
   getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
 
+-- | Something which can be resolved into a `Room`.
 class HasID o => RoomLike wm o where
   getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
 

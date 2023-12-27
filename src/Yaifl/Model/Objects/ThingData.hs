@@ -20,8 +20,8 @@ module Yaifl.Model.Objects.ThingData (
 
 import Solitude
 import Yaifl.Model.Objects.Entity
-import Yaifl.Model.WorldModel
 import Yaifl.Model.Objects.Tag
+import Yaifl.Model.WorldModel
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit

@@ -1,6 +1,3 @@
-
-{-# LANGUAGE UndecidableInstances #-}
-
 module Yaifl.Model.Properties.MultiLocated
   ( MultiLocated(..)
   , getMultiLocatedMaybe
@@ -8,14 +5,16 @@ module Yaifl.Model.Properties.MultiLocated
   , modifyMultiLocated
   ) where
 
-import qualified Data.Set as S
+import Solitude
+
+import Yaifl.Model.Object
+import Yaifl.Model.Objects.Effects
 import Yaifl.Model.Objects.Entity
-import Yaifl.Model.Properties.TH
 import Yaifl.Model.Properties.Has
 import Yaifl.Model.Properties.Query
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Object
-import Solitude
+import Yaifl.Model.Properties.TH
+
+import qualified Data.Set as S
 
 newtype MultiLocated = MultiLocated
   { locations :: S.Set EnclosingEntity
