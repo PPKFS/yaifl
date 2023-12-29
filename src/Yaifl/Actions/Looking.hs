@@ -116,7 +116,6 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
             addTag @Text "Ceiling is not the location" ""
             --  say "[The visibility ceiling]";
             [saying|{The visCeil}|]
-      let
       -- repeat with intermediate level count running from 2 to the visibility level count:
       mapM_ (foreachVisibilityHolder a) (drop 1 lvls)
       -- say line break;

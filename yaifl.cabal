@@ -1,17 +1,17 @@
-cabal-version:   3.6
-name:            yaifl
-version:         0.0.8.383
-synopsis:        Yet another interactive fiction library.
-description:     Yet another interactive fiction library.
-homepage:        https://github.com/PPKFS/yaifl
-bug-reports:     https://github.com/PPKFS/yaifl/issues
-license:         MIT
-author:          Avery
-maintainer:      Avery <thecommunistduck@hotmail.co.uk>
-copyright:       2022-2023 Avery
-category:        Game Development
-build-type:      Simple
-tested-with: GHC == 9.4.7
+cabal-version: 3.6
+name:          yaifl
+version:       0.0.8.383
+synopsis:      Yet another interactive fiction library.
+description:   Yet another interactive fiction library.
+homepage:      https://github.com/PPKFS/yaifl
+bug-reports:   https://github.com/PPKFS/yaifl/issues
+license:       MIT
+author:        Avery
+maintainer:    Avery <thecommunistduck@hotmail.co.uk>
+copyright:     2022-2023 Avery
+category:      Game Development
+build-type:    Simple
+tested-with:   GHC == 9.4.7
 
 source-repository head
   type:     git
@@ -19,25 +19,26 @@ source-repository head
 
 common common-options
   build-depends:
-      base
-    , solitude
+    , base
     , breadcrumbs
     , containers
-    , effectful-plugin
     , effectful-core
+    , effectful-plugin
     , named
+    , solitude
     , template-haskell
     , text
     , text-display
 
   ghc-options:
-    -Wall -Wcompat -Widentities -Wredundant-constraints -Wno-unused-packages -Wno-deprecations
-    -fhide-source-paths -Wno-unused-top-binds
-    -Wmissing-deriving-strategies -O2 -flate-specialise
-    -fspecialise-aggressively -fprint-potential-instances
-    -fno-warn-unused-do-bind -haddock -fwrite-ide-info
-    -fplugin=Effectful.Plugin -Wunused-packages
-  default-language: GHC2021
+    -Wall -Wcompat -Widentities -Wredundant-constraints
+    -Wno-unused-packages -Wno-deprecations -fhide-source-paths
+    -Wno-unused-top-binds -Wmissing-deriving-strategies -O2
+    -flate-specialise -fspecialise-aggressively
+    -fprint-potential-instances -fno-warn-unused-do-bind -haddock
+    -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages
+
+  default-language:   GHC2021
   default-extensions:
     DataKinds
     DefaultSignatures
@@ -59,27 +60,23 @@ common common-options
     ViewPatterns
 
 library
-  import: common-options
-  hs-source-dirs: src
+  import:          common-options
+  hs-source-dirs:  src
   exposed-modules:
     Yaifl
 
     Yaifl.Actions.Action
     Yaifl.Actions.ActionProcessing
-
-    Yaifl.Actions.Parser
+    Yaifl.Actions.Closing
     Yaifl.Actions.Collection
-
     Yaifl.Actions.Examining
     Yaifl.Actions.Going
-    Yaifl.Actions.Opening
-    Yaifl.Actions.Closing
     Yaifl.Actions.Looking
-
     Yaifl.Actions.Looking.Locale
     Yaifl.Actions.Looking.Visibility
-
+    Yaifl.Actions.Opening
     Yaifl.Actions.OutOfWorld
+    Yaifl.Actions.Parser
 
     Yaifl.Activities.Activity
     Yaifl.Activities.ChoosingNotableLocaleObjects
@@ -87,18 +84,14 @@ library
     Yaifl.Activities.PrintingLocaleParagraphAbout
     Yaifl.Activities.PrintingTheLocaleDescription
 
+    Yaifl.EffectHandlers
     Yaifl.Metadata
-    Yaifl.World
 
     Yaifl.Model.Direction
-    Yaifl.Model.Objects.Entity
     Yaifl.Model.Object
-    Yaifl.Model.ObjectSpecifics
-    Yaifl.Model.WorldModel
-
-    Yaifl.Model.Objects.Effects
-
     Yaifl.Model.Objects.Create
+    Yaifl.Model.Objects.Effects
+    Yaifl.Model.Objects.Entity
     Yaifl.Model.Objects.Move
     Yaifl.Model.Objects.ObjectLike
     Yaifl.Model.Objects.Query
@@ -107,6 +100,7 @@ library
     Yaifl.Model.Objects.Store
     Yaifl.Model.Objects.Tag
     Yaifl.Model.Objects.ThingData
+    Yaifl.Model.ObjectSpecifics
 
     Yaifl.Model.Properties.Animal
     Yaifl.Model.Properties.Container
@@ -119,15 +113,15 @@ library
     Yaifl.Model.Properties.Supporter
     Yaifl.Model.Properties.TH
 
+    Yaifl.Model.WorldModel
+
     Yaifl.Rules.Adding
     Yaifl.Rules.Args
     Yaifl.Rules.Rule
-    Yaifl.Rules.RuleEffects
     Yaifl.Rules.Rulebook
+    Yaifl.Rules.RuleEffects
     Yaifl.Rules.Run
     Yaifl.Rules.WhenPlayBegins
-
-    Yaifl.EffectHandlers
 
     Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
@@ -139,8 +133,10 @@ library
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
 
+    Yaifl.World
+
   build-depends:
-    effectful-th
+    , effectful-th
     , enummapset
     , haskell-src-exts
     , haskell-src-meta
@@ -155,18 +151,20 @@ test-suite yaifl-test
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-depends:
-    , tasty
-    , yaifl
     , aeson
     , directory
     , effectful-plugin
+    , tasty
     , tasty-silver
+    , yaifl
 
-  ghc-options: -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:
+    -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
+
   default-extensions:
+    NoImplicitPrelude
     QuasiQuotes
     TemplateHaskell
-    NoImplicitPrelude
 
   other-modules:
     Yaifl.Test.Chapter3.Bic
@@ -175,7 +173,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.PortRoyal2
     Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.StarryVoid
+    Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
     Yaifl.Test.Chapter3.UpAndUp
     Yaifl.Test.Chapter3.Verbosity
-    Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
     Yaifl.Test.Common
