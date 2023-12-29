@@ -32,14 +32,10 @@ openingResponses = \case
   _ -> error ""
 
 openingAction :: WithPrintingNameOfSomething wm => WMWithProperty wm Openability => OpeningAction wm
-openingAction = Action
-  { name = "opening"
-  , understandAs = ["open", "opening"]
-  , matches = []
+openingAction = (makeAction "opening")
+  { understandAs = ["open", "opening"]
   , responses = openingResponses
   , parseArguments = actionOnOneThing
-  , beforeRules = makeActionRulebook "before opening rulebook" []
-  , insteadRules = makeActionRulebook "instead of opening rulebook" []
   , checkRules = makeActionRulebook "check opening rulebook"
       [ cantOpenUnlessOpenable
       , cantOpenIfLocked

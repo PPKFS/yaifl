@@ -35,7 +35,6 @@ import Yaifl.Model.WorldModel (WMDirection)
 import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Properties.Openable
-import Yaifl.Text.Responses (notImplementedResponse)
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -58,17 +57,14 @@ goingAction ::
   (WMStdDirections wm, WMWithProperty wm DoorSpecifics, WMWithProperty wm Enclosing)
   => WithPrintingNameOfSomething wm
   => GoingAction wm
-goingAction = Action
-  "going"
-  ["go", "going"]
-  (map (,TakesObjectParameter) ["with", "through", "by", "to"])
-  (\_ -> notImplementedResponse "going")
-  (ParseArguments goingActionSet)
-  (makeActionRulebook "before going rulebook" [])
-  (makeActionRulebook "instead of going rulebook" [])
-  (makeActionRulebook "check going rulebook" checkGoingRules)
-  carryOutGoingRules
-  (makeActionRulebook "report going rulebook" [ describeRoomGoneInto ])
+goingAction = (makeAction "going")
+  { understandAs = ["go", "going"]
+  , matches = map (,TakesObjectParameter) ["with", "through", "by", "to"]
+  , parseArguments = ParseArguments goingActionSet
+  , checkRules = makeActionRulebook "check going rulebook" checkGoingRules
+  , reportRules = makeActionRulebook "report going rulebook" [ describeRoomGoneInto ]
+  , carryOutRules = carryOutGoingRules
+  }
 
 checkGoingRules ::
   [GoingRule wm]
@@ -224,7 +220,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   rulePass
 
 standUpBeforeGoing :: GoingRule wm
-standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> do error ""
+standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> error ""
   {-chaises <- error ""--ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
       whenM (isPlayer $ v ^. #source) $ do
@@ -255,16 +251,14 @@ toTheRoom ::
   ObjectLike wm r
   => r
   -> Precondition wm (Args wm (GoingActionVariables wm))
-toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> do
-  pure $ getID (roomGoneTo $ variables v) == getID r
+toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> pure $ getID (roomGoneTo $ variables v) == getID r
 
 throughTheDoor ::
   forall d wm.
   TaggedAs d DoorTag
   => d
   -> Precondition wm (Args wm (GoingActionVariables wm))
-throughTheDoor d = Precondition (pure "through a specific door") $ \v -> do
-  pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)
+throughTheDoor d = Precondition (pure "through a specific door") $ \v -> pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)
 
 throughTheClosedDoor ::
   forall d wm.

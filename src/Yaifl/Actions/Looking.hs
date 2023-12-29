@@ -57,9 +57,8 @@ type LookingRule wm = ActionRule wm (LookingAction wm) (LookingActionVariables w
 lookingAction ::
   HasLookingProperties wm
   => LookingAction wm
-lookingAction = Action
-  { name = "looking"
-  , understandAs = ["look", "looking"]
+lookingAction = (makeAction "looking")
+  { understandAs = ["look", "looking"]
   , matches = [] --todo: add "at => examine"
   , responses = roomDescriptionResponsesImpl
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
@@ -76,16 +75,12 @@ lookingAction = Action
         Nothing -> pure "looking"
         Just acName -> pure acName
       return $ Right $ LookingActionVariables loc (take lightLevels vl) acName
-  , beforeRules = makeActionRulebook "before looking rulebook" []
-  , insteadRules = makeActionRulebook "instead of looking rulebook" []
-  , checkRules = makeActionRulebook "check looking rulebook" []
   , carryOutRules = makeActionRulebook "carry out looking"
         [ roomDescriptionHeading
         , roomDescriptionBody
         , aboutObjects
         , checkNewArrival
         ]
-  , reportRules = makeActionRulebook "report looking rulebook" []
   }
 
 roomDescriptionHeading ::

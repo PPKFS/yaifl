@@ -6,7 +6,6 @@ import Yaifl.Actions.Action
 import Solitude
 import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
-import Yaifl.Text.Responses
 import Yaifl.Model.Object
 import Yaifl.Model.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText)
@@ -35,26 +34,22 @@ instance ArgsMightHaveMainObject (ExaminingActionVariables wm) (AnyObject wm) wh
 
 type ExaminingAction wm = Action wm ExaminingResponses ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
 examiningAction :: ExaminingAction wm
-examiningAction = Action
-  "examining"
-  ["examine", "examining", "look closely at"]
-  []
-  (\_x -> notImplementedResponse "ex")
-  (ParseArguments (\(UnverifiedArgs Args{..}) -> do
-    let examiningSubject = ET $ fst variables
-    return $ Right $ EAV {examiningSubject, examiningTextPrinted = False}))
-  (makeActionRulebook "before examining rulebook" [])
-  (makeActionRulebook "instead of examining rulebook" [])
-  (makeActionRulebook "check examining rulebook" [ actionRequiresLight ])
-  (makeActionRulebook "carry out examining rulebook" [
-    standardExamining
-  , examineDirections
-  , examineContainers
-  , examineSupporters
-  , examineDevices
-  , examineUndescribed
-  ])
-  (makeActionRulebook "report examining rulebook" [ reportOtherPeopleExamining ])
+examiningAction = (makeAction "examining")
+  { understandAs = ["examine", "examining", "look closely at"]
+  , parseArguments = ParseArguments (\(UnverifiedArgs Args{..}) -> do
+      let examiningSubject = ET $ fst variables
+      return $ Right $ EAV {examiningSubject, examiningTextPrinted = False})
+  , checkRules = makeActionRulebook "check examining rulebook" [ actionRequiresLight ]
+  , carryOutRules = makeActionRulebook "carry out examining rulebook" [
+        standardExamining
+      , examineDirections
+      , examineContainers
+      , examineSupporters
+      , examineDevices
+      , examineUndescribed
+      ]
+  , reportRules = makeActionRulebook "report examining rulebook" [ reportOtherPeopleExamining ]
+  }
 
 type ExamineRule wm = ActionRule wm (ExaminingAction wm) (ExaminingActionVariables wm)
 

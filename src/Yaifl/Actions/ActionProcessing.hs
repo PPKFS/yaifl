@@ -47,7 +47,11 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
         ( \v -> do
           r <- runRulebookAndReturnVariables (Just aSpan) carryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
-  , notImplementedRule "after stage rule"
+  , Rule "after stage rule"
+      []
+        ( \v -> do
+          r <- runRulebookAndReturnVariables (Just aSpan) afterRules v
+          return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "investigate player awareness after rule"
   , Rule "report stage rule"
       []

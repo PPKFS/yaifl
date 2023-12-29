@@ -1,5 +1,6 @@
 module Yaifl.Rules.Adding
   ( before
+  , after
   , insteadOf
   , theObject
   , whenIn
@@ -35,6 +36,19 @@ before a precs t f = do
   let rule = makeRule t precs f
   case a of
     ActionRule an -> an % #beforeRules %= addRuleLast rule
+  pass
+
+after ::
+  State (ActionCollection wm) :> es
+  => ActionOrActivity wm resps goesWith v
+  -> [Precondition wm (Args wm v)]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
+  -> Eff es ()
+after a precs t f = do
+  let rule = makeRule t precs f
+  case a of
+    ActionRule an -> an % #afterRules %= addRuleLast rule
   pass
 
 insteadOf ::

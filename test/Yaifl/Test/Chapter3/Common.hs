@@ -10,6 +10,7 @@ import Yaifl.Test.Chapter3.SlightlyWrong
 import Yaifl.Test.Chapter3.StarryVoid
 import Yaifl.Test.Chapter3.UpAndUp
 import Yaifl.Test.Chapter3.Verbosity
+import Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
 import qualified Data.Map as M
 
 spec :: Bool -> Map String (IO Text)
@@ -21,4 +22,6 @@ spec allTenses = M.fromList
   , ("Port Royal 2", testHarness allTenses "Port Royal 2" portRoyal2TestMeWith defaultOptions portRoyalWorld2)
   , ("Up and Up", testHarness allTenses "Up and Up" upAndUpTestMeWith defaultOptions upAndUp)
   , ("Starry Void", testHarness allTenses "Starry Void" starryVoidTestMeWith defaultOptions starryVoidWorld)
+  , ("The Unbuttoned Elevator Affair", testHarness allTenses "The Unbuttoned Elevator Affair" theUnbuttonedElevatorAffairTestMeWith
+        defaultOptions theUnbuttonedElevatorAffairWorld)
   ]

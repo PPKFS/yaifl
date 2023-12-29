@@ -19,6 +19,7 @@ module Yaifl.Model.Objects.RoomConnections
   , getAllConnections
   , addDoorToConnection
   , getConnectionViaDoor
+  , isNowMapped
   ) where
 
 import qualified Data.Map as Map
@@ -110,9 +111,18 @@ addDirectionFromOneWay ::
   -> Eff es ()
 addDirectionFromOneWay = isDirectionFromInternal False
 
--- | the ordering here is that r2' `isSouthOf` (for example) r1 means
--- the connection to be made explicitly is from r1 (south) -> r2
--- then the implicit reverse connection is r2 (opposite south) -> r1
+isNowMapped ::
+  WMStdDirections wm
+  => NoMissingObjects wm es
+  => RoomEntity
+  -> WMDirection wm
+  -> RoomEntity
+  -> Eff es ()
+isNowMapped roomTo dir = isDirectionFromInternal False dir roomTo
+
+-- | the ordering here is that roomIsOf' `isSouthOf` (for example) baseRoom means
+-- the connection to be made explicitly is from baseRoom (south) -> roomIsOf
+-- then the implicit reverse connection is roomIsOf (opposite south) -> baseRoom
 isDirectionFromInternal ::
   WMStdDirections wm
   => NoMissingObjects wm es
@@ -121,34 +131,34 @@ isDirectionFromInternal ::
   -> RoomEntity
   -> RoomEntity
   -> Eff es ()
-isDirectionFromInternal mkRev dir r2' r1' = do
+isDirectionFromInternal mkRev dir roomIsOfE baseRoomE = do
     let opp = opposite dir
-    r1 <- refreshRoom r1'
-    r2 <- refreshRoom r2'
+    baseRoom <- getRoom baseRoomE
+    roomIsOf <- getRoom roomIsOfE
     -- we log a warning if we're in construction and we are overriding an explicit connection
     -- apparently inform just doesn't let you do this, so...
-    -- r2 is explicitly dir of r1; it is r1 we need to check
-    -- r2 is implicitly (opposite dir) of r1.
-    -- e.g. if r1 `isWestOf` r2, then r2 has an explicit west connection and r1 has an implicit east connection.
-    whenConstructing (isJust $ connectionInDirection (Just Explicit) r1 dir)
+    -- roomIsOf is explicitly dir of baseRoom; it is baseRoom we need to check
+    -- roomIsOf is implicitly (opposite dir) of baseRoom.
+    -- e.g. if baseRoom `isWestOf` roomIsOf, then roomIsOf has an explicit west connection and baseRoom has an implicit east connection.
+    whenConstructing (isJust $ connectionInDirection (Just Explicit) baseRoom dir)
       -- TODO: this should be a nonblocking failure
-      (addAnnotation $ "Overriding an explicitly set map direction of room " <> "")--show r1)
-    modifyRoom r1 (makeConnection Explicit dir r2)
+      (addAnnotation $ "Overriding an explicitly set map direction of room " <> "")--show baseRoom)
+    modifyRoom baseRoom (makeConnection Explicit dir roomIsOf)
     --only make the reverse if we want to
     when mkRev $ do
       -- something weird is happening if we're overriding an implicit direction with another implicit direction
       -- but I think in general we don't bother setting an implicit one
-      whenConstructing (isJust $ connectionInDirection (Just Implicit) r2 opp)
-        (addAnnotation $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show r1)
+      whenConstructing (isJust $ connectionInDirection (Just Implicit) roomIsOf opp)
+        (addAnnotation $ "Not using an implicit direction to overwrite an implicitly set map direction of room " <> "") --show baseRoom)
       -- and don't bother if there's any connection at all
-      if isJust $ r2 ^? connectionLens opp
+      if isNothing $ roomIsOf ^. connectionLens opp
         then do
-          modifyRoom r2 (makeConnection Implicit opp r1)
-          addAnnotation $ "made implicit connection from " <> display (view #name r2) <> " going " <> show opp <> " to " <> display (view #name r1)
+          modifyRoom roomIsOf (makeConnection Implicit opp baseRoom)
+          addAnnotation $ "made implicit connection from " <> display (view #name roomIsOf) <> " going " <> show opp <> " to " <> display (view #name baseRoom)
         else
-          addAnnotation $ "did not make implicit connection from " <> display (view #name r2) <> " going " <> show opp <> " to " <> display (view #name r1)
+          addAnnotation $ "did not make implicit connection from " <> display (view #name roomIsOf) <> " going " <> show opp <> " to " <> display (view #name baseRoom)
             <> " because it's already made."
-    addAnnotation $ "made connection from " <> display (view #name r1) <> " going " <> show dir <> " to " <> display (view #name r2)
+    addAnnotation $ "made connection from " <> display (view #name baseRoom) <> " going " <> show dir <> " to " <> display (view #name roomIsOf)
 
 makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down"]
 

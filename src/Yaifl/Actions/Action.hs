@@ -17,6 +17,7 @@ module Yaifl.Actions.Action
   , actionName
   , actionsMapL
   , actionOnOneThing
+  , makeAction
   ) where
 
 import Solitude hiding (Reader)
@@ -77,6 +78,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionParameterType) v where
     , checkRules :: ActionRulebook wm (Action wm resps goesWith v) v
     , carryOutRules :: ActionRulebook wm (Action wm resps goesWith v) v
     , reportRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    , afterRules :: ActionRulebook wm (Action wm resps goesWith v) v
     } -> Action wm resps goesWith v
   deriving stock (Generic)
 
@@ -107,6 +109,22 @@ data InterpretAs wm = InterpretAs
   , withArgs :: [NamedActionParameter wm]
   }
 
+makeAction ::
+  Text
+  -> Action wm resp goesWith v
+makeAction n = Action
+  { name = n
+  , understandAs = [n]
+  , matches = []
+  , responses = \_ -> notImplementedResponse "no response"
+  , parseArguments = ParseArguments $ const $ pure $ Left "not parsed"
+  , beforeRules = makeActionRulebook ("before " <> n <> " rulebook") []
+  , insteadRules = makeActionRulebook ("instead " <> n <> " rulebook") []
+  , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook") []
+  , afterRules = makeActionRulebook ("after " <> n <> " rulebook") []
+  , checkRules = makeActionRulebook ("check " <> n <> " rulebook") []
+  , reportRules = makeActionRulebook ("report " <> n <> " rulebook") []
+  }
 -- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
 -- we ignore the span to avoid clutter and thread the arguments through.
 makeActionRulebook ::

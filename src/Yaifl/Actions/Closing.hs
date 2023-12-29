@@ -29,15 +29,10 @@ closingResponses = \case
 
 type ClosingAction wm = Action wm ClosingResponses 'TakesThingParameter (Thing wm)
 closingAction :: WithPrintingNameOfSomething wm => WMWithProperty wm Openability => ClosingAction wm
-closingAction = Action
-  { name = "closing"
-  , understandAs = ["close", "closing"]
-  , matches = []
+closingAction = (makeAction "closing")
+  { understandAs = ["close", "closing"]
   , responses = closingResponses
   , parseArguments = actionOnOneThing
-  , beforeRules = makeActionRulebook "before closing rulebook" []
-  , insteadRules = makeActionRulebook "instead of closing rulebook" []
-  , checkRules = makeActionRulebook "check closing rulebook" []
   , carryOutRules = makeActionRulebook "carry out closing rulebook" [ standardClose ]
   , reportRules = makeActionRulebook "report closing rulebook" [ standardReport ]
   }
