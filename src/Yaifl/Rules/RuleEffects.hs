@@ -3,8 +3,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 
 module Yaifl.Rules.RuleEffects
-  ( sayLn
-  , RuleEffects
+  ( RuleEffects
   , ActionHandler(..)
   , parseAction
   , ActivityCollector(..)
@@ -12,7 +11,6 @@ module Yaifl.Rules.RuleEffects
   , ConcreteRuleStack
   , SayableValue(..)
   , RuleConstraints
-  , sayText
   ) where
 
 import Solitude
@@ -24,9 +22,8 @@ import Effectful.TH ( makeEffect )
 import Effectful.Writer.Static.Local
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Metadata ( Metadata )
-import Yaifl.Text.Print ( Print, printText, printLn )
+import Yaifl.Text.Print ( Print, printText )
 import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMSayable )
-import qualified Data.Text as T
 import Yaifl.Model.Objects.Effects
 import Yaifl.Rules.Args
 
@@ -58,6 +55,18 @@ type RuleConstraints wm =
   , SayableValue (WMSayable wm) wm
   )
 
+class SayableValue s wm where
+  sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()
+  say :: RuleEffects wm es => s -> Eff es ()
+  default say :: RuleEffects wm es => s -> Eff es ()
+  say s = execWriter (sayTell s) >>= printText
+
+instance SayableValue Text wm where
+  sayTell = tell
+
+instance SayableValue String wm where
+  sayTell = tell . toText
+
 type ConcreteRuleStack wm = '[
   ActionHandler wm
   , State (AdaptiveNarrative wm)
@@ -71,32 +80,3 @@ type ConcreteRuleStack wm = '[
   , Breadcrumbs
   , Error MissingObject
   ]
-
-class SayableValue s wm where
-  sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()
-  say :: RuleEffects wm es => s -> Eff es ()
-  default say :: RuleEffects wm es => s -> Eff es ()
-  say s = execWriter (sayTell s) >>= printText
-
-instance SayableValue Text wm where
-  sayTell = tell
-
-instance SayableValue String wm where
-  sayTell = tell . toText
-
-sayText ::
-  SayableValue s wm
-  => RuleEffects wm es
-  => s
-  -> Eff es Text
-sayText = execWriter . sayTell
-
-sayLn ::
-  SayableValue s wm
-  => RuleEffects wm es
-  => s
-  -> Eff es ()
-sayLn s = do
-  t <- sayText s
-  when (display t /= T.empty)
-    (printLn $ display t)

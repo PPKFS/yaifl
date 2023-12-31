@@ -14,24 +14,42 @@ module Yaifl.Text.Say
 
   ) where
 
+import Data.Char (toUpper)
 import Data.Text.Display
+import Effectful.Optics
+import Effectful.Writer.Static.Local (Writer, tell, execWriter)
+import GHC.TypeLits
 import Solitude
 import Yaifl.Activities.Activity
-import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Model.Object
-import Yaifl.Model.Objects.Query
-import Yaifl.Text.Print
-import Yaifl.Rules.Rule
-import Yaifl.Model.WorldModel
-import Data.Char (toUpper)
-import qualified Data.Text as T
-import Yaifl.Rules.RuleEffects
-import GHC.TypeLits
-import Effectful.Optics
-import Effectful.Writer.Static.Local (Writer, tell)
 import Yaifl.Metadata
-import Yaifl.Text.Verb
+import Yaifl.Model.Object
 import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Objects.Query
+import Yaifl.Model.WorldModel
+import Yaifl.Rules.Rule
+import Yaifl.Rules.RuleEffects
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.Print
+import Yaifl.Text.Verb
+import qualified Data.Text as T
+import Yaifl.Text.SayQQ
+
+sayText ::
+  SayableValue s wm
+  => RuleEffects wm es
+  => s
+  -> Eff es Text
+sayText = execWriter . sayTell
+
+sayLn ::
+  SayableValue s wm
+  => RuleEffects wm es
+  => s
+  -> Eff es ()
+sayLn s = do
+  t <- sayText s
+  when (display t /= T.empty)
+    (printLn $ display t)
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -207,15 +225,16 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
         A_ a -> (a, False, False)
 
 type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm () (AnyObject wm) Text)
+
 -- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
   NoMissingObjects wm es
-  => Print :> es
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
+  => Print :> es
   => State (ActivityCollector wm) :> es
-  => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
+  => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => ObjectLike wm o
   => o
@@ -223,7 +242,8 @@ printName ::
 printName o = do
   e <- getObject o
   t <- doActivity #printingNameOfSomething e
-  printText (fromMaybe "" t)
+  let toSay = fromMaybe "" t
+  [saying|{toSay}|]
 
 printingNameOfSomethingImpl :: Activity s () (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"

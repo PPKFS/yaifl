@@ -29,14 +29,21 @@ import Effectful.Optics (use, (.=))
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
+data MessageContext = MessageContext
+  { messageFromRule :: Text
+  ,  :: Bool
+  , shouldLinebreak :: Bool
+  } deriving stock (Show, Ord, Generic, Eq)
+
 data Print :: Effect where
-  PrintDoc :: StyledDoc -> Print m ()
+  PrintDoc :: MessageContext -> StyledDoc -> Print m ()
   SetStyle :: Maybe PPTTY.AnsiStyle -> Print m ()
 
 makeEffect ''Print
 
 data MessageBuffer = MessageBuffer
   { buffer :: [StyledDoc] -- ^ Current messages held before flushing.
+  , lastMessageContext :: MessageContext -- ^ some metadata about the last printed message, to deal with pbreaks and lines
   , style :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
   , context :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
   } deriving stock (Show, Generic)
@@ -44,7 +51,7 @@ data MessageBuffer = MessageBuffer
 makeFieldLabelsNoPrefix ''MessageBuffer
 
 blankMessageBuffer :: MessageBuffer
-blankMessageBuffer = MessageBuffer [] Nothing []
+blankMessageBuffer = MessageBuffer [] (MessageContext "" False False) Nothing []
 
 processDoc ::
   forall s es.
@@ -52,7 +59,7 @@ processDoc ::
   => StyledDoc
   -> Eff es StyledDoc
 processDoc msg = do
-  (MessageBuffer _ style cxt) <- use @s buf
+  (MessageBuffer _ _ style cxt) <- use @s buf
   -- if we have no context, we just monoid it.
   let joinOp = case cxt of
         [] -> (<>)
@@ -73,7 +80,8 @@ runPrintPure ::
   => Eff (Print : es) a
   -> Eff es a
 runPrintPure = interpret $ \_ -> \case
-  PrintDoc doc -> do
+  PrintDoc metadata doc -> do
+    buf % #lastMessageContext .= metadata
     r <- processDoc doc
     modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc])) %~ (r:))
   SetStyle mbStyle -> setStyle' mbStyle
@@ -85,8 +93,9 @@ runPrintIO ::
   => Eff (Print : es) a
   -> Eff es a
 runPrintIO = interpret $ \_ -> \case
-  PrintDoc doc -> do
+  PrintDoc metadata doc -> do
     r <- processDoc doc
+    buf % #lastMessageContext .= metadata
     print r
   SetStyle mbStyle -> setStyle' mbStyle
 
@@ -95,7 +104,23 @@ printText ::
   Print :> es
   => Text -- ^ Message.
   -> Eff es ()
-printText = printDoc . PP.pretty
+printText t = do
+  checkForLinebreaking t
+  printDoc . PP.pretty $ t
+
+-- we need to add a pbreak if:
+-- one was explicitly called for
+-- we have finished the rule which the last printed text was from
+-- which means every piece of text should track also where it came from
+-- and also what that means for the following formatting
+-- |
+checkForLinebreaking :: Text -> Eff es ()
+checkForLinebreaking t = do
+  lsc <- use (buf % #lastMessageContext)
+
+  --
+  -- if we have a pending line or paragraph break then push it
+  --
 
 -- | Print @message@ with a newline.
 printLn ::

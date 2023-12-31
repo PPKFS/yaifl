@@ -8,8 +8,8 @@ import Solitude
 import Yaifl.Activities.Activity
 import Yaifl.Rules.Rule
 import Yaifl.Text.ListWriter
-import Yaifl.Text.Print
 import Effectful.Writer.Static.Local (execWriter)
+import Yaifl.Text.Say
 
 type WithListingContents wm = (
   WithListWriting wm
@@ -27,5 +27,5 @@ listingContentsImpl = makeActivity "Listing contents of something" [makeRule "st
           -- to avoid the infinite loop, this doesn't start the activity again
           , asListingActivity = False
           }
-    execWriter (writeListOfThings objectsWithContents) >>= printText
+    execWriter (writeListOfThings objectsWithContents) >>= say
     pure Nothing )]

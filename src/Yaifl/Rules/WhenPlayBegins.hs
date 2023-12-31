@@ -13,7 +13,7 @@ import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Metadata ( Metadata )
 import Yaifl.Model.Objects.Move ( move )
 import Yaifl.Model.Objects.Query ( getCurrentPlayer )
-import Yaifl.Text.Print ( Print, printText, setStyle )
+import Yaifl.Text.Print ( Print, setStyle, printText )
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMWithProperty )
 import Yaifl.Rules.Rule

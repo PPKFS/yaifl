@@ -26,6 +26,7 @@ import Yaifl.Model.Objects.Effects
 import Data.Char (isSpace)
 import qualified Data.Set as S
 import Yaifl.Model.Object
+import Yaifl.Text.Say
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
