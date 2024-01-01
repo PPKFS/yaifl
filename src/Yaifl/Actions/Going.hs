@@ -35,6 +35,7 @@ import Yaifl.Model.WorldModel (WMDirection)
 import Yaifl.Model.Objects.Tag
 import Yaifl.Model.Objects.ObjectLike
 import Yaifl.Model.Properties.Openable
+import Yaifl.Text.Print (runOnLookingParagraph)
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -90,7 +91,7 @@ describeRoomGoneInto :: GoingRule wm
 describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
   (unless (silently . actionOptions $ a) (void $ do
-    sayLn @Text ""
+    runOnLookingParagraph
     parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look") >> rulePass)
   (error "other actors cant report going yet")
 
@@ -177,8 +178,8 @@ cantGoThatWay source mbDoorThrough fromRoom = do
       Nothing -> do
         rn <- sayText (fromRoom ^. #name)
         [saying|#{We} #{can't go} that way.|]
-        sayLn $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
-      Just door -> [sayingLn|#{We} #{can't}, since {the door} #{lead} nowhere.|]
+        say $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
+      Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
   pure $ Left "Can't go that way"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))

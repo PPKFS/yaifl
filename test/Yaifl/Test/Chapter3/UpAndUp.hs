@@ -23,7 +23,7 @@ cities or civilizations, only the lizard-skeletons.|]
   pots `isBelow` et
 
   before (ActionRule #going) [toTheRoom et] "before climbing rule" $ \_ -> do
-    [sayingParagraph|You climb... and climb... and climb... The sun sets. The moon rises. The wind begins to blow. You continue to climb...|]
+    [saying|You climb... and climb... and climb... The sun sets. The moon rises. The wind begins to blow. You continue to climb...|]
     rulePass
 
 upAndUpTestMeWith :: [Text]

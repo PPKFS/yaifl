@@ -40,17 +40,17 @@ starryVoidWorld = do
   insteadOf (ActionRule #examining) [theObject tmb, whenIn tcr] $ \_ -> do
     booth <- getObject tmb
     let cl = isOpen booth
-    [sayingParagraph|It is dark blue and glittering with gold stars. {?if cl}The door currently stands open{?else}It has been firmly shut{?end if}.|]
+    [saying|It is dark blue and glittering with gold stars. {?if cl}The door currently stands open{?else}It has been firmly shut{?end if}.|]
 
   insteadOf (ActionRule #examining) [theObject tmb, whenIn tsv] $ \_ -> do
     booth <- getObject tmb
     let cl = isOpen booth
-    [sayingParagraph|The booth door is {?if cl}wide open{?else}shut, admitting only a thin crack of light{?end if}.|]
+    [saying|The booth door is {?if cl}wide open{?else}shut, admitting only a thin crack of light{?end if}.|]
 
   tmb `isUnderstoodAs` ["door", "of", "the", "light", "crack", "thin crack"]
 
   before (ActionRule #going) [throughTheClosedDoor tmb] "" $ \_ -> do
-    [sayingLn|(first opening the door of the booth)|]
+    [saying|(first opening the door of the booth)|]
     Nothing <$ parseAction silentAction [] "open door"
   pass
 

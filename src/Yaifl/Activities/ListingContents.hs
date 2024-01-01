@@ -10,6 +10,7 @@ import Yaifl.Rules.Rule
 import Yaifl.Text.ListWriter
 import Effectful.Writer.Static.Local (execWriter)
 import Yaifl.Text.Say
+import Yaifl.Text.Print
 
 type WithListingContents wm = (
   WithListWriting wm
@@ -27,5 +28,5 @@ listingContentsImpl = makeActivity "Listing contents of something" [makeRule "st
           -- to avoid the infinite loop, this doesn't start the activity again
           , asListingActivity = False
           }
-    execWriter (writeListOfThings objectsWithContents) >>= say
+    execWriter (writeListOfThings objectsWithContents) >>= say >> runOnParagraph
     pure Nothing )]

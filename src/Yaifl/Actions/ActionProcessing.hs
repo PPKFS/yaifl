@@ -18,7 +18,7 @@ import Effectful.Reader.Static
 
 actionProcessingRules :: forall wm. ActionProcessing wm
 actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm resp goesWith v) u ->
-  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) (Just aSpan) (Rulebook @wm
+  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) (Just aSpan) False (Rulebook @wm
   "action processing"
   (Just True)
   -- I have no idea how this works
@@ -29,14 +29,14 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   [ Rule "before stage rule"
       []
         ( \v -> do
-          r <- runRulebookAndReturnVariables (Just aSpan) beforeRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) False beforeRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
   ,  Rule "instead stage rule"
       []
         ( \v -> do
-          r <- runRulebookAndReturnVariables (Just aSpan) insteadRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) False insteadRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "requested actions require persuasion rule"
   , notImplementedRule "carry out requested actions rule"
@@ -45,18 +45,18 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   , Rule "carry out stage rule"
       []
         ( \v -> do
-          r <- runRulebookAndReturnVariables (Just aSpan) carryOutRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) False carryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , Rule "after stage rule"
       []
         ( \v -> do
-          r <- runRulebookAndReturnVariables (Just aSpan) afterRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) False afterRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "investigate player awareness after rule"
   , Rule "report stage rule"
       []
         ( \v -> do
-          r <- runRulebookAndReturnVariables (Just aSpan) reportRules v
+          r <- runRulebookAndReturnVariables (Just aSpan) False reportRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"
   ]) u)

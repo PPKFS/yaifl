@@ -13,7 +13,7 @@ import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Metadata ( Metadata, noteError, getGlobalTime )
 import Yaifl.Model.Objects.Query
-import Yaifl.Text.Print ( Print, printLn )
+import Yaifl.Text.Print
 import Yaifl.Rules.Args
 import Yaifl.Model.WorldModel ( WMDirection, WMSayable )
 import qualified Data.Map as Map
@@ -27,6 +27,7 @@ import Data.Char (isSpace)
 import qualified Data.Set as S
 import Yaifl.Model.Object
 import Yaifl.Text.Say
+import Yaifl.Text.SayQQ
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -68,7 +69,17 @@ runActionHandlerAsWorldActions ::
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ do
     -- print the prompt
-    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ "\n>" <> t
+    leftoverLookingSpace <- lastPrint . lastMessageContext <$> modifyBuffer id
+    --printLn $ show leftoverLookingSpace
+    modifyBuffer (\b -> case ("\n\n" `T.isSuffixOf` leftoverLookingSpace, "\n" `T.isSuffixOf` leftoverLookingSpace) of
+      (True, _) -> b
+      (False, True) -> b & #lastMessageContext % #shouldPrintLinebreak .~ True
+      (False, False) -> b & #lastMessageContext % #shouldPrintPbreak .~ True
+      )
+    --printLn $ "aaaa" <>leftoverLookingSpace
+    modifyBuffer (\b -> b & #lastMessageContext % #runningOnLookingParagraph .~ False)
+    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ ">" <> t
+    modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of
@@ -88,7 +99,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
 
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
-      runActionHandlerAsWorldActions $ failHorriblyIfMissing $ sayLn t')
+      runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
 
 findVerb ::

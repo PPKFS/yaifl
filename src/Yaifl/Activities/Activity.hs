@@ -88,7 +88,7 @@ beginActivity acL c = do
       (do
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
         -- run the before rules only.
-        r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
+        r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) True (beforeRules ac) c
         whenJust r $ \r' -> modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ fst r')
         pure $ maybe c fst r)
 
@@ -117,7 +117,7 @@ whenHandling acL f = do
     case currentVariables ac of
       Nothing -> pure (Right Nothing)
       Just c -> do
-        r <- failHorriblyIfMissing $ runReader ac $ runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) c
+        r <- failHorriblyIfMissing $ runReader ac $ runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) c
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
         let runBlock = do
               a <- f c
@@ -147,7 +147,7 @@ endActivity acF = do
         case currentVariables ac of
           Nothing -> pure Nothing
           Just c -> do
-            r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) (afterRules ac) c
+            r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) True (afterRules ac) c
             modify @(ActivityCollector wm) (#activityCollection % acF % #currentVariables .~ Nothing)
             pure $ maybe (Just c) (Just . fst) r)
 
@@ -162,8 +162,8 @@ doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac $ failHorriblyIfMissing (do
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
-    x <- runRulebookAndReturnVariables (Just aSpan) (beforeRules ac) c
-    mr <- runRulebookAndReturnVariables (Just aSpan) (carryOutRules ac) (maybe c fst x)
-    _ <- runRulebookAndReturnVariables (Just aSpan) (afterRules ac) (maybe c fst mr)
+    x <- runRulebookAndReturnVariables (Just aSpan) True (beforeRules ac) c
+    mr <- runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) (maybe c fst x)
+    _ <- runRulebookAndReturnVariables (Just aSpan) True (afterRules ac) (maybe c fst mr)
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
     return $ snd =<< mr)

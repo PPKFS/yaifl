@@ -14,6 +14,7 @@ import Solitude
 import Data.Text.Display
 import Yaifl.Model.WorldModel
 import Named
+import Yaifl.Text.SayQQ
 
 isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
 isBlankDescription d = T.empty == display (d ^. #description)
@@ -29,7 +30,7 @@ ex2World = do
     do
       traverseThings (\t -> do
         when (isBlankDescription t) (do
-          say t
-          printLn " has no description.")
+          [saying|{t} has no description.|]
+          )
         return Nothing)
       return Nothing

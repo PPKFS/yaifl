@@ -59,7 +59,9 @@ class SayableValue s wm where
   sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()
   say :: RuleEffects wm es => s -> Eff es ()
   default say :: RuleEffects wm es => s -> Eff es ()
-  say s = execWriter (sayTell s) >>= printText
+  say s = do
+    r <- execWriter (sayTell s)
+    when (r /= "") $ printText r
 
 instance SayableValue Text wm where
   sayTell = tell

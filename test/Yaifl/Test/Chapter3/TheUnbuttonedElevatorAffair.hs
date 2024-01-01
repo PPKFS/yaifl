@@ -25,8 +25,8 @@ the Removal of Undesirables and the Subjugation of Humanity. Being against techn
   tse `isEastOf` uh
   tse `isEastOf` dfts
 
-  after (ActionRule #going) [toTheRoom tse] "" $ const $ do
-    [sayingLn|The doors automatically close, there is a rush of motion, and they open again.|]
+  after (ActionRule #going) [toTheRoom tse] "ag1" $ const $ do
+    [saying|The doors automatically close, there is a rush of motion, and they open again.|]
     tseR <- getRoom tse
     --   if UNCLE Headquarters is mapped west of the Secret Elevator
     if getMapConnection West tseR == Just uh

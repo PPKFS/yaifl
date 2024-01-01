@@ -8,7 +8,6 @@ module Yaifl.Text.Say
   , SayLiteral(..)
   , SayableValue(..)
   , sayText
-  , sayLn
   , WithPrintingNameOfSomething
   , printingNameOfSomethingImpl
 
@@ -40,16 +39,6 @@ sayText ::
   => s
   -> Eff es Text
 sayText = execWriter . sayTell
-
-sayLn ::
-  SayableValue s wm
-  => RuleEffects wm es
-  => s
-  -> Eff es ()
-sayLn s = do
-  t <- sayText s
-  when (display t /= T.empty)
-    (printLn $ display t)
 
 instance SayableValue a wm => SayableValue (Maybe a) wm where
   sayTell s = fromMaybe () <$> traverse sayTell s
@@ -147,6 +136,11 @@ instance SayableValue (SayLiteral "we") wm where
       SecondPersonPlural -> "you"
       ThirdPersonPlural -> "they"
 
+instance SayableValue (SayLiteral "linebreak") wm where
+  sayTell _ = sayTell ("\n" :: Text)
+  say _ = do
+    void $ modifyBuffer (#lastMessageContext % #shouldPrintLinebreak .~ True)
+
 instance SayableValue (SayLiteral "it") wm where
   sayTell (SayLiteral cap) = do
     regardingNothing
@@ -180,7 +174,9 @@ instance SayableValue (SayLiteral "close") wm where
   sayTell = sayVerb @"close"
 
 instance SayableValue (SayLiteral "paragraphBreak") wm where
-  sayTell _ = tell "\n\n"
+  sayTell _ = sayTell ("dddddd\n\n" :: Text)
+  say _ = do
+    void $ modifyBuffer (#lastMessageContext % #shouldPrintPbreak .~ True)
 
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"

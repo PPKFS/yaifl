@@ -4,8 +4,6 @@
 module Yaifl.Text.SayQQ
   ( saying
   , sayingTell
-  , sayingLn
-  , sayingParagraph
   ) where
 
 import Solitude

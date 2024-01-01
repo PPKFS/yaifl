@@ -8,7 +8,7 @@ import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Model.Object
 import Yaifl.Model.WorldModel
-import Yaifl.Text.Say (SayableValue(..), sayText)
+import Yaifl.Text.Say (SayableValue(..), sayText, SayLiteral (..))
 import Yaifl.Text.SayQQ
 
 data ExaminingResponses =
@@ -82,7 +82,7 @@ standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
     -- now examine text printed is true.
     if desc /= "" then
       do
-        [sayingLn|{desc}|]
+        [saying|{desc}#{linebreak}]|]
         pure $ Just True
       else pure Nothing
   pure (Nothing, Nothing)

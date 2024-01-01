@@ -42,7 +42,6 @@ import Breadcrumbs
 
 import Data.List.NonEmpty as NE (cons)
 import Data.Text.Display
-import Effectful.Error.Static ( runError, Error )
 import Effectful.Optics ( use )
 
 import Yaifl.Metadata

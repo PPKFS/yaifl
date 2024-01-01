@@ -4,6 +4,7 @@
 module Yaifl.Text.Print
   ( -- * Types
     MessageBuffer (..)
+  , MessageContext(..)
   , Print(..)
   , Has(..)
   , PartialState
@@ -11,6 +12,9 @@ module Yaifl.Text.Print
   , blankMessageBuffer
   -- * Buffer modification
   , setStyle
+  , modifyBuffer
+  , runOnParagraph
+  , runOnLookingParagraph
   , printText
   , printLn
   , printIf
@@ -26,32 +30,38 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Optics (use, (.=))
+import qualified Data.Text as T
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle
 
 data MessageContext = MessageContext
   { messageFromRule :: Text
-  ,  :: Bool
-  , shouldLinebreak :: Bool
+  , runningOnParagraph :: Bool
+  , shouldPrintLinebreak :: Bool
+  , runningOnLookingParagraph :: Bool
+  , shouldPrintPbreak :: Bool
+  , lastPrint :: Text
   } deriving stock (Show, Ord, Generic, Eq)
 
 data Print :: Effect where
-  PrintDoc :: MessageContext -> StyledDoc -> Print m ()
+  ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m MessageBuffer
+  PrintDoc :: Maybe MessageContext -> StyledDoc -> Print m ()
   SetStyle :: Maybe PPTTY.AnsiStyle -> Print m ()
-
-makeEffect ''Print
 
 data MessageBuffer = MessageBuffer
   { buffer :: [StyledDoc] -- ^ Current messages held before flushing.
   , lastMessageContext :: MessageContext -- ^ some metadata about the last printed message, to deal with pbreaks and lines
   , style :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
   , context :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
+  , ruleContext :: Text -- ^ the currently executing rule
   } deriving stock (Show, Generic)
 
+makeEffect ''Print
 makeFieldLabelsNoPrefix ''MessageBuffer
+makeFieldLabelsNoPrefix ''MessageContext
 
 blankMessageBuffer :: MessageBuffer
-blankMessageBuffer = MessageBuffer [] (MessageContext "" False False) Nothing []
+blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False False "") Nothing [] ""
 
 processDoc ::
   forall s es.
@@ -59,7 +69,7 @@ processDoc ::
   => StyledDoc
   -> Eff es StyledDoc
 processDoc msg = do
-  (MessageBuffer _ _ style cxt) <- use @s buf
+  (MessageBuffer _ _ style cxt _) <- use @s buf
   -- if we have no context, we just monoid it.
   let joinOp = case cxt of
         [] -> (<>)
@@ -80,11 +90,14 @@ runPrintPure ::
   => Eff (Print : es) a
   -> Eff es a
 runPrintPure = interpret $ \_ -> \case
-  PrintDoc metadata doc -> do
-    buf % #lastMessageContext .= metadata
+  PrintDoc mbMetadata doc -> do
     r <- processDoc doc
     modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc])) %~ (r:))
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata)
   SetStyle mbStyle -> setStyle' mbStyle
+  ModifyBuffer f -> do
+    modify (\s -> s & buf %~ f)
+    use buf
 
 runPrintIO ::
   forall s es a.
@@ -93,11 +106,19 @@ runPrintIO ::
   => Eff (Print : es) a
   -> Eff es a
 runPrintIO = interpret $ \_ -> \case
-  PrintDoc metadata doc -> do
+  PrintDoc mbMetadata doc -> do
     r <- processDoc doc
-    buf % #lastMessageContext .= metadata
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & (buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata))
     print r
   SetStyle mbStyle -> setStyle' mbStyle
+  ModifyBuffer f -> do
+    modify (\s -> s & buf %~ f)
+    use buf
+
+getLastMessageContext ::
+  Print :> es
+  => Eff es MessageContext
+getLastMessageContext = view #lastMessageContext <$> modifyBuffer id
 
 -- | Print a string (well, Text).
 printText ::
@@ -105,22 +126,56 @@ printText ::
   => Text -- ^ Message.
   -> Eff es ()
 printText t = do
-  checkForLinebreaking t
-  printDoc . PP.pretty $ t
+  rc <- view #ruleContext <$> modifyBuffer id
+  (shouldBreak, newlyModifiedToPrint) <- checkForLinebreaking rc t
+  when (newlyModifiedToPrint /= "") $ printDoc (Just (MessageContext rc False shouldBreak False False newlyModifiedToPrint)) . PP.pretty $ newlyModifiedToPrint
 
+runOnParagraph ::
+  Print :> es
+  => Eff es ()
+runOnParagraph = void $ modifyBuffer (\m -> m & #lastMessageContext % #runningOnParagraph .~ True)
+
+runOnLookingParagraph ::
+  Print :> es
+  => Eff es ()
+runOnLookingParagraph = void $ modifyBuffer (\m -> m & #lastMessageContext % #runningOnLookingParagraph .~ True)
+
+-- we want to add the possible whitespace /before/ the next thing we print, rather than
+-- at the /end/ of the thing that caused it.
 -- we need to add a pbreak if:
--- one was explicitly called for
--- we have finished the rule which the last printed text was from
--- which means every piece of text should track also where it came from
--- and also what that means for the following formatting
+-- we have finished the rule which the last printed text was from.
 -- |
-checkForLinebreaking :: Text -> Eff es ()
-checkForLinebreaking t = do
-  lsc <- use (buf % #lastMessageContext)
-
-  --
-  -- if we have a pending line or paragraph break then push it
-  --
+checkForLinebreaking ::
+  Print :> es
+  => Text
+  -> Text
+  -> Eff es (Bool, Text)
+checkForLinebreaking _rule "" = pure (False, "") -- this is nothing, so we just ignore it
+checkForLinebreaking rule t = do
+  lsc <- getLastMessageContext
+  let hangingSpace = T.length $ T.takeWhileEnd (=='\n') (lastPrint lsc)
+  --printDoc Nothing . PP.pretty $ show @Text $ (lastPrint lsc, shouldPrintPbreak lsc, messageFromRule lsc, rule, runningOnParagraph lsc, lastPrint lsc)
+  -- if we are in a different rule, then we need to write a paragraph break
+  newPrepend <- if shouldPrintPbreak lsc -- we need to force a break anyway
+    || (messageFromRule lsc /= "¬¬¬" -- this isn't the first message
+    && messageFromRule lsc /= rule -- different rule
+    && not (runningOnParagraph lsc)
+    && not (runningOnLookingParagraph lsc))
+    then do
+        --printDoc Nothing . PP.pretty $ ("pbreak" :: Text)
+        --printDoc Nothing . PP.pretty $ ("\n\n" :: Text)
+        --void $ modifyBuffer (\m -> m & #lastMessageContext % #lastPrint .~ "\n\n" & #lastMessageContext % #shouldPrintPbreak .~ False)
+        pure "\n\n"
+    else
+      if runningOnLookingParagraph lsc || shouldPrintLinebreak lsc then pure "\n"
+      else pure ""
+  -- we want there to be max two spaces between what we just printed, what we are appending, and what is coming up
+  let newStr1 = newPrepend <> t
+      upcomingSpace = T.length $ T.takeWhile (=='\n') newStr1
+  -- if hanging space + upcoming space is N, and N is greater than 2, we want to drop (N - 2) newlines from the start?
+      newStr = T.dropWhileEnd (=='\n') $ T.drop (max 0 (min upcomingSpace (hangingSpace + upcomingSpace - 2))) newStr1
+  -- then we want to check if we should be putting a linebreak after this message
+  pure (T.empty /= t && T.last t `elem` ['.', '!', '?', ':'], newStr)
 
 -- | Print @message@ with a newline.
 printLn ::

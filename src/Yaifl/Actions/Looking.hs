@@ -30,7 +30,7 @@ import Yaifl.Rules.Args
 import Yaifl.Rules.Rule
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print ( Print, setStyle, printLn )
+import Yaifl.Text.Print ( Print, setStyle, printLn, runOnLookingParagraph )
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
@@ -119,9 +119,9 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
       -- repeat with intermediate level count running from 2 to the visibility level count:
       mapM_ (foreachVisibilityHolder a) (drop 1 lvls)
       -- say line break;
-      printLn "\n"
+      [saying|#{linebreak}|]
+      runOnLookingParagraph
       setStyle Nothing
-      --TODO: "run paragraph on with special look spacing"?
       return Nothing)
 
 foreachVisibilityHolder ::
@@ -189,7 +189,7 @@ roomDescriptionBody = makeRule "room description body rule" forPlayer'
               -- print the location's description;
 
               -- print the location's description;
-              sayLn $ loc ^. #description
+              say $ loc ^. #description
       return Nothing)
 
   -- because I've ignored all the junk about marked for listing or w/e, and we can do nice clean loops

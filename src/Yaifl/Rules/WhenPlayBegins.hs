@@ -56,7 +56,7 @@ introText ::
 introText w = fold
   [ longBorder <> "\n"
   , shortBorder <> " " <> w <> " " <> shortBorder <> "\n"
-  , longBorder <> "\n\n"
+  , longBorder
   ]
   where
     shortBorder = "-----"
