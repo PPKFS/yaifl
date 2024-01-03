@@ -6,22 +6,27 @@ import Solitude
 import Yaifl.Test.Chapter3.Bic
 import Yaifl.Test.Chapter3.PortRoyal
 import Yaifl.Test.Chapter3.PortRoyal2
+import Yaifl.Test.Chapter3.PortRoyal3
 import Yaifl.Test.Chapter3.SlightlyWrong
 import Yaifl.Test.Chapter3.StarryVoid
 import Yaifl.Test.Chapter3.UpAndUp
 import Yaifl.Test.Chapter3.Verbosity
 import Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
 import qualified Data.Map as M
+import Yaifl (PlainWorldModel, Game)
+
+c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
+c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
 
 spec :: Bool -> Map String (IO Text)
-spec allTenses = M.fromList
-  [ ("Bic", testHarness allTenses "Bic" [] defaultOptions ex2World)
-  , ("Verbosity", testHarness allTenses "Verbosity" ex3TestMeWith defaultOptions ex3World)
-  , ("Slightly Wrong", testHarness allTenses "Slightly Wrong" ex4TestMeWith defaultOptions ex4World)
-  , ("Port Royal", testHarness allTenses "Port Royal" portRoyalTestMeWith defaultOptions portRoyalWorld)
-  , ("Port Royal 2", testHarness allTenses "Port Royal 2" portRoyal2TestMeWith defaultOptions portRoyalWorld2)
-  , ("Up and Up", testHarness allTenses "Up and Up" upAndUpTestMeWith defaultOptions upAndUp)
-  , ("Starry Void", testHarness allTenses "Starry Void" starryVoidTestMeWith defaultOptions starryVoidWorld)
-  , ("The Unbuttoned Elevator Affair", testHarness allTenses "The Unbuttoned Elevator Affair" theUnbuttonedElevatorAffairTestMeWith
-        defaultOptions theUnbuttonedElevatorAffairWorld)
+spec _allTenses = M.fromList
+  [ c3Harness ex2 -- bic
+  , c3Harness ex3 -- verbosity
+  , c3Harness ex4 -- slightly wrong
+  , c3Harness ex5 -- Port Royal
+  , c3Harness ex6 -- up and up
+  , c3Harness ex7 -- starry void
+  , c3Harness ex8 -- Port Royal 2
+  , c3Harness ex9 -- unbuttoned elevator affair
+  , c3Harness ex10 -- Port Royal 3
   ]

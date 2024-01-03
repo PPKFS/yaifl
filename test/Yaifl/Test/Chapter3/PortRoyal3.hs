@@ -1,4 +1,4 @@
-module Yaifl.Test.Chapter3.PortRoyal where
+module Yaifl.Test.Chapter3.PortRoyal3 where
 
 import Yaifl
 import Yaifl.Metadata
@@ -7,22 +7,30 @@ import Solitude
 import Yaifl.Test.Common
 import Yaifl.Model.Objects.RoomConnections
 
-ex5 :: (Text, [Text], Game PlainWorldModel ())
-ex5 = ("Port Royal", portRoyalTestMeWith, portRoyalWorld)
+ex10 :: (Text, [Text], Game PlainWorldModel ())
+ex10 = ("Port Royal 3", portRoyal3TestMeWith, portRoyal3World)
 
 -- a combination of port royale:
 -- part 1 https://ganelson.github.io/inform-website/book/WI_3_2.html
-portRoyalWorld :: Game PlainWorldModel ()
-portRoyalWorld = do
+portRoyal3World :: Game PlainWorldModel ()
+portRoyal3World = do
   setTitle "1691"
   fj <- addRoom "Fort James" [wrappedText|The enclosure of Fort James is a large, roughly hexagonal court walled with heavy stone.
 The walls face the entrance to Port Royal Harbour, and the battery of guns is prepared to destroy any enemy ship arriving.|]
 
-  ts <- addRoom "Thames Street End" [wrappedText|The ill-named Thames Street runs from here -- at the point of the peninsula --
-all the way east among houses and shops, through the Fish Market, edging by the round front of Fort Carlisle, to the point
-where the town stops and there is only sandy spit beyond. Lime Street, wider and healthier but not as rich,
-runs directly south, and to the north the road opens up into the courtyard of Fort James.|]
+  ts <- addRoom "Thames Street End" [wrappedText|The ill-named Thames Street runs from here -- at the point of the peninsula -- all the way east among houses and shops,
+through the Fish Market, edging by the round front of Fort Carlisle, to the point where the town stops and there is only sandy spit beyond. Most of that stretch is
+full of people at all hours. Imported goods are moved off of ships and taken to distributors; exported goods are brought to be loaded; and there is one public house and brothel for every ten inhabitants.
+
+Lime Street, wider and healthier but not as rich, runs directly south, and to the north the road opens up into the courtyard of Fort James.|]
   ts `isSouthOf` fj
+
+  ls <- addRoom "Lime Street" ""
+
+  ts `isBelow` fj
+  ts `isNowhere` Up
+  fr `isWestOfOneWay` ts
+  ts `isNorthOfOneWay` fr
 
   wl <- addRoom "Water Lane" [wrappedText|Here Thames Street -- never very straight -- goes steeply southeast for a portion
 before continuing more directly to the east.
@@ -35,6 +43,9 @@ Port Royal from its earliest days, it is nearly the largest building in the town
   tsawb <- addRoom "Thames Street at Wherry Bridge" "To the southwest is the fishmarket; directly across the street is the entrance to a private alley through a brick archway."
   tsawb `isEastOf` wl
 
+  tfm <- addRoom "The Fishmarket" ""
+  tfm `isSouthWestOf` tsawb
+
   tpa <- addRoom "The Private Alley" [wrappedText|You're just outside the tavern the Feathers. To the north, under a
 pretty little archway, is the active mayhem of Thames Street, but the alley narrows down to a dead end a
 little distance to the south.|]
@@ -44,6 +55,13 @@ little distance to the south.|]
 It sells wines in quantity, as well as serving them directly, and the goods are always of the best quality.
 There's a room upstairs for those wanting to stay the night.|]
   tf `isInsideFrom` tpa
+
+  tsbtkh <- "Thames Street by the King's House" [wrappedText|The King's House is reserved for the use of the Governor, but he does not live in it,
+and it is frequently being rented out to some merchant so that the government will at least derive some value from it. It is nearly the least interesting
+establishment on Thames Street, and the crowd -- which, to the west, is extremely dense -- here thins out a bit.|]
+  tsbtkh `isEastOf` tsawb
+
+  tsbfc <- addRoi
 
   tfb <- addRoom "The Feathers Bedroom" ""
   tfb `isAbove` tf
@@ -59,5 +77,5 @@ There's a room upstairs for those wanting to stay the night.|]
 
   pass
 
-portRoyalTestMeWith :: [Text]
-portRoyalTestMeWith = ["s", "e", "e", "s", "in"]
+portRoyal3TestMeWith :: [Text]
+portRoyal3TestMeWith = []

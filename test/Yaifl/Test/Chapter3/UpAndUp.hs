@@ -12,6 +12,9 @@ import Yaifl.Rules.Adding
 import Yaifl.Actions.Going
 import Yaifl.Rules.Rule
 
+ex6 :: (Text, [Text], Game PlainWorldModel ())
+ex6 = ("Up and Up", upAndUpTestMeWith, upAndUp)
+
 upAndUp :: Game PlainWorldModel ()
 upAndUp = do
   setTitle "Up and Up"

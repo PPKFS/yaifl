@@ -16,6 +16,9 @@ import Yaifl.Model.WorldModel
 import Named
 import Yaifl.Text.SayQQ
 
+ex2 :: (Text, [a], Game PlainWorldModel ())
+ex2 = ("Bic", [], ex2World)
+
 isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
 isBlankDescription d = T.empty == display (d ^. #description)
 

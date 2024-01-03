@@ -19,16 +19,24 @@ source-repository head
 
 common common-options
   build-depends:
-    , base
-    , breadcrumbs
-    , containers
-    , effectful-core
-    , effectful-plugin
-    , named
-    , solitude
-    , template-haskell
-    , text
-    , text-display
+    base >= 4.17.2 && < 5,
+    containers >= 0.6.7 && < 1.7,
+    template-haskell >= 2.19.0 && < 3.20,
+    effectful-core >= 2.3.0 && < 3.4,
+    effectful-plugin >= 1.1.0 && < 2.2,
+    effectful-th >= 1.0.0 && < 2.1,
+    enummapset >= 0.7.2 && < 1.8,
+    text >= 2.0.2 && < 3.1,
+    haskell-src-exts >= 1.23.1 && < 2.0,
+    haskell-src-meta >= 0.8.13 && < 2.0,
+    megaparsec >= 9.6.1 && < 10.0,
+    named >= 0.3.0 && < 1.0,
+    prettyprinter >= 1.7.1 && < 3.0,
+    prettyprinter-ansi-terminal >= 1.1.3 && < 2.0,
+    split >= 0.2.4 && < 2.0,
+    text-display >= 0.0.5 && < 1.0,
+    breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
+    solitude >= 0.0.0.0 && <= 10.0.0.0
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
@@ -171,6 +179,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.PortRoyal
     Yaifl.Test.Chapter3.PortRoyal2
+    Yaifl.Test.Chapter3.PortRoyal3
     Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.StarryVoid
     Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair

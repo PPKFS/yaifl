@@ -8,6 +8,9 @@ import Yaifl.Test.Common
 import Yaifl.Model.Objects.RoomConnections
 import Yaifl.Model.Direction
 
+ex8 :: (Text, [Text], Game PlainWorldModel ())
+ex8 = ("Port Royal 2", portRoyal2TestMeWith, portRoyalWorld2)
+
 portRoyalWorld2 :: Game PlainWorldModel ()
 portRoyalWorld2 = do
   setTitle "1691"

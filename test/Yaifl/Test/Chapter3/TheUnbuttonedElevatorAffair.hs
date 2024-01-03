@@ -15,6 +15,9 @@ import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Objects.ObjectLike
 
+ex9 :: (Text, [Text], Game PlainWorldModel ())
+ex9 = ("The Unbuttoned Elevator Affair", theUnbuttonedElevatorAffairTestMeWith, theUnbuttonedElevatorAffairWorld)
+
 theUnbuttonedElevatorAffairWorld :: Game PlainWorldModel ()
 theUnbuttonedElevatorAffairWorld = do
   setTitle "The Unbuttoned Elevator Affair"

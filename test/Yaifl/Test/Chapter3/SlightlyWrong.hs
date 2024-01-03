@@ -14,6 +14,9 @@ import Yaifl.Text.SayQQ
 import Yaifl.Rules.RuleEffects
 import Yaifl.Text.DynamicText
 
+ex4 :: (Text, [Text], Game PlainWorldModel ())
+ex4 = ("Slightly Wrong", ex4TestMeWith, ex4World)
+
 awnN :: DynamicText wm
 awnN = "Awning"
 

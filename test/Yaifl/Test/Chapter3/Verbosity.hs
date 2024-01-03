@@ -8,6 +8,9 @@ import Yaifl.Test.Common
 import Solitude
 import Yaifl.Text.DynamicText
 
+ex3 :: (Text, [Text], Game PlainWorldModel ())
+ex3 = ("Verbosity", ex3TestMeWith, ex3World)
+
 wmrwN :: DynamicText wm
 wmrwN = "The Wilkie Memorial Research Wing"
 

@@ -19,6 +19,9 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ
 
+ex7 :: (Text, [Text], Game PlainWorldModel ())
+ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
+
 starryVoidWorld :: Game PlainWorldModel ()
 starryVoidWorld = do
   setTitle "Starry Void"
