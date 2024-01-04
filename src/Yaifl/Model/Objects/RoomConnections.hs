@@ -5,6 +5,7 @@ module Yaifl.Model.Objects.RoomConnections
   , isSouthOf
   , isEastOf
   , isNorthOf
+  , isSouthWestOf
   , isWestOfOneWay
   , isSouthOfOneWay
   , isEastOfOneWay
@@ -160,7 +161,7 @@ isDirectionFromInternal mkRev dir roomIsOfE baseRoomE = do
             <> " because it's already made."
     addAnnotation $ "made connection from " <> display (view #name baseRoom) <> " going " <> show dir <> " to " <> display (view #name roomIsOf)
 
-makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down"]
+makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down", "SouthWest", "SouthEast", "NorthWest", "NorthEast"]
 
 isInsideFrom ::
   WMStdDirections wm

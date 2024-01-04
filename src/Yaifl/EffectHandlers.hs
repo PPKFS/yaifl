@@ -21,6 +21,7 @@ import Yaifl.World
 import Yaifl.Actions.Collection
 import Effectful.Error.Static (Error, runError)
 import Yaifl.Model.Objects.Store
+import Yaifl.Model.Objects.Region
 
 
 type EffStack (wm :: WorldModel) = '[
@@ -35,7 +36,6 @@ type EffStack (wm :: WorldModel) = '[
   , Reader [Text]
   , State Metadata
   , State (WorldActions wm)
-  , ObjectCreation wm
   , Print
   , State (World wm)
   , Breadcrumbs
@@ -76,7 +76,6 @@ convertToUnderlyingStack w ac =
   . runBreadcrumbs Nothing
   . runStateShared w
   . runPrintPure @(World wm)
-  . runCreationAsLookup
   . zoomState #actions
   . zoomState @(World wm) #metadata
   . runReader []
@@ -105,16 +104,11 @@ runTraverseAsLookup = interpret $ \env -> \case
     mapM_ (\aT -> do
       r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
       whenJust r setRoom) m
-
-runCreationAsLookup ::
-  State (World wm) :> es
-  => Eff (ObjectCreation wm : es) a
-  -> Eff es a
-runCreationAsLookup = interpret $ \_ -> \case
-  GenerateEntity bThing -> if bThing then
-    (#stores % #entityCounter % _1) <<%= (+1) else (#stores % #entityCounter % _2) <<%= (\x -> x-1)
-  AddRoomToWorld aRoom -> #stores % #rooms % at (getID aRoom) ?= aRoom
-  AddThingToWorld aThing -> #stores % #things % at (getID aThing) ?= aThing
+  TraverseRegions f -> do
+    m <- use $ #stores % #regions
+    mapM_ (\aT -> do
+      r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
+      whenJust r setRegion) m
 
 runQueryAsLookup ::
   HasCallStack
@@ -151,6 +145,11 @@ interpretLookup = do
   interpret $ \_ -> \case
     LookupThing e -> lookupHelper (getID e) #things #rooms "thing" "room"
     LookupRoom e -> lookupHelper (getID e) #rooms #things "room" "thing"
+    LookupRegion e -> do
+      mbReg <- use $ #stores % #regions % at (unTag e)
+      case mbReg of
+        Nothing -> pure $ Left $ "could not find region with id " <> show e
+        Just r -> pure $ Right r
 
 interpretUpdate ::
   State (World wm) :> es
@@ -159,6 +158,9 @@ interpretUpdate ::
 interpretUpdate = interpret $ \_ -> \case
   SetRoom r -> #stores % #rooms % at (getID r) %= updateIt r
   SetThing t -> #stores % #things % at (getID t) %= updateIt t
+  SetRegion t -> #stores % #regions % at (unTag $ regionID t) %= updateIt t
+  GenerateEntity bThing -> if bThing then
+    (#stores % #entityCounter % _1) <<%= (+1) else (#stores % #entityCounter % _2) <<%= (\x -> x-1)
 
 updateIt :: a -> Maybe a -> Maybe a
 updateIt newObj mbExisting = case mbExisting of

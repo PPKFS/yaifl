@@ -27,7 +27,6 @@ import Data.Char (isSpace)
 import qualified Data.Set as S
 import Yaifl.Model.Object
 import Yaifl.Text.Say
-import Yaifl.Text.SayQQ
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -76,7 +75,6 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       (False, True) -> b & #lastMessageContext % #shouldPrintLinebreak .~ True
       (False, False) -> b & #lastMessageContext % #shouldPrintPbreak .~ True
       )
-    --printLn $ "aaaa" <>leftoverLookingSpace
     modifyBuffer (\b -> b & #lastMessageContext % #runningOnLookingParagraph .~ False)
     unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ ">" <> t
     modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)

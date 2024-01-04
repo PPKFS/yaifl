@@ -6,6 +6,7 @@ module Yaifl.Model.Objects.Create
   , addObject
   , addRoom
   , addRoom'
+  , addRegion
   , addBaseObjects
   ) where
 
@@ -27,13 +28,14 @@ import Yaifl.Model.Objects.RoomData ( RoomData, blankRoomData )
 import Yaifl.Model.Objects.ThingData
 import Yaifl.Model.Properties.Enclosing ( Enclosing )
 import Yaifl.Model.Properties.Has ( WMWithProperty )
-import Yaifl.Model.WorldModel ( WMObjSpecifics, WMSayable )
+import Yaifl.Model.WorldModel
 
 import qualified Data.Set as S
+import Yaifl.Model.Objects.Region (RegionEntity, Region (..))
 
 makeObject ::
   Pointed s
-  => ObjectCreation wm :> es
+  => ObjectUpdate wm :> es
   => State Metadata :> es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
@@ -97,7 +99,7 @@ addThingInternal ::
   -> Maybe EnclosingEntity
   -> Eff es ThingEntity
 addThingInternal name ia desc objtype specifics details mbLoc = do
-  t <- Thing <$> addObject (addThingToWorld . Thing) name desc objtype
+  t <- Thing <$> addObject (setThing . Thing) name desc objtype
         True specifics (fromMaybe (blankThingData ia) details) mbLoc
   pure (tagThing t)
 
@@ -150,7 +152,7 @@ addRoomInternal ::
   -> Maybe (RoomData wm) -- ^
   -> Eff es RoomEntity
 addRoomInternal name desc objtype specifics details = do
-  e <- Room <$> addObject (addRoomToWorld . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
+  e <- Room <$> addObject (setRoom . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoom e)
   return (tagRoom e)
@@ -181,3 +183,14 @@ addBaseObjects = do
   v <- addRoom "The Void" "If you're seeing this, you did something wrong."
   addThing' "player" ! #description "It's you, looking handsome as always" ! #build (#described .= Undescribed) ! defaults
   #firstRoom .= v
+
+addRegion ::
+  Pointed (WMRegionData wm)
+  => ObjectUpdate wm :> es
+  => Text
+  -> Eff es RegionEntity
+addRegion n = do
+  rId <- generateEntity False
+  let r = Region (unsafeTagEntity rId) n S.empty Nothing S.empty identityElement
+  setRegion r
+  pure (unsafeTagEntity rId)

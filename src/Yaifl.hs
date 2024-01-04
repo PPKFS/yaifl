@@ -140,6 +140,7 @@ blankStores = WorldStores
   , rooms = emptyStore
   , values = DM.empty
   , concepts = ()
+  , regions = emptyStore
   }
 
 blankMetadata :: Metadata

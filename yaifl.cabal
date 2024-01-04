@@ -103,6 +103,7 @@ library
     Yaifl.Model.Objects.Move
     Yaifl.Model.Objects.ObjectLike
     Yaifl.Model.Objects.Query
+    Yaifl.Model.Objects.Region
     Yaifl.Model.Objects.RoomConnections
     Yaifl.Model.Objects.RoomData
     Yaifl.Model.Objects.Store

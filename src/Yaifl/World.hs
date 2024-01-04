@@ -15,6 +15,7 @@ import Yaifl.Model.WorldModel ( WMValues, WorldModel )
 import Yaifl.Model.Object(Thing, Room)
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Objects.Region
 
 data World (wm :: WorldModel) = World
   { metadata :: Metadata
@@ -30,6 +31,7 @@ data WorldStores (wm :: WorldModel) = WorldStores
   { entityCounter :: (Entity, Entity)
   , things :: Store (Thing wm)
   , rooms :: Store (Room wm)
+  , regions :: Store (Region wm)
   , values :: Map Text (WMValues wm)
   , concepts :: ()-- !(Store (AbstractConcept t r c))
   } deriving stock (Generic)

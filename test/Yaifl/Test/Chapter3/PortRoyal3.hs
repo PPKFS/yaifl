@@ -1,11 +1,13 @@
 module Yaifl.Test.Chapter3.PortRoyal3 where
 
+import Solitude
 import Yaifl
 import Yaifl.Metadata
+import Yaifl.Model.Direction
 import Yaifl.Model.Objects.Create
-import Solitude
-import Yaifl.Test.Common
+import Yaifl.Model.Objects.Query
 import Yaifl.Model.Objects.RoomConnections
+import Yaifl.Test.Common
 
 ex10 :: (Text, [Text], Game PlainWorldModel ())
 ex10 = ("Port Royal 3", portRoyal3TestMeWith, portRoyal3World)
@@ -26,6 +28,9 @@ Lime Street, wider and healthier but not as rich, runs directly south, and to th
   ts `isSouthOf` fj
 
   ls <- addRoom "Lime Street" ""
+  ls `isSouthOf` ts
+  fr <- addRoom "Fisher's Row" [wrappedText|"A waterfront street that runs south towards Chocolata Hole, where the small craft are harboured.
+It also continues north around the tip of the peninsula from here, turning into the east-west Thames Street.|]
 
   ts `isBelow` fj
   ts `isNowhere` Up
@@ -56,26 +61,42 @@ It sells wines in quantity, as well as serving them directly, and the goods are 
 There's a room upstairs for those wanting to stay the night.|]
   tf `isInsideFrom` tpa
 
-  tsbtkh <- "Thames Street by the King's House" [wrappedText|The King's House is reserved for the use of the Governor, but he does not live in it,
+  tsbtkh <- addRoom "Thames Street by the King's House" [wrappedText|The King's House is reserved for the use of the Governor, but he does not live in it,
 and it is frequently being rented out to some merchant so that the government will at least derive some value from it. It is nearly the least interesting
 establishment on Thames Street, and the crowd -- which, to the west, is extremely dense -- here thins out a bit.|]
   tsbtkh `isEastOf` tsawb
 
-  tsbfc <- addRoi
+  tsbfc <- addRoom "Thames Street before Fort Carlisle" [wrappedText|Here Thames Street, formerly a respectable width, narrows to a footpath in order to
+edge around the front of Fort Carlisle, underneath the mouths of the cannon.
 
+There are no buildings on the harbour side of Thames Street at this point, which means that you have an unusually good view of the ships at dock,
+water beyond, and the Blue Mountains rising on the other side of the harbour.|]
+  tsbfc `isEastOf` tsbtkh
+  fc <- addRoom "Fort Carlisle" [wrappedText|Handsomely arrayed with cannons which you could fire at any moment -- though of course
+there are ships at dock which might be in the way.|]
+  fc `isSouthOf` tsbfc
   tfb <- addRoom "The Feathers Bedroom" ""
   tfb `isAbove` tf
 
-  ls <- addRoom "Lime Street" ""
-  ls `isSouthOf` ts
-
   qsm <- addRoom "Queen Street Middle" ""
-
+  qsen <- addRoom "Queen Street End" ""
   qse <- addRoom "Queen Street East" ""
+  qsatp <- addRoom "Queen Street at the Prison" ""
+  qse `isSouthOf` ls
   qse `isEastOf` qsm
   qse `isSouthOf` tpa
+  qsm `isEastOf` qsen
+  qsatp `isEastOf` qse
 
-  pass
+  i <- addRegion "Inland"
+  [qsen, qsm, qse, tpa, ls, qsatp] `areInRegion` i
+  wf <- addRegion "Waterfront"
+  [tsbtkh, tsbfc, tsawb, wl, tfm, fr, ts] `areInRegion` wf
+  mh <- addRegion "Military Holdings"
+  [fc, fj] `areInRegion` mh
+  t <- addRegion "Tavern"
+  t `isSubregionOf` i
+  [tf, tfb] `areInRegion` t
 
 portRoyal3TestMeWith :: [Text]
 portRoyal3TestMeWith = []

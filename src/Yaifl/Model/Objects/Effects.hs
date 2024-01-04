@@ -13,18 +13,18 @@ module Yaifl.Model.Objects.Effects
   ObjectLookup(..)
   , lookupThing
   , lookupRoom
+  , lookupRegion
   , failHorriblyIfMissing
   , withoutMissingObjects
   , ObjectUpdate(..)
   , setThing
   , setRoom
+  , setRegion
   , ObjectTraverse(..)
   , traverseRooms
   , traverseThings
-  , ObjectCreation(..)
+  , traverseRegions
   , generateEntity
-  , addThingToWorld
-  , addRoomToWorld
   -- ** Type synonyms
   , ObjectQuery
   , NoMissingObjects
@@ -44,29 +44,27 @@ import Yaifl.Metadata
 import Yaifl.Model.Object
 import Yaifl.Model.Objects.Entity
 import Yaifl.Model.WorldModel
+import Yaifl.Model.Objects.Region
 
 -- | Effect for reading objects from the world.
 data ObjectLookup (wm :: WorldModel) :: Effect where
   LookupThing :: HasID o => o -> ObjectLookup wm m (Either Text (Thing wm))
   LookupRoom :: HasID o => o -> ObjectLookup wm m (Either Text (Room wm))
+  LookupRegion :: RegionEntity -> ObjectLookup wm m (Either Text (Region wm))
 
 -- | Effect for writing objects to the world.
 data ObjectUpdate (wm :: WorldModel) :: Effect where
+  GenerateEntity :: Bool -> ObjectUpdate wm m Entity
   SetRoom :: Room wm -> ObjectUpdate wm m ()
   SetThing :: Thing wm -> ObjectUpdate wm m ()
+  SetRegion :: Region wm -> ObjectUpdate wm m ()
 
 -- | Effect for traversing all objects in the world.
 data ObjectTraverse (wm :: WorldModel) :: Effect where
   TraverseThings :: (Thing wm -> m (Maybe (Thing wm))) -> ObjectTraverse wm m ()
   TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectTraverse wm m ()
+  TraverseRegions :: (Region wm -> m (Maybe (Region wm))) -> ObjectTraverse wm m ()
 
--- | Effect for creating new objects and adding them to the stores.
-data ObjectCreation wm :: Effect where
-  GenerateEntity :: Bool -> ObjectCreation wm m Entity
-  AddThingToWorld :: Thing wm -> ObjectCreation wm m ()
-  AddRoomToWorld :: Room wm -> ObjectCreation wm m ()
-
-makeEffect ''ObjectCreation
 makeEffect ''ObjectLookup
 makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
@@ -87,7 +85,7 @@ type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, Wi
 
 -- | Type synonym for adding new objects.
 type AddObjects wm es = (
-  ObjectCreation wm :> es
+  ObjectUpdate wm :> es
   , Display (WMSayable wm)
   , IsString (WMSayable wm)
   , State Metadata :> es

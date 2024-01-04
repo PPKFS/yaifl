@@ -1,13 +1,3 @@
-{-|
-Module      : Yaifl.Model.Objects.Query
-Copyright   : (c) Avery 2022-2023
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-
-Typeclasses for things which are XLike (can be resolved into an X in an @Eff es@ context with relevant
-constraints/effects).
--}
-
 module Yaifl.Model.Objects.Query
   ( -- * Types
   ObjectLike(..)
@@ -35,6 +25,9 @@ module Yaifl.Model.Objects.Query
   , IncludeDoors(..)
   , isUnderstoodAs
   , IncludeScenery(..)
+  , areInRegion
+  , isInRegion
+  , isSubregionOf
   ) where
 
 import Solitude
@@ -53,6 +46,7 @@ import Yaifl.Model.Objects.Tag
 
 import qualified Data.EnumSet as ES
 import qualified Data.Set as S
+import Yaifl.Model.Objects.Region
 
 getThingMaybe ::
   ObjectLookup wm :> es
@@ -109,6 +103,15 @@ modifyRoom ::
   -> (Room wm -> Room wm)
   -> Eff es ()
 modifyRoom o u = modifyObjectFrom (fmap coerce refreshRoom) (setRoom . Room) o ((\(Room a) -> a) . u . Room)
+
+modifyRegion ::
+  NoMissingObjects wm es
+  => RegionEntity
+  -> (Region wm -> Region wm)
+  -> Eff es ()
+modifyRegion o u = do
+  r <- lookupRegion o
+  whenRight_ r $ \r' -> setRegion (u r')
 
 modifyObject ::
   NoMissingObjects wm es
@@ -233,3 +236,36 @@ isUnderstoodAs o ls = do
 
 makeUnderstandAsSets :: [Text] -> Set (Set Text)
 makeUnderstandAsSets = S.fromList . map (S.fromList . words)
+
+areInRegion ::
+  NoMissingObjects wm es
+  => Foldable f
+  => f RoomEntity
+  -> RegionEntity
+  -> Eff es ()
+areInRegion f r = mapM_ (`isInRegion` r) f
+
+isInRegion ::
+  NoMissingObjects wm es
+  => RoomEntity
+  -> RegionEntity
+  -> Eff es ()
+isInRegion r reg = do
+  modifyRegion reg (#rooms %~ S.insert r)
+
+isSubregionOf ::
+  NoMissingObjects wm es
+  => RegionEntity
+  -> RegionEntity
+  -> Eff es ()
+isSubregionOf subReg reg = do
+  modifyRegion reg (#subRegions %~ S.insert subReg)
+
+roomsInRegion ::
+  NoMissingObjects wm es
+  => Region wm
+  -> Eff es (S.Set RoomEntity)
+roomsInRegion r = do
+  subRegs <- rights <$> mapM lookupRegion (S.toList $ subRegions r)
+  rs <- mapM roomsInRegion subRegs
+  pure $ S.unions $ rooms r : rs

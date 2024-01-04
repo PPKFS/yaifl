@@ -15,7 +15,7 @@ module Yaifl.Model.WorldModel (
   , WMObjSpecifics
   , WMValues
   , WMDirection
-  , WMRulebooks
+  , WMRegionData
   , WMActivities
   , WMResponses
   , WMSayable
@@ -52,8 +52,8 @@ type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir o v a r re) = o
 
 -- | Unused currently.
-type family WMRulebooks (wm :: WorldModel) :: Type where
-  WMRulebooks ('WorldModel objSpec dir o v a r re) = v
+type family WMRegionData (wm :: WorldModel) :: Type where
+  WMRegionData ('WorldModel objSpec dir o v a r re) = v
 
 -- | The record of all `Yaifl.Activity`.
 type family WMActivities (wm :: WorldModel) :: Type where
