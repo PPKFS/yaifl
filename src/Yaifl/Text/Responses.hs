@@ -14,11 +14,11 @@ import Solitude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
 import Yaifl.Model.WorldModel
 import GHC.TypeLits
-import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.SayQQ
 import Effectful.Reader.Static
 
-newtype Response wm v = Response { runResponse :: forall es. (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
+newtype Response wm v = Response { runResponse :: forall es. SayableValue (WMSayable wm) wm => (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 
 makeFieldLabelsNoPrefix ''Response
 
@@ -32,6 +32,7 @@ constResponse t = Response $ const [sayingTell|{t}|]
 
 sayResponse ::
   RuleEffects wm es
+  => SayableValue (WMSayable wm) wm
   => Reader a :> es
   => Is k A_Lens
   => LabelOptic' "responses" k a (resp -> Response wm v)
@@ -46,6 +47,7 @@ sayResponse aL v = do
 
 sayTellResponse ::
   RuleEffects wm es
+  => SayableValue (WMSayable wm) wm
   => Reader a :> es
   => Writer Text :> es
   => Is k A_Lens

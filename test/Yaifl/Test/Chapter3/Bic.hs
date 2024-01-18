@@ -1,20 +1,20 @@
 module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
-import Yaifl.Metadata
-import Yaifl.Model.Object
-import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.Effects
-import Yaifl.Rules.RuleEffects
-import Yaifl.Text.Print
-import Yaifl.World
-import Yaifl.Rules.Rule
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Object
+import Yaifl.Game.Create.Object
+import Yaifl.Model.Effects
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Game.World
+import Yaifl.Model.Rules.Rulebook
 import qualified Data.Text as T
 import Solitude
 import Data.Text.Display
 import Yaifl.Model.WorldModel
 import Named
 import Yaifl.Text.SayQQ
+import Yaifl.Model.Kinds.Thing
 
 ex2 :: (Text, [a], Game PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)

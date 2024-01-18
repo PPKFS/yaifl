@@ -7,18 +7,18 @@ import Data.Char (isSpace)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
-import Yaifl.Actions.Action
-import Yaifl.Model.Objects.Query
-import Yaifl.Rules.Run
+import Yaifl.Model.Action
+import Yaifl.Model.Query
+import Yaifl.Model.Rules.Run
 import Yaifl.Text.ResponseCollection
-import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Rules.RuleEffects
 
-import Yaifl.World
+import Yaifl.Game.World
 import qualified Data.Text as T
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
-import Yaifl.Rules.Args
+import Yaifl.Model.Actions.Args
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

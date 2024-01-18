@@ -72,65 +72,66 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Yaifl
+    Yaifl.Game.ActionProcessing
+    Yaifl.Game.Actions.Closing
+    Yaifl.Game.Actions.Collection
+    Yaifl.Game.Actions.Examining
+    Yaifl.Game.Actions.Going
+    Yaifl.Game.Actions.Looking
+    Yaifl.Game.Actions.Looking.Locale
+    Yaifl.Game.Actions.Looking.Visibility
+    Yaifl.Game.Actions.Opening
+    Yaifl.Game.Actions.OutOfWorld
 
-    Yaifl.Actions.Action
-    Yaifl.Actions.ActionProcessing
-    Yaifl.Actions.Closing
-    Yaifl.Actions.Collection
-    Yaifl.Actions.Examining
-    Yaifl.Actions.Going
-    Yaifl.Actions.Looking
-    Yaifl.Actions.Looking.Locale
-    Yaifl.Actions.Looking.Visibility
-    Yaifl.Actions.Opening
-    Yaifl.Actions.OutOfWorld
-    Yaifl.Actions.Parser
+    Yaifl.Game.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Game.Activities.ListingContents
+    Yaifl.Game.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Game.Activities.PrintingTheLocaleDescription
 
-    Yaifl.Activities.Activity
-    Yaifl.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Activities.ListingContents
-    Yaifl.Activities.PrintingLocaleParagraphAbout
-    Yaifl.Activities.PrintingTheLocaleDescription
+    Yaifl.Game.Create.Object
+    Yaifl.Game.Create.RoomConnection
 
-    Yaifl.EffectHandlers
-    Yaifl.Metadata
+    Yaifl.Game.EffectHandlers
+    Yaifl.Game.Move
+    Yaifl.Game.ObjectSpecifics
+    Yaifl.Game.Parser
+    Yaifl.Game.WhenPlayBegins
+    Yaifl.Game.World
+    Yaifl.Game.Create.Rule
 
-    Yaifl.Model.Direction
-    Yaifl.Model.Object
-    Yaifl.Model.Objects.Create
-    Yaifl.Model.Objects.Effects
-    Yaifl.Model.Objects.Entity
-    Yaifl.Model.Objects.Move
-    Yaifl.Model.Objects.ObjectLike
-    Yaifl.Model.Objects.Query
-    Yaifl.Model.Objects.Region
-    Yaifl.Model.Objects.RoomConnections
-    Yaifl.Model.Objects.RoomData
-    Yaifl.Model.Objects.Store
-    Yaifl.Model.Objects.Tag
-    Yaifl.Model.Objects.ThingData
-    Yaifl.Model.ObjectSpecifics
+    Yaifl.Model.Action
+    Yaifl.Model.Actions.Args
+    Yaifl.Model.Activity
 
-    Yaifl.Model.Properties.Animal
-    Yaifl.Model.Properties.Container
-    Yaifl.Model.Properties.Door
-    Yaifl.Model.Properties.Enclosing
-    Yaifl.Model.Properties.Has
-    Yaifl.Model.Properties.MultiLocated
-    Yaifl.Model.Properties.Openable
-    Yaifl.Model.Properties.Query
-    Yaifl.Model.Properties.Supporter
-    Yaifl.Model.Properties.TH
+    Yaifl.Model.Effects
+    Yaifl.Model.Entity
+    Yaifl.Model.HasProperty
 
+    Yaifl.Model.Kinds.Animal
+    Yaifl.Model.Kinds.AnyObject
+    Yaifl.Model.Kinds.Container
+    Yaifl.Model.Kinds.Direction
+    Yaifl.Model.Kinds.Door
+    Yaifl.Model.Kinds.Enclosing
+    Yaifl.Model.Kinds.Object
+    Yaifl.Model.Kinds.Openable
+    Yaifl.Model.Kinds.Region
+    Yaifl.Model.Kinds.Room
+    Yaifl.Model.Kinds.Supporter
+    Yaifl.Model.Kinds.Thing
+
+    Yaifl.Model.Metadata
+    Yaifl.Model.MultiLocated
+    Yaifl.Model.ObjectLike
+    Yaifl.Model.ObjectType
+    Yaifl.Model.Query
+    Yaifl.Model.Rules.RuleEffects
+    Yaifl.Model.Rules.Rulebook
+    Yaifl.Model.Rules.Run
+    Yaifl.Model.Store
+    Yaifl.Model.TH
+    Yaifl.Model.Tag
     Yaifl.Model.WorldModel
-
-    Yaifl.Rules.Adding
-    Yaifl.Rules.Args
-    Yaifl.Rules.Rule
-    Yaifl.Rules.Rulebook
-    Yaifl.Rules.RuleEffects
-    Yaifl.Rules.Run
-    Yaifl.Rules.WhenPlayBegins
 
     Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
@@ -141,8 +142,6 @@ library
     Yaifl.Text.Say
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
-
-    Yaifl.World
 
   build-depends:
     , effectful-th

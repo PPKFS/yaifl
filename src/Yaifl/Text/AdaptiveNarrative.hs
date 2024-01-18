@@ -1,15 +1,18 @@
 module Yaifl.Text.AdaptiveNarrative where
 
 
-import Yaifl.Model.Object
+import Yaifl.Model.Kinds.Object
 import Solitude
 import Effectful.Optics (use, (.=))
-import Yaifl.Model.Objects.Query
-import Yaifl.Metadata
+import Yaifl.Model.Query
+import Yaifl.Model.Metadata
 import Breadcrumbs
-import Yaifl.Rules.Args (getPlayer)
+import Yaifl.Model.Actions.Args (getPlayer)
 import Yaifl.Text.Verb
-import Yaifl.Model.Objects.Effects
+import Yaifl.Model.Effects
+import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Kinds.Room
+import Yaifl.Model.Kinds.AnyObject
 
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };

@@ -20,51 +20,54 @@ import Solitude hiding ( Reader, runReader )
 
 import Effectful.Optics ( (?=) )
 
-import Yaifl.Actions.Action
-import Yaifl.Actions.ActionProcessing
-import Yaifl.Actions.Going
-import Yaifl.Actions.Looking
-import Yaifl.Actions.Looking.Locale
-import Yaifl.Actions.Looking.Visibility
-import Yaifl.Activities.Activity
-import Yaifl.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Activities.ListingContents
-import Yaifl.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Activities.PrintingTheLocaleDescription
-import Yaifl.Metadata
-import Yaifl.Model.Direction
-import Yaifl.Model.Objects.Entity
-import Yaifl.Model.Object
-import Yaifl.Model.ObjectSpecifics
-import Yaifl.Model.Objects.Create
-import Yaifl.Model.Properties.Container
-import Yaifl.Model.Properties.Door
-import Yaifl.Model.Properties.Enclosing
-import Yaifl.Model.Properties.Has
-import Yaifl.Model.Properties.Openable
+import Yaifl.Model.Action
+import Yaifl.Game.ActionProcessing
+import Yaifl.Game.Actions.Going
+import Yaifl.Game.Actions.Looking
+import Yaifl.Game.Actions.Looking.Locale
+import Yaifl.Game.Actions.Looking.Visibility
+import Yaifl.Model.Activity
+import Yaifl.Game.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Game.Activities.ListingContents
+import Yaifl.Game.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Game.Activities.PrintingTheLocaleDescription
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Direction
+import Yaifl.Model.Entity
+import Yaifl.Model.Kinds.Object
+import Yaifl.Game.ObjectSpecifics
+import Yaifl.Game.Create.Object
+import Yaifl.Model.Kinds.Container
+import Yaifl.Model.Kinds.Door
+import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.HasProperty
+import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.WorldModel
-import Yaifl.Rules.RuleEffects
-import Yaifl.Rules.WhenPlayBegins
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Game.WhenPlayBegins
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative)
 import Yaifl.Text.Print
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.Say
-import Yaifl.World
+import Yaifl.Game.World
 
 import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Text.ListWriter
-import Yaifl.Actions.OutOfWorld
-import Yaifl.Rules.Args
-import Yaifl.EffectHandlers
+import Yaifl.Game.Actions.OutOfWorld
+import Yaifl.Model.Actions.Args
+import Yaifl.Game.EffectHandlers
 import Yaifl.Text.DynamicText
-import Yaifl.Actions.Collection
+import Yaifl.Game.Actions.Collection
 import Breadcrumbs
-import Yaifl.Model.Objects.Query (failHorriblyIfMissing)
-import Yaifl.Actions.Examining
-import Yaifl.Model.Objects.Store
-import Yaifl.Actions.Closing
-import Yaifl.Actions.Opening
+import Yaifl.Model.Query (failHorriblyIfMissing)
+import Yaifl.Game.Actions.Examining
+import Yaifl.Model.Store
+import Yaifl.Game.Actions.Closing
+import Yaifl.Game.Actions.Opening
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Kinds.Room
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -75,7 +78,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Enterable
   , HasLookingProperties s
   , WMStdDirections s
-  , WMWithProperty s DoorSpecifics
+  , WMWithProperty s Door
   , HasDirectionalTerms s
   , Pointed (WMObjSpecifics s)
   )

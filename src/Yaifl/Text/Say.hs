@@ -19,18 +19,21 @@ import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
 import Solitude
-import Yaifl.Activities.Activity
-import Yaifl.Metadata
-import Yaifl.Model.Object
-import Yaifl.Model.Objects.Effects
-import Yaifl.Model.Objects.Query
+import Yaifl.Model.Activity
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Effects
+import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
-import Yaifl.Rules.Rule
-import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Rules.Rulebook
+import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import qualified Data.Text as T
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds.Room
+import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.SayQQ
 
 sayText ::
@@ -241,7 +244,7 @@ printName o = do
   let toSay = fromMaybe "" t
   [saying|{toSay}|]
 
-printingNameOfSomethingImpl :: Activity s () (AnyObject s) Text
+printingNameOfSomethingImpl :: SayableValue (WMSayable s) s => Activity s () (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
     [makeRule "" [] (\o -> do
       regarding (Just o)

@@ -4,7 +4,7 @@ module Yaifl.Text.DynamicText
 
 import Yaifl.Model.WorldModel
 import Solitude
-import Yaifl.Rules.Rule
+import Yaifl.Model.Rules.Rulebook
 import Effectful.Writer.Static.Local (Writer, tell)
 import Data.Text.Display
 import Data.Text.Lazy.Builder (fromText)

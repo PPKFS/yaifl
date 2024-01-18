@@ -10,20 +10,20 @@ module Yaifl.Text.ListWriter
   , ListWriterResponses(..)
   ) where
 
-import Yaifl.Model.Object
 import Solitude hiding (Reader, runReader)
-import Yaifl.Rules.RuleEffects
+import Yaifl.Model.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Text.Say
-import Yaifl.Activities.Activity
+import Yaifl.Model.Activity
 import Data.Text.Display
 import Yaifl.Text.Responses
 import Effectful.Writer.Static.Local
 import Effectful.Optics
-import Yaifl.Metadata
+import Yaifl.Model.Metadata
 import qualified Data.Text as T
 import Yaifl.Text.SayQQ
 import Effectful.Reader.Static
+import Yaifl.Model.Kinds.AnyObject
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm

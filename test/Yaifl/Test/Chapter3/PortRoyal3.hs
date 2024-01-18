@@ -2,11 +2,11 @@ module Yaifl.Test.Chapter3.PortRoyal3 where
 
 import Solitude
 import Yaifl
-import Yaifl.Metadata
-import Yaifl.Model.Direction
-import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.RoomConnections
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Direction
+import Yaifl.Game.Create.Object
+import Yaifl.Model.Query
+import Yaifl.Game.Create.RoomConnection
 import Yaifl.Test.Common
 
 ex10 :: (Text, [Text], Game PlainWorldModel ())

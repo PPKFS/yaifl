@@ -2,19 +2,19 @@ module Yaifl.Test.Chapter3.StarryVoid where
 
 import Solitude
 import Yaifl
-import Yaifl.Actions.Going
-import Yaifl.Metadata
-import Yaifl.Model.Direction
-import Yaifl.Model.ObjectSpecifics
-import Yaifl.Model.Objects.Create
-import Yaifl.Model.Objects.Entity
-import Yaifl.Model.Objects.Query
-import Yaifl.Model.Objects.RoomConnections
-import Yaifl.Model.Properties.Door
-import Yaifl.Rules.Adding
-import Yaifl.Rules.Args (getPlayer, silentAction)
-import Yaifl.Rules.Rule
-import Yaifl.Rules.RuleEffects
+import Yaifl.Game.Actions.Going
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Direction
+import Yaifl.Game.ObjectSpecifics
+import Yaifl.Game.Create.Object
+import Yaifl.Model.Entity
+import Yaifl.Model.Query
+import Yaifl.Game.Create.RoomConnection
+import Yaifl.Model.Kinds.Door
+import Yaifl.Game.Create.Rule
+import Yaifl.Model.Actions.Args (getPlayer, silentAction)
+import Yaifl.Model.Rules.Rulebook
+import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ
