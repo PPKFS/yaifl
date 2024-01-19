@@ -14,6 +14,7 @@ module Yaifl.Model.Kinds.Object (
   -- ** Components
   , NamePlurality(..)
   , NameProperness(..)
+  , NamePrivacy(..)
   -- ** Objects
   , Object(..)
   , Timestamp(..)
@@ -47,6 +48,10 @@ data NamePlurality = SingularNamed | PluralNamed
 data NameProperness = Improper | Proper
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
+-- | If the object should have an indefinite article or not.
+data NamePrivacy = PrivatelyNamed | PubliclyNamed
+  deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
+
 -- | See also `Yaifl.Model.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
 -- there is no data or polymorphism connected to a type, so it's very possible to call something a supporter without
 -- having some supporter properties.
@@ -66,6 +71,7 @@ newtype Timestamp = Timestamp
 data Object wm objData objSpecifics = Object
   { name :: WMSayable wm
   , pluralName :: Maybe (WMSayable wm)
+  , namePrivacy :: NamePrivacy
   , indefiniteArticle :: Maybe (WMSayable wm)
   , understandAs :: Set (Set Text)
   , namePlurality :: NamePlurality

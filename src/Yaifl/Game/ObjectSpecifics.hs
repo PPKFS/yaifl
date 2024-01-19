@@ -104,6 +104,8 @@ addDoor n ia des f b mbD = do
   let ds = blankDoor (fst f) (fst b)
   d <- addThingInternal n ia des (ObjectType "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
+      -- A door is always fixed in place.
+      -- A door is never pushable between rooms.
       (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
       (Just (coerceTag $ fst f))
   updateMultiLocatedObject d

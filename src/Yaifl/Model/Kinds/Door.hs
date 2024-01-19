@@ -6,8 +6,6 @@ module Yaifl.Model.Kinds.Door
   , TaggedDoor
   , blankDoor
   , getDoorMaybe
-  , isOpen
-  , isClosed
   , tagDoorObject
   ) where
 
@@ -41,20 +39,6 @@ blankDoor x y = Door False defaultDoorOpenability x y (MultiLocated $ S.fromList
 
 makeFieldLabelsNoPrefix ''Door
 makeSpecificsWithout [] ''Door
-
-isClosed ::
-  WMWithProperty wm Openability
-  => CanBeAny wm o
-  => o
-  -> Bool
-isClosed o = Just Closed == (O.opened <$> getOpenabilityMaybe o)
-
-isOpen ::
-  WMWithProperty wm Openability
-  => CanBeAny wm o
-  => o
-  -> Bool
-isOpen o = Just Open == (O.opened <$> getOpenabilityMaybe o)
 
 instance Taggable Door DoorTag
 

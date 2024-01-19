@@ -181,6 +181,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.PortRoyal2
     Yaifl.Test.Chapter3.PortRoyal3
     Yaifl.Test.Chapter3.SlightlyWrong
+    Yaifl.Test.Chapter3.FirstNameBasis
     Yaifl.Test.Chapter3.StarryVoid
     Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
     Yaifl.Test.Chapter3.UpAndUp

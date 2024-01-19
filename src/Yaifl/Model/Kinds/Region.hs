@@ -4,6 +4,7 @@ import Solitude
 import Yaifl.Model.Entity (TaggedEntity, RoomEntity)
 import qualified Data.Set as S
 import Yaifl.Model.WorldModel
+import Yaifl.Model.Kinds.Object
 
 data RegionTag
 type RegionEntity = TaggedEntity RegionTag
@@ -11,6 +12,7 @@ type RegionEntity = TaggedEntity RegionTag
 data Region wm = Region
   { regionID :: RegionEntity
   , name :: Text
+  , namePrivacy :: NamePrivacy
   , subRegions :: S.Set RegionEntity
   , superRegion :: Maybe RegionEntity
   , rooms :: S.Set RoomEntity

@@ -10,6 +10,8 @@ module Yaifl.Model.Kinds.Openable
   , defaultContainerOpenability
   , Openable(..)
   , Opened(..)
+  , isOpen
+  , isClosed
   , openIt
   , closeIt
   ) where
@@ -57,3 +59,17 @@ defaultContainerOpenability = Openability Open NotOpenable
 
 defaultDoorOpenability :: Openability
 defaultDoorOpenability = Openability Closed Openable
+
+isClosed ::
+  WMWithProperty wm Openability
+  => CanBeAny wm o
+  => o
+  -> Bool
+isClosed o = Just Closed == (opened <$> getOpenabilityMaybe o)
+
+isOpen ::
+  WMWithProperty wm Openability
+  => CanBeAny wm o
+  => o
+  -> Bool
+isOpen o = Just Open == (opened <$> getOpenabilityMaybe o)

@@ -49,6 +49,7 @@ data ThingData wm = ThingData
   , handled :: ThingHandled
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
+  , isScenery :: Bool
   , initialAppearance :: WMSayable wm
   } deriving stock (Generic)
 
@@ -59,7 +60,7 @@ makeFieldLabelsNoPrefix ''ThingData
 
 -- | A default thing (when given an initial appearance).
 blankThingData :: WMSayable wm -> ThingData wm
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False
 
 -- | An `Object` with `ThingData`.
 newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))

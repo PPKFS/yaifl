@@ -18,6 +18,7 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ
+import Yaifl.Model.Kinds.Openable
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)

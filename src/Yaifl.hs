@@ -68,6 +68,7 @@ import Yaifl.Game.Actions.Opening
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room
+import Yaifl.Model.ObjectType
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -172,16 +173,6 @@ newWorld ::
 newWorld = failHorriblyIfMissing $ do
   addBaseObjects
   addBaseActions
-
-makeTypeDAG :: Map ObjectType (Set ObjectType)
-makeTypeDAG = fromList
-  [ ("object", fromList [])
-  , ("thing", fromList ["object"])
-  , ("room", fromList ["object"])
-  , ("container", fromList ["thing"])
-  , ("supporter", fromList ["thing"])
-  , ("door", fromList ["thing"])
-  ]
 
 blankActivityCollection ::
   HasStandardProperties wm

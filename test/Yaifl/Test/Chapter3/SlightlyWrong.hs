@@ -9,7 +9,6 @@ import Yaifl.Test.Common
 import Solitude
 import Yaifl.Model.Kinds.Room
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.DynamicText
@@ -28,13 +27,12 @@ awnDesc =
 swcN :: DynamicText wm
 swcN = "Slightly Wrong Chamber"
 
-swcDesc :: DynamicText wm
-swcDesc = DynamicText $ Right ("description of slightly wrong chamber", RuleLimitedEffect $ do
+swcDesc :: DynamicText PlainWorldModel
+swcDesc = text "description of slightly wrong chamber" $ do
   obj <- view #objectData <$> getMentionedRoom
   when (isVisited obj /= Visited)
     [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]
   [sayingTell|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|]
-  )
 
 ex4World :: Game PlainWorldModel ()
 ex4World = do

@@ -47,7 +47,7 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing Nothing S.empty SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
+  return (e, Object n Nothing PubliclyNamed Nothing S.empty SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
   Pointed s
@@ -191,6 +191,6 @@ addRegion ::
   -> Eff es RegionEntity
 addRegion n = do
   rId <- generateEntity False
-  let r = Region (unsafeTagEntity rId) n S.empty Nothing S.empty identityElement
+  let r = Region (unsafeTagEntity rId) n PubliclyNamed S.empty Nothing S.empty identityElement
   setRegion r
   pure (unsafeTagEntity rId)
