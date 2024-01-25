@@ -5,6 +5,8 @@ module Yaifl.Game.ObjectSpecifics
   ObjectSpecifics(..)
   , WMHasObjSpecifics(..)
   , addDoor
+  , addDevice
+  , addPerson
   ) where
 
 import Solitude
@@ -29,6 +31,9 @@ import Yaifl.Model.Query
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
 import qualified Data.Set as S
 import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Device
+import Named
+import Yaifl.Model.Kinds.Person
 
 data ObjectSpecifics =
   NoSpecifics
@@ -36,6 +41,8 @@ data ObjectSpecifics =
   | ContainerSpecifics Container
   | OpenabilitySpecifics Openability
   | DoorSpecifics Door
+  | DeviceSpecifics Device
+  | PersonSpecifics Person
   deriving stock (Eq, Show, Read)
 
 makePrisms ''ObjectSpecifics
@@ -128,3 +135,28 @@ updateMultiLocatedObject tl = do
       obj <- getObject x
       let enc = getEnclosing x obj
       updateToContain obj enc t) (S.toList $ ml ^. #locations)
+
+addDevice ::
+  forall wm es.
+  WMHasObjSpecifics wm
+  => WMWithProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm -- ^ Description.
+  -> "device" :? Device
+  -> Eff es ThingEntity
+addDevice n ia d (argDef #device identityElement -> dev) = addThing n ia d ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev))
+
+addPerson ::
+  forall wm es.
+  WMHasObjSpecifics wm
+  => WMWithProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> "gender" :! Gender
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm -- ^ Description.
+  -> "carrying" :? Enclosing
+  -> Eff es ThingEntity
+addPerson n (Arg g) ia d (argF #carrying -> e)= addThing n ia d ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e))))
