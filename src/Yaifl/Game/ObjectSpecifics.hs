@@ -109,7 +109,7 @@ addDoor ::
   -> Eff es DoorEntity
 addDoor n ia des f b mbD = do
   let ds = blankDoor (fst f) (fst b)
-  d <- addThingInternal n ia des (ObjectType "door")
+  d <- addThingInternal n ia des (ObjectKind "door")
       (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
       -- A door is always fixed in place.
       -- A door is never pushable between rooms.

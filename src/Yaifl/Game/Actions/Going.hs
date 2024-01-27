@@ -39,7 +39,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.ObjectType
+import Yaifl.Model.ObjectKind
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -216,7 +216,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
   error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
-    _outAction <- ifM (nonVehicle `isType` "supporter") (pure ("off" :: String)) (pure "out of")
+    _outAction <- ifM (nonVehicle `isKind` "supporter") (pure ("off" :: String)) (pure "out of")
     -- let dir = "[We] [would have] to get off [the nonvehicle] first."
     pass
   rulePass
@@ -247,7 +247,7 @@ getSupportersOf ::
   NoMissingObjects wm es
   => Thing wm
   -> Eff es [Thing wm]
-getSupportersOf o = getContainingThingHierarchy o >>= filterM (`isType` "supporter")
+getSupportersOf o = getContainingThingHierarchy o >>= filterM (`isKind` "supporter")
 
 toTheRoom ::
   ObjectLike wm r

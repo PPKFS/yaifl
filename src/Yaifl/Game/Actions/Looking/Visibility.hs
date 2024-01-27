@@ -23,7 +23,7 @@ import Yaifl.Model.WorldModel
 import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as DES
 import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.ObjectType
+import Yaifl.Model.ObjectKind
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =
@@ -141,7 +141,7 @@ isSeeThrough e = do
   let c = getContainerMaybe e
       en = getEnterableMaybe e
   s <- isSupporter e
-  isContainer <- isType e "container"
+  isContainer <- isKind e "container"
   let isOpenContainer = fmap (opened . _containerOpenable) c == Just Open && isContainer
       isTransparent = fmap _containerOpacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer

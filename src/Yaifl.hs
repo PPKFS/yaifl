@@ -68,7 +68,8 @@ import Yaifl.Game.Actions.Opening
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room
-import Yaifl.Model.ObjectType
+import Yaifl.Model.ObjectKind
+import qualified Data.Map as M
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -158,7 +159,7 @@ blankMetadata = Metadata
   , previousRoom = voidID
   , firstRoom = voidID
   , errorLog = []
-  , typeDAG = makeTypeDAG
+  , kindDAG = M.map (\s  -> ObjectKindInfo s [] []) makeKindDAG
   , traceAnalysisLevel = Maximal
   , oxfordCommaEnabled = True
   , parserMatchThreshold = 0.66

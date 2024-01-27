@@ -32,6 +32,7 @@ module Yaifl.Model.Metadata (
   -- ** Timestamps
   , getGlobalTime
   , tickGlobalTime
+  , isKind
   ) where
 
 import Breadcrumbs
@@ -40,6 +41,8 @@ import Effectful.Optics ( (.=), (%=), use )
 import Solitude
 import Yaifl.Model.Entity
 import Yaifl.Model.Kinds.Object
+import Yaifl.Model.ObjectKind
+import qualified Data.Set as S
 
 -- | Whether the room descriptions should be printed verbosely sometimes, all the time, or never.
 data RoomDescriptions =
@@ -76,7 +79,7 @@ data Metadata = Metadata
   , previousRoom :: TaggedEntity RoomTag -- ^ The last room that was added during construction (to implicitly place new objects).
   , firstRoom :: TaggedEntity RoomTag -- ^ The starting room.
   , errorLog :: [Text] -- ^ We keep track of noted errors for testing reasons.
-  , typeDAG :: Map ObjectType (Set ObjectType) -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
+  , kindDAG :: Map ObjectKind ObjectKindInfo -- ^ A fairly ad-hoc way to mimic inheritance: we track them as tags with no data.
   , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
   , oxfordCommaEnabled :: Bool -- ^ should we use the oxford comma in lists?
   , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
@@ -175,3 +178,31 @@ isPlayer ::
   => o
   -> Eff es Bool
 isPlayer o = (getID o ==) . getID <$> use #currentPlayer
+
+-- | Determine whether an object is of a certain type. This is separate to anything on Haskell's side
+-- and the type system.
+isKind ::
+  WithMetadata es
+  => Is k A_Getter
+  => LabelOptic' "objectType" k o ObjectKind
+  => o -- ^ The object.
+  -> ObjectKind -- ^ The type.
+  -> Eff es Bool
+isKind o = isKindInternal (o ^. #objectType)
+  where
+    isKindInternal ::
+      WithMetadata es
+      => ObjectKind
+      -> ObjectKind
+      -> Eff es Bool
+    isKindInternal obj e' = do
+      td <- gets $ preview (#kindDAG % at obj % _Just % #childKinds)
+      case td of
+        Nothing -> noteError (const False) ("Found no type entry for " <> show obj)
+        Just iv ->
+          if
+            e' `S.member` iv || obj == e'
+          then
+            return True
+          else
+            anyM (`isKindInternal` e') iv

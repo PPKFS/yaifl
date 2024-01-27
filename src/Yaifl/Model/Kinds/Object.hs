@@ -18,7 +18,7 @@ module Yaifl.Model.Kinds.Object (
   -- ** Objects
   , Object(..)
   , Timestamp(..)
-  , ObjectType(..)
+  , ObjectKind(..)
   , IsObject(..)
   , objectEquals
 
@@ -55,8 +55,8 @@ data NamePrivacy = PrivatelyNamed | PubliclyNamed
 -- | See also `Yaifl.Model.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
 -- there is no data or polymorphism connected to a type, so it's very possible to call something a supporter without
 -- having some supporter properties.
-newtype ObjectType = ObjectType
-  { unObjectType :: Text
+newtype ObjectKind = ObjectKind
+  { unObjectKind :: Text
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, IsString, Monoid, Semigroup)
 
@@ -78,7 +78,7 @@ data Object wm objData objSpecifics = Object
   , nameProperness :: NameProperness
   , description :: WMSayable wm
   , objectId :: Entity
-  , objectType :: ObjectType
+  , objectType :: ObjectKind
   , creationTime :: Timestamp
   , modifiedTime :: Timestamp
   , specifics :: objSpecifics -- ^ A @vanilla@ object has no specific additional information; this is a @Pointed@ constraint.

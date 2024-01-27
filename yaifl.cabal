@@ -110,11 +110,13 @@ library
     Yaifl.Model.Kinds.Animal
     Yaifl.Model.Kinds.AnyObject
     Yaifl.Model.Kinds.Container
+    Yaifl.Model.Kinds.Device
     Yaifl.Model.Kinds.Direction
     Yaifl.Model.Kinds.Door
     Yaifl.Model.Kinds.Enclosing
     Yaifl.Model.Kinds.Object
     Yaifl.Model.Kinds.Openable
+    Yaifl.Model.Kinds.Person
     Yaifl.Model.Kinds.Region
     Yaifl.Model.Kinds.Room
     Yaifl.Model.Kinds.Supporter
@@ -123,7 +125,7 @@ library
     Yaifl.Model.Metadata
     Yaifl.Model.MultiLocated
     Yaifl.Model.ObjectLike
-    Yaifl.Model.ObjectType
+    Yaifl.Model.ObjectKind
     Yaifl.Model.Query
     Yaifl.Model.Rules.RuleEffects
     Yaifl.Model.Rules.Rulebook

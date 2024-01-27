@@ -14,6 +14,7 @@ import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
 import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Device
+import Yaifl.Model.Kinds.Person
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)
@@ -34,7 +35,7 @@ The air above the projector is disappointingly clear.{?end if}|]) ! defaults
   lewis <- addPerson "Lewis" ! #gender Male ! #description "A wiry, excitable engineer who just signed aboard last week." ! defaults
   harper <- addPerson "Harper" ! #gender Male ! #description "Harper's a good guy: taciturn when sober, affectionate when drunk, but rarely annoying in either state." ! defaults
   "man" `kindIsUnderstoodAs` ["man", "guy", "chap", "lad", "male"]
-  "man" `pluralIsUnderstoodAs` ["men", "guys", "chaps", "lads", "males"]
+  "man" `kindPluralIsUnderstoodAs` ["men", "guys", "chaps", "lads", "males"]
   pass
 
 firstNameBasisTestMeWith :: [Text]

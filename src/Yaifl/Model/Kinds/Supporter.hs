@@ -17,7 +17,7 @@ import Solitude
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Model.Effects
-import Yaifl.Model.ObjectType
+import Yaifl.Model.ObjectKind
 
 -- | Check if @o@ is of the @supporter@ type.
 isSupporter ::
@@ -25,4 +25,4 @@ isSupporter ::
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isSupporter o = getObject o >>= (`isType` "supporter")
+isSupporter o = getObject o >>= (`isKind` "supporter")

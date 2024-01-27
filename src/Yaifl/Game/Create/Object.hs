@@ -39,7 +39,7 @@ makeObject ::
   => State Metadata :> es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
-  -> ObjectType
+  -> ObjectKind
   -> Bool
   -> Maybe s -- ^ Object details.
   -> d
@@ -56,7 +56,7 @@ addObject ::
   => (Object wm d s -> Eff es ())
   -> WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
-  -> ObjectType
+  -> ObjectKind
   -> Bool
   -> Maybe s
   -> d
@@ -93,7 +93,7 @@ addThingInternal ::
   => WMSayable wm -- ^ Name.
   -> WMSayable wm
   -> WMSayable wm -- ^ Description.
-  -> ObjectType -- ^ Type.
+  -> ObjectKind -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (ThingData wm)
   -> Maybe EnclosingEntity
@@ -120,7 +120,7 @@ addThing' n
   (argF #specifics -> s)
   (arg #build -> stateUpdate)
   (argF #location -> loc) =
-    addThingInternal n ia d (ObjectType "thing") s (runLocalState (blankThingData ia) stateUpdate) loc
+    addThingInternal n ia d (ObjectKind "thing") s (runLocalState (blankThingData ia) stateUpdate) loc
 
 runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
 runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
@@ -147,7 +147,7 @@ addRoomInternal ::
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
   -> WMSayable wm -- ^ Description.
-  -> ObjectType -- ^ Type.
+  -> ObjectKind -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
   -> Eff es RoomEntity
@@ -164,7 +164,7 @@ addRoom' ::
   -> WMSayable wm -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es RoomEntity
-addRoom' n d rd = addRoomInternal n d (ObjectType "room")
+addRoom' n d rd = addRoomInternal n d (ObjectKind "room")
   Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
 
 addRoom ::

@@ -24,7 +24,7 @@ import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
-import Yaifl.Model.ObjectType
+import Yaifl.Model.ObjectKind
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA
@@ -132,8 +132,8 @@ alsoSee = Rule "You can also see" [] (\v ->
       pl <- getCurrentPlayer
       playerLocE <- getLocation pl
       plRoom <- getRoomMaybe playerLocE
-      isASupporter <- dom `isType` "supporter"
-      isAnAnimal <- dom `isType` "animal"
+      isASupporter <- dom `isKind` "supporter"
+      isAnAnimal <- dom `isKind` "animal"
 
       let isInLoc = maybe False (dom `objectEquals`) plRoom
       if
