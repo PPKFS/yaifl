@@ -24,11 +24,12 @@ firstNameBasisWorld = do
   setTitle "First Name Basis"
   tcl <- addRoom "The Crew Lounge" [wrappedText|Deliberately spartan: the crew feels weight restrictions here first,
 so there aren't any chairs, just a few thin pads on the ground.|]
-  thp <- addDevice "holographic projector" "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get." !
-    #description (text "projector description" $ withThing $ \t -> do
-      let ds = getDeviceMaybe t
-      let isOn = fromMaybe False $ ds ^? _Just % #switchedOn
-      [sayingTell|{?if isOn}The projector is now playing a documentary about the early politics of the Mars colony.{?else}
+  thp <- addDevice "holographic projector"
+      ! #initialAppearance "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
+      ! #description (text "projector description" $ withThing $ \t -> do
+          let ds = getDeviceMaybe t
+          let isOn = fromMaybe False $ ds ^? _Just % #switchedOn
+          [sayingTell|{?if isOn}The projector is now playing a documentary about the early politics of the Mars colony.{?else}
 The air above the projector is disappointingly clear.{?end if}|]) ! defaults
 
   thp `isUnderstoodAs` ["holo", "holograph", "Misthon", "9000"]

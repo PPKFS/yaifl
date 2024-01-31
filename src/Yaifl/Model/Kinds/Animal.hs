@@ -4,7 +4,7 @@ import Solitude
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Effects
 import Yaifl.Model.Query
-import Yaifl.Model.ObjectKind
+import Yaifl.Model.Metadata
 
 isAnimal ::
   NoMissingObjects wm es

@@ -57,7 +57,7 @@ instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
   inj _ = id
 
 instance MayHaveProperty ObjectSpecifics Enclosing where
-  propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing)
+  propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing) `thenATraverse` (_PersonSpecifics % #carrying)
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
   propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
@@ -75,6 +75,12 @@ instance MayHaveProperty ObjectSpecifics Openability where
 
 instance MayHaveProperty ObjectSpecifics Door where
   propertyAT = castOptic _DoorSpecifics
+
+instance MayHaveProperty ObjectSpecifics Device where
+  propertyAT = castOptic _DeviceSpecifics
+
+instance MayHaveProperty ObjectSpecifics Person where
+  propertyAT = castOptic _PersonSpecifics
 
 localST ::
   State st :> es

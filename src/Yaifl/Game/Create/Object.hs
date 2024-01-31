@@ -32,9 +32,12 @@ import Yaifl.Model.WorldModel
 
 import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
+import Data.Char (isUpper)
+import qualified Data.Text as T
 
 makeObject ::
-  Pointed s
+  Display (WMSayable wm)
+  => Pointed s
   => ObjectUpdate wm :> es
   => State Metadata :> es
   => WMSayable wm -- ^ Name.
@@ -47,7 +50,9 @@ makeObject ::
 makeObject n d ty isT specifics details = do
   e <- generateEntity isT
   t <- getGlobalTime
-  return (e, Object n Nothing PubliclyNamed Nothing S.empty SingularNamed Improper d e ty t t (fromMaybe identityElement specifics) details)
+  let shownName = display n
+  return (e, Object n Nothing PubliclyNamed Nothing S.empty SingularNamed
+    (if not (T.null shownName) && isUpper (T.head shownName) then Proper else Improper) d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
   Pointed s

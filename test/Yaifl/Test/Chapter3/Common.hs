@@ -14,6 +14,7 @@ import Yaifl.Test.Chapter3.Verbosity
 import Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
 import qualified Data.Map as M
 import Yaifl (PlainWorldModel, Game)
+import Yaifl.Test.Chapter3.FirstNameBasis
 
 c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
@@ -29,4 +30,5 @@ spec _allTenses = M.fromList
   , c3Harness ex8 -- Port Royal 2
   , c3Harness ex9 -- unbuttoned elevator affair
   , c3Harness ex10 -- Port Royal 3
+  , c3Harness ex11
   ]

@@ -19,7 +19,7 @@ import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
 import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.ObjectKind
+import Yaifl.Model.Metadata
 
 setLocalePriority ::
   AnyObject s

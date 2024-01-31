@@ -35,7 +35,7 @@ instance ArgsMightHaveMainObject (ExaminingActionVariables wm) (AnyObject wm) wh
 type ExaminingAction wm = Action wm ExaminingResponses ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (ExaminingActionVariables wm)
 examiningAction :: ExaminingAction wm
 examiningAction = (makeAction "examining")
-  { understandAs = ["examine", "examining", "look closely at"]
+  { understandAs = ["examine", "examining", "look closely at", "x"]
   , parseArguments = ParseArguments (\(UnverifiedArgs Args{..}) -> do
       let examiningSubject = ET $ fst variables
       return $ Right $ EAV {examiningSubject, examiningTextPrinted = False})
@@ -82,7 +82,7 @@ standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
     -- now examine text printed is true.
     if desc /= "" then
       do
-        [saying|{desc}#{linebreak}]|]
+        [saying|{desc}#{linebreak}|]
         pure $ Just True
       else pure Nothing
   pure (Nothing, Nothing)

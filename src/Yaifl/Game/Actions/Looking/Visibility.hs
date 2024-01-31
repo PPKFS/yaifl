@@ -23,7 +23,7 @@ import Yaifl.Model.WorldModel
 import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as DES
 import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.ObjectKind
+import Yaifl.Model.Metadata
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

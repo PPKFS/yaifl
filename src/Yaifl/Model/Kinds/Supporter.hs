@@ -17,7 +17,7 @@ import Solitude
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Model.Effects
-import Yaifl.Model.ObjectKind
+import Yaifl.Model.Metadata
 
 -- | Check if @o@ is of the @supporter@ type.
 isSupporter ::

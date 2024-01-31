@@ -15,6 +15,7 @@ import Yaifl.Model.WorldModel
 import Named
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Query
 
 ex2 :: (Text, [a], Game PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)
@@ -26,7 +27,8 @@ ex2World :: Game PlainWorldModel ()
 ex2World = do
   setTitle "Bic"
   addRoom "The Staff Break Room" ""
-  addThing "Bic pen" ! defaults
+  bp <- addThing "Bic pen" ! defaults
+  modifyThing bp (#nameProperness .~ Improper)
   addThing "orange" ! #description "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice." ! defaults
   addThing "napkin" ! #description "Slightly crumpled." ! defaults
   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" $

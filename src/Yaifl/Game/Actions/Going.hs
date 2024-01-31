@@ -12,7 +12,7 @@ import Solitude
 
 import Yaifl.Model.Action
 import Yaifl.Model.Entity
-import Yaifl.Model.Metadata ( isPlayer )
+import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Model.Actions.Args
@@ -39,8 +39,6 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.ObjectKind
-
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
     roomGoneFrom :: Room wm

@@ -204,10 +204,8 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
     (o :: AnyObject wm) <- getObject objLike
     oName <- sayText $ o ^. #name
     let articleEff
-          | isDef = (if o ^. #nameProperness == Proper
-              then pure ""
-              else pure "the"
-            )
+          | o ^. #nameProperness == Proper = pure ""
+          | isDef = pure "the"
           | o ^. #namePlurality == PluralNamed = pure "some"
           | Just x <- o ^. #indefiniteArticle = sayText x
           | (oName ^? _head) `elem` map Just ['a', 'i', 'e', 'o', 'u'] = pure "an"

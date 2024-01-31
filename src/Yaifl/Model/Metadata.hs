@@ -33,6 +33,9 @@ module Yaifl.Model.Metadata (
   , getGlobalTime
   , tickGlobalTime
   , isKind
+
+  , kindIsUnderstoodAs
+  , kindPluralIsUnderstoodAs
   ) where
 
 import Breadcrumbs
@@ -206,3 +209,17 @@ isKind o = isKindInternal (o ^. #objectType)
             return True
           else
             anyM (`isKindInternal` e') iv
+
+kindIsUnderstoodAs ::
+  ObjectKind
+  -> [ObjectKind]
+  -> Eff es ()
+kindIsUnderstoodAs kind otherKinds = do
+  pass
+
+kindPluralIsUnderstoodAs ::
+  ObjectKind
+  -> [ObjectKind]
+  -> Eff es ()
+kindPluralIsUnderstoodAs kind otherKinds = do
+  pass
