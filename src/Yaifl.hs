@@ -70,11 +70,13 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
+import Yaifl.Model.Kinds.Device
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
+  , WMWithProperty s Device
   , WMWithProperty s Openability
   , WMWithProperty s Container
   , WMWithProperty s Enterable

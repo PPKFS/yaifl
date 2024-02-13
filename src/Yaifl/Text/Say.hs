@@ -49,15 +49,15 @@ instance SayableValue a wm => SayableValue (Maybe a) wm where
 
 instance WithPrintingNameOfSomething wm => SayableValue (Room wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell = tellName
 
 instance WithPrintingNameOfSomething wm => SayableValue (Thing wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell = tellName
 
 instance WithPrintingNameOfSomething wm => SayableValue (AnyObject wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell = tellName
 
 data SayingForm s =
   The s -- [The foo]
@@ -241,6 +241,25 @@ printName o = do
   t <- doActivity #printingNameOfSomething e
   let toSay = fromMaybe "" t
   [saying|{toSay}|]
+
+tellName ::
+  NoMissingObjects wm es
+  => ActionHandler wm :> es
+  => ObjectTraverse wm :> es
+  => Writer Text :> es
+  => Print :> es
+  => State (ActivityCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => State (ResponseCollector wm) :> es
+  => WithPrintingNameOfSomething wm
+  => ObjectLike wm o
+  => o
+  -> Eff es ()
+tellName o = do
+  e <- getObject o
+  t <- doActivity #printingNameOfSomething e
+  let toSay = fromMaybe "" t
+  [sayingTell|{toSay}|]
 
 printingNameOfSomethingImpl :: SayableValue (WMSayable s) s => Activity s () (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"

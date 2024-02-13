@@ -109,7 +109,7 @@ toBePresent :: VerbPersonage -> Text
 toBePresent = \case
   FirstPersonSingular -> "am"
   ThirdPersonSingular -> "is"
-  _ -> "are"
+  x -> show x
 
 toBePast :: VerbPersonage -> Text
 toBePast = \case

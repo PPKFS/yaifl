@@ -145,6 +145,8 @@ library
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
 
+    Words
+
   build-depends:
     , effectful-th
     , enummapset
@@ -154,6 +156,7 @@ library
     , prettyprinter
     , prettyprinter-ansi-terminal
     , split
+    , sqlite-simple
 
 test-suite yaifl-test
   import:             common-options

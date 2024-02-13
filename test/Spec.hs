@@ -14,7 +14,7 @@ import qualified Data.Map as M
 import qualified Yaifl.Test.Chapter3.Common as Chapter3
 import Yaifl.Text.Verb
 import Test.Tasty.Silver.Interactive (defaultMain)
-
+import Words as W
 newtype AllTenses = AllTenses Bool
 
 instance IsOption AllTenses where
@@ -28,10 +28,12 @@ instance IsOption AllTenses where
       (  long (untag (optionName :: Tagged AllTenses String))
       <> help (untag (optionHelp :: Tagged AllTenses String))
       )-}
+main :: IO WordMap
+main = W.initMap
 -- this is a rip of tasty's main, but hooking my own global `TraceID` through it for
 -- better Zipkin traces.
-main :: IO ()
-main = runEff
+main' :: IO ()
+main' = runEff
   . runBreadcrumbs Nothing $
     do
       testTree <- liftIO goldenTests

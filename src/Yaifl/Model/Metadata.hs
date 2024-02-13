@@ -209,7 +209,15 @@ isKind o = isKindInternal (o ^. #objectType)
             return True
           else
             anyM (`isKindInternal` e') iv
-
+{-
+allKinds ::
+  WithMetadata es
+  => Is k A_Getter
+  => LabelOptic' "objectType" k o ObjectKind
+  => o -- ^ The object.
+  -> ObjectKind -- ^ The type.
+  -> Eff es Bool
+-}
 kindIsUnderstoodAs ::
   ObjectKind
   -> [ObjectKind]

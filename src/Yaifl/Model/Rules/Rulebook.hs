@@ -25,6 +25,8 @@ module Yaifl.Model.Rules.Rulebook
   , ruleGuard
   , ruleGuardM
   , forThing
+  , forMainObject
+  , forKindOfThing
   ) where
 
 
@@ -126,6 +128,27 @@ forThing ::
   -> (Thing wm -> Eff es (Maybe b, Maybe r))
   -> Eff es (Maybe b, Maybe r)
 forThing e = ruleWhenJustM (getThingMaybe e)
+
+forKindOfThing ::
+  NoMissingObjects wm es
+  => ObjectLike wm a
+  => a
+  -> (Thing wm -> Maybe p)
+  -> (Thing wm -> p -> Eff es (Maybe b, Maybe r))
+  -> Eff es (Maybe b, Maybe r)
+forKindOfThing e f m = ruleWhenJustM (do
+  t <- getThingMaybe e
+  let d = t >>= f
+  pure (liftA2 (,) t d)) (uncurry m)
+
+forMainObject ::
+  ArgsMightHaveMainObject vars o
+  => (o ->  Eff es (Maybe b, Maybe r))
+  -> Args wm vars
+  ->  Eff es (Maybe b, Maybe r)
+forMainObject f vars = do
+  let mbObj = vars ^? #variables % argsMainObjectMaybe
+  ruleWhenJustM (pure mbObj) f
 
 makeFieldLabelsNoPrefix ''Rule
 
