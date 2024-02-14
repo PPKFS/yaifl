@@ -157,6 +157,7 @@ library
     , prettyprinter-ansi-terminal
     , split
     , sqlite-simple
+    , random
 
 test-suite yaifl-test
   import:             common-options
