@@ -9,6 +9,8 @@ import Network.HTTP.Req
 import Control.Concurrent (threadDelay)
 import Data.Aeson
 import Control.Exception (catch)
+import Eigen.SparseMatrix (SparseMatrix)
+import qualified Eigen.SparseMatrix as E
 
 iterateM_ :: Monad m => (a -> m a) -> a -> m b
 iterateM_ f = g
@@ -29,29 +31,30 @@ data ComboRow = ComboRow Text Text (Maybe Text) Int Bool
 instance FromRow ComboRow where
   fromRow = ComboRow <$> field <*> field <*> field <*> field <*> field
 
-runOneLoop :: WordMap -> IO WordMap
-runOneLoop m = do
-  (m', rows) <- runLoop m
+runOneLoop :: (Int, WordMap) -> IO (Int, WordMap)
+runOneLoop (cnt, m) = do
+  (m', rows, attemptsTotal) <- runLoop m
   conn <- open "words.db"
   executeMany conn "INSERT INTO combos VALUES (?, ?, ?, ?, ?)" (map (\(ComboRow a b c d e) -> (a,b,fromMaybe "" c, show @Text d, if e then "1" :: Text else "0")) rows)
+  execute conn "INSERT INTO stats VALUES (?, ?, ?, ?)" (("plasticity", (length rows) + cnt, length rows, (attemptsTotal)) :: (String, Int, Int, Int))
   close conn
 
   -- now we need to recalculate the plasticity for the elements we've adjusted
   let toAdjust = sortNub (mconcat $ map (\(ComboRow x y _ _ _) -> [x,y]) rows)
   putStrLn $ "Recalculating plasticities for " <> show (length toAdjust) <> " elements"
-  pure $ flipfoldl' (\a -> at a % _Just %~ recalculateInfo) m' toAdjust
+  pure $ (length rows + cnt, flipfoldl' (\a -> at a % _Just %~ recalculateInfo) m' toAdjust)
 
-initMap :: IO WordMap
+initMap :: IO (Int, WordMap)
 initMap = do
   conn <- open "words.db"
   r <- query_ conn "SELECT * from combos" :: IO [ComboRow]
   print @Text $ "Found " <> show (length r) <> " existing combos"
   close conn
   -- start with the basic 4 elements, add the stuff from the db, and then recalculate the numbers
-  pure $ M.map recalculateInfo $ foldl' (\mm cr -> view _2 $ addRow cr mm) seedMap r
+  pure $ (length r, M.map recalculateInfo $ foldl' (\mm cr -> view _2 $ addRow cr mm) seedMap r)
 
 amountOptions :: Int
-amountOptions = 30
+amountOptions = 10
 
 tenPow :: Integer -> Double
 tenPow n = 10.0 ^ n
@@ -85,7 +88,7 @@ getOnePairingRandomly size m = do
           show (roundN (plasticity p1) 2, roundN (plasticity p2) 2, roundN (plasticity p1 * plasticity p2) 2) <> ")"
         return Nothing
 
-runLoop :: Map Text WordInfo -> IO (WordMap, [ComboRow])
+runLoop :: Map Text WordInfo -> IO (WordMap, [ComboRow], Int)
 runLoop m = go m (M.size m) 0 0 []
   where
   go m' size numSoFar (attempts :: Int) newRows = do
@@ -102,7 +105,7 @@ runLoop m = go m (M.size m) 0 0 []
         if numSoFar >= amountOptions
         then do
           putStrLn $ "Done " <> show (numSoFar +1) <> " combos out of " <> show (attempts+1) <> " attempts. Saving to DB..."
-          pure (mAfter, res : newRows)
+          pure (mAfter, res : newRows, attempts+1)
         else go mAfter (if isNewToUs then size+1 else size) (numSoFar + 1) (attempts+1) (res : newRows))
         `catch` (\(SomeException _e) -> go m' size numSoFar attempts newRows)
 
@@ -162,3 +165,30 @@ addRow (ComboRow x y result rank isNew) wm =
 addComboRow :: Text -> Maybe Text -> Int -> Bool -> Maybe WordInfo -> Maybe WordInfo
 addComboRow otherElem result rank isNew Nothing = Just (WordInfo rank 1.0 isNew (M.singleton otherElem result))
 addComboRow otherElem result newRank _isNew (Just wi) = Just (wi { rank = min (rank wi) newRank, combos = combos wi & at otherElem ?~ result })
+
+makeIncidence :: KnownNat rows => KnownNat cols => Proxy (rows :: Nat) -> Proxy (cols :: Nat) -> WordMap -> (SparseMatrix rows cols Float, SparseMatrix rows cols Float)
+makeIncidence _ _ wmOld = (E.fromList inDegreeMatrix, E.fromList outDegreeMatrix)
+  where
+    wm = M.map (\wi -> wi & #combos %~ M.map (\case
+      Just "" -> Nothing
+      x -> x)) wmOld
+    mList :: [((Text, WordInfo), Int)]
+    mList = zip (M.toList wm) [1..]
+    nMap = M.fromList $ map (\((n, _wi), i) -> (n, i)) mList
+    lookup' k = fromMaybe (error "") $ M.lookup k nMap
+    comboMap = zip [0..] $ sortNub $ mconcat $ map (\((_n, wi), i) -> map (\(other, res) -> ((\case
+        [x, y] -> (x, y)
+        _ -> error "") $ sort [lookup' other, i], maybe 0 lookup' res)) (M.toList $ combos wi) ) mList
+    (inDegreeMatrix, outDegreeMatrix) = partitionEithers $ mconcat $
+      map (\(comboId, ((elem1, elem2), res)) -> [Left (elem1, comboId, 1), Left (elem2, comboId, 1), Right (res, comboId, 1)]) comboMap
+      -- this travesty makes a list of combos, indexed by ints.
+      -- maybe it should've just been done directly from the combo rows
+
+makeSubgraph :: KnownNat rows => KnownNat cols => Proxy (rows :: Nat) -> Proxy (cols :: Nat) -> [(Int, Int, Int)] -> SparseMatrix rols cols Float
+makeSubgraph = error ""
+
+-- makeSubgraph (Proxy @6 (Proxy @2) [(0, 1, 2), (3, 4, 5)]
+
+{-
+
+-}

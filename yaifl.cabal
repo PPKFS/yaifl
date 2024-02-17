@@ -156,8 +156,11 @@ library
     , prettyprinter
     , prettyprinter-ansi-terminal
     , split
+    , aeson
+    , req
     , sqlite-simple
     , random
+    , eigen
 
 test-suite yaifl-test
   import:             common-options

@@ -28,10 +28,11 @@ instance IsOption AllTenses where
       (  long (untag (optionName :: Tagged AllTenses String))
       <> help (untag (optionHelp :: Tagged AllTenses String))
       )-}
-main :: IO WordMap
+main :: IO ()
 main = do
   m <- W.initMap
   runLoop m
+  pass
 -- this is a rip of tasty's main, but hooking my own global `TraceID` through it for
 -- better Zipkin traces.
 main' :: IO ()
