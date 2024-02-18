@@ -9,8 +9,6 @@ import Network.HTTP.Req
 import Control.Concurrent (threadDelay)
 import Data.Aeson
 import Control.Exception (catch)
-import Eigen.SparseMatrix (SparseMatrix)
-import qualified Eigen.SparseMatrix as E
 
 iterateM_ :: Monad m => (a -> m a) -> a -> m b
 iterateM_ f = g
@@ -125,7 +123,9 @@ doMatch wm x y r = do
     (bs :: JsonResponse InfiniteResponse) <- req GET (https "neal.fun" /: "api" /: "infinite-craft" /: "pair") NoReqBody jsonResponse $
       ("first" =: x) <>
       ("second" =: y) <>
-      header "Referer" "https://neal.fun/infinite-craft/"
+      header "Referer" "https://neal.fun/infinite-craft/" <>
+      header "Host" "neal.fun" <>
+      header "User-Agent" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
     let res = result (responseBody bs)
     let actualRank = rank <$> wm ^. at res
     putStrLn $ toString $ x <> " + " <> y <> " = " <> showResponse (responseBody bs) <> maybe "" (\acRank -> "(rank " <> show acRank <> ")") actualRank
@@ -165,7 +165,7 @@ addRow (ComboRow x y result rank isNew) wm =
 addComboRow :: Text -> Maybe Text -> Int -> Bool -> Maybe WordInfo -> Maybe WordInfo
 addComboRow otherElem result rank isNew Nothing = Just (WordInfo rank 1.0 isNew (M.singleton otherElem result))
 addComboRow otherElem result newRank _isNew (Just wi) = Just (wi { rank = min (rank wi) newRank, combos = combos wi & at otherElem ?~ result })
-
+{-}
 makeIncidence :: KnownNat rows => KnownNat cols => Proxy (rows :: Nat) -> Proxy (cols :: Nat) -> WordMap -> (SparseMatrix rows cols Float, SparseMatrix rows cols Float)
 makeIncidence _ _ wmOld = (E.fromList inDegreeMatrix, E.fromList outDegreeMatrix)
   where
@@ -188,7 +188,5 @@ makeSubgraph :: KnownNat rows => KnownNat cols => Proxy (rows :: Nat) -> Proxy (
 makeSubgraph = error ""
 
 -- makeSubgraph (Proxy @6 (Proxy @2) [(0, 1, 2), (3, 4, 5)]
-
-{-
 
 -}
