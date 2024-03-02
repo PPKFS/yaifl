@@ -161,7 +161,9 @@ library
     , sqlite-simple
     , random
     , eigen
-
+    , hvega
+    , bytestring
+    , fgl
 test-suite yaifl-test
   import:             common-options
   type:               exitcode-stdio-1.0

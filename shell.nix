@@ -12,6 +12,7 @@ in
       zlib
       zlib.dev
       zlib.out
+      cairo
       haskell.packages.ghc94.haskell-language-server
     ];
     shellHook = ''
