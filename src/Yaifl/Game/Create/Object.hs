@@ -1,13 +1,13 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Yaifl.Game.Create.Object
-  ( addThingInternal
-  , addRoomInternal
-  , addThing'
+  ( addRoomInternal
   , addThing
   , addObject
   , addRoom
   , addRoom'
   , addRegion
   , addBaseObjects
+  , done
   ) where
 
 import Solitude
@@ -34,6 +34,8 @@ import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
+
+done = defaults
 
 makeObject ::
   Display (WMSayable wm)
@@ -108,28 +110,6 @@ addThingInternal name ia desc objtype specifics details mbLoc = do
         True specifics (fromMaybe (blankThingData ia) details) mbLoc
   pure (tagThing t)
 
-addThing' ::
-  forall wm es r.
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm -- ^ Description.
-  -> "specifics" :? WMObjSpecifics wm
-  -> "build" :! Eff '[State (ThingData wm)] r -- ^ Build your own thing monad!
-  -> "location" :? EnclosingEntity
-  -> Eff es ThingEntity
-addThing' n
-  (argDef #initialAppearance "" -> ia)
-  (argDef #description "" -> d)
-  (argF #specifics -> s)
-  (arg #build -> stateUpdate)
-  (argF #location -> loc) =
-    addThingInternal n ia d (ObjectKind "thing") s (runLocalState (blankThingData ia) stateUpdate) loc
-
-runLocalState :: a1 -> Eff '[State a1] a2 -> Maybe a1
-runLocalState bl upd = Just $ snd $ runPureEff $ runStateLocal bl upd
-
 addThing ::
   forall wm es.
   WMWithProperty wm Enclosing
@@ -138,14 +118,25 @@ addThing ::
   -> "initialAppearance" :? WMSayable wm
   -> "description" :? WMSayable wm -- ^ Description.
   -> "specifics" :? WMObjSpecifics wm
+  -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
+  -> "location" :? EnclosingEntity
+  -> "type" :? ObjectKind
+  -> "thingData" :? ThingData wm
   -> Eff es ThingEntity
-addThing n (argDef #initialAppearance "" -> ia) (argDef #description "" -> d) (argDef #specifics identityElement -> s) =
-  addThing' @wm n
-    ! #initialAppearance ia
-    ! #description d
-    ! #specifics s
-    ! #build pass
-    ! defaults
+addThing n
+  (argDef #initialAppearance "" -> ia)
+  (argDef #description "" -> d)
+  (argF #specifics -> s)
+  (argF #modify -> stateUpdate)
+  (argF #location -> loc)
+  (argDef #type (ObjectKind "thing") -> ki)
+  (argDef #thingData (blankThingData ia) -> td) = do
+    t <- addThingInternal n ia d ki s (Just td) loc
+    whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyThing t (`runLocalState` su)
+    pure t
+
+runLocalState :: a1 -> Eff '[State a1] a2 -> a1
+runLocalState bl upd = snd $ runPureEff $ runStateLocal bl upd
 
 addRoomInternal ::
   WMWithProperty wm Enclosing
@@ -176,17 +167,17 @@ addRoom ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  -> "description" :? WMSayable wm -- ^ Description.
   -> Eff es RoomEntity
-addRoom n d = addRoom' n d pass
+addRoom n (argDef #description "" -> d) = addRoom' n d pass
 
 addBaseObjects ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => Eff es ()
 addBaseObjects = do
-  v <- addRoom "The Void" "If you're seeing this, you did something wrong."
-  addThing' "player" ! #description "It's you, looking handsome as always" ! #build (#described .= Undescribed) ! defaults
+  v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
+  addThing "player" ! #description "It's you, looking handsome as always" ! #modify (#objectData % #described .= Undescribed) ! done
   #firstRoom .= v
 
 addRegion ::

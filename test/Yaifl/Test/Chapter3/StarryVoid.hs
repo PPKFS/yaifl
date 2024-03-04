@@ -1,24 +1,24 @@
 module Yaifl.Test.Chapter3.StarryVoid where
 
 import Solitude
+import Named
 import Yaifl
 import Yaifl.Game.Actions.Going
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Direction
-import Yaifl.Game.ObjectSpecifics
 import Yaifl.Game.Create.Object
-import Yaifl.Model.Entity
-import Yaifl.Model.Query
 import Yaifl.Game.Create.RoomConnection
-import Yaifl.Model.Kinds.Door
 import Yaifl.Game.Create.Rule
+import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Actions.Args (getPlayer, silentAction)
-import Yaifl.Model.Rules.Rulebook
+import Yaifl.Model.Entity
+import Yaifl.Model.Kinds.Direction
+import Yaifl.Model.Kinds.Openable
+import Yaifl.Model.Metadata
+import Yaifl.Model.Query
 import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.SayQQ
-import Yaifl.Model.Kinds.Openable
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
@@ -26,11 +26,14 @@ ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
 starryVoidWorld :: Game PlainWorldModel ()
 starryVoidWorld = do
   setTitle "Starry Void"
-  tcr <- addRoom "The Centre Ring" ""
-  tsv <- addRoom "The Starry Void" ""
+  tcr <- addRoom "The Centre Ring"
+    ! done
+  tsv <- addRoom "The Starry Void"
+    ! done
   tsv `isInsideFrom` tcr
+
   tmb <- addDoor "magician's booth"
-    (DynamicText $ Right ("description of magician's booth door", RuleLimitedEffect $
+    ! #initialAppearance (DynamicText @PlainWorldModel $ Right ("description of magician's booth door", RuleLimitedEffect $
         withThing $ \t ->
         do
           p <- getPlayer
@@ -39,7 +42,9 @@ starryVoidWorld = do
           [sayingTell|{?if picr}A magician's booth stands in the corner, painted dark blue with glittering gold stars.¬
       {?else if cl}A crack of light indicates the way back out to the center ring.¬
       {?else}The door stands open to the outside.{?end if}|]))
-    "" (tsv, Out) (tcr, In) Nothing
+    ! #front (tsv, Out)
+    ! #back (tcr, In)
+    ! done
 
   insteadOf (ActionRule #examining) [theObject tmb, whenIn tcr] $ \_ -> do
     booth <- getObject tmb

@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl
-version:       0.0.8.383
+version:       0.0.9.475
 synopsis:      Yet another interactive fiction library.
 description:   Yet another interactive fiction library.
 homepage:      https://github.com/PPKFS/yaifl

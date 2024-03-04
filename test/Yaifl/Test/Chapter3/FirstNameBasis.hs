@@ -22,8 +22,9 @@ ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)
 firstNameBasisWorld :: Game PlainWorldModel ()
 firstNameBasisWorld = do
   setTitle "First Name Basis"
-  tcl <- addRoom "The Crew Lounge" [wrappedText|Deliberately spartan: the crew feels weight restrictions here first,
-so there aren't any chairs, just a few thin pads on the ground.|]
+  _tcl <- addRoom "The Crew Lounge"
+    ! #description [wrappedText|Deliberately spartan: the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.|]
+    ! done
   thp <- addDevice "holographic projector"
       ! #initialAppearance "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
       ! #description (text "projector description" $ withThing $ \t -> do

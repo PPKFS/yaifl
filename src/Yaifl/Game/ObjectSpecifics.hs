@@ -34,6 +34,7 @@ import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Device
 import Named
 import Yaifl.Model.Kinds.Person
+import Effectful.Optics ((.=))
 
 data ObjectSpecifics =
   NoSpecifics
@@ -107,20 +108,30 @@ addDoor ::
   => NoMissingObjects wm es
   => AddObjects wm es
   => WMSayable wm -- ^ name
-  -> WMSayable wm -- ^ initial appearance
-  -> WMSayable wm -- ^ description
-  -> (RoomEntity, WMDirection wm)
-  -> (RoomEntity, WMDirection wm)
-  -> Maybe (ThingData wm) -- ^ Optional details; if 'Nothing' then the default is used.
+  -> "front" :! (RoomEntity, WMDirection wm)
+  -> "back" :! (RoomEntity, WMDirection wm)
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm -- ^ Description.
+  -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
+  -> "thingData" :? ThingData wm -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es DoorEntity
-addDoor n ia des f b mbD = do
+addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #modify pass -> upD) (argF #thingData -> mbD) = do
   let ds = blankDoor (fst f) (fst b)
-  d <- addThingInternal n ia des (ObjectKind "door")
-      (Just $ inj (Proxy @wm) $ DoorSpecifics ds)
+  d <- addThing @wm n ia des
+    ! #specifics (inj (Proxy @wm) $ DoorSpecifics ds)
+    ! #modify (do
+      upD
+      #objectData % #portable .= FixedInPlace
+      #objectData % #pushableBetweenRooms .= False)
+    ! #type (ObjectKind "door")
+    ! paramF #thingData mbD
+    ! #location (coerceTag $ fst f)
+    ! done
+
       -- A door is always fixed in place.
       -- A door is never pushable between rooms.
-      (Just $ (\x -> x & #portable .~ FixedInPlace & #pushableBetweenRooms .~ False) $ fromMaybe (blankThingData ia) mbD)
-      (Just (coerceTag $ fst f))
+      --(Just $ (\x -> x & )
+      --(Just )
   updateMultiLocatedObject d
   let tagged = tag @Door @DoorTag ds d
   addDoorToConnection tagged f b
@@ -152,7 +163,7 @@ addDevice ::
   -> "description" :? WMSayable wm -- ^ Description.
   -> "device" :? Device
   -> Eff es ThingEntity
-addDevice n ia d (argDef #device identityElement -> dev) = addThing n ia d ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev))
+addDevice n ia d (argDef #device identityElement -> dev) = addThing @wm n ia d ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev)) ! done
 
 addPerson ::
   forall wm es.
@@ -165,4 +176,4 @@ addPerson ::
   -> "description" :? WMSayable wm -- ^ Description.
   -> "carrying" :? Enclosing
   -> Eff es ThingEntity
-addPerson n (Arg g) ia d (argF #carrying -> e)= addThing n ia d ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e))))
+addPerson n (Arg g) ia d (argF #carrying -> e) = addThing @wm n ia d ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e)))) ! done
