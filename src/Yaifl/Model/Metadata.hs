@@ -33,6 +33,7 @@ module Yaifl.Model.Metadata (
   , getGlobalTime
   , tickGlobalTime
   , isKind
+  , mapKindsOf
 
   , kindIsUnderstoodAs
   , kindPluralIsUnderstoodAs
@@ -199,7 +200,7 @@ isKind o = isKindInternal (o ^. #objectType)
       -> ObjectKind
       -> Eff es Bool
     isKindInternal obj e' = do
-      td <- gets $ preview (#kindDAG % at obj % _Just % #childKinds)
+      td <- gets $ preview (#kindDAG % at obj % _Just % #parentKinds)
       case td of
         Nothing -> noteError (const False) ("Found no type entry for " <> show obj)
         Just iv ->
@@ -210,16 +211,39 @@ isKind o = isKindInternal (o ^. #objectType)
           else
             anyM (`isKindInternal` e') iv
 
+mapKindsOf ::
+  forall es k o a.
+  WithMetadata es
+  => Ord a
+  => Is k A_Getter
+  => LabelOptic' "objectType" k o ObjectKind
+  => o -- ^ The object.
+  -> (ObjectKindInfo -> a)
+  -> Eff es (S.Set a)
+mapKindsOf o f = mapKindsInternal (o ^. #objectType)
+  where
+  mapKindsInternal :: ObjectKind -> Eff es (S.Set a)
+  mapKindsInternal ty = do
+    td <- gets @Metadata $ preview (#kindDAG % at ty % _Just)
+    case td of
+      Nothing -> noteError (const $ S.fromList []) ("Found no kind entry for " <> show ty)
+      Just oki ->
+        if S.null (oki ^. #parentKinds)
+        then pure $ S.fromList [f oki]
+        else S.insert (f oki) . mconcat <$> mapM mapKindsInternal (S.toList (oki ^. #parentKinds))
+
 kindIsUnderstoodAs ::
-  ObjectKind
-  -> [ObjectKind]
+  WithMetadata es
+  => ObjectKind
+  -> [Text]
   -> Eff es ()
-kindIsUnderstoodAs kind otherKinds = do
-  pass
+kindIsUnderstoodAs kind otherKinds =
+  #kindDAG % at kind % _Just % #understandAs %= (otherKinds<>)
 
 kindPluralIsUnderstoodAs ::
-  ObjectKind
-  -> [ObjectKind]
+  WithMetadata es
+  => ObjectKind
+  -> [Text]
   -> Eff es ()
-kindPluralIsUnderstoodAs kind otherKinds = do
-  pass
+kindPluralIsUnderstoodAs kind otherKinds =
+  #kindDAG % at kind % _Just % #pluralUnderstandAs %= (otherKinds<>)

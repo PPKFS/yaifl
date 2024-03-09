@@ -23,6 +23,7 @@ module Yaifl.Model.Effects
   , ObjectTraverse(..)
   , traverseRooms
   , traverseThings
+  , traverseThings_
   , traverseRegions
   , generateEntity
   -- ** Type synonyms
@@ -70,6 +71,12 @@ data ObjectTraverse (wm :: WorldModel) :: Effect where
 makeEffect ''ObjectLookup
 makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse
+
+traverseThings_ ::
+  ObjectTraverse wm :> es
+  => (Thing wm -> Eff es (Maybe (Thing wm)))
+  -> Eff es ()
+traverseThings_ f = traverseThings (\t -> f t >> return Nothing)
 
 -- | Error payload for when an object is not present in the world.
 -- However, most places currently just throw instead of doing any kind of error recovery...

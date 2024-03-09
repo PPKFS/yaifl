@@ -138,10 +138,14 @@ data ActionPhrase (wm :: WorldModel) =
   | OtherAction (OutOfWorldAction wm)
   deriving stock ( Generic )
 
+data CommandStatus = None | Low | Medium | High | Maximal
+  deriving stock (Eq, Show, Read, Ord, Enum, Generic)
+
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
   , whenPlayBegins :: Rulebook wm Unconstrained () Bool
   , actionProcessing :: ActionProcessing wm
+  , currentCommandStatus :: CommandStatus
   } deriving stock ( Generic )
 
 makeFieldLabelsNoPrefix ''WorldActions

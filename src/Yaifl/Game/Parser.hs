@@ -11,7 +11,7 @@ import Effectful.Optics ( use )
 import Yaifl.Model.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Kinds.Direction ( HasDirectionalTerms(..) )
-import Yaifl.Model.Metadata ( Metadata, noteError, getGlobalTime )
+import Yaifl.Model.Metadata
 import Yaifl.Model.Query
 import Yaifl.Text.Print
 import Yaifl.Model.Actions.Args
@@ -223,7 +223,8 @@ tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
   playerLoc <- getLocation pl
   allItems <- getAllObjectsInRoom IncludeScenery IncludeDoors playerLoc
-  let scores = zip (map (scoreParserMatch t) allItems) allItems
+  let phraseSet = S.fromList . words $ t
+  let scores = zip (map (scoreParserMatch phraseSet) allItems) allItems
   threshold <- use @Metadata #parserMatchThreshold
   match <- filterM (\(f, _) -> f >>= \x -> pure (x > threshold)) scores
   case match of
@@ -233,15 +234,16 @@ tryFindingObject t = failHorriblyIfMissing $ do
 
 scoreParserMatch ::
   RuleEffects wm es
-  => Text -> Thing wm -> Eff es Double
-scoreParserMatch phrase thing = do
-  let phraseSet = S.fromList . words $ phrase
+  => S.Set Text -> Thing wm -> Eff es Double
+scoreParserMatch phraseSet thing = do
   -- a total match between the phrase and either the thing's name or any of the thing's understand as gives 1
   -- otherwise, we see how many of the words of the phrase are represented in the above
   -- then the match is how many words of the phrase were successfully matched
   matchingAgainst <- (:(toList $ thing ^. #understandAs)) . S.fromList . words <$> sayText (thing ^. #name)
+  -- and also get the matches of its *kind*
+  kindSynonyms <- map (S.fromList . words) . mconcat . S.toList <$> mapKindsOf thing (view #understandAs)
   -- for each set, keep only the words that match
-  let filterSets = S.unions $ map (S.intersection phraseSet) matchingAgainst
+  let filterSets = S.unions $ map (S.intersection phraseSet) (matchingAgainst <> kindSynonyms)
   pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))
 
 

@@ -28,12 +28,15 @@ ex2World = do
   setTitle "Bic"
   addRoom "The Staff Break Room"
     ! done
+
   addThing "Bic pen"
     ! #modify (#nameProperness .= Improper)
     ! done
+
   addThing "orange"
     ! #description "It's a small hard pinch-skinned thing from the lunch room, probably with lots of pips and no juice."
     ! done
+
   addThing "napkin"
     ! #description "Slightly crumpled."
     ! done

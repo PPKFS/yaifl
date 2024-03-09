@@ -163,7 +163,10 @@ addDevice ::
   -> "description" :? WMSayable wm -- ^ Description.
   -> "device" :? Device
   -> Eff es ThingEntity
-addDevice n ia d (argDef #device identityElement -> dev) = addThing @wm n ia d ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev)) ! done
+addDevice n ia d (argDef #device identityElement -> dev) = addThing @wm n ia d
+  ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev))
+  ! #type (ObjectKind "device")
+  ! done
 
 addPerson ::
   forall wm es.
@@ -176,4 +179,11 @@ addPerson ::
   -> "description" :? WMSayable wm -- ^ Description.
   -> "carrying" :? Enclosing
   -> Eff es ThingEntity
-addPerson n (Arg g) ia d (argF #carrying -> e) = addThing @wm n ia d ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e)))) ! done
+addPerson n (Arg g) ia d (argF #carrying -> e) = addThing @wm n ia d
+  ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e))))
+  ! #type (case g of
+    Male -> ObjectKind "man"
+    Female -> ObjectKind "woman"
+    NonBinary -> ObjectKind "person"
+    Other _ -> ObjectKind "person")
+  ! done

@@ -5,8 +5,6 @@ module Yaifl.Model.ObjectKind
 
 import Solitude
 import Yaifl.Model.Kinds.Object
-import Effectful.Optics
-import qualified Data.Set as S
 
 makeKindDAG :: Map ObjectKind (Set ObjectKind)
 makeKindDAG = fromList
@@ -19,7 +17,10 @@ makeKindDAG = fromList
   , ("supporter", fromList ["thing"])
   , ("backdrop", fromList ["thing"])
   , ("person", fromList ["animal"])
+  , ("man", fromList ["person"])
+  , ("woman", fromList ["person"])
   , ("animal", fromList ["thing"])
+  , ("device", fromList ["thing"])
   -- same as direction, probably useless
   , ("region", fromList [])
   , ("door", fromList ["thing"])
@@ -27,7 +28,7 @@ makeKindDAG = fromList
   ]
 
 data ObjectKindInfo = ObjectKindInfo
-  { childKinds :: Set ObjectKind
+  { parentKinds :: Set ObjectKind
   , understandAs :: [Text]
   , pluralUnderstandAs :: [Text]
   }

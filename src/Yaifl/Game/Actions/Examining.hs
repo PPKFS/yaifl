@@ -57,7 +57,7 @@ actionRequiresLight :: ExamineRule wm
 actionRequiresLight = notImplementedRule "action requires light"
 
 examineUndescribed :: ExamineRule wm
-examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \Args{..} -> do
+examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \Args{} -> do
   --unless (examiningTextPrinted variables) $ sayResponse (#examiningResponses % #examineUndescribedA) (error "")
   rulePass
 

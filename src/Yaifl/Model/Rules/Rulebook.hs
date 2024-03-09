@@ -140,8 +140,8 @@ data Rulebook wm x v r = Rulebook
 getRuleNames ::
   Rulebook wm x v r
   -> [Text]
-getRuleNames r = map (\r -> case r ^. #name of
-  "" -> r ^. #name <> " blank rule"
+getRuleNames r = map (\r' -> case r' ^. #name of
+  "" -> r' ^. #name <> " blank rule"
   x -> x) (rules r)
 
 blankRulebook ::

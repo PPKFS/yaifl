@@ -24,7 +24,6 @@ import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
-import Yaifl.Model.ObjectKind
 import Yaifl.Model.Metadata
 
 data YouCanAlsoSeeResponses =

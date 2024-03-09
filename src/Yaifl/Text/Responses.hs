@@ -32,7 +32,6 @@ constResponse t = Response $ const [sayingTell|{t}|]
 
 sayResponse ::
   RuleEffects wm es
-  => SayableValue (WMSayable wm) wm
   => Reader a :> es
   => Is k A_Lens
   => LabelOptic' "responses" k a (resp -> Response wm v)
@@ -47,7 +46,6 @@ sayResponse aL v = do
 
 sayTellResponse ::
   RuleEffects wm es
-  => SayableValue (WMSayable wm) wm
   => Reader a :> es
   => Writer Text :> es
   => Is k A_Lens
