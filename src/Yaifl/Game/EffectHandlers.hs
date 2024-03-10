@@ -22,13 +22,17 @@ import Yaifl.Game.Actions.Collection
 import Effectful.Error.Static (Error, runError)
 import Yaifl.Model.Store
 import Yaifl.Model.Kinds.Region
+import Yaifl.Model.Input
+import Yaifl.Text.ListWriter
 
 
 type EffStack (wm :: WorldModel) = '[
   ActionHandler wm
+
   , State (AdaptiveNarrative wm)
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)
+  , Input
   , State (ActionCollection wm)
   , ObjectTraverse wm
   , ObjectUpdate wm
@@ -38,6 +42,7 @@ type EffStack (wm :: WorldModel) = '[
   , State (WorldActions wm)
   , Print
   , State (World wm)
+
   , Breadcrumbs
   , Error MissingObject
   , IOE
@@ -65,11 +70,14 @@ zoomState l = interpret $ \env -> \case
 convertToUnderlyingStack ::
   forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => World wm
+  -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
+  => WithListWriting wm
+  => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
   -> IO (a, World wm)
-convertToUnderlyingStack w ac =
+convertToUnderlyingStack i w ac =
   fmap (either (error . show) id)
   . runEff
   . runError
@@ -82,6 +90,7 @@ convertToUnderlyingStack w ac =
   . runQueryAsLookup
   . runTraverseAsLookup
   . evalStateShared ac
+  . i
   . zoomState @(World wm) #activities
   . zoomState @(World wm) #responses
   . zoomState @(World wm) #adaptiveNarrative
@@ -169,7 +178,9 @@ updateIt newObj mbExisting = case mbExisting of
 
 runGame ::
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
-  => World wm
+  => WithListWriting wm
+  => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
   -> IO (a, World wm)

@@ -28,7 +28,10 @@ import qualified Data.Set as S
 import Yaifl.Model.Kinds.Object
 import Yaifl.Text.Say
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
+import Effectful.Writer.Static.Local (execWriter)
+import Yaifl.Model.Input (waitForInput, Input)
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -60,11 +63,13 @@ runActionHandlerAsWorldActions ::
   => ObjectTraverse wm :> es
   => ObjectUpdate wm :> es
   => Print :> es
+  => WithListWriting wm
   => SayableValue (WMSayable wm) wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
   => State Metadata :> es
+  => Input :> es
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
@@ -137,6 +142,8 @@ findSubjects ::
   => ObjectTraverse wm :> es
   => ObjectUpdate wm :> es
   => Print :> es
+  => Input :> es
+  => WithListWriting wm
   => SayableValue (WMSayable wm) wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
@@ -179,6 +186,7 @@ findSubjects cmd actionArgs (WrappedAction (a :: Action wm resps goesWith v)) = 
 parseArgumentType ::
   forall wm es.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => WithListWriting wm
   => RuleEffects wm es
   => ActionParameterType
   -> Text
@@ -208,7 +216,8 @@ parseArgumentType TakesThingParameter t = do
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 tryFindingAnyObject ::
-  RuleEffects wm es
+  WithListWriting wm
+  => RuleEffects wm es
   => Text
   -> Eff es (Either Text (NamedActionParameter wm))
 tryFindingAnyObject t = do
@@ -216,7 +225,8 @@ tryFindingAnyObject t = do
   pure $ ObjectParameter <$> o
 
 tryFindingObject ::
-  RuleEffects wm es
+  WithListWriting wm
+  => RuleEffects wm es
   => Text
   -> Eff es (Either Text (AnyObject wm))
 tryFindingObject t = failHorriblyIfMissing $ do
@@ -230,7 +240,23 @@ tryFindingObject t = failHorriblyIfMissing $ do
   case match of
     [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
     [x] -> pure $ Right (toAny $ snd x)
-    (_x:_xs) -> pure $ Left "I saw too many things that could be that."
+    xs -> handleAmbiguity (map (toAny . snd) xs)
+
+handleAmbiguity ::
+  WithListWriting wm
+  => RuleEffects wm es
+  => [AnyObject wm]
+  -> Eff es (Either Text (AnyObject wm))
+handleAmbiguity ls = do
+  names <- mapM (sayText . view #name) ls
+  let phrase = case names of
+        [] -> error "no objects to be ambiguous between"
+        [x] -> x
+        [x, y] -> x <> " or " <> y
+        l -> maybe (error "impossible") (\(i, ls') -> T.intercalate ", " i <> ", or " <> ls') (unsnoc l)
+  say $ "Which did you mean: " <> phrase <> "?"
+  i <- waitForInput
+  pure $ Left "I saw too many things that could be that."
 
 scoreParserMatch ::
   RuleEffects wm es
@@ -263,10 +289,11 @@ parseDirection p cmd =
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
   NoMissingObjects wm es
+  => WithListWriting wm
+  => Input :> es
   => Refreshable wm v
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
-  => SayableValue (WMSayable wm) wm
   => State (WorldActions wm) :> es
   => State (ActivityCollector wm) :> es
   => State (ResponseCollector wm) :> es

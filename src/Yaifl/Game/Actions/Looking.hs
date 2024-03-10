@@ -37,6 +37,7 @@ import Yaifl.Text.SayQQ
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Input
 
 data LookingResponses wm =
   RoomDescriptionHeadingA
@@ -131,6 +132,7 @@ foreachVisibilityHolder ::
   => ActionHandler wm :> es
   => ObjectTraverse wm :> es
   => Print :> es
+  => Input :> es
   => Reader (LookingAction wm) :> es
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es

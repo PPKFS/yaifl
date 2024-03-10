@@ -34,11 +34,11 @@ firstNameBasisWorld = do
       ! done
 
   thp `isUnderstoodAs` ["holo", "holograph", "Misthon", "9000"]
-  addPerson "lewis"
+  addPerson "Lewis"
     ! #gender Male
     ! #description "A wiry, excitable engineer who just signed aboard last week."
     ! done
-  addPerson "Harper"
+  addPerson "harper"
     ! #gender Male
     ! #description "Harper's a good guy: taciturn when sober, affectionate when drunk, but rarely annoying in either state."
     ! done

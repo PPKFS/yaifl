@@ -123,6 +123,7 @@ library
     Yaifl.Model.Kinds.Thing
 
     Yaifl.Model.Metadata
+    Yaifl.Model.Input
     Yaifl.Model.MultiLocated
     Yaifl.Model.ObjectLike
     Yaifl.Model.ObjectKind

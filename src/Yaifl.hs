@@ -13,12 +13,14 @@ module Yaifl (
   , Game
   , runGame
   , addStandardActions
+  , runTurnsFromBuffer
+  , runTurn
   ) where
 
 import Solitude hiding ( Reader, runReader )
 
 
-import Effectful.Optics ( (?=) )
+import Effectful.Optics ( (?=), use )
 
 import Yaifl.Model.Action
 import Yaifl.Game.ActionProcessing
@@ -70,6 +72,7 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
+import Yaifl.Model.Input (waitForInput, Input)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -163,6 +166,7 @@ blankMetadata = Metadata
   , traceAnalysisLevel = Maximal
   , oxfordCommaEnabled = True
   , parserMatchThreshold = 0.66
+  , bufferedInput = []
   }
 
 newWorld ::
@@ -262,3 +266,21 @@ addOutOfWorld ::
   -> Eff es ()
 addOutOfWorld cs e = forM_ cs $ \c ->
   #actionsMap % at c ?= OtherAction e
+
+runTurnsFromBuffer ::
+  State Metadata :> es
+  => Input :> es
+  => ActionHandler wm :> es
+  => Eff es ()
+runTurnsFromBuffer = do
+  b <- use #bufferedInput
+  unless (null b) $ runTurn >> runTurnsFromBuffer
+
+runTurn ::
+  Input :> es
+  => ActionHandler wm :> es
+  => Eff es ()
+runTurn = do
+  i <- waitForInput
+  void $ parseAction (ActionOptions False False) [NoParameter] i
+  -- TODO: this is where every turn things happen

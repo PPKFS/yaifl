@@ -20,6 +20,7 @@ import Yaifl.Text.Print ( Print, printText )
 import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMSayable )
 import Yaifl.Model.Effects
 import Yaifl.Model.Actions.Args
+import Yaifl.Model.Input
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> [NamedActionParameter wm] -> Text -> ActionHandler wm m (Either Text Bool)
@@ -33,6 +34,7 @@ makeEffect ''ActionHandler
 
 type RuleEffects wm es = (
   State Metadata :> es
+  , Input :> es
   , State (ActivityCollector wm) :> es
   , State (ResponseCollector wm) :> es
   , State (AdaptiveNarrative wm) :> es
@@ -60,6 +62,7 @@ instance SayableValue String wm where
 
 type ConcreteRuleStack wm = '[
   ActionHandler wm
+  , Input
   , State (AdaptiveNarrative wm)
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)

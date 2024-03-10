@@ -35,6 +35,7 @@ import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.SayQQ
+import Yaifl.Model.Input
 
 sayText ::
   SayableValue s wm
@@ -231,6 +232,7 @@ printName ::
   => Print :> es
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
+  => Input :> es
   => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => ObjectLike wm o

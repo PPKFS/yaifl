@@ -87,6 +87,7 @@ data Metadata = Metadata
   , traceAnalysisLevel :: AnalysisLevel -- ^ See `AnalysisLevel`.
   , oxfordCommaEnabled :: Bool -- ^ should we use the oxford comma in lists?
   , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
+  , bufferedInput :: [Text]
   -- more to come I guess
   } deriving stock (Generic)
 makeFieldLabelsNoPrefix ''Metadata

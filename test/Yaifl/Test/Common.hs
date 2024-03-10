@@ -18,7 +18,8 @@ import qualified Data.Text as T
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
-import Yaifl.Model.Actions.Args
+import Effectful.Optics
+import Yaifl.Model.Input
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -76,7 +77,7 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
-  fst <$$> runGame (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <$$> runGame runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
@@ -92,7 +93,8 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
                 failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
-                mapM_ (parseAction (ActionOptions False False) [NoParameter]) actionsToDo
+                setInputBuffer actionsToDo
+                runTurnsFromBuffer
                 (w2 :: World wm) <- get
                 let (x, _) = runPureEff $ runStateShared w2 $ do
                       -- take it down and flip it around
