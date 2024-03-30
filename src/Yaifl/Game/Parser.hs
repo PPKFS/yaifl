@@ -74,17 +74,7 @@ runActionHandlerAsWorldActions ::
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ do
-    -- print the prompt
-    leftoverLookingSpace <- lastPrint . lastMessageContext <$> modifyBuffer id
-    --printLn $ show leftoverLookingSpace
-    modifyBuffer (\b -> case ("\n\n" `T.isSuffixOf` leftoverLookingSpace, "\n" `T.isSuffixOf` leftoverLookingSpace) of
-      (True, _) -> b
-      (False, True) -> b & #lastMessageContext % #shouldPrintLinebreak .~ True
-      (False, False) -> b & #lastMessageContext % #shouldPrintPbreak .~ True
-      )
-    modifyBuffer (\b -> b & #lastMessageContext % #runningOnLookingParagraph .~ False)
-    unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ ">" <> t
-    modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
+    printPrompt actionOpts
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of
@@ -106,6 +96,21 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
+a
+2
+printPrompt ::
+  ActionOptions wm
+  -> Eff es ()
+printPrompt actionOpts = do
+  leftoverLookingSpace <- lastPrint . lastMessageContext <$> modifyBuffer id
+  modifyBuffer (\b -> case ("\n\n" `T.isSuffixOf` leftoverLookingSpace, "\n" `T.isSuffixOf` leftoverLookingSpace) of
+    (True, _) -> b
+    (False, True) -> b & #lastMessageContext % #shouldPrintLinebreak .~ True
+    (False, False) -> b & #lastMessageContext % #shouldPrintPbreak .~ True
+    )
+  modifyBuffer (\b -> b & #lastMessageContext % #runningOnLookingParagraph .~ False)
+  unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ ">" <> t
+  void $ modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
 
 findVerb ::
   (State (WorldActions wm) :> es)
@@ -137,14 +142,12 @@ findSubjects ::
   ActionHandler wm :> es
   => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
-  => Display (WMSayable wm)
   => ObjectLookup wm :> es
   => ObjectTraverse wm :> es
   => ObjectUpdate wm :> es
   => Print :> es
   => Input :> es
   => WithListWriting wm
-  => SayableValue (WMSayable wm) wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
@@ -255,6 +258,7 @@ handleAmbiguity ls = do
         [x, y] -> x <> " or " <> y
         l -> maybe (error "impossible") (\(i, ls') -> T.intercalate ", " i <> ", or " <> ls') (unsnoc l)
   say $ "Which did you mean: " <> phrase <> "?"
+  -- TODO: this should be an activity
   i <- waitForInput
   pure $ Left "I saw too many things that could be that."
 

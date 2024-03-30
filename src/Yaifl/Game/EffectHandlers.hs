@@ -69,7 +69,7 @@ zoomState l = interpret $ \env -> \case
 
 convertToUnderlyingStack ::
   forall wm a.
-  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
+  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => WithListWriting wm
   => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
@@ -177,7 +177,7 @@ updateIt newObj mbExisting = case mbExisting of
   Just _ -> Just newObj
 
 runGame ::
-  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm, Display (WMSayable wm), SayableValue (WMSayable wm) wm)
+  (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => WithListWriting wm
   => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
