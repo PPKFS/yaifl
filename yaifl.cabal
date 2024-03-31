@@ -81,6 +81,8 @@ library
     Yaifl.Game.Actions.Looking.Locale
     Yaifl.Game.Actions.Looking.Visibility
     Yaifl.Game.Actions.Opening
+    Yaifl.Game.Actions.SwitchingOn
+    Yaifl.Game.Actions.Taking
     Yaifl.Game.Actions.OutOfWorld
 
     Yaifl.Game.Activities.ChoosingNotableLocaleObjects

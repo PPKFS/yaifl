@@ -28,6 +28,7 @@ import Yaifl.Game.Actions.Going
 import Yaifl.Game.Actions.Looking
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Game.Actions.Looking.Visibility
+import Yaifl.Game.Actions.SwitchingOn
 import Yaifl.Model.Activity
 import Yaifl.Game.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Game.Activities.ListingContents
@@ -73,6 +74,9 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
 import Yaifl.Model.Input (waitForInput, Input)
+import Yaifl.Game.Parser
+import Yaifl.Game.Actions.Taking
+import Yaifl.Model.Kinds.Device
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -81,6 +85,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Openability
   , WMWithProperty s Container
   , WMWithProperty s Enterable
+  , WMWithProperty s Device
   , HasLookingProperties s
   , WMStdDirections s
   , WMWithProperty s Door
@@ -130,6 +135,8 @@ addStandardActions = do
   addAction examining
   addAction opening
   addAction closing
+  addAction switchingOn
+  addAction taking
   pass
 
 blankActions ::
@@ -204,6 +211,8 @@ blankActionCollection = ActionCollection
   , examining = examiningAction
   , opening = openingAction
   , closing = closingAction
+  , switchingOn = switchingOnAction
+  , taking = takingAction
   }
 
 blankWorld ::
@@ -270,6 +279,7 @@ addOutOfWorld cs e = forM_ cs $ \c ->
 runTurnsFromBuffer ::
   State Metadata :> es
   => Input :> es
+  => Print :> es
   => ActionHandler wm :> es
   => Eff es ()
 runTurnsFromBuffer = do
@@ -278,9 +288,13 @@ runTurnsFromBuffer = do
 
 runTurn ::
   Input :> es
+  => Print :> es
   => ActionHandler wm :> es
   => Eff es ()
 runTurn = do
+  let actionOpts = ActionOptions False False
+  printPrompt actionOpts
   i <- waitForInput
-  void $ parseAction (ActionOptions False False) [NoParameter] i
+  printText i
+  void $ parseAction actionOpts [NoParameter] i
   -- TODO: this is where every turn things happen

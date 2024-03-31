@@ -1,8 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
-module Yaifl.Actions.Opening where
+module Yaifl.Game.Actions.SwitchingOn where
 
-
-import Yaifl.Actions.Action
+import Yaifl.Model.Action
 import Solitude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
@@ -13,19 +12,18 @@ import Yaifl.Model.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText)
 import Yaifl.Text.SayQQ
 
-data OpeningResponses wm
+data SwitchingOnResponses wm
 
-type OpeningAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (Thing wm)
-openingAction :: OpeningAction wm
-openingAction = Action
-  { name = error ""
+type SwitchingOnAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (Thing wm)
+switchingOnAction :: SwitchingOnAction wm
+switchingOnAction = (makeAction "switching on")
+  { name = "switching on"
   , understandAs = error ""
   , matches = error ""
   , parseArguments = error ""
-  , beforeRules = makeActionRulebook "before opening rulebook" []
-  , insteadRules = makeActionRulebook "instead of opening rulebook" []
-  , checkRules = makeActionRulebook "check opening rulebook" []
-  , carryOutRules = makeActionRulebook "carry out opening rulebook" []
-  , reportRules = makeActionRulebook "report opening rulebook" []
-
+  , beforeRules = makeActionRulebook "before switching on rulebook" []
+  , insteadRules = makeActionRulebook "instead of switching on rulebook" []
+  , checkRules = makeActionRulebook "check switching on rulebook" []
+  , carryOutRules = makeActionRulebook "carry out switching on rulebook" []
+  , reportRules = makeActionRulebook "report switching on rulebook" []
   }

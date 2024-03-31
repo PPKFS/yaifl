@@ -30,6 +30,8 @@ firstNameBasisWorld = do
       ! #initialAppearance "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
       ! #description (text "projector description" $ withThing $ \t -> do
           let isOn = fromMaybe False $ getDeviceMaybe t ^? _Just % #switchedOn
+          traceShow isOn pass
+          traceShow (getDeviceMaybe t ^? _Just % #switchedOn) pass
           [sayingTell|{?if isOn}The projector is now playing a documentary about the early politics of the Mars colony.{?else}The air above the projector is disappointingly clear.{?end if}|])
       ! done
 
@@ -38,7 +40,7 @@ firstNameBasisWorld = do
     ! #gender Male
     ! #description "A wiry, excitable engineer who just signed aboard last week."
     ! done
-  addPerson "harper"
+  addPerson "Harper"
     ! #gender Male
     ! #description "Harper's a good guy: taciturn when sober, affectionate when drunk, but rarely annoying in either state."
     ! done

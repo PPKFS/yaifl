@@ -177,8 +177,11 @@ instance SayableValue (SayLiteral "open") wm where
 instance SayableValue (SayLiteral "close") wm where
   sayTell = sayVerb @"close"
 
+instance SayableValue (SayLiteral "switch") wm where
+  sayTell = sayVerb @"switch"
+
 instance SayableValue (SayLiteral "paragraphBreak") wm where
-  sayTell _ = sayTell ("dddddd\n\n" :: Text)
+  sayTell _ = sayTell ("\n\n" :: Text)
   say _ = do
     void $ modifyBuffer (#lastMessageContext % #shouldPrintPbreak .~ True)
 
@@ -214,7 +217,9 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
     article <- articleEff
     sayTell (if isCap then maybe "" (uncurry T.cons) (bimapF toUpper id (T.uncons article)) else article)
     when (article /= "") (sayTell @Text " ")
-    sayTell @(AnyObject wm) o
+    ifM (isPlayer o)
+      [sayingTell|#{We}|]
+      (sayTell @(AnyObject wm) o)
     where
       getDetails = \case
         The a -> (a, True, True)

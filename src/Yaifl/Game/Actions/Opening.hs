@@ -75,7 +75,7 @@ standardReport = makeRule "standard report opening rule" [] $ \args -> do
   rulePass
 
 revealNewInterior :: ActionRule wm (OpeningAction wm) (Thing wm)
-revealNewInterior = notImplementedRule "can't open nonopenable things"
+revealNewInterior = notImplementedRule "revealing new interiors"
 
 standardOpening :: WMWithProperty wm Openability => ActionRule wm (OpeningAction wm) (Thing wm)
 standardOpening = makeRule "standard opening rule" [] $ \thing -> do

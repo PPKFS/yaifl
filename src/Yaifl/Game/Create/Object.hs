@@ -177,7 +177,9 @@ addBaseObjects ::
   => Eff es ()
 addBaseObjects = do
   v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
-  addThing "player" ! #description "It's you, looking handsome as always" ! #modify (#objectData % #described .= Undescribed) ! done
+  addThing "yourself" ! #description "It's you, looking handsome as always" ! #modify (do
+    #objectData % #described .= Undescribed
+    #nameProperness .= Proper) ! done
   #firstRoom .= v
 
 addRegion ::

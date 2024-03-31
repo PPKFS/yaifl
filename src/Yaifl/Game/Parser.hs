@@ -1,11 +1,11 @@
 module Yaifl.Game.Parser
   ( runActionHandlerAsWorldActions
+  , printPrompt
   ) where
 
 import Solitude
 
 import Breadcrumbs
-import Data.Text.Display
 import Effectful.Dispatch.Dynamic
 import Effectful.Optics ( use )
 import Yaifl.Model.Action
@@ -15,7 +15,7 @@ import Yaifl.Model.Metadata
 import Yaifl.Model.Query
 import Yaifl.Text.Print
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.WorldModel ( WMDirection, WMSayable )
+import Yaifl.Model.WorldModel ( WMDirection )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
@@ -30,7 +30,6 @@ import Yaifl.Text.Say
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
-import Effectful.Writer.Static.Local (execWriter)
 import Yaifl.Model.Input (waitForInput, Input)
 
 -- | Run an action. This assumes that all parsing has been completed.
@@ -58,13 +57,11 @@ runActionHandlerAsWorldActions ::
   State (WorldActions wm) :> es
   => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
-  => Display (WMSayable wm)
   => ObjectLookup wm :> es
   => ObjectTraverse wm :> es
   => ObjectUpdate wm :> es
   => Print :> es
   => WithListWriting wm
-  => SayableValue (WMSayable wm) wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
@@ -74,7 +71,7 @@ runActionHandlerAsWorldActions ::
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
   ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ do
-    printPrompt actionOpts
+    addPostPromptSpacing
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
     ac <- case possVerbs of
@@ -96,10 +93,15 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
-a
-2
+
+addPostPromptSpacing ::
+  Print :> es
+  => Eff es ()
+addPostPromptSpacing = void $ modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
+
 printPrompt ::
-  ActionOptions wm
+  Print :> es
+  => ActionOptions wm
   -> Eff es ()
 printPrompt actionOpts = do
   leftoverLookingSpace <- lastPrint . lastMessageContext <$> modifyBuffer id
@@ -109,8 +111,7 @@ printPrompt actionOpts = do
     (False, False) -> b & #lastMessageContext % #shouldPrintPbreak .~ True
     )
   modifyBuffer (\b -> b & #lastMessageContext % #runningOnLookingParagraph .~ False)
-  unless (silently actionOpts || hidePrompt actionOpts) $ printLn $ ">" <> t
-  void $ modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
+  unless (silently actionOpts || hidePrompt actionOpts) $ printText ">"
 
 findVerb ::
   (State (WorldActions wm) :> es)
@@ -236,6 +237,16 @@ tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
   playerLoc <- getLocation pl
   allItems <- getAllObjectsInRoom IncludeScenery IncludeDoors playerLoc
+  findObjectsFrom t allItems True
+
+findObjectsFrom ::
+  WithListWriting wm
+  => RuleEffects wm es
+  => Text
+  -> [Thing wm]
+  -> Bool
+  -> Eff es (Either Text (AnyObject wm))
+findObjectsFrom t allItems considerAmbiguity = do
   let phraseSet = S.fromList . words $ t
   let scores = zip (map (scoreParserMatch phraseSet) allItems) allItems
   threshold <- use @Metadata #parserMatchThreshold
@@ -243,12 +254,14 @@ tryFindingObject t = failHorriblyIfMissing $ do
   case match of
     [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
     [x] -> pure $ Right (toAny $ snd x)
-    xs -> handleAmbiguity (map (toAny . snd) xs)
+    xs -> if considerAmbiguity
+      then handleAmbiguity (map snd xs)
+      else pure $ Left "I still didn't know what you meant."
 
 handleAmbiguity ::
   WithListWriting wm
   => RuleEffects wm es
-  => [AnyObject wm]
+  => [Thing wm]
   -> Eff es (Either Text (AnyObject wm))
 handleAmbiguity ls = do
   names <- mapM (sayText . view #name) ls
@@ -259,12 +272,17 @@ handleAmbiguity ls = do
         l -> maybe (error "impossible") (\(i, ls') -> T.intercalate ", " i <> ", or " <> ls') (unsnoc l)
   say $ "Which did you mean: " <> phrase <> "?"
   -- TODO: this should be an activity
+  printPrompt (ActionOptions False False)
   i <- waitForInput
-  pure $ Left "I saw too many things that could be that."
+  printText i
+  addPostPromptSpacing
+  findObjectsFrom i ls False
 
 scoreParserMatch ::
   RuleEffects wm es
-  => S.Set Text -> Thing wm -> Eff es Double
+  => S.Set Text
+  -> Thing wm
+  -> Eff es Double
 scoreParserMatch phraseSet thing = do
   -- a total match between the phrase and either the thing's name or any of the thing's understand as gives 1
   -- otherwise, we see how many of the words of the phrase are represented in the above
@@ -273,7 +291,7 @@ scoreParserMatch phraseSet thing = do
   -- and also get the matches of its *kind*
   kindSynonyms <- map (S.fromList . words) . mconcat . S.toList <$> mapKindsOf thing (view #understandAs)
   -- for each set, keep only the words that match
-  let filterSets = S.unions $ map (S.intersection phraseSet) (matchingAgainst <> kindSynonyms)
+  let filterSets = S.unions $ map (S.intersection phraseSet . S.map T.toLower) (matchingAgainst <> kindSynonyms)
   pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))
 
 

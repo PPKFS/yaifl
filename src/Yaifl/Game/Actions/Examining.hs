@@ -10,6 +10,7 @@ import Yaifl.Model.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText, SayLiteral (..))
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Text.AdaptiveNarrative
 
 data ExaminingResponses =
   ExamineDirectionA
@@ -77,6 +78,7 @@ standardExamining :: ExamineRule wm
 standardExamining = Rule "standard examining rule" forPlayer' $ \Args{..} -> do
   -- if the noun provides the property description and the description of the noun is not "":
   _r <- whenRight Nothing (unwrapTarget $ examiningSubject variables) $ \obj -> do
+    regarding (Just obj)
     desc <- sayText (view #description obj)
     -- say "[description of the noun][line break]";
     -- now examine text printed is true.
