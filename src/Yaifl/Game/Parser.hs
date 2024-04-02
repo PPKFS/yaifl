@@ -213,26 +213,31 @@ parseArgumentType (Optionally a) t = do
 parseArgumentType TakesObjectParameter t = tryFindingAnyObject t
 parseArgumentType TakesThingParameter t = do
   o <- tryFindingObject t
-  case fromAny <$> o of
+  case bimapF (mapM fromAny) fromAny o of
     Left err -> pure $ Left err
-    Right Nothing -> pure $ Left "got room not thing"
-    Right (Just x) -> pure $ Right $ ThingParameter x
+    Right (Right (Just x)) -> pure $ Right $ ThingParameter x
+    Right (Left (Just ts)) -> pure $ Right $ PluralParameter (map ThingParameter ts)
+    _ -> pure $ Left "got room not thing"
 parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> t
 
 tryFindingAnyObject ::
+  forall wm es.
   WithListWriting wm
   => RuleEffects wm es
   => Text
   -> Eff es (Either Text (NamedActionParameter wm))
 tryFindingAnyObject t = do
   o <- tryFindingObject t
-  pure $ ObjectParameter <$> o
+  case o of
+    Right (Left plurals) -> pure $ Right $ PluralParameter (map ObjectParameter plurals)
+    Right (Right o') -> pure $ Right $ ObjectParameter o'
+    Left err -> pure $ Left err
 
 tryFindingObject ::
   WithListWriting wm
   => RuleEffects wm es
   => Text
-  -> Eff es (Either Text (AnyObject wm))
+  -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
   playerLoc <- getLocation pl
@@ -245,7 +250,7 @@ findObjectsFrom ::
   => Text
   -> [Thing wm]
   -> Bool
-  -> Eff es (Either Text (AnyObject wm))
+  -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 findObjectsFrom t allItems considerAmbiguity = do
   let phraseSet = S.fromList . words $ t
   let scores = zip (map (scoreParserMatch phraseSet) allItems) allItems
@@ -253,7 +258,7 @@ findObjectsFrom t allItems considerAmbiguity = do
   match <- filterM (\(f, _) -> f >>= \x -> pure (x > threshold)) scores
   case match of
     [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
-    [x] -> pure $ Right (toAny $ snd x)
+    [x] -> pure . Right . Right $ toAny (snd x)
     xs -> if considerAmbiguity
       then handleAmbiguity (map snd xs)
       else pure $ Left "I still didn't know what you meant."
@@ -262,7 +267,7 @@ handleAmbiguity ::
   WithListWriting wm
   => RuleEffects wm es
   => [Thing wm]
-  -> Eff es (Either Text (AnyObject wm))
+  -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 handleAmbiguity ls = do
   names <- mapM (sayText . view #name) ls
   let phrase = case names of

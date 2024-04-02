@@ -53,6 +53,7 @@ data NamedActionParameter wm =
   | ObjectParameter (AnyObject wm)
   | ThingParameter (Thing wm)
   | ConstantParameter Text
+  | PluralParameter [NamedActionParameter wm]
   deriving stock ( Generic)
 
 instance Show (NamedActionParameter wm) where
@@ -63,6 +64,7 @@ instance Show (NamedActionParameter wm) where
     ObjectParameter _ -> "object"
     ConstantParameter t -> show t
     ThingParameter _ -> "thing"
+    PluralParameter wm -> "Multiple " <> show wm <> "s"
 deriving stock instance Eq (WMDirection wm) => Eq (NamedActionParameter wm)
 deriving stock instance Ord (WMDirection wm) => Ord (NamedActionParameter wm)
 
@@ -74,6 +76,7 @@ type family ActionParameter wm (goesWith :: ActionParameterType) where
   ActionParameter wm TakesThingParameter = Thing wm
   ActionParameter wm TakesConstantParameter = Text
   ActionParameter wm (TakesOneOf goesWith1 goesWith2) = Either (ActionParameter wm goesWith1) (ActionParameter wm goesWith2)
+  --ActionParameter wm (PluralParameter goesWith) = [ActionParameter wm goesWith]
 
 class GoesWith (g :: ActionParameterType) where
   goesWithA :: Proxy g -> ActionParameterType
