@@ -212,7 +212,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   let _vehcGoneBy = v ^. #variables % #vehicleGoneBy
       _roomGoneFrom = v ^. #variables % #roomGoneFrom
   -- if nonvehicle is the room gone from, continue the action; if nonvehicle is the vehicle gone by, continue the action;
-  error "" --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
+  --ruleCondition' (pure $ not ((nonVehicle `objectEquals` roomGoneFrom) || maybe True (`objectEquals` nonVehicle) vehcGoneBy) )
   whenM (isPlayer $ v ^. #source) $ do
     _outAction <- ifM (nonVehicle `isKind` "supporter") (pure ("off" :: String)) (pure "out of")
     -- let dir = "[We] [would have] to get off [the nonvehicle] first."
@@ -220,7 +220,7 @@ cantTravelInNotAVehicle = makeRule "can't travel in what's not a vehicle" [] $ \
   rulePass
 
 standUpBeforeGoing :: GoingRule wm
-standUpBeforeGoing = makeRule "stand up before going" [] $ \_v -> error ""
+standUpBeforeGoing = notImplementedRule "stand up before going"
   {-chaises <- error ""--ruleCondition (nonEmpty <$> getSupportersOf (v ^. #source))
   res <- forM chaises (\chaise -> do
       whenM (isPlayer $ v ^. #source) $ do

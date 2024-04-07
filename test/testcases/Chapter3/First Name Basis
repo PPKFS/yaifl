@@ -1,0 +1,44 @@
+----------------------------
+----- First Name Basis -----
+----------------------------
+
+The Crew Lounge
+Deliberately spartan: the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.
+
+The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get.
+
+You can also see Lewis and Harper here.
+
+>x holo
+
+The air above the projector is disappointingly clear.
+
+>x man
+
+Which did you mean: Lewis or Harper?
+
+>lewis
+
+A wiry, excitable engineer who just signed aboard last week.
+
+>x guy
+
+Which did you mean: Lewis or Harper?
+
+>harper
+
+Harper's a good guy: taciturn when sober, affectionate when drunk, but rarely annoying in either state.
+
+>turn on projector
+
+You switch the holographic projector on.
+
+>x holo projector
+
+The projector is now playing a documentary about the early politics of the Mars colony.
+
+>get men
+
+(taking Lewis) I don't suppose Lewis would care for that.
+
+(taking Harper) I don't suppose Harper would care for that.

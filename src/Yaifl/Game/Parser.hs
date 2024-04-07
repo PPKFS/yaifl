@@ -31,6 +31,7 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Input (waitForInput, Input)
+import Yaifl.Text.SayQQ
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -83,21 +84,31 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
       -- we've successfully resolved it into an action
-      [(matched, r, RegularAction x@(WrappedAction (a :: Action wm resps goesWith v)))] -> do
+      [(matched, r, RegularAction (WrappedAction (a :: Action wm resps goesWith v)))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
         runActionHandlerAsWorldActions $ do
           -- attempt to work out our nouns
           nouns <- parseNouns (Proxy @goesWith) (matches a) (T.strip r)
+          let actuallyRunIt parsedArgs match = do
+                let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
+                case v of
+                  Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+                  Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
           case nouns of
             Left ex -> pure (Left ex)
-            Right (match, parsedArgs) -> do
-              let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
-              case v of
-                Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-                Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
+            Right (PluralParameter xs, parsedArgs) -> do
+              addAnnotation $ "Running a set of plural actions..." <> matched
+              rs <- sequence <$> forM xs (\x -> do
+                let acName = a ^. #name
+                n <- sayParameterName x
+                [saying|({acName} {n}) |]
+                runOnParagraph
+                actuallyRunIt parsedArgs x)
+              pure $ second and rs
+            Right (match, parsedArgs) -> actuallyRunIt parsedArgs match
       [(matched, _, OtherAction (OutOfWorldAction name runIt))] -> do
         addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
-        runActionHandlerAsWorldActions $  runIt
+        runActionHandlerAsWorldActions runIt
         pure $ Right True
 
     whenLeft_ ac (\t' -> do
@@ -245,6 +256,7 @@ tryFindingObject t = failHorriblyIfMissing $ do
   findObjectsFrom t allItems True
 
 findObjectsFrom ::
+  forall wm es.
   WithListWriting wm
   => RuleEffects wm es
   => Text
@@ -253,15 +265,20 @@ findObjectsFrom ::
   -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 findObjectsFrom t allItems considerAmbiguity = do
   let phraseSet = S.fromList . words $ t
-  let scores = zip (map (scoreParserMatch phraseSet) allItems) allItems
+  -- the scores here are likelihood that it's matching as a singular or part of a plural
+  scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems
   threshold <- use @Metadata #parserMatchThreshold
-  match <- filterM (\(f, _) -> f >>= \x -> pure (x > threshold)) scores
-  case match of
-    [] -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
-    [x] -> pure . Right . Right $ toAny (snd x)
-    xs -> if considerAmbiguity
-      then handleAmbiguity (map snd xs)
+  let singularMatches = filter ((> threshold) . fst . snd) scores
+  let pluralMatches = filter ((> threshold) . snd . snd) scores
+  case (singularMatches, pluralMatches) of
+    ([], []) -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
+    -- just one singular thing
+    ([x], []) -> pure . Right . Right $ toAny (fst x)
+    ([], xs) -> pure . Right . Left $ map (toAny @wm . fst) xs
+    (xs, []) -> if considerAmbiguity
+      then handleAmbiguity (map fst xs)
       else pure $ Left "I still didn't know what you meant."
+    (_x, _xs) -> pure $ Left "I saw both a single thing and plural things that could be that."
 
 handleAmbiguity ::
   WithListWriting wm
@@ -287,7 +304,7 @@ scoreParserMatch ::
   RuleEffects wm es
   => S.Set Text
   -> Thing wm
-  -> Eff es Double
+  -> Eff es (Double, Double)
 scoreParserMatch phraseSet thing = do
   -- a total match between the phrase and either the thing's name or any of the thing's understand as gives 1
   -- otherwise, we see how many of the words of the phrase are represented in the above
@@ -295,9 +312,14 @@ scoreParserMatch phraseSet thing = do
   matchingAgainst <- (:(toList $ thing ^. #understandAs)) . S.fromList . words <$> sayText (thing ^. #name)
   -- and also get the matches of its *kind*
   kindSynonyms <- map (S.fromList . words) . mconcat . S.toList <$> mapKindsOf thing (view #understandAs)
+  kindPluralSynonyms <- map (S.fromList . words) . mconcat . S.toList <$> mapKindsOf thing (view #pluralUnderstandAs)
   -- for each set, keep only the words that match
   let filterSets = S.unions $ map (S.intersection phraseSet . S.map T.toLower) (matchingAgainst <> kindSynonyms)
-  pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))
+      filterPluralSets = S.unions $ map (S.intersection phraseSet . S.map T.toLower) kindPluralSynonyms
+  pure
+    ( fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet)
+    , fromIntegral (S.size filterPluralSets) / fromIntegral (S.size phraseSet)
+    )
 
 parseDirection ::
   forall wm.

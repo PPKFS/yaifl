@@ -16,6 +16,7 @@ module Yaifl.Model.Rules.Rulebook
   , Unconstrained
   , forPlayer'
   , forPlayer
+  , forKind
   , parseAction
   , notImplementedRule
   , makeRule
@@ -25,6 +26,7 @@ module Yaifl.Model.Rules.Rulebook
   , ruleGuard
   , ruleGuardM
   , forThing
+  , stopTheAction
   ) where
 
 
@@ -39,6 +41,8 @@ import Yaifl.Model.Effects
 import Yaifl.Model.Query
 import Data.Text.Display
 import Yaifl.Model.WorldModel
+import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Metadata
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMSayable wm) wm => Display (WMSayable wm) => Eff (es : ConcreteRuleStack wm) a)
 
@@ -54,6 +58,9 @@ forPlayer = Precondition (pure "actor is the player") $ \v -> do
 
 forPlayer' :: [Precondition wm (Args wm v)]
 forPlayer' = [forPlayer]
+
+forKind :: ObjectKind -> Precondition wm (Args wm (Thing wm))
+forKind k = Precondition (pure $ "of kind " <> show k) $ \v -> variables v `isKind` k
 
 -- | A 'Rule' is a wrapped function with a name, that modifies the world (potentially)
 -- and any rulebook variables, and might return an outcome (Just) or not (Nothing).
@@ -95,6 +102,11 @@ rulePass ::
   Monad m
   => m (Maybe a)
 rulePass = return Nothing
+
+stopTheAction ::
+  Monad m
+  => m (Maybe Bool)
+stopTheAction = return (Just False)
 
 ruleGuard ::
   Monad m

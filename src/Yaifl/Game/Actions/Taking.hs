@@ -4,9 +4,12 @@ import Yaifl.Model.Action
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Text.SayQQ
+import Solitude
+import Yaifl.Text.Say
 
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)
-takingAction :: TakingAction wm
+takingAction :: WithPrintingNameOfSomething wm => TakingAction wm
 takingAction = (makeAction "taking")
   { name = "taking"
   , understandAs = ["take", "get", "grab"]
@@ -33,8 +36,11 @@ type TakingRule wm = ActionRule wm (TakingAction wm) (Thing wm)
 cantTakeYourself :: TakingRule wm
 cantTakeYourself = notImplementedRule "cantTakeYourself rule"
 
-cantTakeOtherPeople :: TakingRule wm
-cantTakeOtherPeople = notImplementedRule "cantTakeOtherPeople rule"
+cantTakeOtherPeople :: WithPrintingNameOfSomething wm => TakingRule wm
+cantTakeOtherPeople = makeRule "cant take other people rule" [ forKind "person" ] $ \args -> do
+  let person = variables args
+  [saying|I don't suppose {person} would care for that.|]
+  stopTheAction
 
 cantTakeComponentParts :: TakingRule wm
 cantTakeComponentParts = notImplementedRule "cantTakeComponentParts rule"
@@ -66,5 +72,8 @@ cantExceedCarryingCapacity = notImplementedRule "cantExceedCarryingCapacity rule
 standardTakingRule :: TakingRule wm
 standardTakingRule = notImplementedRule "standardTakingRule rule"
 
-standardReportTakingRule :: TakingRule wm
-standardReportTakingRule = notImplementedRule "standard report taking rule"
+standardReportTakingRule :: WithPrintingNameOfSomething wm => TakingRule wm
+standardReportTakingRule = makeRule "standard report taking rule" [] $ \args -> do
+  let vars = variables args
+  [saying|Grabbing {the vars}.|]
+  rulePass

@@ -54,7 +54,7 @@ data NamedActionParameter wm =
   | ThingParameter (Thing wm)
   | ConstantParameter Text
   | PluralParameter [NamedActionParameter wm]
-  deriving stock ( Generic)
+  deriving stock ( Generic )
 
 instance Show (NamedActionParameter wm) where
   show = \case

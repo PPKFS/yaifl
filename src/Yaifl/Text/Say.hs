@@ -10,6 +10,7 @@ module Yaifl.Text.Say
   , sayText
   , WithPrintingNameOfSomething
   , printingNameOfSomethingImpl
+  , sayParameterName
 
   ) where
 
@@ -36,6 +37,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Input
+import Yaifl.Model.Actions.Args
 
 sayText ::
   SayableValue s wm
@@ -255,3 +257,19 @@ printingNameOfSomethingImpl = makeActivity "Printing the name of something"
       regarding (Just o)
       t <- sayText $ o ^. #name
       pure $ Just t) ]
+
+sayParameterName ::
+  NoMissingObjects wm es
+  => ActionHandler wm :> es
+  => ObjectTraverse wm :> es
+  => Print :> es
+  => State (ActivityCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => Input :> es
+  => State (ResponseCollector wm) :> es
+  => WithPrintingNameOfSomething wm
+  => NamedActionParameter wm
+  -> Eff es Text
+sayParameterName (ObjectParameter o) = sayText (o ^. #name)
+sayParameterName (ThingParameter o) = sayText (o ^. #name)
+sayParameterName _ = pure "not done this one yet"

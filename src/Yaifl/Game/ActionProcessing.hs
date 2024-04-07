@@ -31,7 +31,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "carrying requirements rule"
   , notImplementedRule "basic visibility rule"
-  ,  Rule "instead stage rule"
+  , Rule "instead stage rule"
       []
         ( \v -> do
           r <- runRulebookAndReturnVariables (Just aSpan) False insteadRules v
@@ -39,7 +39,11 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   , notImplementedRule "requested actions require persuasion rule"
   , notImplementedRule "carry out requested actions rule"
   , notImplementedRule "investigate player awareness rule"
-  , notImplementedRule "check stage rule"
+  , Rule "check stage rule"
+      []
+        ( \v -> do
+          r <- runRulebookAndReturnVariables (Just aSpan) False checkRules v
+          return (first Just $ fromMaybe (v, Nothing) r))
   , Rule "carry out stage rule"
       []
         ( \v -> do

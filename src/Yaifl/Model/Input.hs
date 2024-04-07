@@ -29,7 +29,7 @@ runInputAsBuffer = interpret $ \_ -> \case
   WaitForInput -> do
     buf <- use #bufferedInput
     case buf of
-      [] -> error "ran out of buffered input"
+      [] -> pure "ran out of buffered input"
       (x:xs) -> do
         #bufferedInput .= xs
         pure x
