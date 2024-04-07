@@ -70,10 +70,12 @@ runActionHandlerAsWorldActions ::
   => Eff (ActionHandler wm : es) a
   -> Eff es a
 runActionHandlerAsWorldActions = interpret $ \_ -> \case
-  ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ do
+  ParseAction actionOpts additionalArgs t -> withSpan' "action" t $ failHorriblyIfMissing $ do
     addPostPromptSpacing
     --we assume that the verb is the first thing in the command
     possVerbs <- findVerb t
+    actor <- getPlayer
+    ts <- getGlobalTime
     ac <- case possVerbs of
       [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
       xs:x:_ -> return $ Left $ "Did you mean one of" <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
@@ -81,18 +83,65 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
         addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
         runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
       -- we've successfully resolved it into an action
-      [(matched, r, RegularAction x@(WrappedAction a))] -> do
+      [(matched, r, RegularAction x@(WrappedAction (a :: Action wm resps goesWith v)))] -> do
         addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
-        runActionHandlerAsWorldActions $ findSubjects (T.strip r) additionalArgs x
+        runActionHandlerAsWorldActions $ do
+          -- attempt to work out our nouns
+          nouns <- parseNouns (Proxy @goesWith) (matches a) (T.strip r)
+          case nouns of
+            Left ex -> pure (Left ex)
+            Right (match, parsedArgs) -> do
+              let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
+              case v of
+                Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+                Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
       [(matched, _, OtherAction (OutOfWorldAction name runIt))] -> do
         addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
-        runActionHandlerAsWorldActions $ failHorriblyIfMissing runIt
+        runActionHandlerAsWorldActions $  runIt
         pure $ Right True
 
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
+
+parseNouns ::
+  forall wm es goesWith.
+  ActionHandler wm :> es
+  => (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  => GoesWith goesWith
+  => Breadcrumbs :> es
+  => ObjectLookup wm :> es
+  => ObjectTraverse wm :> es
+  => ObjectUpdate wm :> es
+  => Print :> es
+  => Input :> es
+  => WithListWriting wm
+  => State (ActivityCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => State (ResponseCollector wm) :> es
+  => State Metadata :> es
+  => Proxy (goesWith :: ActionParameterType)
+  -> [(Text, ActionParameterType)]
+  -> Text
+  -> Eff es (Either Text (NamedActionParameter wm, [(Text, NamedActionParameter wm)]))
+parseNouns _ wordsToMatch command = runErrorNoCallStack $ failHorriblyIfMissing $ do
+  let isMatchWord = flip elem (map fst wordsToMatch)
+      parts = (split . whenElt) isMatchWord (words command)
+  case parts of
+    -- no matches at all
+    [] -> pure (NoParameter, [])
+    -- one "vanilla" word (e.g. pet cat) and optionally some match words (e.g. pet cat with brush)
+    cmdArgWords:matchedWords -> do
+      cmdArgs <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
+      -- then for each run of matching words we want to try and parse the rest of the list
+      matchWords <- mapM (\case
+        [] -> error "impossible"
+        (matchWord:args) -> do
+          let v = fromMaybe (error "impossible") $ lookup matchWord wordsToMatch
+          arg <- parseArgumentType @wm v (unwords args)
+          either throwError (pure . (matchWord,)) arg) matchedWords
+      either throwError pure cmdArgs >>= \c -> pure (c, matchWords)
 
 addPostPromptSpacing ::
   Print :> es
@@ -137,55 +186,6 @@ findVerb cmd = do
         Nothing -> True
         Just (a, _b) -> isSpace a
   return $ filter removePartialInMiddleOfWord possVerbs
-
-findSubjects ::
-  forall wm es.
-  ActionHandler wm :> es
-  => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => Breadcrumbs :> es
-  => ObjectLookup wm :> es
-  => ObjectTraverse wm :> es
-  => ObjectUpdate wm :> es
-  => Print :> es
-  => Input :> es
-  => WithListWriting wm
-  => State (ActivityCollector wm) :> es
-  => State (AdaptiveNarrative wm) :> es
-  => State (ResponseCollector wm) :> es
-  => State (WorldActions wm) :> es
-  => State Metadata :> es
-  => Text
-  -> [NamedActionParameter wm]
-  -> WrappedAction wm
-  -> Eff es (Either Text Bool)
-findSubjects cmd actionArgs (WrappedAction (a :: Action wm resps goesWith v)) = runErrorNoCallStack $ failHorriblyIfMissing $ do
-  --TODO: handle other actors doing things#
-  actor <- getPlayer
-  ts <- getGlobalTime
-  --we attempt to either match some matching word from the action (e.g. go through <door>)
-  --otherwise, we try to find a match of objects with increasingly large radii
-  --todo: properly expand the search; consider the most likely items and then go off that
-  --but for now, we'll just check everything.
-  --ua <- playerArgs actionArgs
-  let isMatchWord = flip elem (map fst $ matches a)
-      parts = (split . whenElt) isMatchWord (words cmd)
-  (goesWithPart, parsedArgs) <- case parts of
-    [] -> pure (NoParameter, [])
-    cmdArgWords:matchedWords -> do
-      cmdArgs' <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
-      cmdArgs <- either throwError pure cmdArgs'
-      -- then for each run of matching words we want to try and parse the rest of the list
-      matchWords <- mapM (\case
-        [] -> error "impossible"
-        (matchWord:args) -> do
-          let v = fromMaybe (error "impossible") $ lookup matchWord (matches a)
-          arg <- parseArgumentType @wm v (unwords args)
-          either throwError (pure . (matchWord,)) arg) matchedWords
-      pure (cmdArgs, matchWords)
-  let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ goesWithPart:actionArgs)
-  case v of
-    Nothing -> throwError (("Argument mismatch because we got " <> show (S.fromList $ goesWithPart:actionArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-    Just v' -> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
 
 parseArgumentType ::
   forall wm es.
@@ -298,7 +298,6 @@ scoreParserMatch phraseSet thing = do
   -- for each set, keep only the words that match
   let filterSets = S.unions $ map (S.intersection phraseSet . S.map T.toLower) (matchingAgainst <> kindSynonyms)
   pure (fromIntegral (S.size filterSets) / fromIntegral (S.size phraseSet))
-
 
 parseDirection ::
   forall wm.
