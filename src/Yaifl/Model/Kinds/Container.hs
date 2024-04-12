@@ -3,31 +3,32 @@ module Yaifl.Model.Kinds.Container
     Opacity(..)
   , Enterable(..)
   , Container(..)
+  , ContainerEntity
+  , ContainerTag
 
   , getContainerMaybe
   , setContainer
   , modifyContainer
   , isOpaqueClosedContainer
+  , makeContainer
+  , inThe
 
   , getEnterableMaybe
   , setEnterable
   , modifyEnterable
-    -- * Lenses
-  , containerOpacity
-  , containerEnclosing
-  , containerOpenable
-  , containerEnterable
   ) where
 
 import Solitude
 
 import Yaifl.Model.Effects
-import Yaifl.Model.Kinds.Enclosing ( Enclosing )
+import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.HasProperty ( WMWithProperty )
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.TH ( makeSpecificsWithout )
 import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Entity
+import Yaifl.Model.Tag
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent
@@ -39,17 +40,42 @@ data Enterable = Enterable | NotEnterable
 
 -- | A container.
 data Container = Container
-  { _containerOpacity :: Opacity
-  , _containerEnclosing :: Enclosing
-  , _containerOpenable :: Openability
-  , _containerEnterable :: Enterable
+  { opacity :: Opacity
+  , enclosing :: Enclosing
+  , openable :: Openability
+  , enterable :: Enterable
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
-makeLenses ''Container
+makeFieldLabelsNoPrefix ''Container
 makeSpecificsWithout [] ''Container
 makeSpecificsWithout [] ''Enterable
 
 isOpaqueClosedContainer ::
   Container
   -> Bool
-isOpaqueClosedContainer c = (_containerOpacity c == Opaque) && (_containerOpenable c == defaultContainerOpenability)
+isOpaqueClosedContainer c = (opacity c == Opaque) && (view #openable c == defaultContainerOpenability)
+
+makeContainer ::
+  Maybe Int
+  -> Maybe Opacity
+  -> Maybe Enterable
+  -> Maybe Openable
+  -> Maybe Opened
+  -> Container
+makeContainer cc op e oa opd = (Container Opaque (blankEnclosing { capacity = Just 100 }) defaultContainerOpenability NotEnterable)
+  & (maybe id (set #enterable) e)
+  & (maybe id (set (#enclosing % #capacity) . Just) cc)
+  & (maybe id (set #opacity) op)
+  & (maybe id (set (#openable % #opened)) opd)
+  & (maybe id (set (#openable % #openable)) oa)
+
+data ContainerTag
+type ContainerEntity = TaggedEntity ContainerTag
+
+inThe ::
+  ContainerEntity
+  -> EnclosingEntity
+inThe = coerceTag
+
+instance Taggable (TaggedEntity ContainerTag) EnclosingTag
+instance Taggable Container ContainerTag

@@ -18,7 +18,6 @@ import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
-
 import qualified Data.EnumSet as ES
 import Yaifl.Model.Kinds.AnyObject
 

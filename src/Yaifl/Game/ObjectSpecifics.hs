@@ -7,6 +7,7 @@ module Yaifl.Game.ObjectSpecifics
   , addDoor
   , addDevice
   , addPerson
+  , addContainer
   ) where
 
 import Solitude
@@ -35,6 +36,7 @@ import Yaifl.Model.Kinds.Device
 import Named
 import Yaifl.Model.Kinds.Person
 import Effectful.Optics ((.=))
+import Yaifl.Model.Kinds.Supporter
 
 data ObjectSpecifics =
   NoSpecifics
@@ -58,7 +60,7 @@ instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
   inj _ = id
 
 instance MayHaveProperty ObjectSpecifics Enclosing where
-  propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % containerEnclosing) `thenATraverse` (_PersonSpecifics % #carrying)
+  propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % #enclosing) `thenATraverse` (_PersonSpecifics % #carrying)
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
   propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
@@ -67,11 +69,11 @@ instance MayHaveProperty ObjectSpecifics Container where
   propertyAT = castOptic _ContainerSpecifics
 
 instance MayHaveProperty ObjectSpecifics Enterable where
-  propertyAT = _ContainerSpecifics % containerEnterable
+  propertyAT = _ContainerSpecifics % #enterable
 
 instance MayHaveProperty ObjectSpecifics Openability where
   propertyAT = _OpenabilitySpecifics
-    `thenATraverse` (_ContainerSpecifics % containerOpenable)
+    `thenATraverse` (_ContainerSpecifics % #openable)
     `thenATraverse` (_DoorSpecifics % #opened)
 
 instance MayHaveProperty ObjectSpecifics Door where
@@ -167,6 +169,52 @@ addDevice n ia d (argDef #device identityElement -> dev) = addThing @wm n ia d
   ! #specifics (inj (Proxy @wm) (DeviceSpecifics dev))
   ! #type (ObjectKind "device")
   ! done
+
+addContainer ::
+  forall wm es.
+  WMHasObjSpecifics wm
+  => WMWithProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm
+  -> "carryingCapacity" :? Int
+  -> "opacity" :? Opacity
+  -> "enterable" :? Enterable
+  -> "openable" :? Openable
+  -> "opened" :? Opened
+  -> "location" :? EnclosingEntity
+  -> Eff es ContainerEntity
+addContainer n ia d
+  (argF #carryingCapacity -> cc) (argF #opacity -> op) (argF #enterable -> e) (argF #openable -> o) (argF #opened -> od) (argF #location -> l) = do
+    let cs = makeContainer cc op e o od
+    c <- addThing @wm n ia d
+        ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
+        ! #type (ObjectKind "container")
+        ! paramF #location l
+        ! done
+    pure $ tag @Container @ContainerTag cs c
+
+addSupporter ::
+  forall wm es.
+  WMHasObjSpecifics wm
+  => WMWithProperty wm Enclosing
+  => AddObjects wm es
+  => WMSayable wm -- ^ Name.
+  -> "initialAppearance" :? WMSayable wm
+  -> "description" :? WMSayable wm
+  -> "carryingCapacity" :? Int
+  -> "location" :? EnclosingEntity
+  -> Eff es SupporterEntity
+addSupporter n ia d
+  (argF #carryingCapacity -> cc) (argF #location -> l) = do
+    let cs = makeContainer cc op e o od
+    c <- addThing @wm n ia d
+        ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
+        ! #type (ObjectKind "container")
+        ! paramF #location l
+        ! done
+    pure $ tag @Supporter @SupporterTag cs c
 
 addPerson ::
   forall wm es.

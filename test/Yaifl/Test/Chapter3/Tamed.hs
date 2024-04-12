@@ -1,4 +1,4 @@
-module Yaifl.Test.Chapter3.FirstNameBasis where
+module Yaifl.Test.Chapter3.Tamed where
 
 import Solitude
 import Yaifl.Game.EffectHandlers
@@ -16,15 +16,13 @@ import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
 
-ex11 :: (Text, [Text], Game PlainWorldModel ())
-ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)
+ex13 :: (Text, [Text], Game PlainWorldModel ())
+ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
 
-firstNameBasisWorld :: Game PlainWorldModel ()
-firstNameBasisWorld = do
-  setTitle "First Name Basis"
-  addRoom "The Crew Lounge"
-    ! #description [wrappedText|Deliberately spartan: the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.|]
-    ! done
+tamedWorld :: Game PlainWorldModel ()
+tamedWorld = do
+  setTitle "Tamed"
+  addRoom "Garden" ! done
 
   thp <- addDevice "holographic projector"
       ! #initialAppearance "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
@@ -47,5 +45,5 @@ firstNameBasisWorld = do
   "man" `kindPluralIsUnderstoodAs` ["men", "guys", "chaps", "lads", "males"]
   pass
 
-firstNameBasisTestMeWith :: [Text]
-firstNameBasisTestMeWith = ["x holo", "x man", "lewis", "x guy", "harper", "turn on projector",  "x holo projector", "get men"]
+tamedTestMeWith :: [Text]
+tamedTestMeWith = ["x holo", "x man", "lewis", "x guy", "harper", "turn on projector",  "x holo projector", "get men"]

@@ -193,6 +193,7 @@ sayingParser = many piece <* P.eof where
     P.string "{?if "
     con <- condition
     firstBlock <- P.someTill piece endIfBlock
+    many $ P.choice [P.single '\n', P.single ' ']
     elseIfs <- P.manyTill (do
       P.try $ P.string "{?else if "
       con' <- condition

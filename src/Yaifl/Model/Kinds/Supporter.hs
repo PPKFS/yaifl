@@ -10,6 +10,8 @@ enclosing).
 
 module Yaifl.Model.Kinds.Supporter
   ( isSupporter
+  , SupporterEntity
+  , onThe
   ) where
 
 import Solitude
@@ -18,6 +20,8 @@ import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Model.Effects
 import Yaifl.Model.Metadata
+import Yaifl.Model.Entity
+import Yaifl.Model.Tag
 
 -- | Check if @o@ is of the @supporter@ type.
 isSupporter ::
@@ -26,3 +30,13 @@ isSupporter ::
   => o
   -> Eff es Bool
 isSupporter o = getObject o >>= (`isKind` "supporter")
+
+data SupporterTag
+type SupporterEntity = TaggedEntity SupporterTag
+
+onThe ::
+  SupporterEntity
+  -> EnclosingEntity
+onThe = coerceTag
+
+instance Taggable (TaggedEntity SupporterTag) EnclosingTag
