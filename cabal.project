@@ -15,7 +15,8 @@ source-repository-package
   location: https://github.com/PPKFS/solitude.git
   tag: bcfd36ec733e4b046fdf89288730b85feef27900
 packages:
-  ./yaifl.cabal
+  yaifl/yaifl.cabal
+  yaifl-city/yaifl-city.cabal
 
 -- documentation: true
 -- haddock-internal: true

@@ -1,12 +1,12 @@
 cradle:
   cabal:
-    - path: "src"
+    - path: "yaifl/src"
       component: "lib:yaifl"
 
-    - path: "yaifl-core/src"
-      component: "lib:yaifl-core"
+    - path: "yaifl-city/src"
+      component: "executable:yaifl-city"
 
-    - path: "test"
+    - path: "yaifl/test"
       component: "yaifl:test:yaifl-test"
 
     - path: "solitude"
@@ -14,6 +14,3 @@ cradle:
 
     - path: "breadcrumbs"
       component: "lib:breadcrumbs"
-
-    - path: "effectful-rulebooks"
-      component: "lib:effectful-rulebooks"

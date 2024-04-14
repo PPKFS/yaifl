@@ -194,7 +194,7 @@ addContainer n ia d
         ! paramF #location l
         ! done
     pure $ tag @Container @ContainerTag cs c
-
+{-}
 addSupporter ::
   forall wm es.
   WMHasObjSpecifics wm
@@ -215,7 +215,7 @@ addSupporter n ia d
         ! paramF #location l
         ! done
     pure $ tag @Supporter @SupporterTag cs c
-
+-}
 addPerson ::
   forall wm es.
   WMHasObjSpecifics wm

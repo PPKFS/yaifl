@@ -12,6 +12,7 @@ module Yaifl.Model.Kinds.Supporter
   ( isSupporter
   , SupporterEntity
   , onThe
+  , SupporterTag
   ) where
 
 import Solitude

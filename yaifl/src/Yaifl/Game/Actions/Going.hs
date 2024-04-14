@@ -39,6 +39,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
+import Yaifl.Model.Kinds.Region
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
     roomGoneFrom :: Room wm
@@ -252,7 +253,13 @@ toTheRoom ::
   => r
   -> Precondition wm (Args wm (GoingActionVariables wm))
 toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> pure $ getID (roomGoneTo $ variables v) == getID r
-
+{-
+inTheRegion ::
+  RegionEntity
+  -> Precondition wm (Args wm (GoingActionVariables wm))
+inTheRegion r = Precondition (lookupRegion r >>= \(Right o) -> pure $ "in the region " <> display (o ^. #name)) $
+  \v -> pure $ (variables v ^. #roomGoneTo % #objectData % #containingRegion) == ContainingRegion (Just r)
+-}
 throughTheDoor ::
   forall d wm.
   TaggedAs d DoorTag
