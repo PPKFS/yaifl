@@ -1,16 +1,8 @@
 module Yaifl.Test.Chapter3.MidsummerDay where
 
-import Solitude
-import Yaifl.Game.EffectHandlers
-import Yaifl (PlainWorldModel)
-import Yaifl.Model.Metadata
-import Yaifl.Test.Common
-import Yaifl.Game.Create.Object
-import Named
-import Yaifl.Game.Create.RoomConnection
-import Yaifl.Game.ObjectSpecifics
-import Yaifl.Model.Kinds.Supporter
-import Yaifl.Model.Kinds.Container
+import Yaifl.Prelude
+import Yaifl
+import Yaifl.Game.Create
 
 ex12 :: (Text, [Text], Game PlainWorldModel ())
 ex12 = ("Midsummer Day", midsummerDayTestMeWith, midsummerDayWorld)

@@ -2,7 +2,7 @@ module Yaifl.Test.Chapter3.Common where
 
 import Yaifl.Test.Common
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Test.Chapter3.Bic
 import Yaifl.Test.Chapter3.PortRoyal
 import Yaifl.Test.Chapter3.PortRoyal2

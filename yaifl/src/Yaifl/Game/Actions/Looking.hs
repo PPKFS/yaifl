@@ -33,7 +33,6 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print ( Print, setStyle, runOnLookingParagraph )
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
-import Yaifl.Text.SayQQ
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing

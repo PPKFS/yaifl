@@ -13,12 +13,10 @@ import Yaifl.Model.Rules.Run
 import Yaifl.Text.ResponseCollection
 import Yaifl.Model.Rules.RuleEffects
 
-import Yaifl.Game.World
 import qualified Data.Text as T
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
-import Effectful.Optics
 import Yaifl.Model.Input
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter

@@ -31,7 +31,6 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Input (waitForInput, Input)
-import Yaifl.Text.SayQQ
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::

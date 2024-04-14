@@ -1,20 +1,14 @@
 module Yaifl.Test.Chapter3.FirstNameBasis where
 
-import Solitude
-import Yaifl.Game.EffectHandlers
-import Yaifl (PlainWorldModel)
-import Yaifl.Model.Metadata
+import Yaifl.Prelude
+import Yaifl
 import Yaifl.Test.Common
-import Yaifl.Game.Create.Object
+import Yaifl.Game.Create
 import Yaifl.Model.Query
-import Named
-import Yaifl.Text.SayQQ
+import Yaifl.Text.Say
+import Yaifl.Model.Kinds
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
-import Yaifl.Text.Say
-import Yaifl.Game.ObjectSpecifics
-import Yaifl.Model.Kinds.Device
-import Yaifl.Model.Kinds.Person
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)

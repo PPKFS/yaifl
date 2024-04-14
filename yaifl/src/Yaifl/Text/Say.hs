@@ -11,6 +11,7 @@ module Yaifl.Text.Say
   , WithPrintingNameOfSomething
   , printingNameOfSomethingImpl
   , sayParameterName
+  , module Yaifl.Text.SayQQ
 
   ) where
 

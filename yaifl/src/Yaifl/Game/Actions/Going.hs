@@ -39,7 +39,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.Kinds.Region
+
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
     roomGoneFrom :: Room wm

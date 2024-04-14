@@ -1,7 +1,6 @@
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Model.Metadata
 import Yaifl.Game.Create.Object
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Test.Common

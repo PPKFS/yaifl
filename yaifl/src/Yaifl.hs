@@ -15,6 +15,10 @@ module Yaifl (
   , addStandardActions
   , runTurnsFromBuffer
   , runTurn
+
+  , module Yaifl.Model.Metadata
+  , module Yaifl.Game.World
+  , module Yaifl.Model.WorldModel
   ) where
 
 import Solitude hiding ( Reader, runReader )

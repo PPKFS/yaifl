@@ -148,6 +148,11 @@ library
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
 
+    Yaifl.Model.Rules
+    Yaifl.Model.Kinds
+    Yaifl.Game.Create
+    Yaifl.Prelude
+
   build-depends:
     , effectful-th
     , enummapset

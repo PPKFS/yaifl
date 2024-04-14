@@ -1,13 +1,11 @@
 module Yaifl.Test.Chapter3.UpAndUp where
 
 import Yaifl
-import Yaifl.Model.Metadata
 import Yaifl.Game.Create.Object
 import Solitude
 import Yaifl.Test.Common
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Text.Say
-import Yaifl.Text.SayQQ
 import Yaifl.Game.Create.Rule
 import Yaifl.Game.Actions.Going
 import Yaifl.Model.Rules.Rulebook

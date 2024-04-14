@@ -1,20 +1,12 @@
 module Yaifl.Test.Chapter3.Bic where
 
-import Data.Text.Display
-import Effectful.Optics ((.=))
-import Named
-import Solitude
 import Yaifl
 import Yaifl.Game.Create.Object
-import Yaifl.Game.World
 import Yaifl.Model.Effects
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Metadata
-import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.WorldModel
-import Yaifl.Text.SayQQ
+import Yaifl.Model.Kinds
+import Yaifl.Model.Rules
+import Yaifl.Prelude
+import Yaifl.Text.Say
 import qualified Data.Text as T
 
 ex2 :: (Text, [a], Game PlainWorldModel ())

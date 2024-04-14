@@ -3,7 +3,6 @@ module Yaifl.Game.EffectHandlers where
 import Solitude hiding ( Reader, runReader )
 
 import Breadcrumbs
-import Data.Text.Display
 import Effectful.Dispatch.Dynamic
 import Effectful.Optics
 import Effectful.Reader.Static

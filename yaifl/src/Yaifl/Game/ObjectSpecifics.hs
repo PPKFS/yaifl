@@ -36,7 +36,6 @@ import Yaifl.Model.Kinds.Device
 import Named
 import Yaifl.Model.Kinds.Person
 import Effectful.Optics ((.=))
-import Yaifl.Model.Kinds.Supporter
 
 data ObjectSpecifics =
   NoSpecifics
@@ -129,11 +128,8 @@ addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #modify pass -> upD)
     ! paramF #thingData mbD
     ! #location (coerceTag $ fst f)
     ! done
-
       -- A door is always fixed in place.
       -- A door is never pushable between rooms.
-      --(Just $ (\x -> x & )
-      --(Just )
   updateMultiLocatedObject d
   let tagged = tag @Door @DoorTag ds d
   addDoorToConnection tagged f b

@@ -1,13 +1,11 @@
 module Yaifl.Test.Chapter3.PortRoyal2 where
 
 import Yaifl
-import Yaifl.Model.Metadata
 import Yaifl.Game.Create.Object
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Test.Common
-import Yaifl.Game.Create.RoomConnection
-import Yaifl.Model.Kinds.Direction
-import Named
+import Yaifl.Game.Create
+import Yaifl.Model.Kinds
 
 ex8 :: (Text, [Text], Game PlainWorldModel ())
 ex8 = ("Port Royal 2", portRoyal2TestMeWith, portRoyalWorld2)

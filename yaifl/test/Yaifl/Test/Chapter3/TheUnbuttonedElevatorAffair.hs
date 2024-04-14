@@ -4,7 +4,6 @@ module Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair where
 import Solitude
 import Yaifl
 import Yaifl.Game.Actions.Going
-import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Game.Create.Object
 import Yaifl.Game.Create.RoomConnection
@@ -12,7 +11,6 @@ import Yaifl.Game.Create.Rule
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Test.Common
 import Yaifl.Text.Say
-import Yaifl.Text.SayQQ
 import Yaifl.Model.ObjectLike
 import Named
 

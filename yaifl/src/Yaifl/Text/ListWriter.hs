@@ -21,7 +21,6 @@ import Effectful.Writer.Static.Local
 import Effectful.Optics
 import Yaifl.Model.Metadata
 import qualified Data.Text as T
-import Yaifl.Text.SayQQ
 import Effectful.Reader.Static
 import Yaifl.Model.Kinds.AnyObject
 

@@ -1,16 +1,12 @@
 module Yaifl.Test.Chapter3.SlightlyWrong where
 
 import Yaifl
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object
-import Yaifl.Game.Create.Object
-import Yaifl.Game.Create.RoomConnection
+import Yaifl.Prelude
+import Yaifl.Model.Kinds
+import Yaifl.Game.Create
 import Yaifl.Test.Common
-import Solitude
-import Yaifl.Model.Kinds.Room
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.SayQQ
-import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Text.Say
 import Yaifl.Text.DynamicText
 
 ex4 :: (Text, [Text], Game PlainWorldModel ())
