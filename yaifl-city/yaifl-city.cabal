@@ -72,6 +72,7 @@ executable yaifl-city
   hs-source-dirs:  src
   main-is: Main.hs
   other-modules: Building
+    BuildingDefs
 
   build-depends:
     , effectful-th

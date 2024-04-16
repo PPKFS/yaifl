@@ -29,7 +29,7 @@ defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 game :: Game PlainWorldModel ()
 game = do
   setTitle fullTitle
-  a <- runPlan apartmentBuildingPlan (1, 10000)
+ -- a <- runPlan apartmentBuildingPlan (1, 10000)
   --print a
   before (ActionRule #going) [] "before climbing rule" $ \_ -> do
     [saying|You climb up the stairs to the next floor.|]
