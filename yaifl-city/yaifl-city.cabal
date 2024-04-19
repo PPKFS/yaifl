@@ -72,7 +72,9 @@ executable yaifl-city
   hs-source-dirs:  src
   main-is: Main.hs
   other-modules: Building
-    BuildingDefs
+    Yaifl.Gen.Plan
+    Yaifl.Gen.City.Building
+    Yaifl.Gen.City.ApartmentTower
 
   build-depends:
     , effectful-th
@@ -84,3 +86,4 @@ executable yaifl-city
     , prettyprinter-ansi-terminal
     , split
     , yaifl
+    , placeholder
