@@ -1,12 +1,13 @@
 module Yaifl.Gen.Plan
   ( Plannable(..)
-  , Weight
+  , Weight(..)
   , PlanOption
   , Options
   , Options2
   , Options3
   , Options4
   , SequentialOptions
+  , SequentialOptions2
   , SequentialOptions3
 
   , pickOne
@@ -25,7 +26,7 @@ class Plannable plan where
   type PlanOutput plan
   runPlan :: Monad (PlanM plan) => plan -> PlanInput plan -> (PlanM plan) (PlanOutput plan)
 
-type Weight = Int
+newtype Weight = Weight Int
 type PlanOption es a b = (a -> Eff es b)
 type Options es a b = NonEmpty (Weight, PlanOption es a b)
 type Options2 es a b c = Options es (a, b) c
@@ -45,4 +46,4 @@ beforePlanWith :: (a -> Eff es c) -> NonEmpty (Weight, PlanOption es (c, a) b) -
 beforePlanWith bef = fmap (second (\f -> \a -> bef a >>= \b -> f (b, a)))
 
 equalWeights :: NonEmpty (PlanOption es a b) -> NonEmpty (Weight, PlanOption es a b)
-equalWeights = fmap (1,)
+equalWeights = fmap (Weight 1,)

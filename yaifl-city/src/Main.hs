@@ -3,7 +3,6 @@ module Main where
 import Solitude
 import Yaifl
 import Yaifl.Model.Action
-import Yaifl.Game.World
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.ResponseCollection
 import Breadcrumbs
@@ -11,13 +10,12 @@ import Yaifl.Model.Input
 import Yaifl.Model.Effects
 import Yaifl.Text.Print
 import Yaifl.Model.Rules.Run
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Region
-import Yaifl.Game.Create.Object
-import Building
 import Yaifl.Text.SayQQ
 import Yaifl.Game.Create.Rule
 import Yaifl.Model.Rules.Rulebook
+import Yaifl.Gen.Plan
+import Yaifl.Gen.City.ApartmentTower
+import Yaifl.Model.Kinds.Direction
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
@@ -29,8 +27,8 @@ defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 game :: Game PlainWorldModel ()
 game = do
   setTitle fullTitle
- -- a <- runPlan apartmentBuildingPlan (1, 10000)
-  --print a
+  a <- runPlan apartmentTowerPlan (injectDirection West, 10)
+  print a
   before (ActionRule #going) [] "before climbing rule" $ \_ -> do
     [saying|You climb up the stairs to the next floor.|]
     rulePass
@@ -59,7 +57,7 @@ main = do
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
                 failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
-                setInputBuffer $ take 190 $ repeat "up"
+                setInputBuffer $ "east" : (take 5 $ repeat "up")
                 runTurnsFromBuffer
                 (w2 :: World PlainWorldModel) <- get
                 let (x, _) = runPureEff $ runStateShared w2 $ do

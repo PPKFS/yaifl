@@ -21,6 +21,8 @@ module Yaifl.Game.Create.RoomConnection
   , addDoorToConnection
   , getConnectionViaDoor
   , isNowMapped
+
+  , addDirectionFrom
   ) where
 
 import qualified Data.Map as Map
@@ -39,9 +41,11 @@ import Yaifl.Model.ObjectLike
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.TH ( makeDirections )
-import Yaifl.Model.WorldModel ( WMDirection )
+import Yaifl.Model.WorldModel ( WMDirection, WMSayable )
 
 import qualified Data.Map as M
+import Yaifl.Text.Say
+import Yaifl.Model.Rules (RuleEffects)
 
 getAllConnections ::
   Room wm
@@ -197,7 +201,7 @@ isBelow = isDownOf
 
 addDoorToConnection ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => RuleEffects wm es
   => DoorEntity
   -> (RoomEntity, WMDirection wm)
   -> (RoomEntity, WMDirection wm)
@@ -211,7 +215,7 @@ addDoorToConnection d (front, frontDir) (back, backDir) = do
 modifyAndVerifyConnection ::
   forall wm es.
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => RuleEffects wm es
   => RoomEntity
   -> WMDirection wm
   -> RoomEntity
@@ -221,8 +225,10 @@ modifyAndVerifyConnection fromRoomE' fromDir destE f = do
   fromRoom <- getRoom fromRoomE'
   if connectionInDirection Nothing fromRoom fromDir == Just destE
   then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
-  else noteError (const ()) ("Tried to add a connection to the room " <> display fromRoom <> " but it had no connection in direction "
-    <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))
+  else do
+    r <- sayText (fromRoom ^. #name)
+    noteError (const ()) ("Tried to add a connection to the room " <> r <> " but it had no connection in direction "
+      <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))
 
 isNowhere ::
   forall wm es.

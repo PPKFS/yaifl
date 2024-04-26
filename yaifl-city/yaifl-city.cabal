@@ -60,6 +60,7 @@ common common-options
     NoImplicitPrelude
     OverloadedLabels
     OverloadedStrings
+    PatternSynonyms
     QuasiQuotes
     StrictData
     TemplateHaskell
@@ -71,7 +72,7 @@ executable yaifl-city
   import:          common-options
   hs-source-dirs:  src
   main-is: Main.hs
-  other-modules: Building
+  other-modules:
     Yaifl.Gen.Plan
     Yaifl.Gen.City.Building
     Yaifl.Gen.City.ApartmentTower

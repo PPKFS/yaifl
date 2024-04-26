@@ -36,6 +36,7 @@ import Yaifl.Model.Kinds.Device
 import Named
 import Yaifl.Model.Kinds.Person
 import Effectful.Optics ((.=))
+import Yaifl.Model.Rules (RuleEffects)
 
 data ObjectSpecifics =
   NoSpecifics
@@ -106,7 +107,7 @@ addDoor ::
   => WMWithProperty wm Enclosing
   => WMStdDirections wm
   => WMWithProperty wm MultiLocated
-  => NoMissingObjects wm es
+  => RuleEffects wm es
   => AddObjects wm es
   => WMSayable wm -- ^ name
   -> "front" :! (RoomEntity, WMDirection wm)
