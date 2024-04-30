@@ -76,6 +76,7 @@ executable yaifl-city
     Yaifl.Gen.Plan
     Yaifl.Gen.City.Building
     Yaifl.Gen.City.ApartmentTower
+    Yaifl.Gen.City.Apartment
 
   build-depends:
     , effectful-th

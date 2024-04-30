@@ -6,6 +6,9 @@ module Yaifl.Gen.Plan
   , Options2
   , Options3
   , Options4
+  , PlanOption2
+  , PlanOption3
+  , PlanOption4
   , SequentialOptions
   , SequentialOptions2
   , SequentialOptions3
@@ -15,6 +18,7 @@ module Yaifl.Gen.Plan
 
   , beforePlanWith
   , equalWeights
+  , oneOption
 
   ) where
 
@@ -32,6 +36,9 @@ type Options es a b = NonEmpty (Weight, PlanOption es a b)
 type Options2 es a b c = Options es (a, b) c
 type Options3 es a b c d = Options es (a, b, c) d
 type Options4 es a b c d e = Options es (a, b, c, d) e
+type PlanOption2 es a b c = PlanOption es (a, b) c
+type PlanOption3 es a b c d = PlanOption es (a, b, c) d
+type PlanOption4 es a b c d e = PlanOption es (a, b, c, d) e
 type SequentialOptions es a b = Options es (Int, a, [b]) b
 type SequentialOptions2 es a b c = SequentialOptions es (a, b) c
 type SequentialOptions3 es a b c d = SequentialOptions es (a, b, c) d
@@ -47,3 +54,6 @@ beforePlanWith bef = fmap (second (\f -> \a -> bef a >>= \b -> f (b, a)))
 
 equalWeights :: NonEmpty (PlanOption es a b) -> NonEmpty (Weight, PlanOption es a b)
 equalWeights = fmap (Weight 1,)
+
+oneOption :: PlanOption es a b -> NonEmpty (Weight, PlanOption es a b)
+oneOption = equalWeights . one

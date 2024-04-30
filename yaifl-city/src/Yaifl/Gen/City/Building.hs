@@ -2,12 +2,20 @@ module Yaifl.Gen.City.Building
 ( Building(..)
 , BuildingFloor(..)
 , ApartmentTowerBase(..)
+, BuildingGeneration
 ) where
 
 import Yaifl.Prelude
 import Yaifl.Model.Entity
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.WorldModel
+import Yaifl.Model.Kinds
+import Yaifl.Model.Effects
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Model.HasProperty
+import Yaifl.Game.Create
+import Yaifl.Model.MultiLocated
+import Yaifl.Model.Kinds.Enclosing
 
 data Building wm = Building
   { name :: Text
@@ -38,3 +46,16 @@ deriving stock instance Eq (WMDirection wm) => Eq (ApartmentTowerBase wm)
 
 makeFieldLabelsNoPrefix ''ApartmentTowerBase
 makeFieldLabelsNoPrefix ''BuildingFloor
+
+type BuildingGeneration wm es =
+  ( Pointed (WMRegionData wm)
+  , ObjectUpdate wm :> es
+  , RuleEffects wm es
+  , NoMissingObjects wm es
+  , WMStdDirections wm
+  , WMWithProperty wm MultiLocated
+  , WMWithProperty wm Enclosing
+  , WMHasObjSpecifics wm
+  , AddObjects wm es
+  , Semigroup (WMSayable wm)
+  )
