@@ -90,7 +90,7 @@ landing2Apartment (floorRegion, (floorNum, (building, foyer), prevFloors)) = do
     ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
     ! done
   let belowFloor = ((fromMaybe foyer $ viaNonEmpty head prevFloors) ^. #exits % _1)
-  r1 `isAbove` belowFloor
+  --r1 `isAbove` belowFloor
   _d <- addDoor "staircase"
     ! #front (belowFloor, injectDirection $ Up)
     ! #back (r1, injectDirection $ Down)

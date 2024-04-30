@@ -27,7 +27,6 @@ module Yaifl.Game.Create.RoomConnection
 
 import qualified Data.Map as Map
 
-import Solitude hiding (Down)
 import Breadcrumbs
 
 import Data.Text.Display
@@ -41,11 +40,12 @@ import Yaifl.Model.ObjectLike
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.TH ( makeDirections )
-import Yaifl.Model.WorldModel ( WMDirection, WMSayable )
+import Yaifl.Model.WorldModel ( WMDirection )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say
 import Yaifl.Model.Rules (RuleEffects)
+import Yaifl.Prelude hiding (Down)
 
 getAllConnections ::
   Room wm
@@ -125,7 +125,17 @@ isNowMapped ::
   -> Eff es ()
 isNowMapped roomTo dir = isDirectionFromInternal False dir roomTo
 
--- | the ordering here is that roomIsOf' `isSouthOf` (for example) baseRoom means
+inDirection ::
+  WMStdDirections wm
+  => NoMissingObjects wm es
+  => "thisRoom" :! RoomEntity
+  -> "leads" :! WMDirection wm
+  -> "here" :! RoomEntity
+  -> "isOneWay" :? Bool
+  -> Eff es ()
+inDirection (arg #thisRoom -> tr) (arg #leads -> l) (arg #here -> t) (argDef #isOneWay False -> o) = isDirectionFromInternal (not o) l t tr
+
+-- | the ordering here is that roomIsOf' `isSouthOf` (for example) baseRoom meanss
 -- the connection to be made explicitly is from baseRoom (south) -> roomIsOf
 -- then the implicit reverse connection is roomIsOf (opposite south) -> baseRoom
 isDirectionFromInternal ::
@@ -223,12 +233,20 @@ modifyAndVerifyConnection ::
   -> Eff es ()
 modifyAndVerifyConnection fromRoomE' fromDir destE f = do
   fromRoom <- getRoom fromRoomE'
-  if connectionInDirection Nothing fromRoom fromDir == Just destE
-  then modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
-  else do
-    r <- sayText (fromRoom ^. #name)
-    noteError (const ()) ("Tried to add a connection to the room " <> r <> " but it had no connection in direction "
-      <> display fromDir <> ". Directions that do exist are " <> show (getAllConnections fromRoom))
+  case connectionInDirection Nothing fromRoom fromDir of
+    -- all good
+    Just dest
+      | dest == destE ->
+        modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
+    Just anotherDest -> do
+      r <- sayText (fromRoom ^. #name)
+      r2 <- getRoom anotherDest
+      r2' <- sayText (r2 ^. #name)
+      noteError (const ()) ("When modifying the connection from " <> r <> " we expected the other side to be "
+        <> show destE <> ". but it was " <> r2' <> " in the direction " <> show fromDir)
+    Nothing -> do
+      inDirection ! #thisRoom fromRoomE' ! #leads fromDir ! #here destE ! #isOneWay True
+      modifyRoom @wm fromRoomE' (connectionLens fromDir % _Just %~ f)
 
 isNowhere ::
   forall wm es.
