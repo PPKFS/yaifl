@@ -4,7 +4,7 @@ module Yaifl.Gen.City.ApartmentTower
 
   ) where
 
-import Yaifl.Prelude hiding (Down)
+import Yaifl.Prelude hiding (State, Down)
 import Yaifl.Gen.Plan
 import Yaifl.Model.Kinds.Region
 import Yaifl.Game.Create.Object
@@ -15,10 +15,14 @@ import Yaifl.Game.Create.RoomConnection
 import Yaifl.Game.ObjectSpecifics (addDoor)
 import Yaifl.Gen.City.Apartment
 import Yaifl.Gen.City.Building
-import Control.Placeholder (todo)
-import Control.Placeholder (pattern TODO)
+import Control.Placeholder (pattern TODO, todo)
 import GHC.TypeLits
 import Yaifl.Text.DynamicText
+import Yaifl.Model.Kinds (Room, getRoom)
+import Yaifl.Model.Entity
+import Yaifl.Model.Rules (RuleEffects)
+import Effectful.State.Static.Local
+import Yaifl.Model.Effects (setRoom)
 
 data TowerBuildingPlan es inputs base floor (building :: Type) = TowerBuildingPlan
   { baseOptions :: Options es inputs base
@@ -41,8 +45,6 @@ type ApartmentFoyerPlan es b f = PlanOption es (RegionEntity, b) f
 type ApartmentFloorPlan es b f = PlanOption es (RegionEntity, (Int, (b, f), [f])) f
 type ApartmentTowerPlan es wm = TowerBuildingPlan es (WMDirection wm, Int) (ApartmentTowerBase wm) (BuildingFloor wm) (Building wm)
 
-
-
 data FloorBase wm = FloorBase
   { floorNumber :: Int
   , towerBase :: ApartmentTowerBase wm
@@ -51,19 +53,22 @@ data FloorBase wm = FloorBase
 apartmentTowerPlan :: BuildingGeneration wm es => ApartmentTowerPlan es wm
 apartmentTowerPlan = TowerBuildingPlan
   { baseOptions = equalWeights $ one makeBuildingBase
-  , foyerOptions = beforePlanWith (\v -> makeFloor (FloorBase 0 v )) $ equalWeights $ fromList
+  , foyerOptions = beforePlanWith (makeFloor . FloorBase 0) $ equalWeights $ fromList
       [ smallFoyer1Staircase
       --, longFoyer2Staircases
       ]
   , floorOptions = beforePlanWith (\(i, (b, _), _) -> makeFloor (FloorBase i b)) $ equalWeights $ fromList
       [  landing2Apartment
       --, singleApartmentFloor
-      --, landing4Apartment
+      --, landing4Apartment  n jhmmmmmmh
       --, hallway6Apartment
       ]
   , build = \apb@ApartmentTowerBase{..} floors -> return $ Building { name, floors, buildingBase = apb }
   }
 
+{-
+data ApartmentPlan1 = Foyer1 Staircase Floor
+-}
 singleApartmentFloor :: ApartmentFloorPlan es (ApartmentTowerBase wm) (BuildingFloor wm)
 singleApartmentFloor = todo
 
@@ -72,7 +77,7 @@ landing2Apartment (floorRegion, (floorNum, (building, foyer), prevFloors)) = do
   r1 <- addRoom (fromString $ toString $ (building ^. #name) <> ", Floor " <> show floorNum <> "; Hallway")
     ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
     ! done
-  let belowFloor = ((fromMaybe foyer $ viaNonEmpty head prevFloors) ^. #exits % _1)
+  let belowFloor = fromMaybe foyer (viaNonEmpty head prevFloors) ^. #exits % _1
   addDoor "staircase"
     ! #front (belowFloor, injectDirection $ Up)
     ! #back (r1, injectDirection $ Down)
@@ -148,3 +153,45 @@ makeBuildingBase (entranceIsOnFace, numberOfFloors) = do
   let name = "Apartment Building"
   region <- addRegion "Apartment Building"
   return ApartmentTowerBase {entranceIsOnFace, region, numberOfFloors, name}
+
+data BlueprintKind = Shell | Construction
+type Plan = WorldModel -> BlueprintKind -> Type
+newtype BlueprintAction wm component plan = BA { runIt :: forall es. BuildingGeneration wm es => plan -> Eff (State component : es) () }
+
+type family RoomBlueprint (wm :: WorldModel) (bk :: BlueprintKind) (p :: Plan)
+type instance RoomBlueprint wm 'Shell p = RoomEntity
+type instance RoomBlueprint wm 'Construction p  = BlueprintAction wm (Room wm) (p wm 'Shell)
+
+data SpokePlan wm a = SpokePlan
+  { centre :: RoomBlueprint wm a SpokePlan
+  , top :: RoomBlueprint wm a SpokePlan
+  , left :: RoomBlueprint wm a SpokePlan
+  , right :: RoomBlueprint wm a SpokePlan
+  }
+
+class Blueprintable (a :: Plan) where
+  constructBlueprint :: forall wm es. BuildingGeneration wm es => ({- todo: orientation/northIs -}) -> a wm 'Construction -> Eff es (a wm 'Shell)
+
+class BlueprintComponent wm componentEntity component where
+  buildAction :: BuildingGeneration wm es => plan -> BlueprintAction wm component plan -> componentEntity -> Eff es ()
+
+instance BlueprintComponent wm RoomEntity (Room wm) where
+  buildAction :: BuildingGeneration wm es => plan -> BlueprintAction wm (Room wm) plan -> RoomEntity -> Eff es ()
+  buildAction sp b r = do
+    room <- getRoom r
+    r' <- execState room (runIt b sp)
+    setRoom r'
+
+instance Blueprintable SpokePlan where
+  constructBlueprint :: BuildingGeneration wm es => ({- todo: orientation/northIs -}) -> SpokePlan wm Construction -> Eff es (SpokePlan wm Shell)
+  constructBlueprint _ SpokePlan{..} = do
+    r1 <- addRoom "centre" ! done
+    r2 <- addRoom "top" ! done
+    r3 <- addRoom "left" ! done
+    r4 <- addRoom "right" ! done
+    r1 `isSouthOf` r2
+    r3 `isWestOf` r1
+    r4 `isEastOf` r1
+    let sp = SpokePlan @_ @'Shell r1 r2 r3 r4
+    mapM_ (uncurry (buildAction sp)) $ zip [centre, top, left, right] [r1, r2, r3, r4]
+    pure sp

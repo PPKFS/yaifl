@@ -32,23 +32,40 @@ data ApartmentBase (wm :: WorldModel) = ApartmentBase
   { name :: Text
   , number :: Int
   }
-data ApartmentRoom wm
+
+data ApartmentRoom wm = ApartmentRoom
+  { room :: RoomEntity
+
+  }
 data Apartment wm
 
+{-
+ApartmentTower
+ r
+ -
+-h-r
+ -
+ b
+b: bedroom
+-}
 apartmentPlan :: BuildingGeneration wm es => ApartmentPlan' es wm
 apartmentPlan = ApartmentPlan
   { baseOptions = oneOption makeApartmentBase
   , hallwayOptions = oneOption makeLongHallway
-  , roomOptions = \rt -> beforePlanWith (\v -> makeApartmentRoom rt v) $ equalWeights $ case rt of
-      LivingRoom -> one makeLivingRoom
-      Kitchen -> one makeKitchen
-      Bathroom -> one makeBathroom
-      Bedroom -> one makeLivingRoom
-      Study -> one makeStudy
+  , roomOptions = \rt -> oneOption $ makeApartmentRoom rt
   , build = \base rooms -> do
       error ""
   }
 
+makeApartmentRoom :: BuildingGeneration wm es => RoomType -> ApartmentBase wm -> Eff es (ApartmentRoom wm)
+makeApartmentRoom rt b = do
+  r <- addRoom (show rt) ! done
+  furnishRoom rt r
+  pure $ ApartmentRoom r
+
+furnishRoom :: RoomType -> RoomEntity -> Eff es ()
+furnishRoom = todo
+{-
 makeStudy :: (RoomEntity, ApartmentBase wms) -> Eff es (ApartmentRoom wms)
 makeStudy = todo
 
@@ -60,15 +77,7 @@ makeKitchen = todo
 
 makeLivingRoom :: (RoomEntity, ApartmentBase wms) -> Eff es (ApartmentRoom wms)
 makeLivingRoom = todo
-
-makeApartmentRoom :: BuildingGeneration wm es => RoomType -> ApartmentBase wm -> Eff es RoomEntity
-makeApartmentRoom rt base = do
-  let name = makeApartmentRoomName rt base
-  addRoom name ! done
-
-makeApartmentRoomName :: IsString (WMSayable wm) => RoomType -> ApartmentBase wm -> WMSayable wm
-makeApartmentRoomName rt (ApartmentBase{name}) = fromString $ toString $ name <> " " <> show rt
-
+-}
 makeLongHallway :: PlanOption es (ApartmentBase wms) (ApartmentRoom wms)
 makeLongHallway = todo
 

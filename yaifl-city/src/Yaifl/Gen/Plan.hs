@@ -30,8 +30,6 @@ class Plannable plan where
   type PlanOutput plan
   runPlan :: Monad (PlanM plan) => plan -> PlanInput plan -> (PlanM plan) (PlanOutput plan)
 
-newtype Weight = Weight Int
-type PlanOption es a b = (a -> Eff es b)
 type Options es a b = NonEmpty (Weight, PlanOption es a b)
 type Options2 es a b c = Options es (a, b) c
 type Options3 es a b c d = Options es (a, b, c) d
@@ -42,6 +40,10 @@ type PlanOption4 es a b c d e = PlanOption es (a, b, c, d) e
 type SequentialOptions es a b = Options es (Int, a, [b]) b
 type SequentialOptions2 es a b c = SequentialOptions es (a, b) c
 type SequentialOptions3 es a b c d = SequentialOptions es (a, b, c) d
+
+newtype Weight = Weight Int
+type PlanOption es a b = (a -> Eff es b)
+
 
 pickSequential :: Int -> a -> SequentialOptions es a d -> Eff es [d]
 pickSequential n t opts = foldlM (\ds i -> (:ds) <$> pickOne opts (i, t, ds)) [] [0..n]
