@@ -14,3 +14,5 @@ cradle:
 
     - path: "breadcrumbs"
       component: "lib:breadcrumbs"
+    - path: "bearmonadterminal"
+      component: "lib:bearmonadterminal"

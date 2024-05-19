@@ -1,0 +1,41 @@
+cabal-version: 3.6
+name:          bearmonadterminal
+version:       0.0.0.1
+synopsis:      High-level Haskell bindings to the bearlibterminal graphics library.
+description:   High-level Haskell bindings to the bearlibterminal graphics library.
+homepage:      https://github.com/PPKFS/yaifl
+bug-reports:   https://github.com/PPKFS/yaifl/issues
+license:       MIT
+author:        Avery
+maintainer:    Avery <ppkfs@outlook.com>
+copyright:     2024 Avery
+category:      Game Development
+build-type:    Simple
+tested-with:   GHC == 9.6.8
+
+source-repository head
+  type:     git
+  location: https://github.com/PPKFS/yaifl.git
+
+common common-options
+  build-depends:
+    base >= 4.17.2 && < 5
+
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wredundant-constraints
+    -Wno-unused-packages -Wno-deprecations -fhide-source-paths
+    -Wno-unused-top-binds -Wmissing-deriving-strategies -O2
+
+  default-language: GHC2021
+  default-extensions:
+
+library
+  import:          common-options
+  hs-source-dirs:  src
+  other-modules:
+    BearMonadTerminal
+  extra-libraries: stdc++ BearLibTerminal
+  include-dirs:
+    cbits
+  extra-lib-dirs:
+    cbits
