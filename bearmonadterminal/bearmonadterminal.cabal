@@ -20,7 +20,9 @@ source-repository head
 common common-options
   build-depends:
     base >= 4.17.2 && < 5
-
+    , text
+    , bytestring
+    , mtl
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
     -Wno-unused-packages -Wno-deprecations -fhide-source-paths
@@ -28,14 +30,17 @@ common common-options
 
   default-language: GHC2021
   default-extensions:
+    DerivingStrategies
+    OverloadedStrings
 
 library
-  import:          common-options
+  import: common-options
   hs-source-dirs:  src
   other-modules:
     BearMonadTerminal
+    BearMonadTerminal.Raw
   extra-libraries: stdc++ BearLibTerminal
   include-dirs:
-    cbits
+    cbits/
   extra-lib-dirs:
-    cbits
+    cbits/
