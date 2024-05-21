@@ -4,6 +4,11 @@
 #include "BearLibTerminal.h"
 #include <string.h>
 
+void terminal_color_from_name(const char* name)
+{
+	terminal_color(color_from_name(name));
+}
+
 void terminal_print_ptr(int x, int y, const char* s, dimensions_t* dim)
 {
   dimensions_t d = terminal_print(x, y, s);

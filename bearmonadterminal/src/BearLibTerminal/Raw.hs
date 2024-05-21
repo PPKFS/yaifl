@@ -1,7 +1,7 @@
 {-# LANGUAGE CApiFFI #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module BearMonadTerminal.Raw where
+module BearLibTerminal.Raw where
 
 import Foreign.C.Types
 import Foreign.C.String
@@ -10,6 +10,8 @@ import Foreign.Storable
 import Control.Monad.IO.Class
 import Data.ByteString
 import qualified Data.ByteString as BS
+import Data.Text (Text)
+import qualified Data.Text.Foreign as TF
 
 data Dimensions = Dimensions
   { width :: Int
@@ -42,13 +44,23 @@ terminalClose = liftIO c_terminal_close
 
 foreign import capi safe "BearLibTerminal.h terminal_set" c_terminal_set :: CString -> IO CInt
 
+bsToCString :: MonadIO m => (CString -> IO Bool) -> ByteString -> m Bool
+bsToCString f = liftIO . flip BS.useAsCString f
+
+textToCString :: MonadIO m => (CString -> IO Bool) -> Text -> m Bool
+textToCString f = liftIO . flip TF.withCString f
+
 terminalSetCString :: MonadIO m => CString -> m Bool
 terminalSetCString = liftIO . (fmap asBool . c_terminal_set)
 
 terminalSetBS :: MonadIO m => ByteString -> m Bool
-terminalSetBS = liftIO . flip BS.useAsCString terminalSetCString
+terminalSetBS = bsToCString terminalSetCString
 
-foreign import capi safe "BearLibTerminal.h terminal_color" c_terminal_color :: CUInt -> IO ()
+terminalSetText :: MonadIO m => Text -> m Bool
+terminalSetText = textToCString terminalSetCString
+
+foreign import capi safe "BearLibTerminal.h terminal_color" c_terminal_color_uint :: CUInt -> IO ()
+foreign import capi safe "BearLibTerminal.h terminal_color" c_terminal_color_from_name :: CString -> IO ()
 
 --terminalColorUInt ::
 foreign import capi safe "BearLibTerminal.h terminal_bkcolor" c_terminal_bkcolor :: CUInt -> IO ()
@@ -80,7 +92,7 @@ foreign import capi safe "BearLibTerminal.h terminal_has_input" c_terminal_has_i
 foreign import capi safe "BearLibTerminal.h terminal_read" c_terminal_read :: IO CInt
 foreign import capi safe "BearLibTerminal.h terminal_peek" c_terminal_peek :: IO CInt
 -- also read_wstr
-foreign import capi safe "BearLibTerminal.h terminal_read_str" c_read_str :: CInt -> CInt -> Ptr CUChar -> CInt -> IO CUInt
+foreign import capi safe "BearLibTerminal.h terminal_read_str" c_read_str :: CInt -> CInt -> Ptr CChar -> CInt -> IO CUInt
 foreign import capi safe "BearLibTerminal.h terminal_delay" c_terminal_delay :: CInt -> IO ()
 
 -- not bothering with: color_from_name, color_from_argb

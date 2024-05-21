@@ -38,7 +38,7 @@ library
   hs-source-dirs:  src
   other-modules:
     BearMonadTerminal
-    BearMonadTerminal.Raw
+    BearLibTerminal.Raw
   extra-libraries: stdc++ BearLibTerminal
   include-dirs:
     cbits/

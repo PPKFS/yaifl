@@ -16,7 +16,7 @@ import Foreign.Marshal.Alloc
 import Foreign.Storable
 import qualified Data.Text.Lazy.Encoding as LT
 import qualified Data.ByteString as BS
-import qualified Data.Text.Internal.StrictBuilder as B
+import qualified Data.Text.Lazy as TL
 
 class BearLibConfigString s where
   toConfigString :: s -> LT.Builder
@@ -48,6 +48,9 @@ instance BearLibConfigString ConfigOption where
 
 toByteString :: BearLibConfigString c => c -> BS.ByteString
 toByteString = BS.toStrict . LT.encodeUtf8 . LT.toLazyText . toConfigString
+
+terminalSet :: MonadIO m => BearLibConfigString c => c -> m Bool
+terminalSet = terminalSetText . TL.toStrict . LT.toLazyText . toConfigString
 
 data WindowOptions = WindowOptions
   { size :: Maybe (Int, Int)
@@ -100,10 +103,20 @@ makeWindow = void $ runInBoundThread $ do
   c_terminal_close
   return ()
 
-initWindow :: MonadIO m => m ()
-initWindow = do
+initWindow :: MonadIO m => WindowOptions -> m ()
+initWindow opts = do
   terminalOpen
-  terminalSet defaultWindowOptions
+  terminalSet opts
+  return ()
+
+ {-}
   liftIO $ c_terminal_refresh
   liftIO $ c_terminal_refresh
   liftIO $ c_terminal_delay 5000
+  -}
+
+omniMain :: MonadIO m => m ()
+omniMain = do
+  -- todo: font:default, input filter to keyboard
+  initWindow defaultWindowOptions { title = Just "Omni: menu" }
+  terminalColor "white"
