@@ -64,7 +64,7 @@ terminalSetText :: MonadIO m => Text -> m Bool
 terminalSetText = textToCString terminalSetCString
 
 foreign import capi safe "BearLibTerminal.h terminal_color" c_terminal_color_uint :: CUInt -> IO ()
-foreign import capi safe "BearLibTerminal.h terminal_color" c_terminal_color_from_name :: CString -> IO ()
+foreign import capi safe "BearMonadTerminal.h terminal_color_from_name" c_terminal_color_from_name :: CString -> IO ()
 
 terminalColorUInt :: MonadIO m => CUInt -> m ()
 terminalColorUInt = liftIO . c_terminal_color_uint

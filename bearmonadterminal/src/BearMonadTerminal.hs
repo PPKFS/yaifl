@@ -108,15 +108,3 @@ initWindow opts = do
   terminalOpen
   terminalSet opts
   return ()
-
- {-}
-  liftIO $ c_terminal_refresh
-  liftIO $ c_terminal_refresh
-  liftIO $ c_terminal_delay 5000
-  -}
-
-omniMain :: MonadIO m => m ()
-omniMain = do
-  -- todo: font:default, input filter to keyboard
-  initWindow defaultWindowOptions { title = Just "Omni: menu" }
-  terminalColorNameText "white"

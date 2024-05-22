@@ -36,11 +36,19 @@ common common-options
 library
   import: common-options
   hs-source-dirs:  src
-  other-modules:
+  exposed-modules:
     BearMonadTerminal
     BearLibTerminal.Raw
   extra-libraries: stdc++ BearLibTerminal
   include-dirs:
     cbits/
   extra-lib-dirs:
-    cbits/
+    ${pkgroot}/cbits/
+
+executable omni
+  import:          common-options
+  hs-source-dirs:  omni
+  main-is: Main.hs
+  other-modules:
+  build-depends:
+    bearmonadterminal
