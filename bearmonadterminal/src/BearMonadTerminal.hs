@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module BearMonadTerminal where
 
-import BearMonadTerminal.Raw
+import BearLibTerminal.Raw
 import Data.Text ( Text )
 import Control.Monad.IO.Class (MonadIO (..))
 import GHC.Generics
@@ -119,4 +119,4 @@ omniMain :: MonadIO m => m ()
 omniMain = do
   -- todo: font:default, input filter to keyboard
   initWindow defaultWindowOptions { title = Just "Omni: menu" }
-  terminalColor "white"
+  terminalColorNameText "white"

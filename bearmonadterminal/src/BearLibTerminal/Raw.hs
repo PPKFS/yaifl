@@ -15,6 +15,7 @@ import Data.Text (Text)
 import qualified Data.Text.Foreign as TF
 import Foreign.Marshal.Array (withArray)
 import Foreign.Marshal.Alloc
+import qualified Data.Text.Foreign as T
 
 data Dimensions = Dimensions
   { width :: Int
@@ -125,8 +126,8 @@ data Rectangle a = Rectangle
   , y :: a
   , width :: a
   , height :: a
-
   }
+
 terminalClearRect :: MonadIO m => Rectangle Int -> m ()
 terminalClearRect Rectangle{..} = terminalClearArea x y width height
 
@@ -256,8 +257,13 @@ terminalPeekCode = liftIO $ fromIntegral <$> c_terminal_peek
 
 foreign import capi safe "BearLibTerminal.h terminal_read_str" c_read_str :: CInt -> CInt -> Ptr CChar -> CInt -> IO CUInt
 
-terminalReadStr :: MonadIO m => Int -> Int -> m (CUInt, Text)
-terminalReadStr = error ""
+terminalReadStr :: MonadIO m => Int -> Int -> Int -> m (Maybe Text)
+terminalReadStr x y m = liftIO $ alloca (\c -> c_read_str (fromIntegral x) (fromIntegral y) c (fromIntegral m) >>=
+  \res -> if res == -1 then return Nothing else Just <$> T.peekCStringLen (c, fromIntegral res))
+
 foreign import capi safe "BearLibTerminal.h terminal_delay" c_terminal_delay :: CInt -> IO ()
+
+terminalDelay :: MonadIO m => Int -> m ()
+terminalDelay = liftIO . c_terminal_delay . fromIntegral
 
 
