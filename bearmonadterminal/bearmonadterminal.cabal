@@ -32,6 +32,8 @@ common common-options
   default-extensions:
     DerivingStrategies
     OverloadedStrings
+    MultiWayIf
+    BlockArguments
 
 library
   import: common-options
@@ -50,5 +52,11 @@ executable omni
   hs-source-dirs:  omni
   main-is: Main.hs
   other-modules:
+    Omni.Speed
   build-depends:
-    bearmonadterminal
+    bearmonadterminal,
+    random,
+    word8,
+    bytestring,
+    vector,
+    time

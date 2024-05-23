@@ -63,7 +63,7 @@ data WindowOptions = WindowOptions
 
 defaultWindowOptions :: WindowOptions
 defaultWindowOptions = WindowOptions
-  { size = Just (80, 125)
+  { size = Just (80, 25)
   , cellsize = Just Auto
   , title = Just "BearMonadTerminal"
   , icon = Nothing
@@ -89,22 +89,7 @@ instance BearLibConfigString WindowOptions where
         [] -> mempty
         opts -> LT.fromText "window: " <> mconcat (L.intersperse (LT.singleton ',') $ opts) <> LT.singleton ';'
 
-makeWindow :: IO ()
-makeWindow = void $ runInBoundThread $ do
-  void c_terminal_open
-  c_terminal_refresh
-  c_terminal_refresh
-  c_terminal_delay 1000
-  c2 <- newCString "hello, world!🐒"
-  v <- alloca (\p -> c_terminal_print_ptr 14 14 c2 p >> peek @Dimensions p)
-  print v
-  c_terminal_refresh
-  c_terminal_delay 5000
-  c_terminal_close
-  return ()
-
 initWindow :: MonadIO m => WindowOptions -> m ()
 initWindow opts = do
-  terminalOpen
-  terminalSet opts
-  return ()
+  void $ terminalOpen
+  void $ terminalSet opts
