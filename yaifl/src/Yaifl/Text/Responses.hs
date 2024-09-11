@@ -10,7 +10,7 @@ module Yaifl.Text.Responses
   , WithResponseSet
   ) where
 
-import Solitude hiding (Reader, ask)
+import Yaifl.Prelude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
 import Yaifl.Model.WorldModel
 import GHC.TypeLits

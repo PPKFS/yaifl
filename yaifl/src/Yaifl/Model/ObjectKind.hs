@@ -3,7 +3,7 @@ module Yaifl.Model.ObjectKind
   , ObjectKindInfo(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Kinds.Object
 
 makeKindDAG :: Map ObjectKind (Set ObjectKind)

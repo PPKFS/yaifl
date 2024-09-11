@@ -12,7 +12,7 @@ module Yaifl.Model.Query (
 
 ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Effectful.Error.Static ( Error, throwError )
 import Yaifl.Model.Entity

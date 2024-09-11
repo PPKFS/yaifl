@@ -22,7 +22,7 @@ module Yaifl.Model.Actions.Args
   --, getNoun
   ) where
 
-import Solitude hiding (show)
+import Yaifl.Prelude hiding (show)
 
 import Effectful.Optics
 import Yaifl.Model.ObjectLike

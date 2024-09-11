@@ -1,6 +1,6 @@
 module Yaifl.Model.Kinds.Region where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity (TaggedEntity, RoomEntity)
 import qualified Data.Set as S
 import Yaifl.Model.WorldModel

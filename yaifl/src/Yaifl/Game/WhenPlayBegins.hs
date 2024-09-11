@@ -4,7 +4,7 @@ module Yaifl.Game.WhenPlayBegins
   , introText
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Effectful.Optics
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY

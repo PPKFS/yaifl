@@ -26,7 +26,7 @@ module Yaifl.Model.Kinds.Object (
 
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Data.Text.Display
 

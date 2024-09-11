@@ -20,7 +20,7 @@ module Yaifl.Model.Action
   , makeAction
   ) where
 
-import Solitude hiding (Reader)
+import Yaifl.Prelude hiding (Reader)
 
 import Breadcrumbs
 import Effectful.Optics ( (?=) )

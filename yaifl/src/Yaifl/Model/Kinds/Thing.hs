@@ -11,7 +11,7 @@ module Yaifl.Model.Kinds.Thing
   , defaultPlayerID
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Room

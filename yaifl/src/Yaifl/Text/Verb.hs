@@ -2,7 +2,7 @@
 module Yaifl.Text.Verb where
 
 import GHC.TypeLits
-import Solitude
+import Yaifl.Prelude
 import qualified Data.Text as T
 
 -- https://ganelson.github.io/inform/inflections-module/4-ei.html#SP14

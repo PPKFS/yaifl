@@ -14,7 +14,7 @@ module Yaifl.Model.Kinds.Room
 
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.WorldModel

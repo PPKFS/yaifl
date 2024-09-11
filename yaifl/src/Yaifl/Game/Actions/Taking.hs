@@ -5,7 +5,7 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.SayQQ
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Text.Say
 
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)

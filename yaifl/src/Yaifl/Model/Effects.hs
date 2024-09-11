@@ -34,7 +34,7 @@ module Yaifl.Model.Effects
   , AddObjects
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 import Data.Text.Display

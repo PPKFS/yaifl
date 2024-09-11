@@ -10,7 +10,7 @@ module Yaifl.Game.Create.Object
   , done
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.Text.Display

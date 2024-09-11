@@ -2,7 +2,7 @@
 
 module Yaifl.Game.Actions.Looking.Visibility where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Model.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)

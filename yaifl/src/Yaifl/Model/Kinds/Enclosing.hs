@@ -13,7 +13,7 @@ module Yaifl.Model.Kinds.Enclosing (
   , blankEnclosing
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Data.EnumSet ( EnumSet, empty )
 import Yaifl.Model.Entity

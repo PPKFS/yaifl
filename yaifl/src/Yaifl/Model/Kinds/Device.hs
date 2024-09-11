@@ -1,6 +1,6 @@
 module Yaifl.Model.Kinds.Device where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.TH (makeSpecificsWithout)
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Effects

@@ -3,7 +3,7 @@ module Yaifl.Game.Parser
   , printPrompt
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic

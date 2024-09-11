@@ -2,7 +2,7 @@
 module Yaifl.Game.Actions.SwitchingOn where
 
 import Yaifl.Model.Action
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say

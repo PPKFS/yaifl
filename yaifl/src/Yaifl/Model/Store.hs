@@ -14,7 +14,7 @@ module Yaifl.Model.Store
   , emptyStore
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 import qualified Data.EnumMap as EM
 import qualified Data.IntMap as IM

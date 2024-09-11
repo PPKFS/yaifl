@@ -3,7 +3,7 @@ module Yaifl.Game.Activities.ChoosingNotableLocaleObjects
   , WithChoosingNotableLocaleObjects
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Activity hiding (name)
 import Yaifl.Model.Entity ( HasID(..) )

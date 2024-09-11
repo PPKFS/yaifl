@@ -18,7 +18,7 @@ module Yaifl.Model.Kinds.Container
   , modifyEnterable
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Effects
 import Yaifl.Model.Kinds.Enclosing

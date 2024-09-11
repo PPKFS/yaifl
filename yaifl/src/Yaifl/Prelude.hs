@@ -8,4 +8,4 @@ module Yaifl.Prelude
 import Solitude
 import Effectful.Optics
 import Named
-import Data.Text.Display
+import Data.Text.Display hiding (Opaque)

@@ -8,7 +8,7 @@ module Yaifl.Model.Rules.RuleEffects
   , SayableValue(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs ( Breadcrumbs )
 import Effectful.Error.Static ( Error )

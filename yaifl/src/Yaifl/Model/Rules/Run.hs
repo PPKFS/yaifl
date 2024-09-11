@@ -6,7 +6,7 @@ module Yaifl.Model.Rules.Run
   , failRuleWithError
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 import Data.Text.Display ( Display, display )

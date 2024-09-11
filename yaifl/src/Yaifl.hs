@@ -21,7 +21,7 @@ module Yaifl (
   , module Yaifl.Model.WorldModel
   ) where
 
-import Solitude hiding ( Reader, runReader )
+import Yaifl.Prelude hiding ( Reader, runReader )
 
 
 import Effectful.Optics ( (?=), use )

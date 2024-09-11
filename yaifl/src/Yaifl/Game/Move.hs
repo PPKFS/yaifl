@@ -3,7 +3,7 @@ module Yaifl.Game.Move
   , updateToContain
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.Text.Display

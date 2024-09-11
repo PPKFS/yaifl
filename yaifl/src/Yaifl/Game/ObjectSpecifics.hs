@@ -10,7 +10,7 @@ module Yaifl.Game.ObjectSpecifics
   , addContainer
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Metadata ( noteError )
 import Yaifl.Model.Kinds.Direction (WMStdDirections)

@@ -24,7 +24,7 @@ module Yaifl.Model.Entity
   , DoorEntity
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Data.Text.Display ( Display(..) )
 
 -- | An object ID.

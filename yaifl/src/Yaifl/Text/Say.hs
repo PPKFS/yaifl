@@ -20,7 +20,7 @@ import Data.Text.Display
 import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Activity
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Object

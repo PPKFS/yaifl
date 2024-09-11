@@ -8,7 +8,7 @@ module Yaifl.Game.Actions.Collection
 import Yaifl.Model.Action
 import Yaifl.Game.Actions.Going
 import Yaifl.Game.Actions.Looking.Visibility
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Game.Actions.Examining
 import Yaifl.Game.Actions.Opening

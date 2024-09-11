@@ -4,7 +4,7 @@ module Yaifl.Game.Actions.OutOfWorld
   , verboseAction
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Metadata
 import Effectful.Optics
 import Yaifl.Text.SayQQ

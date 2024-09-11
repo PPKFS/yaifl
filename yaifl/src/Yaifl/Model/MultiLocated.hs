@@ -5,7 +5,7 @@ module Yaifl.Model.MultiLocated
   , modifyMultiLocated
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Effects
 import Yaifl.Model.Entity

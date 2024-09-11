@@ -22,7 +22,7 @@ module Yaifl.Model.Kinds.Direction (
   , HasDirectionalTerms(..)
   ) where
 
-import Solitude hiding (Down)
+import Yaifl.Prelude hiding (Down)
 import Yaifl.Model.WorldModel ( WMDirection, WorldModel(..) )
 import Data.Text.Display
 import qualified Data.Text as T

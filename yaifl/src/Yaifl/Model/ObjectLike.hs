@@ -14,7 +14,7 @@ module Yaifl.Model.ObjectLike
   , RoomLike(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Effectful.Error.Static
 

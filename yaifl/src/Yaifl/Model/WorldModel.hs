@@ -26,7 +26,7 @@ module Yaifl.Model.WorldModel (
   , WMEq
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 -- | All the various type parameters wrapped into a single type.
 data WorldModel =

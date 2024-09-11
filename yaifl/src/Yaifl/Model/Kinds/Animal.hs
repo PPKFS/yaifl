@@ -1,6 +1,6 @@
 module Yaifl.Model.Kinds.Animal where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Effects
 import Yaifl.Model.Query

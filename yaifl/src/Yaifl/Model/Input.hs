@@ -5,7 +5,7 @@ module Yaifl.Model.Input
   , setInputBuffer
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Metadata
 import Effectful.Optics
 import Effectful.Dispatch.Dynamic (interpret)

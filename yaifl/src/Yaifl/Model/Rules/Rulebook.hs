@@ -30,7 +30,7 @@ module Yaifl.Model.Rules.Rulebook
   ) where
 
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Yaifl.Model.Rules.RuleEffects

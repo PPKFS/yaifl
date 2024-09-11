@@ -7,7 +7,7 @@ module Yaifl.Model.Kinds.AnyObject
 
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room

@@ -7,7 +7,7 @@ module Yaifl.Game.Create.Rule
   , ActionOrActivity(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Data.Text.Display
 import Effectful.Optics
 import Yaifl.Model.Action
