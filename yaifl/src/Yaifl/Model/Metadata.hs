@@ -41,8 +41,7 @@ module Yaifl.Model.Metadata (
 
 import Breadcrumbs
 import Data.Text.Display
-import Effectful.Optics ( (.=), (%=), use )
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.ObjectKind

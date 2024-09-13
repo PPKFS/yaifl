@@ -3,7 +3,7 @@ module Yaifl.Game.Move
   , updateToContain
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.Text.Display
@@ -25,7 +25,7 @@ move ::
   Breadcrumbs :> es
   => State Metadata :> es
   => ObjectQuery wm es
-  => Display (WMSayable wm)
+  => Display (WMText wm)
   => WMWithProperty wm Enclosing
   => EnclosingObject l
   => ObjectLike wm l

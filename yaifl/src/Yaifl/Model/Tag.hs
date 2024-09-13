@@ -18,7 +18,7 @@ module Yaifl.Model.Tag
   , unsafeTagObject
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 
 -- | Because tagging object entities is a headache to marshall between `AnyObject` and not, this is an Object

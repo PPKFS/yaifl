@@ -1,7 +1,7 @@
 module Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair where
 
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl
 import Yaifl.Game.Actions.Going
 import Yaifl.Model.Kinds.Direction

@@ -5,7 +5,7 @@ module Yaifl.Game.Activities.PrintingTheLocaleDescription
 , youCanAlsoSeeResponsesImpl
 ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 

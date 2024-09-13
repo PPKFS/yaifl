@@ -10,7 +10,7 @@ module Yaifl.Text.Responses
   , WithResponseSet
   ) where
 
-import Solitude hiding (Reader, ask)
+import Yaifl.Prelude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
 import Yaifl.Model.WorldModel
 import GHC.TypeLits
@@ -18,7 +18,7 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.SayQQ
 import Effectful.Reader.Static
 
-newtype Response wm v = Response { runResponse :: forall es. SayableValue (WMSayable wm) wm => (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
+newtype Response wm v = Response { runResponse :: forall es. SayableValue (WMText wm) wm => (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 
 makeFieldLabelsNoPrefix ''Response
 

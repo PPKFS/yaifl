@@ -15,7 +15,7 @@ module Yaifl.Model.Activity
   , whenHandling'
   ) where
 
-import Solitude hiding ( Reader, runReader )
+import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs ( withSpan )
 import Data.Text.Display

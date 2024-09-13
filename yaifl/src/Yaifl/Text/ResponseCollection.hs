@@ -1,7 +1,7 @@
 
 module Yaifl.Text.ResponseCollection where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Text.ListWriter
 import Yaifl.Text.Responses
 

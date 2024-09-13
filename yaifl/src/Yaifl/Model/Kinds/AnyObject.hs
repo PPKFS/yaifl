@@ -4,17 +4,17 @@ module Yaifl.Model.Kinds.AnyObject
   , AnyObject(..)
   , _Room
   , _Thing
-
   ) where
 
-import Solitude
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Entity
-import Yaifl.Model.WorldModel
+import Yaifl.Prelude
+
 import GHC.Records
-import Data.Text.Display
+import Yaifl.Model.Entity
+import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Kinds.Room
+import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.WorldModel
+
 
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to
 -- do things with the other fields.

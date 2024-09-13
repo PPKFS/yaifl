@@ -10,7 +10,7 @@ module Yaifl.Game.Create.Object
   , done
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.Text.Display
@@ -38,12 +38,12 @@ import qualified Data.Text as T
 done = defaults
 
 makeObject ::
-  Display (WMSayable wm)
+  Display (WMText wm)
   => Pointed s
   => ObjectUpdate wm :> es
   => State Metadata :> es
-  => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> WMText wm -- ^ Description.
   -> ObjectKind
   -> Bool
   -> Maybe s -- ^ Object details.
@@ -61,8 +61,8 @@ addObject ::
   => WMWithProperty wm Enclosing
   => AddObjects wm es
   => (Object wm d s -> Eff es ())
-  -> WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  -> WMText wm -- ^ Name.
+  -> WMText wm -- ^ Description.
   -> ObjectKind
   -> Bool
   -> Maybe s
@@ -97,9 +97,9 @@ addObject updWorld n d ty isT specifics details mbLocation =
 addThingInternal ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> WMSayable wm
-  -> WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> WMText wm
+  -> WMText wm -- ^ Description.
   -> ObjectKind -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (ThingData wm)
@@ -114,9 +114,9 @@ addThing ::
   forall wm es.
   WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm -- ^ Description.
   -> "specifics" :? WMObjSpecifics wm
   -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
   -> "location" :? EnclosingEntity
@@ -141,8 +141,8 @@ runLocalState bl upd = snd $ runPureEff $ runStateLocal bl upd
 addRoomInternal ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> WMText wm -- ^ Description.
   -> ObjectKind -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
@@ -156,8 +156,8 @@ addRoomInternal name desc objtype specifics details = do
 addRoom' ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> WMText wm -- ^ Description.
   -> Eff '[State (RoomData wm)] v
   -> Eff es RoomEntity
 addRoom' n d rd = addRoomInternal n d (ObjectKind "room")
@@ -166,8 +166,8 @@ addRoom' n d rd = addRoomInternal n d (ObjectKind "room")
 addRoom ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "description" :? WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> "description" :? WMText wm -- ^ Description.
   -> Eff es RoomEntity
 addRoom n (argDef #description "" -> d) = addRoom' n d pass
 

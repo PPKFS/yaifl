@@ -18,16 +18,16 @@ module Yaifl.Model.Kinds.Container
   , modifyEnterable
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Effects
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.Entity
 import Yaifl.Model.HasProperty ( WMWithProperty )
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.TH ( makeSpecificsWithout )
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Entity
 import Yaifl.Model.Tag
 
 -- | If the container is see-through.
@@ -62,12 +62,14 @@ makeContainer ::
   -> Maybe Openable
   -> Maybe Opened
   -> Container
-makeContainer cc op e oa opd = (Container Opaque (blankEnclosing { capacity = Just 100 }) defaultContainerOpenability NotEnterable)
-  & (maybe id (set #enterable) e)
-  & (maybe id (set (#enclosing % #capacity) . Just) cc)
-  & (maybe id (set #opacity) op)
-  & (maybe id (set (#openable % #opened)) opd)
-  & (maybe id (set (#openable % #openable)) oa)
+makeContainer cc op e oa opd = (Container
+  { opacity = fromMaybe Opaque op
+  , enclosing = (blankEnclosing { capacity = cc <|> Just 100 })
+  , openable = defaultContainerOpenability
+  , enterable = fromMaybe NotEnterable e
+  })
+  & maybe id (set (#openable % #opened)) opd
+  & maybe id (set (#openable % #openable)) oa
 
 data ContainerTag
 type ContainerEntity = TaggedEntity ContainerTag

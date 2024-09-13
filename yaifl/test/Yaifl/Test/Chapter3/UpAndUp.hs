@@ -2,7 +2,7 @@ module Yaifl.Test.Chapter3.UpAndUp where
 
 import Yaifl
 import Yaifl.Game.Create.Object
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Test.Common
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Text.Say

@@ -34,7 +34,7 @@ module Yaifl.Model.Effects
   , AddObjects
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 import Data.Text.Display
@@ -88,15 +88,15 @@ data MissingObject = MissingObject
 -- | Type synonym for reading/writing objects.
 type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
 -- | Type synonym for reading/writing objects with a way to handle missing IDs.
-type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es, Display (WMSayable wm))
+type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es, Display (WMText wm))
 -- | Type synonym for reading objects with a way to handle missing IDs.
 type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, WithMetadata es)
 
 -- | Type synonym for adding new objects.
 type AddObjects wm es = (
   ObjectUpdate wm :> es
-  , Display (WMSayable wm)
-  , IsString (WMSayable wm)
+  , Display (WMText wm)
+  , IsString (WMText wm)
   , State Metadata :> es
   , Pointed (WMObjSpecifics wm)
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)

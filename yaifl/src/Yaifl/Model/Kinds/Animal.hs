@@ -1,14 +1,15 @@
-module Yaifl.Model.Kinds.Animal where
+module Yaifl.Model.Kinds.Animal
+  ( isAnimal
+  ) where
 
-import Solitude
-import Yaifl.Model.Kinds.Object
+import Yaifl.Prelude
+
 import Yaifl.Model.Effects
-import Yaifl.Model.Query
-import Yaifl.Model.Metadata
+import Yaifl.Model.ObjectLike
 
 isAnimal ::
   NoMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isAnimal o = getObject o >>= (`isKind` "animal")
+isAnimal = objectIsKind "animal"

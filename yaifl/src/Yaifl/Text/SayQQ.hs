@@ -6,7 +6,7 @@ module Yaifl.Text.SayQQ
   , sayingTell
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Data.Char (isUpper, toUpper, toLower)
 import Language.Haskell.TH hiding (Type)

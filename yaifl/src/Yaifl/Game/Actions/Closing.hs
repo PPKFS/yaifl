@@ -2,7 +2,7 @@
 module Yaifl.Game.Actions.Closing where
 
 import Yaifl.Model.Action
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Openable

@@ -13,7 +13,7 @@ module Yaifl.Model.HasProperty (
   , WMWithProperty
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.WorldModel ( WMObjSpecifics )
 
 -- | An `AffineTraversal` is an optic that focuses on 0-1 objects; it's a `Prism` without

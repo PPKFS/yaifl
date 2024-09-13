@@ -2,7 +2,7 @@ module Yaifl.Text.AdaptiveNarrative where
 
 
 import Yaifl.Model.Kinds.Object
-import Solitude
+import Yaifl.Prelude
 import Effectful.Optics (use, (.=))
 import Yaifl.Model.Query
 import Yaifl.Model.Metadata

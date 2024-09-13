@@ -10,7 +10,7 @@ module Yaifl.Text.ListWriter
   , ListWriterResponses(..)
   ) where
 
-import Solitude hiding (Reader, runReader)
+import Yaifl.Prelude hiding (Reader, runReader)
 import Yaifl.Model.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Text.Say

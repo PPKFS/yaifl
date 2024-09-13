@@ -6,7 +6,7 @@ module Yaifl.Game.Actions.Looking
   , roomDescriptionResponsesImpl
   ) where
 
-import Solitude hiding ( Reader )
+import Yaifl.Prelude hiding ( Reader )
 
 import Breadcrumbs ( addTag )
 import Data.Text.Display ( display )

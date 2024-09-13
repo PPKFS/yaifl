@@ -1,6 +1,6 @@
 module Main where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl
 import Yaifl.Model.Action
 import Yaifl.Model.Rules.RuleEffects

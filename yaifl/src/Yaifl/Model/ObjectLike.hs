@@ -12,9 +12,10 @@ module Yaifl.Model.ObjectLike
   ( ObjectLike(..)
   , ThingLike(..)
   , RoomLike(..)
+  , objectIsKind
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Effectful.Error.Static
 
@@ -25,6 +26,7 @@ import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Metadata (isKind)
 
 -- | Something which can be resolved into an `AnyObject`.
 class HasID o => ObjectLike wm o where
@@ -81,3 +83,11 @@ instance ThingLike wm (TaggedEntity ThingTag) where
 
 instance RoomLike wm (TaggedEntity RoomTag) where
   getRoom o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
+
+objectIsKind ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => ObjectKind
+  -> o
+  -> Eff es Bool
+objectIsKind t o = getObject o >>= (`isKind` t)

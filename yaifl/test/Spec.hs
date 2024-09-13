@@ -2,7 +2,7 @@
 
 module Main ( main ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Data.Aeson
 import Breadcrumbs

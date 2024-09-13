@@ -1,6 +1,6 @@
 module Yaifl.Game.EffectHandlers where
 
-import Solitude hiding ( Reader, runReader )
+import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic

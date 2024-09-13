@@ -16,7 +16,7 @@ module Yaifl.Model.Kinds.Openable
   , closeIt
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Effects
 import Yaifl.Model.HasProperty

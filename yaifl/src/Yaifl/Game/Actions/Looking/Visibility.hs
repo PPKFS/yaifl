@@ -2,7 +2,7 @@
 
 module Yaifl.Game.Actions.Looking.Visibility where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Model.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
@@ -30,8 +30,8 @@ type HasLookingProperties wm =
   ( WMWithProperty wm Enclosing
   , WMWithProperty wm Enterable
   , WMWithProperty wm Container
-  , Display (WMSayable wm)
-  , IsString (WMSayable wm)
+  , Display (WMText wm)
+  , IsString (WMText wm)
   , WithPrintingNameOfADarkRoom wm
   , WithPrintingTheLocaleDescription wm
   , WithPrintingDescriptionOfADarkRoom wm

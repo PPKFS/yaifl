@@ -1,6 +1,6 @@
 module Yaifl.Test.Chapter3.Tamed where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Game.EffectHandlers
 import Yaifl (PlainWorldModel)
 import Yaifl.Model.Metadata

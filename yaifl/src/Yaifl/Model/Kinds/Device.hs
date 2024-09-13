@@ -1,12 +1,17 @@
-module Yaifl.Model.Kinds.Device where
+module Yaifl.Model.Kinds.Device
+  ( Device(..)
+  , switchItOn
+  , switchItOff
+  , toggleDevice
 
-import Solitude
+  ) where
+
+import Yaifl.Prelude
 import Yaifl.Model.TH (makeSpecificsWithout)
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Effects
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Kinds.Thing
 
 newtype Device = Device
@@ -26,3 +31,17 @@ switchItOn ::
   => Thing wm
   -> Eff es ()
 switchItOn = flip modifyDevice (#switchedOn .~ True)
+
+switchItOff ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Device
+  => Thing wm
+  -> Eff es ()
+switchItOff = flip modifyDevice (#switchedOn .~ False)
+
+toggleDevice ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Device
+  => Thing wm
+  -> Eff es ()
+toggleDevice = flip modifyDevice (#switchedOn %~ not)

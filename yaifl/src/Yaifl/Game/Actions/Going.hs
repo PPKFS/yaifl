@@ -8,7 +8,7 @@ module Yaifl.Game.Actions.Going
   , throughTheClosedDoor
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Action
 import Yaifl.Model.Entity

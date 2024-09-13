@@ -4,7 +4,7 @@ import Yaifl
 import Yaifl.Game.Create.Object
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Test.Common
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Text.DynamicText
 
 ex3 :: (Text, [Text], Game PlainWorldModel ())

@@ -15,7 +15,7 @@ module Yaifl.Model.TH
   , makeDirections
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Data.Text (replace)
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )

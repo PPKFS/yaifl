@@ -3,7 +3,7 @@ module Yaifl.Game.Activities.PrintingLocaleParagraphAbout
   , printingLocaleParagraphAboutImpl
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Activity
 import Yaifl.Model.Kinds.Thing

@@ -1,6 +1,6 @@
 module Yaifl.Game.World where
 
-import Solitude
+import Yaifl.Prelude
 
 import Effectful.Optics ( (%=) )
 

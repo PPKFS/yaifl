@@ -3,7 +3,7 @@ module Yaifl.Game.Activities.ListingContents
 , WithListingContents
 ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Activity
 import Yaifl.Model.Rules.Rulebook

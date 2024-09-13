@@ -5,7 +5,7 @@ module Yaifl.Text.DynamicText
   ) where
 
 import Yaifl.Model.WorldModel
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Rules.Rulebook
 import Effectful.Writer.Static.Local (Writer, tell)
 import Data.Text.Display
@@ -34,8 +34,8 @@ instance Semigroup (DynamicText wm) where
 instance Monoid (DynamicText wm) where
   mempty = DynamicText (Left "")
 text ::
-  SayableValue (WMSayable wm) wm
-  => Display (WMSayable wm)
+  SayableValue (WMText wm) wm
+  => Display (WMText wm)
   => Text
   -> Eff (Writer Text : ConcreteRuleStack wm) ()
   -> DynamicText wm

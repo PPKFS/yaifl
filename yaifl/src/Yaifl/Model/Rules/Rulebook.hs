@@ -30,7 +30,7 @@ module Yaifl.Model.Rules.Rulebook
   ) where
 
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Yaifl.Model.Rules.RuleEffects
@@ -44,7 +44,7 @@ import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Metadata
 
-newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMSayable wm) wm => Display (WMSayable wm) => Eff (es : ConcreteRuleStack wm) a)
+newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMText wm) wm => Display (WMText wm) => Eff (es : ConcreteRuleStack wm) a)
 
 data Precondition wm v = Precondition
   { preconditionName :: forall es. RuleEffects wm es => Eff es Text

@@ -10,7 +10,7 @@ module Yaifl.Game.ObjectSpecifics
   , addContainer
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Yaifl.Model.Metadata ( noteError )
 import Yaifl.Model.Kinds.Direction (WMStdDirections)
@@ -29,7 +29,7 @@ import Yaifl.Model.HasProperty ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query
-import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMSayable, WMDirection )
+import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMText, WMDirection )
 import qualified Data.Set as S
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Device
@@ -109,11 +109,11 @@ addDoor ::
   => WMWithProperty wm MultiLocated
   => RuleEffects wm es
   => AddObjects wm es
-  => WMSayable wm -- ^ name
+  => WMText wm -- ^ name
   -> "front" :! (RoomEntity, WMDirection wm)
   -> "back" :! (RoomEntity, WMDirection wm)
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm -- ^ Description.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm -- ^ Description.
   -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
   -> "thingData" :? ThingData wm -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es DoorEntity
@@ -157,9 +157,9 @@ addDevice ::
   WMHasObjSpecifics wm
   => WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm -- ^ Description.
+  => WMText wm -- ^ Name.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm -- ^ Description.
   -> "device" :? Device
   -> Eff es ThingEntity
 addDevice n ia d (argDef #device identityElement -> dev) = addThing @wm n ia d
@@ -172,9 +172,9 @@ addContainer ::
   WMHasObjSpecifics wm
   => WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm
+  => WMText wm -- ^ Name.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm
   -> "carryingCapacity" :? Int
   -> "opacity" :? Opacity
   -> "enterable" :? Enterable
@@ -197,9 +197,9 @@ addSupporter ::
   WMHasObjSpecifics wm
   => WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm
+  => WMText wm -- ^ Name.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm
   -> "carryingCapacity" :? Int
   -> "location" :? EnclosingEntity
   -> Eff es SupporterEntity
@@ -218,10 +218,10 @@ addPerson ::
   WMHasObjSpecifics wm
   => WMWithProperty wm Enclosing
   => AddObjects wm es
-  => WMSayable wm -- ^ Name.
+  => WMText wm -- ^ Name.
   -> "gender" :! Gender
-  -> "initialAppearance" :? WMSayable wm
-  -> "description" :? WMSayable wm -- ^ Description.
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm -- ^ Description.
   -> "carrying" :? Enclosing
   -> Eff es ThingEntity
 addPerson n (Arg g) ia d (argF #carrying -> e) = addThing @wm n ia d

@@ -5,7 +5,7 @@ module Yaifl.Game.ActionProcessing
   ( actionProcessingRules
   ) where
 
-import Solitude hiding (runReader, Reader)
+import Yaifl.Prelude hiding (runReader, Reader)
 
 import Yaifl.Model.Action
 import Yaifl.Model.Query

@@ -1,6 +1,6 @@
 module Yaifl.Test.Common where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs
 import Data.Char (isSpace)

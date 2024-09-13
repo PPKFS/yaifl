@@ -8,7 +8,7 @@ module Yaifl.Model.Rules.RuleEffects
   , SayableValue(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 import Breadcrumbs ( Breadcrumbs )
 import Effectful.Error.Static ( Error )
@@ -17,7 +17,7 @@ import Effectful.Writer.Static.Local
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Metadata ( Metadata )
 import Yaifl.Text.Print ( Print, printText )
-import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMSayable )
+import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMText )
 import Yaifl.Model.Effects
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Input
@@ -43,7 +43,7 @@ type RuleEffects wm es = (
   , Print :> es
   , ActionHandler wm :> es
   , ObjectTraverse wm :> es
-  , SayableValue (WMSayable wm) wm
+  , SayableValue (WMText wm) wm
   )
 
 class SayableValue s wm where

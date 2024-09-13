@@ -57,5 +57,5 @@ type BuildingGeneration wm es =
   , WMWithProperty wm Enclosing
   , WMHasObjSpecifics wm
   , AddObjects wm es
-  , Semigroup (WMSayable wm)
+  , Semigroup (WMText wm)
   )

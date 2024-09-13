@@ -18,7 +18,7 @@ module Yaifl.Model.WorldModel (
   , WMRegionData
   , WMActivities
   , WMResponses
-  , WMSayable
+  , WMText
   -- ** Constraints
   , WMShow
   , WMRead
@@ -26,7 +26,7 @@ module Yaifl.Model.WorldModel (
   , WMEq
   ) where
 
-import Solitude
+import Yaifl.Prelude
 
 -- | All the various type parameters wrapped into a single type.
 data WorldModel =
@@ -65,8 +65,8 @@ type family WMResponses (wm :: WorldModel) :: Type where
 
 -- | To avoid circular dependencies, the dynamic text type (a fancy forall es. Eff es Text made
 -- with quasiquoters).
-type family WMSayable (wm :: WorldModel) :: Type where
-  WMSayable ('WorldModel objSpec dir o v a r re) = re ('WorldModel objSpec dir o v a r re)
+type family WMText (wm :: WorldModel) :: Type where
+  WMText ('WorldModel objSpec dir o v a r re) = re ('WorldModel objSpec dir o v a r re)
 
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirection wm))
 

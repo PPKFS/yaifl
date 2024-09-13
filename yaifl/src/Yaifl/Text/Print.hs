@@ -23,7 +23,7 @@ module Yaifl.Text.Print
   )
 where
 
-import Solitude
+import Yaifl.Prelude
 
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY

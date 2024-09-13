@@ -12,7 +12,7 @@ import qualified Data.Text as T
 ex2 :: (Text, [a], Game PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)
 
-isBlankDescription :: Display (WMSayable wm) => Thing wm -> Bool
+isBlankDescription :: Display (WMText wm) => Thing wm -> Bool
 isBlankDescription d = T.empty == display (d ^. #description)
 
 ex2World :: Game PlainWorldModel ()

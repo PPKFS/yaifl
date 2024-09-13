@@ -39,7 +39,7 @@ module Yaifl.Model.Query
   , EnclosingObject(..)
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.List.NonEmpty as NE (cons)

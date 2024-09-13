@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Model.Kinds.Object
-Copyright   : (c) Avery 2023
+Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -21,24 +21,12 @@ module Yaifl.Model.Kinds.Object (
   , ObjectKind(..)
   , IsObject(..)
   , objectEquals
-
-  -- * CanBeAny
-
+  , isRoom
   ) where
 
-import Solitude
-
-import Data.Text.Display
-
+import Yaifl.Prelude
 import Yaifl.Model.Entity
-import Yaifl.Model.WorldModel (WMSayable)
-
--- | Pointed set class; Monoid without the operation, or the dreaded default typeclass.
-class Pointed s where
-  identityElement :: s
-
-instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
-  identityElement = mempty
+import Yaifl.Model.WorldModel (WMText)
 
 -- | If the object has a pluralised name.
 data NamePlurality = SingularNamed | PluralNamed
@@ -69,14 +57,14 @@ newtype Timestamp = Timestamp
 
 -- | A game object.
 data Object wm objData objSpecifics = Object
-  { name :: WMSayable wm
-  , pluralName :: Maybe (WMSayable wm)
+  { name :: WMText wm
+  , pluralName :: Maybe (WMText wm)
   , namePrivacy :: NamePrivacy
-  , indefiniteArticle :: Maybe (WMSayable wm)
+  , indefiniteArticle :: Maybe (WMText wm)
   , understandAs :: Set (Set Text)
   , namePlurality :: NamePlurality
   , nameProperness :: NameProperness
-  , description :: WMSayable wm
+  , description :: WMText wm
   , objectId :: Entity
   , objectType :: ObjectKind
   , creationTime :: Timestamp
@@ -125,13 +113,16 @@ instance Bitraversable (Object wm) where
         s' = g (specifics o)
     in (\d s -> o & #objectData .~ d & #specifics .~ s) <$> d' <*> s'
 
--- | If something is a thing or a room.,
+-- | If something is a thing or a room.
 class IsObject o where
   isThing :: o -> Bool
-  isRoom :: o -> Bool
-  default isRoom :: o -> Bool
-  isRoom = not . isThing
+
+isRoom ::
+  IsObject o
+  => o
+  -> Bool
+isRoom = not . isThing
 
 -- | This is safe as long as we only ever generate object IDs under the right principle.
 instance IsObject Entity where
-  isThing = (> 0) . unID
+  isThing = (> 0)

@@ -20,7 +20,7 @@ import Data.Text.Display
 import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Activity
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Object
@@ -230,7 +230,7 @@ instance (ObjectLike wm o, WithPrintingNameOfSomething wm) => SayableValue (Sayi
         A a -> (a, False, True)
         A_ a -> (a, False, False)
 
-type WithPrintingNameOfSomething wm = (Display (WMSayable wm), SayableValue (WMSayable wm) wm, WithActivity "printingNameOfSomething" wm () (AnyObject wm) Text)
+type WithPrintingNameOfSomething wm = (Display (WMText wm), SayableValue (WMText wm) wm, WithActivity "printingNameOfSomething" wm () (AnyObject wm) Text)
 
 -- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
@@ -252,7 +252,7 @@ printName o = do
   let toSay = fromMaybe "" t
   [saying|{toSay}|]
 
-printingNameOfSomethingImpl :: SayableValue (WMSayable s) s => Activity s () (AnyObject s) Text
+printingNameOfSomethingImpl :: SayableValue (WMText s) s => Activity s () (AnyObject s) Text
 printingNameOfSomethingImpl = makeActivity "Printing the name of something"
     [makeRule "" [] (\o -> do
       regarding (Just o)

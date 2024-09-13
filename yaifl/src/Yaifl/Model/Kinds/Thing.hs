@@ -11,7 +11,7 @@ module Yaifl.Model.Kinds.Thing
   , defaultPlayerID
   ) where
 
-import Solitude
+import Yaifl.Prelude
 import Yaifl.Model.Entity
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Room
@@ -50,16 +50,16 @@ data ThingData wm = ThingData
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
   , isScenery :: Bool
-  , initialAppearance :: WMSayable wm
+  , initialAppearance :: WMText wm
   } deriving stock (Generic)
 
-deriving stock instance (Eq (WMSayable wm)) => Eq (ThingData wm)
-deriving stock instance (Show (WMSayable wm)) => Show (ThingData wm)
+deriving stock instance (Eq (WMText wm)) => Eq (ThingData wm)
+deriving stock instance (Show (WMText wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
 
 -- | A default thing (when given an initial appearance).
-blankThingData :: WMSayable wm -> ThingData wm
+blankThingData :: WMText wm -> ThingData wm
 blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False
 
 -- | An `Object` with `ThingData`.
@@ -90,4 +90,3 @@ tagThing r = tag r (r ^. #objectId)
 
 instance IsObject (Thing wm) where
   isThing = const True
-  isRoom = const False
