@@ -4,6 +4,7 @@ module Yaifl.Model.Kinds.AnyObject
   , AnyObject(..)
   , _Room
   , _Thing
+  , TaggedEnclosing
   ) where
 
 import Yaifl.Prelude
@@ -14,14 +15,15 @@ import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.WorldModel
+import Yaifl.Model.Tag
 
-
+type RawAnyObject wm = Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to
 -- do things with the other fields.
-newtype AnyObject wm = AnyObject (Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm))
+newtype AnyObject wm = AnyObject (RawAnyObject wm)
   deriving newtype (Eq, Ord, Generic)
 
-instance HasField x (Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)) a => HasField x (AnyObject wm) a where
+instance HasField x (RawAnyObject wm) a => HasField x (AnyObject wm) a where
   getField (AnyObject o) = getField @x o
 
 instance Display (AnyObject wm) where
@@ -57,3 +59,5 @@ instance CanBeAny wm (AnyObject wm) where
 
 instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
+
+type TaggedEnclosing wm = TaggedObject (AnyObject wm) EnclosingTag

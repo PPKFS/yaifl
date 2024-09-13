@@ -19,7 +19,7 @@ module Yaifl.Model.Query
 
   , getCurrentPlayer
   , isVoid
-  , tagObject
+  , unwrapAny
   , getContainingHierarchy
   , getAllObjectsInRoom
   , IncludeDoors(..)
@@ -35,7 +35,6 @@ module Yaifl.Model.Query
   , getEnclosingMaybe
   , getEnclosing
   , setEnclosing
-  , HasProperty(..)
   , EnclosingObject(..)
   ) where
 
@@ -43,8 +42,6 @@ import Yaifl.Prelude
 import Breadcrumbs
 
 import Data.List.NonEmpty as NE (cons)
-import Data.Text.Display
-import Effectful.Optics ( use )
 
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Object
@@ -201,10 +198,10 @@ isVoid ::
   -> Bool
 isVoid = (unTag voidID ==) . getID
 
-tagObject ::
+unwrapAny ::
   AnyObject wm
   -> Either (TaggedEntity ThingTag) (TaggedEntity RoomTag)
-tagObject a = case (preview _Thing a, preview _Room a) of
+unwrapAny a = case (preview _Thing a, preview _Room a) of
     (Just x, _) -> Left (tag x (a ^. #objectId))
     (_, Just x) -> Right (tag x (a ^. #objectId))
     _ -> error "impossible"
@@ -354,18 +351,13 @@ getEnclosing ::
   -> Enclosing
 getEnclosing _ = fromMaybe (error "property witness was violated") . getEnclosingMaybe
 
--- | A lens that is guaranteed by witnesses
-class HasProperty w o v where
-  propertyL :: w -> Lens' o v
-
-instance MayHaveProperty o v => HasProperty w o v where
-  propertyL _ = lens (fromMaybe (error "property witness was violated") . preview propertyAT) (flip (set propertyAT))
-
+-- My hope is that this can vanish at some point but enclosing is the weird one
+-- we want this class because we want an easier way of doing `propertyAT` for enclosing
 class EnclosingObject o where
   enclosingL :: Lens' o Enclosing
 
 instance EnclosingObject (Room wm) where
   enclosingL = #objectData % #enclosing
 
-instance WMWithProperty wm Enclosing => EnclosingObject (EnclosingEntity, Thing wm) where
-  enclosingL = lens (\(e, o) -> getEnclosing e (toAny o)) (\(e, o) enc -> (e, o & (#specifics % propertyAT .~ enc)))
+instance WMWithProperty wm Enclosing => EnclosingObject (TaggedObject (Thing wm) EnclosingTag)  where
+  enclosingL = lens (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o)) (\o enc -> o & (coerced % (_2 @(EnclosingEntity, Thing wm)) % #specifics % propertyAT .~ enc))

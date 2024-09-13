@@ -77,7 +77,7 @@ findVisibilityHolder ::
 findVisibilityHolder obj = do
   let mCont = getContainerMaybe obj
   let n = obj ^. #name
-  case (tagObject obj, isOpaqueClosedContainer <$?> mCont) of
+  case (unwrapAny obj, isOpaqueClosedContainer <$?> mCont) of
     -- a nonopaque or open container thing
     (Left thingTag, False) -> do
       t <- getThing thingTag

@@ -34,6 +34,7 @@ import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
+import Yaifl.Model.Tag (tagObject)
 
 done = defaults
 
@@ -87,7 +88,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
             Just loc -> do
               encLoc <- getObject loc
               asThingOrRoom
-                (void . move t . (loc,))
+                (void . move t . tagObject @EnclosingEntity @EnclosingTag loc)
                 (void . move t)
                 encLoc
         )

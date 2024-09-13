@@ -14,30 +14,35 @@ module Yaifl.Model.Tag
   , TaggedAs(..)
   , coerceTag
    -- ** Tagging
-  , TaggedObject(unTagObject)
+  , TaggedObject(..)
   , unsafeTagObject
+  , tagObject
   ) where
 
 import Yaifl.Prelude
 import Yaifl.Model.Entity
 
--- | Because tagging object entities is a headache to marshall between `AnyObject` and not, this is an Object
--- level equivalent to `TaggedEntity`; it allows for witnessed property lookups without `Maybe`.
--- (e.g. a `TaggedObject (Thing wm) DoorTag` can have `Yaifl.Model.Properties.Door.getDoor` rather than `Yaifl.Model.Properties.Door.getDoorMaybe`).
-newtype TaggedObject o tag = TaggedObject { unTagObject :: o }
+{-
+A tagged entity can do getX
+which means a tagged object can also do getX
+
+-}
+-- | A tagged object is a tuple of a tagged entity, and the object itself
+newtype TaggedObject o tag = TaggedObject { unTagObject :: (TaggedEntity tag, o) }
   deriving stock (Generic)
 
-instance HasID o => HasID (TaggedObject o tag) where
-  getID = getID . unTagObject
+instance HasID (TaggedObject o tag) where
+  getID = getID . fst . unTagObject
 
 -- | Unsafely tag an object when we know it's sensible.
 unsafeTagObject ::
-  o
+  HasID o
+  => o
   -> TaggedObject o tag
-unsafeTagObject = TaggedObject
+unsafeTagObject o = TaggedObject (unsafeTagEntity $ getID o, o)
 
-instance HasID o => TaggedAs (TaggedObject o tag) tag where
-  toTag = unsafeTagEntity . getID . unTagObject
+instance TaggedAs (TaggedObject o tag) tag where
+  toTag = fst . unTagObject
 
 -- | An entity @e@ can be tagged as a `TaggedEntity` @taggableTo@ (a phantom type)
 -- given a witness of type @taggableWith@.
@@ -45,6 +50,17 @@ class Taggable taggableWith taggableTo where
   tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
   default tag :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
   tag _ = unsafeTagEntity . getID
+
+-- you can always tag something as itself
+instance Taggable (TaggedEntity a) a
+
+tagObject ::
+  Taggable tagWith taggableTo
+  => HasID e
+  => tagWith
+  -> e
+  -> TaggedObject e taggableTo
+tagObject ev e = TaggedObject (tag ev e, e)
 
 -- | An @a@ that is already tagged does not need a witness.
 class TaggedAs a taggedAs where

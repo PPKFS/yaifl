@@ -20,10 +20,10 @@ import Yaifl.Prelude
 
 import Yaifl.Model.Effects
 import Yaifl.Model.HasProperty
-import Yaifl.Model.Query
-import Yaifl.Model.TH
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Query
+import Yaifl.Model.TH
 
 -- | Whether the thing is open or not.
 data Opened = Open | Closed

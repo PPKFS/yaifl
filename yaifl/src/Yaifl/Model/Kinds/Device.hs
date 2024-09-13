@@ -7,12 +7,13 @@ module Yaifl.Model.Kinds.Device
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.TH (makeSpecificsWithout)
-import Yaifl.Model.Kinds.AnyObject
+
 import Yaifl.Model.Effects
 import Yaifl.Model.HasProperty
-import Yaifl.Model.Query
+import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Query
+import Yaifl.Model.TH (makeSpecificsWithout)
 
 newtype Device = Device
   { switchedOn :: Bool

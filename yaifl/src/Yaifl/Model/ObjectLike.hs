@@ -44,10 +44,10 @@ instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tag) where
   getObject = getObject . unTagObject
 
 instance (RoomLike wm o) => RoomLike wm (TaggedObject o tag) where
-  getRoom = getRoom . unTagObject
+  getRoom = getRoom . snd . unTagObject
 
 instance (ThingLike wm o) => ThingLike wm (TaggedObject o tag) where
-  getThing = getThing . unTagObject
+  getThing = getThing . snd . unTagObject
 
 instance ObjectLike wm (Thing wm) where
   getObject = pure . toAny
