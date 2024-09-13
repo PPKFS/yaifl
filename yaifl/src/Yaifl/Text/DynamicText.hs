@@ -8,7 +8,6 @@ import Yaifl.Model.WorldModel
 import Yaifl.Prelude
 import Yaifl.Model.Rules.Rulebook
 import Effectful.Writer.Static.Local (Writer, tell)
-import Data.Text.Display
 import Data.Text.Lazy.Builder (fromText)
 import Yaifl.Text.Say
 import Yaifl.Model.Rules.RuleEffects

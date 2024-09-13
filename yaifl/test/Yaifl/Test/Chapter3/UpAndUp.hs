@@ -9,7 +9,6 @@ import Yaifl.Text.Say
 import Yaifl.Game.Create.Rule
 import Yaifl.Game.Actions.Going
 import Yaifl.Model.Rules.Rulebook
-import Named
 
 ex6 :: (Text, [Text], Game PlainWorldModel ())
 ex6 = ("Up and Up", upAndUpTestMeWith, upAndUp)

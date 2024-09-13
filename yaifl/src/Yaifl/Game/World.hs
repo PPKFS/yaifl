@@ -2,8 +2,6 @@ module Yaifl.Game.World where
 
 import Yaifl.Prelude
 
-import Effectful.Optics ( (%=) )
-
 import Yaifl.Model.Action ( WorldActions )
 import Yaifl.Model.Entity ( Entity )
 import Yaifl.Model.Store

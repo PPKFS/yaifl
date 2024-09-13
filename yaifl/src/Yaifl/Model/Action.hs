@@ -23,7 +23,6 @@ module Yaifl.Model.Action
 import Yaifl.Prelude hiding (Reader)
 
 import Breadcrumbs
-import Effectful.Optics ( (?=) )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.WorldModel ( WorldModel )
 import Yaifl.Model.Rules.RuleEffects

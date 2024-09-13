@@ -18,7 +18,6 @@ import Yaifl.Model.Activity
 import Data.Text.Display
 import Yaifl.Text.Responses
 import Effectful.Writer.Static.Local
-import Effectful.Optics
 import Yaifl.Model.Metadata
 import qualified Data.Text as T
 import Effectful.Reader.Static

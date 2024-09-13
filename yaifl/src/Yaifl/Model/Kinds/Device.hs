@@ -3,7 +3,7 @@ module Yaifl.Model.Kinds.Device
   , switchItOn
   , switchItOff
   , toggleDevice
-
+  , getDeviceMaybe
   ) where
 
 import Yaifl.Prelude

@@ -22,8 +22,8 @@ packages:
   yaifl/yaifl.cabal
   yaifl-city/yaifl-city.cabal
 
-documentation: true
-haddock-internal: true
-haddock-hoogle: true
-haddock-html: true
-haddock-hyperlink-source: true
+  -- documentation: true
+  -- haddock-internal: true
+  -- haddock-hoogle: true
+  -- haddock-html: true
+  -- haddock-hyperlink-source: true

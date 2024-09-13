@@ -18,10 +18,12 @@ isBlankDescription d = T.empty == display (d ^. #description)
 ex2World :: Game PlainWorldModel ()
 ex2World = do
   setTitle "Bic"
+
   addRoom "The Staff Break Room"
     ! done
 
   addThing "Bic pen"
+    -- because we want "You see a Bic pen" not "You see Bic pen".
     ! #modify (#nameProperness .= Improper)
     ! done
 
