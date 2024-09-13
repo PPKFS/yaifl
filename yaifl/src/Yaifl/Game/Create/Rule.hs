@@ -8,8 +8,6 @@ module Yaifl.Game.Create.Rule
   ) where
 
 import Yaifl.Prelude
-import Data.Text.Display
-import Effectful.Optics
 import Yaifl.Model.Action
 import Yaifl.Game.Actions.Collection (ActionCollection)
 import Yaifl.Model.Kinds.Object

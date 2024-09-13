@@ -6,7 +6,6 @@ module Yaifl.Game.Move
 import Yaifl.Prelude
 import Breadcrumbs
 
-import Data.Text.Display
 
 import Yaifl.Model.Metadata ( Metadata(..) )
 import Yaifl.Model.Kinds.Object

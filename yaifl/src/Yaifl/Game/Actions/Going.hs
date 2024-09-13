@@ -29,7 +29,6 @@ import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Enclosing
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import Data.Text.Display
 import Yaifl.Model.WorldModel (WMDirection)
 import Yaifl.Model.Tag
 import Yaifl.Model.ObjectLike

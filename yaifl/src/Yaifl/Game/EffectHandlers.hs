@@ -4,7 +4,6 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic
-import Effectful.Optics
 import Effectful.Reader.Static
 import Yaifl.Model.Action
 import Yaifl.Game.Parser

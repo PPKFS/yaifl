@@ -16,7 +16,6 @@ import Yaifl.Model.Rules.Rulebook (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Breadcrumbs
-import Data.Text.Display
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.ObjectLike

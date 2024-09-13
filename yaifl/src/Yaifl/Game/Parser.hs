@@ -7,7 +7,7 @@ import Yaifl.Prelude
 
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic
-import Effectful.Optics ( use )
+
 import Yaifl.Model.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Kinds.Direction ( HasDirectionalTerms(..) )

@@ -13,10 +13,6 @@ module Yaifl.Game.Create.Object
 import Yaifl.Prelude
 import Breadcrumbs
 
-import Data.Text.Display
-import Effectful.Optics ( (.=), use )
-import Named
-
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Effects

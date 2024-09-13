@@ -9,8 +9,6 @@ module Yaifl.Game.Actions.Looking
 import Yaifl.Prelude hiding ( Reader )
 
 import Breadcrumbs ( addTag )
-import Data.Text.Display ( display )
-import Effectful.Optics ( use )
 
 import Effectful.Reader.Static
 import Yaifl.Model.Action

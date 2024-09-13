@@ -15,14 +15,14 @@ module Yaifl.Model.Kinds.Room
   ) where
 
 import Yaifl.Prelude
+
+import GHC.Records
 import Yaifl.Model.Entity
+import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Tag
 import Yaifl.Model.WorldModel
 import qualified Data.Map.Strict as Map
-import Yaifl.Model.Kinds.Enclosing
-import GHC.Records
-import Data.Text.Display
-import Yaifl.Model.Tag
 
 -- | Whether a connection was made by the user or simply assumed (we can override assumed connections but
 -- error on overriding explicitly made connections).

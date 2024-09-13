@@ -6,7 +6,6 @@ module Yaifl.Game.Actions.OutOfWorld
 
 import Yaifl.Prelude
 import Yaifl.Model.Metadata
-import Effectful.Optics
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Action
 import Yaifl.Text.Say

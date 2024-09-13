@@ -33,9 +33,7 @@ import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMText, WMDirect
 import qualified Data.Set as S
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Device
-import Named
 import Yaifl.Model.Kinds.Person
-import Effectful.Optics ((.=))
 import Yaifl.Model.Rules (RuleEffects)
 
 data ObjectSpecifics =

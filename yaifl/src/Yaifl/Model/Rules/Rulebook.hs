@@ -39,7 +39,6 @@ import Yaifl.Model.ObjectLike
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Effects
 import Yaifl.Model.Query
-import Data.Text.Display
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Metadata

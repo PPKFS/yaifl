@@ -5,7 +5,6 @@ module Yaifl.Game.WhenPlayBegins
   ) where
 
 import Yaifl.Prelude
-import Effectful.Optics
 import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
@@ -68,9 +67,9 @@ initRoomDescription ::
   => Eff es (Maybe Bool)
 initRoomDescription = do
   parseAction (ActionOptions True True) [NoParameter] "look" >>= (\case
-     Left txt -> addAnnotation txt
-     Right True -> pass
-     Right False -> error "Could not find the looking action.")
+    Left txt -> addAnnotation txt
+    Right True -> pass
+    Right False -> error "Could not find the looking action.")
   rulePass
 
 positionPlayer ::
