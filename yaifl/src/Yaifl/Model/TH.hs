@@ -13,6 +13,8 @@ module Yaifl.Model.TH
   , makePropertyFunction
   , SpecificsFunctions(..)
   , makeDirections
+  , module Yaifl.Model.HasProperty
+  , module Yaifl.Model.Kinds.AnyObject
   ) where
 
 import Yaifl.Prelude
@@ -21,7 +23,8 @@ import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Lang
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase)
-
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.HasProperty
 -- | The functions we *don't* want to autogenerate for a given property
 -- because we want to do something special with them (e.g. see `Yaifl.Model.Kinds.Enclosing`
 -- in `Yaifl.Model.Query` where @getEnclosingMaybe@ does something special with

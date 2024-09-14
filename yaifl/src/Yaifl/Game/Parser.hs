@@ -149,8 +149,8 @@ parseNouns _ wordsToMatch command = runErrorNoCallStack $ failHorriblyIfMissing 
         [] -> error "impossible"
         (matchWord:args) -> do
           let v = fromMaybe (error "impossible") $ lookup matchWord wordsToMatch
-          arg <- parseArgumentType @wm v (unwords args)
-          either throwError (pure . (matchWord,)) arg) matchedWords
+          arg' <- parseArgumentType @wm v (unwords args)
+          either throwError (pure . (matchWord,)) arg') matchedWords
       either throwError pure cmdArgs >>= \c -> pure (c, matchWords)
 
 addPostPromptSpacing ::

@@ -26,7 +26,7 @@ swcN = "Slightly Wrong Chamber"
 swcDesc :: DynamicText PlainWorldModel
 swcDesc = text "description of slightly wrong chamber" $ do
   obj <- view #objectData <$> getMentionedRoom
-  when (isVisited obj /= Visited)
+  when (isNotVisited obj)
     [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]
   [sayingTell|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|]
 

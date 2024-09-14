@@ -11,6 +11,8 @@ module Yaifl.Model.Kinds.Room
   , Room(..)
   , tagRoom
   , voidID
+  , isNotVisited
+  ,
 
   ) where
 
@@ -118,3 +120,8 @@ instance (TaggedAs (Room wm) EnclosingTag) where
 
 instance IsObject (Room wm) where
   isThing = const False
+
+isNotVisited ::
+  RoomData wm
+  -> Bool
+isNotVisited = (/= Visited) . isVisited

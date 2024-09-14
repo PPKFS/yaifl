@@ -8,6 +8,7 @@ module Yaifl.Game.ObjectSpecifics
   , addDevice
   , addPerson
   , addContainer
+  , addSupporter
   ) where
 
 import Yaifl.Prelude
@@ -24,7 +25,7 @@ import Yaifl.Game.Create.RoomConnection
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.Kinds.Enclosing ( Enclosing )
+import Yaifl.Model.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
 import Yaifl.Model.HasProperty ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Openable
@@ -35,6 +36,7 @@ import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
 import Yaifl.Model.Rules (RuleEffects)
+import Yaifl.Model.Kinds.Supporter
 
 data ObjectSpecifics =
   NoSpecifics
@@ -44,6 +46,7 @@ data ObjectSpecifics =
   | DoorSpecifics Door
   | DeviceSpecifics Device
   | PersonSpecifics Person
+  | SupporterSpecifics Supporter
   deriving stock (Eq, Show, Read)
 
 makePrisms ''ObjectSpecifics
@@ -58,7 +61,10 @@ instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
   inj _ = id
 
 instance MayHaveProperty ObjectSpecifics Enclosing where
-  propertyAT = _EnclosingSpecifics `thenATraverse` (_ContainerSpecifics % #enclosing) `thenATraverse` (_PersonSpecifics % #carrying)
+  propertyAT = _EnclosingSpecifics
+    `thenATraverse` (_ContainerSpecifics % #enclosing)
+    `thenATraverse` (_SupporterSpecifics % #enclosing)
+    `thenATraverse` (_PersonSpecifics % #carrying)
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
   propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
@@ -82,6 +88,9 @@ instance MayHaveProperty ObjectSpecifics Device where
 
 instance MayHaveProperty ObjectSpecifics Person where
   propertyAT = castOptic _PersonSpecifics
+
+instance MayHaveProperty ObjectSpecifics Supporter where
+  propertyAT = castOptic _SupporterSpecifics
 
 localST ::
   State st :> es
@@ -189,7 +198,7 @@ addContainer n ia d
         ! paramF #location l
         ! done
     pure $ tag @Container @ContainerTag cs c
-{-}
+
 addSupporter ::
   forall wm es.
   WMHasObjSpecifics wm
@@ -200,17 +209,19 @@ addSupporter ::
   -> "description" :? WMText wm
   -> "carryingCapacity" :? Int
   -> "location" :? EnclosingEntity
+  -> "enterable" :? Enterable
   -> Eff es SupporterEntity
 addSupporter n ia d
-  (argF #carryingCapacity -> cc) (argF #location -> l) = do
-    let cs = makeContainer cc op e o od
+  (argF #carryingCapacity -> cc) (argF #location -> l) (argF #enterable -> e) = do
+    let enc = (blankEnclosing { capacity = cc <|> Just 100 })
+        sup = Supporter enc (fromMaybe NotEnterable e)
     c <- addThing @wm n ia d
-        ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
+        ! #specifics (inj (Proxy @wm) $ SupporterSpecifics sup)
         ! #type (ObjectKind "container")
         ! paramF #location l
         ! done
-    pure $ tag @Supporter @SupporterTag cs c
--}
+    pure $ tag @_ @SupporterTag sup c
+
 addPerson ::
   forall wm es.
   WMHasObjSpecifics wm

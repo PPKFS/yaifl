@@ -12,6 +12,7 @@ import Yaifl.Model.Query
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run
 import Effectful.Reader.Static
+import Breadcrumbs
 
 
 actionProcessingRules :: forall wm. ActionProcessing wm
@@ -27,6 +28,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   [ Rule "before stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook beforeRules
           r <- runRulebookAndReturnVariables (Just aSpan) False beforeRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "carrying requirements rule"
@@ -34,6 +36,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   , Rule "instead stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook insteadRules
           r <- runRulebookAndReturnVariables (Just aSpan) False insteadRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "requested actions require persuasion rule"
@@ -42,23 +45,29 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   , Rule "check stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook checkRules
           r <- runRulebookAndReturnVariables (Just aSpan) False checkRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , Rule "carry out stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook carryOutRules
           r <- runRulebookAndReturnVariables (Just aSpan) False carryOutRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , Rule "after stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook afterRules
           r <- runRulebookAndReturnVariables (Just aSpan) False afterRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "investigate player awareness after rule"
   , Rule "report stage rule"
       []
         ( \v -> do
+          ignoreSpanIfEmptyRulebook reportRules
           r <- runRulebookAndReturnVariables (Just aSpan) False reportRules v
           return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"
   ]) u)
+  where
+    ignoreSpanIfEmptyRulebook r = if null (rules r) then ignoreSpan else pass

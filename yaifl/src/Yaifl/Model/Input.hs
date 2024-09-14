@@ -7,7 +7,6 @@ module Yaifl.Model.Input
 
 import Yaifl.Prelude
 import Yaifl.Model.Metadata
-import Effectful.Optics
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.TH ( makeEffect )
 

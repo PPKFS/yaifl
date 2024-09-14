@@ -37,12 +37,10 @@ module Yaifl.Model.Effects
 import Yaifl.Prelude
 
 import Breadcrumbs
-import Data.Text.Display
 import Effectful.Error.Static
 import Effectful.TH
 
 import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Entity
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Region

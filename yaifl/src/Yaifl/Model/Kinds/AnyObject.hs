@@ -26,8 +26,8 @@ newtype AnyObject wm = AnyObject (RawAnyObject wm)
 instance HasField x (RawAnyObject wm) a => HasField x (AnyObject wm) a where
   getField (AnyObject o) = getField @x o
 
-instance Display (AnyObject wm) where
-  displayBuilder = const "object"
+instance Display (WMText wm) => Display (AnyObject wm) where
+  displayBuilder o = displayBuilder (o ^. #name)
 
 instance HasID (AnyObject wm) where
   getID (AnyObject a) = objectId a

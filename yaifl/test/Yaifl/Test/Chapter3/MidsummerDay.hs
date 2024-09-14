@@ -3,6 +3,8 @@ module Yaifl.Test.Chapter3.MidsummerDay where
 import Yaifl.Prelude
 import Yaifl
 import Yaifl.Game.Create
+import Yaifl.Model.Kinds.Supporter
+import Yaifl.Model.Kinds.Container
 
 ex12 :: (Text, [Text], Game PlainWorldModel ())
 ex12 = ("Midsummer Day", midsummerDayTestMeWith, midsummerDayWorld)
@@ -21,7 +23,7 @@ midsummerDayWorld = do
     ! #location (inThe tc)
     ! done
   th <- addRoom "Treehouse" ! done
-  th `isAbove` gz
+  th `isAbove` ga
   addContainer "cardboard box" ! done
   pass
 

@@ -29,7 +29,7 @@ the Removal of Undesirables and the Subjugation of Humanity. Being against techn
   after (ActionRule #going) [toTheRoom tse] "ag1" $ const $ do
     [saying|The doors automatically close, there is a rush of motion, and they open again.|]
     tseR <- getRoom tse
-    --   if UNCLE Headquarters is mapped west of the Secret Elevator
+    -- if UNCLE Headquarters is mapped west of the Secret Elevator
     if getMapConnection West tseR == Just uh
     then
       -- now Del Floria's Tailor Shop is mapped west of the Secret Elevator;

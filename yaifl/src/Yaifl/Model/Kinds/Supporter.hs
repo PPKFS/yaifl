@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Model.Properties.Supporter
-Copyright   : (c) Avery 2022-2023
+Copyright   : (c) Avery 2022-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -13,6 +13,8 @@ module Yaifl.Model.Kinds.Supporter
   , SupporterEntity
   , onThe
   , SupporterTag
+  , Supporter(..)
+  , getSupporterMaybe
   ) where
 
 import Yaifl.Prelude
@@ -23,6 +25,14 @@ import Yaifl.Model.Effects
 import Yaifl.Model.Metadata
 import Yaifl.Model.Entity
 import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.Kinds.Container
+import Yaifl.Model.TH
+
+data Supporter = Supporter
+  { enclosing :: Enclosing
+  , enterable :: Enterable
+  } deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | Check if @o@ is of the @supporter@ type.
 isSupporter ::
@@ -40,4 +50,8 @@ onThe ::
   -> EnclosingEntity
 onThe = coerceTag
 
+instance Taggable Supporter SupporterTag
 instance Taggable (TaggedEntity SupporterTag) EnclosingTag
+
+makeFieldLabelsNoPrefix ''Supporter
+makeSpecificsWithout [] ''Supporter

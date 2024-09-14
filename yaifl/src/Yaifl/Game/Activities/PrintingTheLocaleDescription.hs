@@ -98,6 +98,8 @@ interestingLocale = Rule "Interesting locale paragraphs" [] (\v ->
     -- the printing a locale paragraph activity will instead modify
     -- the locale variables and pass those through
     newP <- foldlM (\v' li -> do
+        o <- getObject (localeObject li)
+        addAnnotation $ "printing locale paragraph about " <> (display (view #name o))
         r <- doActivity #printingLocaleParagraphAbout (v', li)
         return $ fromMaybe v' r) v sorted
     addTag "interesting things after printingLocaleParagraphAbout" (length (unStore $ localePriorities newP))

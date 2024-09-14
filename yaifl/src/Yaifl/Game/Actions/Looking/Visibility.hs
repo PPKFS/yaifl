@@ -6,7 +6,6 @@ import Yaifl.Prelude
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Model.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
-import Data.Text.Display
 import Yaifl.Game.Activities.PrintingTheLocaleDescription
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Effects
@@ -30,6 +29,7 @@ type HasLookingProperties wm =
   ( WMWithProperty wm Enclosing
   , WMWithProperty wm Enterable
   , WMWithProperty wm Container
+  , WMWithProperty wm Supporter
   , Display (WMText wm)
   , IsString (WMText wm)
   , WithPrintingNameOfADarkRoom wm

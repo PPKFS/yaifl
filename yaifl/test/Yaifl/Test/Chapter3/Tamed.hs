@@ -4,10 +4,8 @@ import Yaifl.Prelude
 import Yaifl.Game.EffectHandlers
 import Yaifl (PlainWorldModel)
 import Yaifl.Model.Metadata
-import Yaifl.Test.Common
 import Yaifl.Game.Create.Object
 import Yaifl.Model.Query
-import Named
 import Yaifl.Text.SayQQ
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText

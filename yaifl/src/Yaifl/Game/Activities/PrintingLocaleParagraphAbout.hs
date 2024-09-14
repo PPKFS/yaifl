@@ -13,6 +13,7 @@ import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Model.Entity
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.Kinds.Supporter
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Say
@@ -20,6 +21,11 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
+import Yaifl.Model.Actions.Args
+import qualified Data.EnumSet as ES
+import Yaifl.Text.ListWriter
+import Yaifl.Game.Activities.ListingContents (WithListingContents)
+import Breadcrumbs (addAnnotation)
 
 setLocalePriority ::
   AnyObject s
@@ -114,20 +120,6 @@ useInitialAppearance = Rule "use initial appearance in room descriptions rule" [
         [saying|{ia}|]
         -- say "[paragraph break]";
         [saying|#{paragraphBreak}|]
-
-        {-
-        TODO:
-        -- if a locale-supportable thing is on the item:
-        repeat with possibility running through things on the item:
-                  now the possibility is marked for listing;
-                  if the possibility is mentioned:
-                      now the possibility is not marked for listing;
-              say "On [the item] " (A);
-              list the contents of the item, as a sentence, including contents,
-                  giving brief inventory information, tersely, not listing
-                  concealed items, prefacing with is/are, listing marked items only;
-              say ".[paragraph break]";
-        -}
         -- increase the locale paragraph count by 1;
         -- now the item is mentioned;
         mentionItemAndIncreaseParagraphCount e v li
@@ -139,8 +131,50 @@ useInitialAppearanceOnSupporters = notImplementedRule "initial appearance on sup
 describeOnScenery :: LocaleParagraphAboutRule wm
 describeOnScenery = notImplementedRule "describe what's on scenery supporters in room descriptions rule"
 
-describeOnMentionedSupporters :: LocaleParagraphAboutRule wm
-describeOnMentionedSupporters = notImplementedRule "describe what's on mentioned supporters in room descriptions rule"
+describeOnMentionedSupporters ::
+  WithListingContents wm
+  => WMWithProperty wm Supporter
+  => LocaleParagraphAboutRule wm
+describeOnMentionedSupporters = Rule "describe what's on mentioned supporters in room descriptions rule" []
+  (\(v, li@(LocaleInfo _ e isMentioned)) ->
+    forThing e $ \thing -> do
+      enc <- view (#objectData % #containedBy) <$> getPlayer
+      -- if the item is mentioned and the item is not undescribed and the item is
+      -- not scenery and the item does not enclose the player:
+      ruleGuard
+        (isMentioned && (thing ^. #objectData % #described == Described)
+        && not (thing ^.  #objectData % #isScenery) && not (enc `objectEquals` e)) $ do
+        -- set pronouns from the item;
+        regarding (Just thing)
+        let objSupports = getSupporterMaybe thing
+        case objSupports of
+          -- if a locale-supportable thing is on the item:
+          Just sup
+            | (not . ES.null) (sup ^. #enclosing % #contents) -> do
+            -- say "On [the item] " (A);
+            [saying|On {the thing} |]
+            void $ doActivity #listingContents (withContents [toAny thing])
+            [saying|.#{paragraphBreak}|]
+          Just _sup -> do
+            addAnnotation "It was a supporter but it did not support anything"
+
+          _ -> addAnnotation "It was not a supporter"
+        -- this stuff is all marked for listing/mentioned boilerplate so we don't need it
+        {-
+        repeat with possibility running through things on the item:
+                  now the possibility is marked for listing;
+                  if the possibility is mentioned:
+                      now the possibility is not marked for listing;
+
+              list the contents of the item, as a sentence, including contents,
+                  giving brief inventory information, tersely, not listing
+                  concealed items, prefacing with is/are, listing marked items only;
+              say ".[paragraph break]";
+        -}
+        -- increase the locale paragraph count by 1;
+        -- now the item is mentioned;
+        mentionItemAndIncreaseParagraphCount e v li
+  )
 
 setPronounsFromItems :: LocaleParagraphAboutRule wm
 setPronounsFromItems = notImplementedRule "set pronouns from items in room descriptions rule"

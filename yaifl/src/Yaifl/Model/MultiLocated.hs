@@ -12,7 +12,6 @@ import Yaifl.Model.Entity
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.TH
-import Yaifl.Model.Kinds.AnyObject
 
 import qualified Data.Set as S
 

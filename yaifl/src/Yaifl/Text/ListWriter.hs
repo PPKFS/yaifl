@@ -15,13 +15,13 @@ import Yaifl.Model.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Text.Say
 import Yaifl.Model.Activity
-import Data.Text.Display
 import Yaifl.Text.Responses
 import Effectful.Writer.Static.Local
 import Yaifl.Model.Metadata
 import qualified Data.Text as T
 import Effectful.Reader.Static
 import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.WorldModel
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
@@ -38,10 +38,11 @@ data ListWritingItem wm =
   | GroupedItems (NonEmpty (ListWritingItem wm))
   | EquivalenceClass (NonEmpty (AnyObject wm))
 
-instance Display (ListWritingItem wm) where
-  displayBuilder = pure ""
+instance Display (WMText wm) => Display (ListWritingItem wm) where
+  displayBuilder (SingleObject o) = displayBuilder o
+  displayBuilder _ = "some list items"
 
-data ListWritingParameters wm = ListWritingParameters
+data ListWritingParameters (wm :: WorldModel) = ListWritingParameters
   { contents :: [ListWritingItem wm]
   -- New-line after each entry NEWLINE_BIT
   , withNewlines :: Bool
@@ -279,8 +280,27 @@ singleClassGroup isFirst cnt item' = do
     void $ doActivity #printingANumberOf (cnt, item)
   writeAfterEntry cnt item'
 
-writeAfterEntry :: Int -> ListWritingItem wm -> Eff es ()
-writeAfterEntry = const $ const pass
+writeAfterEntry ::
+  forall wm es.
+  State (ListWritingVariables wm) :> es
+  => RuleEffects wm es
+  => Int
+  -> ListWritingItem wm
+  -> Eff es ()
+writeAfterEntry numberOfItem item = do
+  s <- lwp <$> get
+  if
+    | givingBriefInventoryInformation s -> do
+      -- start the room description details activity
+      -- note that the "false" here in the documentation
+      -- means that the for rulebook came to no decision
+      -- NOT that it doesn't exist or something
+      -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html
+      error ""
+      --
+    | otherwise -> error ""
+    | otherwise -> error ""
+
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]
 coalesceList = id

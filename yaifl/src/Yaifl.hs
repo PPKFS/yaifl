@@ -23,9 +23,6 @@ module Yaifl (
 
 import Yaifl.Prelude hiding ( Reader, runReader )
 
-
-import Effectful.Optics ( (?=), use )
-
 import Yaifl.Model.Action
 import Yaifl.Game.ActionProcessing
 import Yaifl.Game.Actions.Going
@@ -41,7 +38,6 @@ import Yaifl.Game.Activities.PrintingTheLocaleDescription
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.Object
 import Yaifl.Game.ObjectSpecifics
 import Yaifl.Game.Create.Object
 import Yaifl.Model.Kinds.Container

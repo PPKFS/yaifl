@@ -25,7 +25,6 @@ module Yaifl.Model.Entity
   ) where
 
 import Yaifl.Prelude
-import Data.Text.Display ( Display(..) )
 
 -- | An object ID.
 newtype Entity = Entity

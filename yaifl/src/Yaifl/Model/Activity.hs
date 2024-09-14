@@ -18,8 +18,6 @@ module Yaifl.Model.Activity
 import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs ( withSpan )
-import Data.Text.Display
-import Effectful.Optics ( use )
 import GHC.TypeLits
 import Yaifl.Model.Actions.Args ( Refreshable )
 import Yaifl.Model.Rules.Rulebook

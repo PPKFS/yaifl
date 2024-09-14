@@ -29,7 +29,6 @@ import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Terminal as PPTTY
 import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
-import Effectful.Optics (use, (.=))
 import qualified Data.Text as T
 
 type StyledDoc = PP.Doc PPTTY.AnsiStyle

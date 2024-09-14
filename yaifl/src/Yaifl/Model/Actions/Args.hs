@@ -24,11 +24,9 @@ module Yaifl.Model.Actions.Args
 
 import Yaifl.Prelude hiding (show)
 
-import Effectful.Optics
 import Yaifl.Model.ObjectLike
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.WorldModel
-import Data.Text.Display
 import Yaifl.Model.Effects
 import GHC.Show
 import qualified Data.Set as S
