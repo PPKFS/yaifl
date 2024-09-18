@@ -20,12 +20,12 @@ import Yaifl.Model.Kinds (ThingPortable(..))
 import Yaifl.Game.Create
 import Yaifl.Model.Rules (parseAction)
 
-ex13 :: (Text, [Text], Game PlainWorldModel ())
-ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
+ex14 :: (Text, [Text], Game PlainWorldModel ())
+ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)
 
 tamedWorld :: Game PlainWorldModel ()
 tamedWorld = do
-  setTitle "Tamed"
+  setTitle "Disenchantment Bay"
   tcr <- addRoom "The Center Ring" ! done
 
   tc <- addContainer "cage"

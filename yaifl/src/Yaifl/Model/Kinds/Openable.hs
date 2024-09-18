@@ -39,6 +39,7 @@ data Openability = Openability
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeSpecificsWithout [] ''Openability
+makeFieldLabelsNoPrefix ''Openability
 
 openIt ::
   NoMissingObjects wm es

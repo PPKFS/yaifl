@@ -22,6 +22,16 @@ import qualified Data.Text as T
 import Effectful.Reader.Static
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.WorldModel
+import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
+import Yaifl.Model.Query
+import Yaifl.Model.Kinds (Object(objectData))
+import Yaifl.Model.Actions.Args
+import Yaifl.Model.Kinds.Room
+import Yaifl.Model.Kinds.Container
+import Yaifl.Model.HasProperty
+import Yaifl.Model.Kinds.Openable (Opened(..))
+import qualified Data.EnumSet as ES
+import Yaifl.Model.Kinds.Thing
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
@@ -29,6 +39,8 @@ type WithListWriting wm = (
   , WithActivity "groupingTogether" wm () (AnyObject wm) ()
   , WithActivity "printingANumberOf" wm () (Int, AnyObject wm) ()
   , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
+  , WithPrintingRoomDescriptionDetails wm
+  , WMWithProperty wm Container
   )
 
 newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm () } deriving stock (Generic)
@@ -278,28 +290,45 @@ singleClassGroup isFirst cnt item' = do
   else do
     [sayingTell|{cnt} |]
     void $ doActivity #printingANumberOf (cnt, item)
-  writeAfterEntry cnt item'
+  writeAfterEntry cnt item
 
 writeAfterEntry ::
   forall wm es.
   State (ListWritingVariables wm) :> es
+  => WithListWriting wm
   => RuleEffects wm es
   => Int
-  -> ListWritingItem wm
+  -> AnyObject wm
   -> Eff es ()
-writeAfterEntry numberOfItem item = do
+writeAfterEntry numberOfItem itemMember = do
   s <- lwp <$> get
-  if
-    | givingBriefInventoryInformation s -> do
-      -- start the room description details activity
-      -- note that the "false" here in the documentation
-      -- means that the for rulebook came to no decision
-      -- NOT that it doesn't exist or something
-      -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html
-      error ""
-      --
-    | otherwise -> error ""
-    | otherwise -> error ""
+  asThing <- getThingMaybe itemMember
+  p <- getPlayer
+  locP <- getLocation p
+  -- if we are somehow writing about a room, ignore it.
+  -- TODO: should we just cut out non-things here
+  whenJust asThing $ \thingWrittenAbout ->
+    if
+      | givingBriefInventoryInformation s -> do
+        -- start the room description details activity
+        -- note that the "false" here in the documentation
+        -- means that the for rulebook came to no decision
+        -- NOT that it doesn't exist or something
+        -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html
+        -- so this is a mix of an override and also a falsely occupied/unoccupied check
+          beginActivity #printingRoomDescriptionDetails thingWrittenAbout
+          void $ whenHandling' #printingRoomDescriptionDetails $ do
+            let lit = (== Lit) $ thingWrittenAbout ^. #objectData % #lit
+                locationLit = locP ^. #objectData % #darkness == Lighted
+                asCont = getContainerMaybe thingWrittenAbout
+                isOpen = (== Open) . view (#openable % #opened) <$> asCont
+                opClosed = isOpaqueClosedContainer <$> asCont
+                visiblyEmpty = ES.null . view (#enclosing % #contents) <$> asCont
+                combo = (lit && not locationLit, )
+            pure ()
+
+      | otherwise -> error ""
+      | otherwise -> error ""
 
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]

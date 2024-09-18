@@ -77,6 +77,7 @@ import Yaifl.Model.Input (waitForInput, Input)
 import Yaifl.Game.Parser
 import Yaifl.Game.Actions.Taking
 import Yaifl.Model.Kinds.Device
+import Yaifl.Game.Activities.PrintingRoomDescriptionDetails
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -109,9 +110,11 @@ data ActivityCollection wm = ActivityCollection
   , printingNameOfSomething :: Activity wm () (AnyObject wm) Text
   , printingTheLocaleDescription :: Activity wm YouCanAlsoSeeResponses (LocaleVariables wm) ()
   , printingNameOfADarkRoom :: Activity wm () () ()
+  , printingRoomDescriptionDetails :: Activity wm () (Thing wm) ()
+  , printingInventoryDetails :: Activity wm () (Thing wm) ()
   -- TODO https://ganelson.github.io/inform/standard_rules/S-act.html#SP15
-{- , printingRoomDescriptionDetails :: Activity wm (Thing wm) ()
-  , printingInventoryDetails :: Activity wm (Thing wm) ()
+{-
+
   , writingAParagraphAbout :: Activity wm (AnyObject wm) ()
   , printingAnnouncementOfDarkness :: Activity wm () ()
   , printingAnnouncementOfLight :: Activity wm () ()
@@ -200,6 +203,8 @@ blankActivityCollection = ActivityCollection
   , listingContents = listingContentsImpl
   , groupingTogether = blankActivity "grouping things together"
   , printingANumberOf = blankActivity "printing a number of"
+  , printingInventoryDetails = blankActivity "printing inventory details of"
+  , printingRoomDescriptionDetails = printingRoomDescriptionDetailsImpl
   }
 
 blankActionCollection ::

@@ -16,6 +16,7 @@ module Yaifl.Model.Actions.Args
   , getPlayer
   , getActorLocation
   , silentAction
+  , normalAction
   --, blankArgs
   --, playerArgs
   --, getActionParameter
@@ -129,6 +130,9 @@ data ActionOptions wm = ActionOptions
 
 silentAction :: ActionOptions wm
 silentAction = ActionOptions True True
+
+normalAction :: ActionOptions wm
+normalAction = ActionOptions False False
 
 -- | Arguments for an action, activity, or rulebook.
 data Args wm v = Args
