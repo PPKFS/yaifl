@@ -29,8 +29,6 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Openable (Opened(..))
-import qualified Data.EnumSet as ES
 import Yaifl.Model.Kinds.Thing
 
 type WithListWriting wm = (
@@ -265,6 +263,7 @@ singleClassGroup ::
   WithListWriting wm
   => Writer Text :> es
   => State (ListWritingVariables wm) :> es
+  => Reader (ListWriting wm) :> es
   => RuleEffects wm es
   => Bool
   -> Int -- ^ number of class elements
@@ -295,6 +294,8 @@ singleClassGroup isFirst cnt item' = do
 writeAfterEntry ::
   forall wm es.
   State (ListWritingVariables wm) :> es
+  => Reader (ListWriting wm) :> es
+  => Writer Text :> es
   => WithListWriting wm
   => RuleEffects wm es
   => Int
@@ -307,7 +308,8 @@ writeAfterEntry numberOfItem itemMember = do
   locP <- getLocation p
   -- if we are somehow writing about a room, ignore it.
   -- TODO: should we just cut out non-things here
-  whenJust asThing $ \thingWrittenAbout ->
+  whenJust asThing $ \thingWrittenAbout -> do
+    let lit = thingIsLit thingWrittenAbout
     if
       | givingBriefInventoryInformation s -> do
         -- start the room description details activity
@@ -318,18 +320,99 @@ writeAfterEntry numberOfItem itemMember = do
         -- so this is a mix of an override and also a falsely occupied/unoccupied check
           beginActivity #printingRoomDescriptionDetails thingWrittenAbout
           void $ whenHandling' #printingRoomDescriptionDetails $ do
-            let lit = (== Lit) $ thingWrittenAbout ^. #objectData % #lit
-                locationLit = locP ^. #objectData % #darkness == Lighted
+            let locationLit = roomIsLighted locP
                 asCont = getContainerMaybe thingWrittenAbout
-                isOpen = (== Open) . view (#openable % #opened) <$> asCont
+                isCC = thingIsClosedContainer thingWrittenAbout
                 opClosed = isOpaqueClosedContainer <$> asCont
-                visiblyEmpty = ES.null . view (#enclosing % #contents) <$> asCont
-                combo = (lit && not locationLit, )
-            pure ()
+                visiblyEmpty = isEmptyContainer <$?> asCont
+                -- we have a total of 7 different possible combos
+                -- giving light, closed container, visibly empty container that is not opaque and closed
+                combo = (lit && not locationLit, isCC, Just False == opClosed && visiblyEmpty)
+                anythingAtAll = view _1 combo || view _2 combo || view _3 combo
+            when anythingAtAll $ sayTellResponse A ()
+            case combo of
+              (True, False, False) -> sayTellResponse D ()
+              (False, True, False) -> sayTellResponse E ()
+              (True, True, False) -> sayTellResponse H ()
+              (False, False, True) -> sayTellResponse F ()
+              (True, False, True) -> sayTellResponse I ()
+              (False, True, True) -> sayTellResponse G ()
+              (True, True, True) -> sayTellResponse J ()
+              (False, False, False) -> pass
+            when anythingAtAll $ sayTellResponse B ()
+          void $ endActivity #printingRoomDescriptionDetails
+      -- full inventory info (perhaps with nested children)
+      | givingInventoryInformation s -> do
+          beginActivity #printingInventoryDetails thingWrittenAbout
+          void $ whenHandling' #printingInventoryDetails $ do
+            let isWorn = thingIsWorn thingWrittenAbout
+                combo = lit || isWorn
+            when combo $ sayTellResponse A ()
+            case (lit, isWorn) of
+              (True, True) ->
+            pass
+      | otherwise -> pass
+-- combos are as follows
+{-
+then for full inventory
+light and worn: A then K (providing light and being worn))
+light: D
+worn: A, being worn L
+container:
+  if openable: (I guess to aovid supporters)
+    potential and (C) or open the bracket (A)
+    if open and has stuff:
+      open (M)
+      open but empty (N)
+    if locked:
+      closed and locked (P)
+    else:
+      closed (O)
+  otherwise it's a supporter:
+    transparent and without children,
+       "and" if needbe (C) and empty (F)
+        ( (A), empty (F), ) (B)
 
-      | otherwise -> error ""
-      | otherwise -> error ""
+if (parenth_flag) LW_Response('B');
 
+loop over all children of o
+ignore concealed objects
+if there's stuff print containing (Q)
+if it's a supporter then
+  A-R-S
+  (on which/on top of which )
+otherwise I-T-U
+  (in which/inside of which)
+  regard the first item in the list
+  then recurse and print a list of things
+  followed by finally the closing bracket
+-}
+
+{-
+rulebooks
+turn sequence
+- follow the every turn rules
+- follow the scene changing rules
+- generate
+scene changing
+when play begins
+when play ends
+when scene begins
+when scene ends
+every turn
+
+some action processing
+action awareness
+accessibility rules
+reaching inside
+reaching outside
+visibility rules
+persuasion rules
+unsuccessful attempt
+does the player mean
+multiple action processing
+
+-}
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]
 coalesceList = id
@@ -363,10 +446,11 @@ multiClassGroup groupOfThings = do
     put o
   void $ endActivity #groupingTogether
 
-data ListWriterResponses = C | W | V | Y
+data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | W | V | Y
 
 listWriterResponsesImpl :: ListWriterResponses -> Response wm ()
 listWriterResponsesImpl = \case
+  A -> constResponse " ("
   C -> constResponse " and "
   -- "[regarding list writer internals][are] nothing" (W) TODO
   W -> constResponse "is nothing"

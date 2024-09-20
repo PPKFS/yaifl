@@ -168,7 +168,7 @@ objectItselfHasLight ::
   AnyObject wm -- ^ the object
   -> Bool
 objectItselfHasLight = asThingOrRoom
-  ((Lit ==) . view (#objectData % #lit))
+  thingIsLit
   ((Lighted ==) . view (#objectData % #darkness))
 
 {- | (4) An object has light if:

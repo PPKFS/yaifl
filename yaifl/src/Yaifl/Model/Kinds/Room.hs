@@ -12,7 +12,7 @@ module Yaifl.Model.Kinds.Room
   , tagRoom
   , voidID
   , isNotVisited
-  ,
+  , roomIsLighted
 
   ) where
 
@@ -125,3 +125,8 @@ isNotVisited ::
   RoomData wm
   -> Bool
 isNotVisited = (/= Visited) . isVisited
+
+roomIsLighted ::
+  Room wm
+  -> Bool
+roomIsLighted = (== Lighted) . view (#objectData % #darkness)

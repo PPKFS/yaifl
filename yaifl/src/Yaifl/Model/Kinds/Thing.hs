@@ -9,6 +9,8 @@ module Yaifl.Model.Kinds.Thing
   , Thing(..)
   , tagThing
   , defaultPlayerID
+  , thingIsLit
+  , thingIsWorn
   ) where
 
 import Yaifl.Prelude
@@ -56,6 +58,7 @@ deriving stock instance (Eq (WMText wm)) => Eq (ThingData wm)
 deriving stock instance (Show (WMText wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
+makePrismLabels ''ThingWearability
 
 -- | A default thing (when given an initial appearance).
 blankThingData :: WMText wm -> ThingData wm
@@ -89,3 +92,13 @@ tagThing r = tag r (r ^. #objectId)
 
 instance IsObject (Thing wm) where
   isThing = const True
+
+thingIsLit ::
+  Thing wm
+  -> Bool
+thingIsLit = (== Lit) . view (#objectData % #lit)
+
+thingIsWorn ::
+  Thing wm
+  -> Bool
+thingIsWorn = isJust . preview (#objectData % #wearable % #_Wearable)

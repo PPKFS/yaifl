@@ -16,6 +16,11 @@ module Yaifl.Model.Kinds.Container
   , getEnterableMaybe
   , setEnterable
   , modifyEnterable
+  , thingIsOpenContainer
+  , thingIsClosedContainer
+  , isOpenContainer
+  , isEmptyContainer
+  , isClosedContainer
   ) where
 
 import Yaifl.Prelude
@@ -29,6 +34,8 @@ import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.TH ( makeSpecificsWithout )
 import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Thing
+import qualified Data.EnumSet as ES
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent
@@ -54,6 +61,33 @@ isOpaqueClosedContainer ::
   Container
   -> Bool
 isOpaqueClosedContainer c = (opacity c == Opaque) && (view #openable c == defaultContainerOpenability)
+
+thingIsOpenContainer ::
+  WMWithProperty wm Container
+  => Thing wm
+  -> Bool
+thingIsOpenContainer = (== Just Open) . fmap (view (#openable % #opened)) . getContainerMaybe
+
+thingIsClosedContainer ::
+  WMWithProperty wm Container
+  => Thing wm
+  -> Bool
+thingIsClosedContainer = (== Just Closed) . fmap (view (#openable % #opened)) . getContainerMaybe
+
+isOpenContainer ::
+  Container
+  -> Bool
+isOpenContainer = (== Open) . view (#openable % #opened)
+
+isClosedContainer ::
+  Container
+  -> Bool
+isClosedContainer = (== Closed) . view (#openable % #opened)
+
+isEmptyContainer ::
+  Container
+  -> Bool
+isEmptyContainer = ES.null . view (#enclosing % #contents)
 
 makeContainer ::
   Maybe Int
