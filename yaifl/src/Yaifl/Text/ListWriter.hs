@@ -10,7 +10,7 @@ module Yaifl.Text.ListWriter
   , ListWriterResponses(..)
   ) where
 
-import Yaifl.Prelude hiding (Reader, runReader)
+import Yaifl.Prelude hiding (asks, Reader, runReader)
 import Yaifl.Model.Rules.RuleEffects
 --import Effectful.Writer.Static.Local ( tell )
 import Yaifl.Text.Say
@@ -310,6 +310,7 @@ writeAfterEntry numberOfItem itemMember = do
   -- TODO: should we just cut out non-things here
   whenJust asThing $ \thingWrittenAbout -> do
     let lit = thingIsLit thingWrittenAbout
+        asCont = getContainerMaybe thingWrittenAbout
     if
       | givingBriefInventoryInformation s -> do
         -- start the room description details activity
@@ -321,7 +322,6 @@ writeAfterEntry numberOfItem itemMember = do
           beginActivity #printingRoomDescriptionDetails thingWrittenAbout
           void $ whenHandling' #printingRoomDescriptionDetails $ do
             let locationLit = roomIsLighted locP
-                asCont = getContainerMaybe thingWrittenAbout
                 isCC = thingIsClosedContainer thingWrittenAbout
                 opClosed = isOpaqueClosedContainer <$> asCont
                 visiblyEmpty = isEmptyContainer <$?> asCont
@@ -348,31 +348,46 @@ writeAfterEntry numberOfItem itemMember = do
             let isWorn = thingIsWorn thingWrittenAbout
                 combo = lit || isWorn
             when combo $ sayTellResponse A ()
-            case (lit, isWorn) of
-              (True, True) ->
-            pass
+            alreadyPrinted <- case (lit, isWorn) of
+              (True, True) -> sayTellResponse K () >> pure True
+              (True, False) -> sayTellResponse D () >> pure True
+              (False, True) -> sayTellResponse L () >> pure True
+              _ -> pure False
+            printedContainerPart <- case asCont of
+              Just container -> do
+                if isOpenableContainer container
+                then do
+                  -- either close off the clause or
+                  -- open a parenthesis
+                  if alreadyPrinted
+                  then do
+                    serialComma <- asks oxfordCommaEnabled
+                    when serialComma $ tell ","
+                    sayTellResponse C ()
+                  else
+                    sayTellResponse A ()
+                  -- open check
+                  if isOpenContainer container
+                  then
+                    if isEmptyContainer container
+                    then sayTellResponse N ()
+                    else sayTellResponse M ()
+                  else
+                    if isLockedContainer container
+                    then sayTellResponse P ()
+                    else sayTellResponse O ()
+                  pure True
+                else do
+                  when (isEmptyTransparentContainer container) $
+                    if alreadyPrinted
+                    then sayTellResponse C () >> sayTellResponse F ()
+                    else sayTellResponse A () >> sayTellResponse F () >> sayTellResponse B ()
+                  pure alreadyPrinted
+              Nothing -> pure alreadyPrinted
+            when printedContainerPart $ sayTellResponse B ()
       | otherwise -> pass
 -- combos are as follows
 {-
-then for full inventory
-light and worn: A then K (providing light and being worn))
-light: D
-worn: A, being worn L
-container:
-  if openable: (I guess to aovid supporters)
-    potential and (C) or open the bracket (A)
-    if open and has stuff:
-      open (M)
-      open but empty (N)
-    if locked:
-      closed and locked (P)
-    else:
-      closed (O)
-  otherwise it's a supporter:
-    transparent and without children,
-       "and" if needbe (C) and empty (F)
-        ( (A), empty (F), ) (B)
-
 if (parenth_flag) LW_Response('B');
 
 loop over all children of o

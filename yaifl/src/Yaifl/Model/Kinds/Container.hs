@@ -21,6 +21,9 @@ module Yaifl.Model.Kinds.Container
   , isOpenContainer
   , isEmptyContainer
   , isClosedContainer
+  , isLockedContainer
+  , isEmptyTransparentContainer
+  , isTransparentContainer
   ) where
 
 import Yaifl.Prelude
@@ -84,10 +87,25 @@ isClosedContainer ::
   -> Bool
 isClosedContainer = (== Closed) . view (#openable % #opened)
 
+isLockedContainer ::
+  Container
+  -> Bool
+isLockedContainer = (== Closed) . view (#openable % #opened)
+
 isEmptyContainer ::
   Container
   -> Bool
 isEmptyContainer = ES.null . view (#enclosing % #contents)
+
+isEmptyTransparentContainer ::
+  Container
+  -> Bool
+isEmptyTransparentContainer c = isEmptyContainer c && isTransparentContainer c
+
+isTransparentContainer ::
+  Container
+  -> Bool
+isTransparentContainer = (== Transparent) . view #opacity
 
 makeContainer ::
   Maybe Int
