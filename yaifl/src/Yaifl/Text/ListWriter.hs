@@ -30,6 +30,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Thing
+import Yaifl.Game.Activities.PrintingInventoryDetails
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
@@ -38,6 +39,7 @@ type WithListWriting wm = (
   , WithActivity "printingANumberOf" wm () (Int, AnyObject wm) ()
   , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   , WithPrintingRoomDescriptionDetails wm
+  , WithPrintingInventoryDetails wm
   , WMWithProperty wm Container
   )
 
@@ -321,113 +323,95 @@ writeAfterEntry numberOfItem itemMember = do
         -- so this is a mix of an override and also a falsely occupied/unoccupied check
           beginActivity #printingRoomDescriptionDetails thingWrittenAbout
           void $ whenHandling' #printingRoomDescriptionDetails $ do
-            let locationLit = roomIsLighted locP
-                isCC = thingIsClosedContainer thingWrittenAbout
-                opClosed = isOpaqueClosedContainer <$> asCont
-                visiblyEmpty = isEmptyContainer <$?> asCont
-                -- we have a total of 7 different possible combos
-                -- giving light, closed container, visibly empty container that is not opaque and closed
-                combo = (lit && not locationLit, isCC, Just False == opClosed && visiblyEmpty)
-                anythingAtAll = view _1 combo || view _2 combo || view _3 combo
-            when anythingAtAll $ sayTellResponse A ()
-            case combo of
-              (True, False, False) -> sayTellResponse D ()
-              (False, True, False) -> sayTellResponse E ()
-              (True, True, False) -> sayTellResponse H ()
-              (False, False, True) -> sayTellResponse F ()
-              (True, False, True) -> sayTellResponse I ()
-              (False, True, True) -> sayTellResponse G ()
-              (True, True, True) -> sayTellResponse J ()
-              (False, False, False) -> pass
-            when anythingAtAll $ sayTellResponse B ()
+            printBriefDetailsAbout locP thingWrittenAbout lit asCont
           void $ endActivity #printingRoomDescriptionDetails
       -- full inventory info (perhaps with nested children)
       | givingInventoryInformation s -> do
           beginActivity #printingInventoryDetails thingWrittenAbout
           void $ whenHandling' #printingInventoryDetails $ do
-            let isWorn = thingIsWorn thingWrittenAbout
-                combo = lit || isWorn
-            when combo $ sayTellResponse A ()
-            alreadyPrinted <- case (lit, isWorn) of
-              (True, True) -> sayTellResponse K () >> pure True
-              (True, False) -> sayTellResponse D () >> pure True
-              (False, True) -> sayTellResponse L () >> pure True
-              _ -> pure False
-            printedContainerPart <- case asCont of
-              Just container -> do
-                if isOpenableContainer container
-                then do
-                  -- either close off the clause or
-                  -- open a parenthesis
-                  if alreadyPrinted
-                  then do
-                    serialComma <- asks oxfordCommaEnabled
-                    when serialComma $ tell ","
-                    sayTellResponse C ()
-                  else
-                    sayTellResponse A ()
-                  -- open check
-                  if isOpenContainer container
-                  then
-                    if isEmptyContainer container
-                    then sayTellResponse N ()
-                    else sayTellResponse M ()
-                  else
-                    if isLockedContainer container
-                    then sayTellResponse P ()
-                    else sayTellResponse O ()
-                  pure True
-                else do
-                  when (isEmptyTransparentContainer container) $
-                    if alreadyPrinted
-                    then sayTellResponse C () >> sayTellResponse F ()
-                    else sayTellResponse A () >> sayTellResponse F () >> sayTellResponse B ()
-                  pure alreadyPrinted
-              Nothing -> pure alreadyPrinted
-            when printedContainerPart $ sayTellResponse B ()
+            printFullDetailsAbout thingWrittenAbout lit asCont
       | otherwise -> pass
--- combos are as follows
-{-
-if (parenth_flag) LW_Response('B');
 
-loop over all children of o
-ignore concealed objects
-if there's stuff print containing (Q)
-if it's a supporter then
-  A-R-S
-  (on which/on top of which )
-otherwise I-T-U
-  (in which/inside of which)
-  regard the first item in the list
-  then recurse and print a list of things
-  followed by finally the closing bracket
--}
+printBriefDetailsAbout ::
+  Writer Text :> es
+  => WithListWriting wm
+  => Reader (ListWriting wm) :> es
+  => RuleEffects wm es
+  => Room wm
+  -> Thing wm
+  -> Bool
+  -> Maybe Container
+  -> Eff es ()
+printBriefDetailsAbout locP thingWrittenAbout lit asCont = do
+  let locationLit = roomIsLighted locP
+      isCC = thingIsClosedContainer thingWrittenAbout
+      opClosed = isOpaqueClosedContainer <$> asCont
+      visiblyEmpty = isEmptyContainer <$?> asCont
+      -- we have a total of 7 different possible combos
+      -- giving light, closed container, visibly empty container that is not opaque and closed
+      combo = (lit && not locationLit, isCC, Just False == opClosed && visiblyEmpty)
+      anythingAtAll = view _1 combo || view _2 combo || view _3 combo
+  when anythingAtAll $ sayTellResponse A ()
+  case combo of
+    (True, False, False) -> sayTellResponse D ()
+    (False, True, False) -> sayTellResponse E ()
+    (True, True, False) -> sayTellResponse H ()
+    (False, False, True) -> sayTellResponse F ()
+    (True, False, True) -> sayTellResponse I ()
+    (False, True, True) -> sayTellResponse G ()
+    (True, True, True) -> sayTellResponse J ()
+    (False, False, False) -> pass
+  when anythingAtAll $ sayTellResponse B ()
 
-{-
-rulebooks
-turn sequence
-- follow the every turn rules
-- follow the scene changing rules
-- generate
-scene changing
-when play begins
-when play ends
-when scene begins
-when scene ends
-every turn
-
-some action processing
-action awareness
-accessibility rules
-reaching inside
-reaching outside
-visibility rules
-persuasion rules
-unsuccessful attempt
-does the player mean
-multiple action processing
-
--}
+printFullDetailsAbout ::
+  Writer Text :> es
+  => WithListWriting wm
+  => Reader (ListWriting wm) :> es
+  => RuleEffects wm es
+  => Thing wm
+  -> Bool
+  -> Maybe Container
+  -> Eff es ()
+printFullDetailsAbout thingWrittenAbout lit asCont = do
+  let isWorn = thingIsWorn thingWrittenAbout
+      combo = lit || isWorn
+  when combo $ sayTellResponse A ()
+  alreadyPrinted <- case (lit, isWorn) of
+    (True, True) -> sayTellResponse K () >> pure True
+    (True, False) -> sayTellResponse D () >> pure True
+    (False, True) -> sayTellResponse L () >> pure True
+    _ -> pure False
+  printedContainerPart <- case asCont of
+    Just container -> do
+      if isOpenableContainer container
+      then do
+        -- either close off the clause or
+        -- open a parenthesis
+        if alreadyPrinted
+        then do
+          serialComma <- use @Metadata #oxfordCommaEnabled
+          when serialComma $ tell ","
+          sayTellResponse C ()
+        else sayTellResponse A ()
+        -- open check
+        if isOpenContainer container
+        then
+          if isEmptyContainer container
+          then sayTellResponse N ()
+          else sayTellResponse M ()
+        else
+          if isLockedContainer container
+          then sayTellResponse P ()
+          else sayTellResponse O ()
+        pure True
+      else do
+        when (isEmptyTransparentContainer container) $
+          if alreadyPrinted
+          then sayTellResponse C () >> sayTellResponse F ()
+          else sayTellResponse A () >> sayTellResponse F () >> sayTellResponse B ()
+        pure alreadyPrinted
+    Nothing -> pure alreadyPrinted
+  when printedContainerPart $ sayTellResponse B ()
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]
 coalesceList = id
@@ -461,7 +445,7 @@ multiClassGroup groupOfThings = do
     put o
   void $ endActivity #groupingTogether
 
-data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | W | V | Y
+data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | W | V | Y
 
 listWriterResponsesImpl :: ListWriterResponses -> Response wm ()
 listWriterResponsesImpl = \case

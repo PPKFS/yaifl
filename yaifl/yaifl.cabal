@@ -91,6 +91,7 @@ library
     Yaifl.Game.Activities.PrintingLocaleParagraphAbout
     Yaifl.Game.Activities.PrintingTheLocaleDescription
     Yaifl.Game.Activities.PrintingRoomDescriptionDetails
+    Yaifl.Game.Activities.PrintingInventoryDetails
 
     Yaifl.Game.Create.Object
     Yaifl.Game.Create.RoomConnection
