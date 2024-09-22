@@ -133,7 +133,6 @@ describeOnScenery = notImplementedRule "describe what's on scenery supporters in
 
 describeOnMentionedSupporters ::
   WithListingContents wm
-  => WMWithProperty wm Supporter
   => LocaleParagraphAboutRule wm
 describeOnMentionedSupporters = Rule "describe what's on mentioned supporters in room descriptions rule" []
   (\(v, li@(LocaleInfo _ e isMentioned)) ->

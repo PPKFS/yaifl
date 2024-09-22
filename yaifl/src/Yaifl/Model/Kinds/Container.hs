@@ -25,6 +25,7 @@ module Yaifl.Model.Kinds.Container
   , isEmptyTransparentContainer
   , isTransparentContainer
   , isOpenableContainer
+  , isOpenTransparentContainer
   ) where
 
 import Yaifl.Prelude
@@ -112,6 +113,11 @@ isTransparentContainer ::
   Container
   -> Bool
 isTransparentContainer = (== Transparent) . view #opacity
+
+isOpenTransparentContainer ::
+  Container
+  -> Bool
+isOpenTransparentContainer c = isOpenContainer c && isTransparentContainer c
 
 makeContainer ::
   Maybe Int

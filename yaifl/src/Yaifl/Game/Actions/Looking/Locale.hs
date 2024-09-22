@@ -4,7 +4,6 @@
 module Yaifl.Game.Actions.Looking.Locale where
 
 import Yaifl.Prelude
-import Data.Text.Display
 import Yaifl.Model.Store
 import Yaifl.Model.Kinds.AnyObject
 

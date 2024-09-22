@@ -15,7 +15,6 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.WorldModel
@@ -142,13 +141,13 @@ isSeeThrough e = do
       en = getEnterableMaybe e
   s <- isSupporter e
   isContainer <- isKind e "container"
-  let isOpenContainer = fmap (opened . view #openable) c == Just Open && isContainer
+  let
       isTransparent = fmap opacity c == Just Transparent
       isEnterableNotContainer = en == Just Enterable && not isContainer
   return $ s --if it's a supporter
       || isTransparent -- it's transparent
       || isEnterableNotContainer -- it's enterable but not a container
-      || isOpenContainer -- it's an open container
+      || isOpenContainer <$?> c-- it's an open container
 
 containsLitObj ::
   NoMissingObjects wm es

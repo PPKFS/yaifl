@@ -11,6 +11,8 @@ module Yaifl.Model.Kinds.Thing
   , defaultPlayerID
   , thingIsLit
   , thingIsWorn
+  , thingIsConcealed
+  , thingIsScenery
   ) where
 
 import Yaifl.Prelude
@@ -41,6 +43,9 @@ data ThingPortable = Portable | FixedInPlace
 data ThingHandled = Handled | NotHandled
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
+data ThingConcealed = Concealed | NotConcealed
+  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+
 -- | Properties that define a `Yaifl.Model.Kinds.Object.Thing`.
 data ThingData wm = ThingData
   { containedBy :: EnclosingEntity
@@ -51,7 +56,9 @@ data ThingData wm = ThingData
   , portable :: ThingPortable
   , pushableBetweenRooms :: Bool
   , isScenery :: Bool
+  , concealed :: ThingConcealed
   , initialAppearance :: WMText wm
+
   } deriving stock (Generic)
 
 deriving stock instance (Eq (WMText wm)) => Eq (ThingData wm)
@@ -62,7 +69,7 @@ makePrismLabels ''ThingWearability
 
 -- | A default thing (when given an initial appearance).
 blankThingData :: WMText wm -> ThingData wm
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False NotConcealed
 
 -- | An `Object` with `ThingData`.
 newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))
@@ -71,8 +78,8 @@ newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))
 instance HasField x (Object wm (ThingData wm) (WMObjSpecifics wm)) a  => HasField x (Thing wm) a where
   getField (Thing o) = getField @x o
 
-instance Display (Thing wm) where
-  displayBuilder = const "thing"
+instance Display (WMText wm) => Display (Thing wm) where
+  displayBuilder = displayBuilder . coerce @_ @(Object wm (ThingData wm) (WMObjSpecifics wm))
 
 instance HasID (Thing wm) where
   getID (Thing a) = objectId a
@@ -102,3 +109,13 @@ thingIsWorn ::
   Thing wm
   -> Bool
 thingIsWorn = isJust . preview (#objectData % #wearable % #_Wearable)
+
+thingIsConcealed ::
+  Thing wm
+  -> Bool
+thingIsConcealed = (== Concealed) . view (#objectData % #concealed)
+
+thingIsScenery ::
+  Thing wm
+  -> Bool
+thingIsScenery = view (#objectData % #isScenery)

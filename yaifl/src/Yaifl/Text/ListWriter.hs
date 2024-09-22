@@ -11,39 +11,43 @@ module Yaifl.Text.ListWriter
   ) where
 
 import Yaifl.Prelude hiding (asks, Reader, runReader)
-import Yaifl.Model.Rules.RuleEffects
---import Effectful.Writer.Static.Local ( tell )
-import Yaifl.Text.Say
-import Yaifl.Model.Activity
-import Yaifl.Text.Responses
-import Effectful.Writer.Static.Local
-import Yaifl.Model.Metadata
-import qualified Data.Text as T
+
 import Effectful.Reader.Static
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.WorldModel
-import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
-import Yaifl.Model.Query
-import Yaifl.Model.Kinds (Object(objectData))
-import Yaifl.Model.Actions.Args
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Container
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Thing
+import Effectful.Writer.Static.Local
 import Yaifl.Game.Activities.PrintingInventoryDetails
+import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
+import Yaifl.Model.Actions.Args
+import Yaifl.Model.Activity
+import Yaifl.Model.HasProperty
+import Yaifl.Model.Kinds
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds.Container
+import Yaifl.Model.Kinds.Supporter
+import Yaifl.Model.Metadata
+import Yaifl.Model.Query
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Model.WorldModel
+
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.Responses
+import Yaifl.Text.Say
+
+import qualified Data.EnumSet as ES
+import qualified Data.Text as T
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm () (ListWritingParameters wm) ()
   , WithActivity "groupingTogether" wm () (AnyObject wm) ()
   , WithActivity "printingANumberOf" wm () (Int, AnyObject wm) ()
-  , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
+  , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm (Thing wm))
   , WithPrintingRoomDescriptionDetails wm
   , WithPrintingInventoryDetails wm
   , WMWithProperty wm Container
+  , WMWithProperty wm Supporter
   )
 
-newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm () } deriving stock (Generic)
+newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm (Thing wm) } deriving stock (Generic)
 data ListWritingItem wm =
   SingleObject (AnyObject wm)
   -- a group may contain equivalence classes of objects
@@ -56,6 +60,7 @@ instance Display (WMText wm) => Display (ListWritingItem wm) where
 
 data ListWritingParameters (wm :: WorldModel) = ListWritingParameters
   { contents :: [ListWritingItem wm]
+  , initialDepth :: Int
   -- New-line after each entry NEWLINE_BIT
   , withNewlines :: Bool
   -- Indent each entry by depth INDENT_BIT
@@ -104,7 +109,8 @@ instance Display (ListWritingVariables wm) where
 
 blankListWritingParameters :: [AnyObject wm] -> ListWritingParameters wm
 blankListWritingParameters c = ListWritingParameters
-  { contents = map SingleObject c
+  { -- TODO: this really should have any sort of grouping...
+    contents = map SingleObject c
   , withNewlines = False
   , indented = False
   , givingInventoryInformation = False
@@ -122,6 +128,7 @@ blankListWritingParameters c = ListWritingParameters
   , asListingActivity = True
   -- ???
   , andOrCapitalised = False
+  , initialDepth = 0
   }
 
 withContents :: [AnyObject wm] -> ListWritingParameters wm
@@ -208,15 +215,16 @@ writeListOfThings lwp = do
   lr <- use @(ResponseCollector wm) (#responseCollection % #listWriterResponses)
   runReader (LW lr) $ evalStateLocal (LWV
     { fromStart = True
-    , depth = 0
+    , depth = initialDepth lwp
     , margin = if withExtraIndentation lwp then 1 else 0
     , lwp = lwp
     }) $ do
     case contents lwp of
       [] -> do
+        a <- getMentionedThing
         if prefacingWithIsAre lwp
-        then sayTellResponse W ()
-        else sayTellResponse Y ()
+        then sayTellResponse W a
+        else sayTellResponse Y a
         when (withNewlines lwp) $ tell "\n"
       _
         | not (asListingActivity lwp) -> writeListR
@@ -238,7 +246,8 @@ writeListR = do
   ListWritingParameters{..} <- use @(ListWritingVariables wm) #lwp
   let adjustedList = if fromStart then coalesceList contents else contents
   when prefacingWithIsAre $ do
-    sayTellResponse V ()
+    a <- getMentionedThing
+    sayTellResponse V a
     if withNewlines
     then tell ":\n"
     else tell " "
@@ -257,8 +266,14 @@ writeListR = do
       when (i == (length adjustedList - 1) && oxfordComma) $ do
         -- and we have more than 2 items in the list
         when (length adjustedList > 2) $ tell @Text ","
-        sayTellResponse C ()
+        sayTellResponse C (fromMaybe (error "hit a room in the listwriter") $ fromAny $ getObjectOut item)
       when (i < (length adjustedList - 1)) $ tell ", "
+
+getObjectOut :: ListWritingItem wm -> AnyObject wm
+getObjectOut = \case
+  SingleObject o -> o
+  GroupedItems (g :| _) -> getObjectOut g
+  EquivalenceClass (g :| _) -> g
 
 singleClassGroup ::
   forall wm es.
@@ -274,10 +289,7 @@ singleClassGroup ::
 singleClassGroup isFirst cnt item' = do
   LWV{lwp, depth, margin} <- get
   when (indented lwp) $ tell (T.replicate (2 * (depth+margin)) " ")
-  let getObjectOut = \case
-        SingleObject o -> o
-        GroupedItems (g :| _) -> getObjectOut g
-        EquivalenceClass (g :| _) -> g
+  let
   let item = getObjectOut item'
   if cnt == 1
     -- TODO: tidy all this up
@@ -293,6 +305,9 @@ singleClassGroup isFirst cnt item' = do
     void $ doActivity #printingANumberOf (cnt, item)
   writeAfterEntry cnt item
 
+saySpace :: Writer Text :> es => Eff es ()
+saySpace = tell " "
+
 writeAfterEntry ::
   forall wm es.
   State (ListWritingVariables wm) :> es
@@ -303,7 +318,7 @@ writeAfterEntry ::
   => Int
   -> AnyObject wm
   -> Eff es ()
-writeAfterEntry numberOfItem itemMember = do
+writeAfterEntry _numberOfItem itemMember = do
   s <- lwp <$> get
   asThing <- getThingMaybe itemMember
   p <- getPlayer
@@ -313,6 +328,7 @@ writeAfterEntry numberOfItem itemMember = do
   whenJust asThing $ \thingWrittenAbout -> do
     let lit = thingIsLit thingWrittenAbout
         asCont = getContainerMaybe thingWrittenAbout
+        asSupporter = getSupporterMaybe thingWrittenAbout
     if
       | givingBriefInventoryInformation s -> do
         -- start the room description details activity
@@ -331,6 +347,58 @@ writeAfterEntry numberOfItem itemMember = do
           void $ whenHandling' #printingInventoryDetails $ do
             printFullDetailsAbout thingWrittenAbout lit asCont
       | otherwise -> pass
+    -- now we want to recurse properly
+    whenJust (getEnclosingMaybe . toAny $ thingWrittenAbout) $ \enc -> do
+      ListWritingParameters{..} <- use @(ListWritingVariables wm) #lwp
+      containedThings <- mapM getThing $ ES.toList (view #contents enc)
+      let nonConcealedThings = if notListingConcealedItems then
+        -- there's also something about checking for containers?
+        -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html
+        -- see: §10. Concealment.
+        -- but at this point I'm just tired
+            filter (\i -> thingIsConcealed i || thingIsScenery i) containedThings
+            else containedThings
+          numberOfThings = length nonConcealedThings
+      recurseFlag1 <- if numberOfThings > 0 && includingAllContents
+        then do
+          when asEnglishSentence $ saySpace >> sayTellResponse Q thingWrittenAbout >> saySpace
+          pure True
+        else do
+          pure False
+      recurseFlag <- (|| recurseFlag1) <$> if numberOfThings > 0 && includingContents
+        then
+          -- the two branches are for a supporter and for an open transparent container
+          if
+            | isJust asSupporter -> do
+                when asEnglishSentence $
+                  if tersely
+                    then sayTellResponse A thingWrittenAbout >> sayTellResponse R thingWrittenAbout
+                    else sayTellResponse S thingWrittenAbout
+                pure True
+            | (\c -> isOpenContainer c || isTransparentContainer c) <$?> asCont -> do
+                when asEnglishSentence $
+                  if tersely
+                    then sayTellResponse A thingWrittenAbout >> sayTellResponse T thingWrittenAbout
+                    else sayTellResponse U thingWrittenAbout
+                pure True
+            | otherwise -> pure False
+        else
+          pure False
+      when (recurseFlag && asEnglishSentence) $ whenJust (viaNonEmpty head nonConcealedThings) $ \thing1 -> do
+        regarding (Just thing1)
+        sayTellResponse V thingWrittenAbout
+        saySpace
+      when withNewlines [sayingTell|#{linebreak}|]
+      -- I have no idea what the original code did here but I think it's
+      -- some iterator nonsense
+      when recurseFlag $ do
+        lwv <- get @(ListWritingVariables wm)
+        let lwp' = lwp lwv
+        -- TODO: the grouping should be here too
+        writeListOfThings (lwp' { contents = map (SingleObject . toAny) nonConcealedThings, initialDepth = 1 + depth lwv})
+        when tersely $ sayTellResponse B thingWrittenAbout
+      pass
+
 
 printBriefDetailsAbout ::
   Writer Text :> es
@@ -345,23 +413,23 @@ printBriefDetailsAbout ::
 printBriefDetailsAbout locP thingWrittenAbout lit asCont = do
   let locationLit = roomIsLighted locP
       isCC = thingIsClosedContainer thingWrittenAbout
-      opClosed = isOpaqueClosedContainer <$> asCont
       visiblyEmpty = isEmptyContainer <$?> asCont
+      transCont = isTransparentContainer <$?> asCont
       -- we have a total of 7 different possible combos
       -- giving light, closed container, visibly empty container that is not opaque and closed
-      combo = (lit && not locationLit, isCC, Just False == opClosed && visiblyEmpty)
+      combo = (lit && not locationLit, isCC, (not isCC || transCont) && visiblyEmpty)
       anythingAtAll = view _1 combo || view _2 combo || view _3 combo
-  when anythingAtAll $ sayTellResponse A ()
+  when anythingAtAll $ sayTellResponse A thingWrittenAbout
   case combo of
-    (True, False, False) -> sayTellResponse D ()
-    (False, True, False) -> sayTellResponse E ()
-    (True, True, False) -> sayTellResponse H ()
-    (False, False, True) -> sayTellResponse F ()
-    (True, False, True) -> sayTellResponse I ()
-    (False, True, True) -> sayTellResponse G ()
-    (True, True, True) -> sayTellResponse J ()
+    (True, False, False) -> sayTellResponse D thingWrittenAbout
+    (False, True, False) -> sayTellResponse E thingWrittenAbout
+    (True, True, False) -> sayTellResponse H thingWrittenAbout
+    (False, False, True) -> sayTellResponse F thingWrittenAbout
+    (True, False, True) -> sayTellResponse I thingWrittenAbout
+    (False, True, True) -> sayTellResponse G thingWrittenAbout
+    (True, True, True) -> sayTellResponse J thingWrittenAbout
     (False, False, False) -> pass
-  when anythingAtAll $ sayTellResponse B ()
+  when anythingAtAll $ sayTellResponse B thingWrittenAbout
 
 printFullDetailsAbout ::
   Writer Text :> es
@@ -375,11 +443,11 @@ printFullDetailsAbout ::
 printFullDetailsAbout thingWrittenAbout lit asCont = do
   let isWorn = thingIsWorn thingWrittenAbout
       combo = lit || isWorn
-  when combo $ sayTellResponse A ()
+  when combo $ sayTellResponse A thingWrittenAbout
   alreadyPrinted <- case (lit, isWorn) of
-    (True, True) -> sayTellResponse K () >> pure True
-    (True, False) -> sayTellResponse D () >> pure True
-    (False, True) -> sayTellResponse L () >> pure True
+    (True, True) -> sayTellResponse K thingWrittenAbout >> pure True
+    (True, False) -> sayTellResponse D thingWrittenAbout >> pure True
+    (False, True) -> sayTellResponse L thingWrittenAbout >> pure True
     _ -> pure False
   printedContainerPart <- case asCont of
     Just container -> do
@@ -391,27 +459,27 @@ printFullDetailsAbout thingWrittenAbout lit asCont = do
         then do
           serialComma <- use @Metadata #oxfordCommaEnabled
           when serialComma $ tell ","
-          sayTellResponse C ()
-        else sayTellResponse A ()
+          sayTellResponse C thingWrittenAbout
+        else sayTellResponse A thingWrittenAbout
         -- open check
         if isOpenContainer container
         then
           if isEmptyContainer container
-          then sayTellResponse N ()
-          else sayTellResponse M ()
+          then sayTellResponse N thingWrittenAbout
+          else sayTellResponse M thingWrittenAbout
         else
           if isLockedContainer container
-          then sayTellResponse P ()
-          else sayTellResponse O ()
+          then sayTellResponse P thingWrittenAbout
+          else sayTellResponse O thingWrittenAbout
         pure True
       else do
         when (isEmptyTransparentContainer container) $
           if alreadyPrinted
-          then sayTellResponse C () >> sayTellResponse F ()
-          else sayTellResponse A () >> sayTellResponse F () >> sayTellResponse B ()
+          then sayTellResponse C thingWrittenAbout >> sayTellResponse F thingWrittenAbout
+          else sayTellResponse A thingWrittenAbout >> sayTellResponse F thingWrittenAbout >> sayTellResponse B thingWrittenAbout
         pure alreadyPrinted
     Nothing -> pure alreadyPrinted
-  when printedContainerPart $ sayTellResponse B ()
+  when printedContainerPart $ sayTellResponse B thingWrittenAbout
 
 coalesceList :: [ListWritingItem wm] -> [ListWritingItem wm]
 coalesceList = id
@@ -428,10 +496,6 @@ multiClassGroup ::
 multiClassGroup groupOfThings = do
   LWV{lwp, depth, margin} <- get
   when (indented lwp) $ tell (T.replicate (2 * (depth+margin)) " ")
-  let getObjectOut = \case
-        SingleObject o -> o
-        GroupedItems (g :| _) -> getObjectOut g
-        EquivalenceClass (g :| _) -> g
   --  as we know the items are grouped, we should be fine to just take the first element as the class representative
   beginActivity #groupingTogether (getObjectOut $ head groupOfThings)
   whenHandling' #groupingTogether $ do
@@ -445,16 +509,34 @@ multiClassGroup groupOfThings = do
     put o
   void $ endActivity #groupingTogether
 
-data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | W | V | Y
+data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | Y
+  deriving stock (Show, Eq, Ord, Enum, Generic, Bounded, Read)
 
-listWriterResponsesImpl :: ListWriterResponses -> Response wm ()
+listWriterResponsesImpl :: ListWriterResponses -> Response wm (Thing wm)
 listWriterResponsesImpl = \case
   A -> constResponse " ("
+  B -> constResponse ")"
   C -> constResponse " and "
+  D -> constResponse "providing light"
+  E -> constResponse "closed"
+  F -> constResponse "empty"
+  G -> constResponse "closed and empty"
+  H -> constResponse "closed and providing light"
+  I -> constResponse "empty and providing light"
+  J -> Response $ const $ do
+    oc <- use @Metadata #oxfordCommaEnabled
+    [sayingTell|closed, empty{?if oc},{?end if}|]
+  R -> Response $ \o -> do
+    p <- objectIsKind "person" o
+    [sayingTell|on {?if p}whom{?else}which{?end if} |]
+  T -> Response $ \o -> do
+    p <- objectIsKind "person" o
+    [sayingTell|in {?if p}whom{?else}which{?end if} |]
   -- "[regarding list writer internals][are] nothing" (W) TODO
   W -> constResponse "is nothing"
   -- "[regarding list writer internals][are]" (V) TODO
   V -> constResponse "is"
   Y -> constResponse "nothing"
+  x -> constResponse $ "need to do response " <> show x <> " "
 
 -- what else...probably want a test *now* for grouping items and for coalescing the list correctly

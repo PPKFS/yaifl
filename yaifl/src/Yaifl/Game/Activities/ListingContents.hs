@@ -26,6 +26,7 @@ listingContentsImpl = makeActivity "Listing contents of something" [makeRule "st
           { asEnglishSentence = True
           , tersely = True
           , includingContents = True
+          , givingBriefInventoryInformation = True
           -- to avoid the infinite loop, this doesn't start the activity again
           , asListingActivity = False
           }

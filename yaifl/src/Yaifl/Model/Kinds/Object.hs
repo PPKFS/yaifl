@@ -75,8 +75,8 @@ data Object wm objData objSpecifics = Object
 
 makeFieldLabelsNoPrefix ''Object
 
-instance Display (Object wm objData s) where
-  displayBuilder = const "object"
+instance Display (WMText wm) => Display (Object wm objData s) where
+  displayBuilder o = displayBuilder (o ^. #name)
 
 -- | By generalising `Eq`, we can compare two objects of different kinds. Trivially this is always `False`,
 -- but it does allow comparing a `Thing` and an `AnyObject`.

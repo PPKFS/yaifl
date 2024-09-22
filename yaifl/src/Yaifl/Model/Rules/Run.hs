@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Avoid lambda" #-}
 
 module Yaifl.Model.Rules.Run
   ( runRulebook
@@ -9,7 +11,6 @@ module Yaifl.Model.Rules.Run
 import Yaifl.Prelude
 
 import Breadcrumbs
-import Data.Text.Display ( Display, display )
 import Yaifl.Model.Actions.Args ( Refreshable(..) )
 import Yaifl.Model.Rules.Rulebook
 import qualified Data.Text as T
