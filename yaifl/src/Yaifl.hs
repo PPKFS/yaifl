@@ -101,10 +101,10 @@ type HasStandardProperties s = (
 -- handling final question, offering something and performing something (both dialogue)
 data ActivityCollection wm = ActivityCollection
   { choosingNotableLocaleObjects :: Activity wm () (AnyObject wm) (LocalePriorities wm)
-  , groupingTogether :: Activity wm () (AnyObject wm) ()
+  , groupingTogether :: Activity wm () (Thing wm) ()
   , listingContents :: Activity wm () (ListWritingParameters wm) ()
   , listingNondescriptItems :: Activity wm () (AnyObject wm) ()
-  , printingANumberOf :: Activity wm () (Int, AnyObject wm) ()
+  , printingANumberOf :: Activity wm () (Int, Thing wm) ()
   , printingDescriptionOfADarkRoom :: Activity wm () () ()
   , printingLocaleParagraphAbout :: Activity wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
   , printingNameOfSomething :: Activity wm () (AnyObject wm) Text

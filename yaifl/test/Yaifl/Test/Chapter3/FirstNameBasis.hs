@@ -17,7 +17,8 @@ firstNameBasisWorld :: Game PlainWorldModel ()
 firstNameBasisWorld = do
   setTitle "First Name Basis"
   addRoom "The Crew Lounge"
-    ! #description [wrappedText|Deliberately spartan: the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.|]
+    ! #description [wrappedText|Deliberately spartan:
+the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.|]
     ! done
 
   thp <- addDevice "holographic projector"

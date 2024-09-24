@@ -6,6 +6,7 @@ module Yaifl.Game.Actions.Looking.Locale where
 import Yaifl.Prelude
 import Yaifl.Model.Store
 import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables
@@ -25,7 +26,7 @@ instance Display (LocalePriorities wm) where
 
 data LocaleInfo wm = LocaleInfo
   { priority :: Int
-  , localeObject :: AnyObject wm
+  , localeObject :: Thing wm
   , isMentioned :: Bool
   } deriving stock (Generic)
 

@@ -33,7 +33,7 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
         return Nothing)
       Just encl -> (do
         l <- mapM (\x -> do
-          x' <- getObject x
+          x' <- getThing x
           addAnnotation $ "Found a " <> display (x' ^. #name)
           return x') (DES.toList (contents encl))
         return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))

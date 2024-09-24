@@ -52,7 +52,7 @@ pickOne :: Options es a b -> a -> Eff es b
 pickOne (x:|_opts) i = x ^. _2 $ i
 
 beforePlanWith :: (a -> Eff es c) -> NonEmpty (Weight, PlanOption es (c, a) b) -> NonEmpty (Weight, PlanOption es a b)
-beforePlanWith bef = fmap (second (\f -> \a -> bef a >>= \b -> f (b, a)))
+beforePlanWith bef = secondF (\f a -> bef a >>= \b -> f (b, a))
 
 equalWeights :: NonEmpty (PlanOption es a b) -> NonEmpty (Weight, PlanOption es a b)
 equalWeights = fmap (Weight 1,)

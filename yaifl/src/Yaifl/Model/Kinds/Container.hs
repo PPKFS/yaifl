@@ -26,6 +26,7 @@ module Yaifl.Model.Kinds.Container
   , isTransparentContainer
   , isOpenableContainer
   , isOpenTransparentContainer
+  , isOpaqueContainer
   ) where
 
 import Yaifl.Prelude
@@ -65,7 +66,7 @@ makeSpecificsWithout [] ''Enterable
 isOpaqueClosedContainer ::
   Container
   -> Bool
-isOpaqueClosedContainer c = (opacity c == Opaque) && (view #openable c == defaultContainerOpenability)
+isOpaqueClosedContainer c = isClosedContainer c && isOpaqueContainer c
 
 thingIsOpenContainer ::
   WMWithProperty wm Container
@@ -113,6 +114,11 @@ isTransparentContainer ::
   Container
   -> Bool
 isTransparentContainer = (== Transparent) . view #opacity
+
+isOpaqueContainer ::
+  Container
+  -> Bool
+isOpaqueContainer = (== Opaque) . view #opacity
 
 isOpenTransparentContainer ::
   Container

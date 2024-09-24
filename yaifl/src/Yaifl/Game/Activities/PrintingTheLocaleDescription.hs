@@ -25,6 +25,7 @@ import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.AnyObject
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA
@@ -161,7 +162,7 @@ alsoSee = Rule "You can also see" [] (\v ->
       -- manually adds some notable object that isn't present in the room
       let allHolders = DEM.foldl' (\xs li -> flip cons xs $ asThingOrRoom
             (\t -> Just $ t ^. #objectData % #containedBy)
-            (const Nothing) (localeObject li)) [] lp
+            (const Nothing) (toAny $ localeObject li)) [] lp
       case allHolders of
         -- no items
         [] -> error "impossible - no items found?"

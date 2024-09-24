@@ -57,7 +57,7 @@ main = do
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
                 failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
-                setInputBuffer $ "east" : (take 5 $ repeat "up")
+                setInputBuffer $ "east" : replicate 5 "up"
                 runTurnsFromBuffer
                 (w2 :: World PlainWorldModel) <- get
                 let (x, _) = runPureEff $ runStateShared w2 $ do

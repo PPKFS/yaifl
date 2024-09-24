@@ -28,7 +28,7 @@ import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
 
 setLocalePriority ::
-  AnyObject s
+  Thing s
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
@@ -36,7 +36,7 @@ setLocalePriority e lv i = lv & #localePriorities % at (getID e) % _Just % #prio
 
 removeFromLocale ::
   Applicative m
-  => AnyObject v
+  => Thing v
   -> LocaleVariables v
   -> LocaleInfo v
   -> m (Maybe (LocaleVariables v, LocaleInfo v), Maybe (LocaleVariables v))
@@ -45,7 +45,7 @@ removeFromLocale e lv li = do
 
 mentionItemAndIncreaseParagraphCount ::
   Applicative m
-  => AnyObject v
+  => Thing v
   -> LocaleVariables v
   -> LocaleInfo v
   -> m (Maybe (LocaleVariables v, LocaleInfo v), Maybe (LocaleVariables v))
@@ -152,7 +152,7 @@ describeOnMentionedSupporters = Rule "describe what's on mentioned supporters in
             | (not . ES.null) (sup ^. #enclosing % #contents) -> do
             -- say "On [the item] " (A);
             [saying|On {the thing} |]
-            void $ doActivity #listingContents (withContents [toAny thing])
+            void $ doActivity #listingContents (withContents [thing])
             [saying|.#{paragraphBreak}|]
           Just _sup -> do
             addAnnotation "It was a supporter but it did not support anything"

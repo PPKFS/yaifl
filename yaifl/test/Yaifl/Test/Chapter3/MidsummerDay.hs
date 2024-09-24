@@ -28,4 +28,21 @@ midsummerDayWorld = do
   pass
 
 midsummerDayTestMeWith :: [Text]
-midsummerDayTestMeWith = ["up", "x box", "d", "e", "x table", "x cup", "x pistol", "get cup"]
+midsummerDayTestMeWith =
+  [ "up"
+  -- You can see a cardboard box (empty) here.
+  , "x box"
+  -- The cardboard box is empty. TODO
+  , "d"
+  -- nothing
+  , "e"
+  -- You can see a billiards table (on which is a trophy cup (in which is a starting pistol)) here.
+  , "x table"
+  -- On the billiards table is a trophy cup (in which is a starting pistol). TODO
+  , "x cup"
+  -- In the trophy cup is a starting pistol. TODO, also needs to be visible
+  , "x pistol"
+  -- You see nothing special about the starting pistol. TODO, also needs to be visible
+  , "get cup"
+  -- Taken. TODO, also needs to be visible
+  ]

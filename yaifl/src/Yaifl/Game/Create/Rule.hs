@@ -18,7 +18,7 @@ import Yaifl.Model.Tag
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)
@@ -62,16 +62,16 @@ insteadOf a precs f = do
   pass
 
 theObject ::
-  ArgsMightHaveMainObject v (AnyObject wm)
-  => ObjectLike wm o
+  ArgsMightHaveMainObject v (Thing wm)
+  => ThingLike wm o
   => o
   -> Precondition wm (Args wm v)
 theObject o = Precondition
   { preconditionName = do
-      e <- getObject o
+      e <- getThing o
       pure $ "to the object " <> display (e ^. #name)
   , checkPrecondition = \args -> do
-      o' <- getObject o
+      o' <- getThing o
       pure $ args ^? #variables % argsMainObjectMaybe == Just o'
   }
 

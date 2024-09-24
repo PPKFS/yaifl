@@ -38,8 +38,8 @@ import qualified Data.Text as T
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
   , WithActivity "listingContents" wm () (ListWritingParameters wm) ()
-  , WithActivity "groupingTogether" wm () (AnyObject wm) ()
-  , WithActivity "printingANumberOf" wm () (Int, AnyObject wm) ()
+  , WithActivity "groupingTogether" wm () (Thing wm) ()
+  , WithActivity "printingANumberOf" wm () (Int, Thing wm) ()
   , WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm (Thing wm))
   , WithPrintingRoomDescriptionDetails wm
   , WithPrintingInventoryDetails wm
@@ -49,10 +49,10 @@ type WithListWriting wm = (
 
 newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm (Thing wm) } deriving stock (Generic)
 data ListWritingItem wm =
-  SingleObject (AnyObject wm)
+  SingleObject (Thing wm)
   -- a group may contain equivalence classes of objects
   | GroupedItems (NonEmpty (ListWritingItem wm))
-  | EquivalenceClass (NonEmpty (AnyObject wm))
+  | EquivalenceClass (NonEmpty (Thing wm))
 
 instance Display (WMText wm) => Display (ListWritingItem wm) where
   displayBuilder (SingleObject o) = displayBuilder o
@@ -107,7 +107,7 @@ instance Display (ListWritingParameters wm) where
 instance Display (ListWritingVariables wm) where
   displayBuilder = pure ""
 
-blankListWritingParameters :: [AnyObject wm] -> ListWritingParameters wm
+blankListWritingParameters :: [Thing wm] -> ListWritingParameters wm
 blankListWritingParameters c = ListWritingParameters
   { -- TODO: this really should have any sort of grouping...
     contents = map SingleObject c
@@ -131,7 +131,7 @@ blankListWritingParameters c = ListWritingParameters
   , initialDepth = 0
   }
 
-withContents :: [AnyObject wm] -> ListWritingParameters wm
+withContents :: [Thing wm] -> ListWritingParameters wm
 withContents = (#includingContents .~ True) . blankListWritingParameters
 
 -- https://ganelson.github.io/inform/WorldModelKit/S-lst.html#SP16
@@ -266,10 +266,10 @@ writeListR = do
       when (i == (length adjustedList - 1) && oxfordComma) $ do
         -- and we have more than 2 items in the list
         when (length adjustedList > 2) $ tell @Text ","
-        sayTellResponse C (fromMaybe (error "hit a room in the listwriter") $ fromAny $ getObjectOut item)
+        sayTellResponse C (getObjectOut item)
       when (i < (length adjustedList - 1)) $ tell ", "
 
-getObjectOut :: ListWritingItem wm -> AnyObject wm
+getObjectOut :: ListWritingItem wm -> Thing wm
 getObjectOut = \case
   SingleObject o -> o
   GroupedItems (g :| _) -> getObjectOut g
@@ -316,7 +316,7 @@ writeAfterEntry ::
   => WithListWriting wm
   => RuleEffects wm es
   => Int
-  -> AnyObject wm
+  -> Thing wm
   -> Eff es ()
 writeAfterEntry _numberOfItem itemMember = do
   s <- lwp <$> get
@@ -395,7 +395,7 @@ writeAfterEntry _numberOfItem itemMember = do
         lwv <- get @(ListWritingVariables wm)
         let lwp' = lwp lwv
         -- TODO: the grouping should be here too
-        writeListOfThings (lwp' { contents = map (SingleObject . toAny) nonConcealedThings, initialDepth = 1 + depth lwv})
+        writeListOfThings (lwp' { contents = map (SingleObject) nonConcealedThings, initialDepth = 1 + depth lwv})
         when tersely $ sayTellResponse B thingWrittenAbout
       pass
 
