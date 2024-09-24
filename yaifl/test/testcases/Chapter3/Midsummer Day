@@ -1,0 +1,39 @@
+-------------------------
+----- Midsummer Day -----
+-------------------------
+
+Garden
+
+>up
+
+Treehouse
+You can see a cardboard box (empty) here.
+
+>x box
+
+The cardboard box is empty.
+
+>d
+
+Garden
+
+>e
+
+Gazebo
+You can see a billiards table (on which is a trophy cup (in which is a starting pistol)) here.
+
+>x table
+
+On the billiards table is a trophy cup (in which is a starting pistol).
+
+>x cup
+
+In the trophy cup is a starting pistol.
+
+>x pistol
+
+You see nothing special about the starting pistol.
+
+>get cup
+
+Grabbing the trophy cup.

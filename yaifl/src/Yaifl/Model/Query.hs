@@ -36,6 +36,11 @@ module Yaifl.Model.Query
   , getEnclosing
   , setEnclosing
   , EnclosingObject(..)
+  , getPlayer
+  , getDescribableContents
+  , getEnclosingObject
+  , enclosingContains
+  , getAllObjectsInEnclosing
   ) where
 
 import Yaifl.Prelude
@@ -221,6 +226,24 @@ getAllObjectsInRoom _incScenery _incDoors r = do
   let allItemIDs = ES.toList $ room ^. #objectData % #enclosing % #contents
   mapM getThing allItemIDs
 
+getAllObjectsInEnclosing ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Enclosing
+  => IncludeScenery
+  -> IncludeDoors
+  -> EnclosingEntity
+  -> Eff es [Thing wm]
+getAllObjectsInEnclosing incScenery incDoors r = do
+  (_, enc) <- getEnclosingObject r
+  let allItemIDs = ES.toList $ enc ^. #contents
+  things <- mapM getThing allItemIDs
+  recursedThings <- mconcat <$> mapM (\t -> do
+    let mbE = getEnclosingMaybe (toAny t)
+    case mbE of
+      Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tag enc' t)
+      Nothing -> return []) things
+  return $ (things <> recursedThings)
+
 getContainingHierarchy ::
   NoMissingObjects wm es
   => Thing wm
@@ -350,6 +373,44 @@ getEnclosing ::
   -> AnyObject wm
   -> Enclosing
 getEnclosing _ = fromMaybe (error "property witness was violated") . getEnclosingMaybe
+
+getEnclosingObject ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Enclosing
+  => EnclosingEntity
+  -> Eff es (AnyObject wm, Enclosing)
+getEnclosingObject e = do
+  o <- getObject e
+  let enc = getEnclosing e o
+  pure (o, enc)
+
+getPlayer ::
+  NoMissingObjects wm es
+  => Eff es (Thing wm)
+getPlayer = use #currentPlayer >>= getThing
+
+getDescribableContents ::
+  NoMissingObjects wm es
+  => Enclosing
+  -> Eff es [Thing wm]
+getDescribableContents e = do
+  p <- getPlayer
+  catMaybes <$> mapM (\i -> do
+    item <- getThing i
+    if thingIsScenery item || p `objectEquals` i {- || todo: falsely unoccupied -}
+    then pure Nothing
+    else pure (Just item)
+    ) (ES.toList $ view #contents e)
+
+enclosingContains ::
+  NoMissingObjects wm es
+  => ThingLike wm o
+  => EnclosingEntity
+  -> o
+  -> Eff es Bool
+enclosingContains e o = do
+  hier <- getContainingHierarchy =<< getThing o
+  return $ e `elem` hier
 
 -- My hope is that this can vanish at some point but enclosing is the weird one
 -- we want this class because we want an easier way of doing `propertyAT` for enclosing

@@ -185,12 +185,6 @@ getNoun ::
   -> ActionParameter wm goesWith
 getNoun = fst . variables . unArgs
 
--- | This should be moved somewhere else I guess TODO
-getPlayer ::
-  NoMissingObjects wm es
-  => Eff es (Thing wm)
-getPlayer = use #currentPlayer >>= getThing
-
 getActorLocation ::
   NoMissingObjects wm es
   => Args wm v

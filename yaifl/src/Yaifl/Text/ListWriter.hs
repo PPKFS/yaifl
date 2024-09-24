@@ -251,6 +251,7 @@ writeListR = do
     if withNewlines
     then tell ":\n"
     else tell " "
+    modify @(ListWritingVariables wm) (#lwp % #prefacingWithIsAre .~ False)
   --isAre is now off.
   forM_ (zip [1..] adjustedList) $ \(i, item) -> do
     oxfordComma <- use @Metadata #oxfordCommaEnabled

@@ -31,6 +31,7 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Input (waitForInput, Input)
+import Yaifl.Model.Tag
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -250,8 +251,10 @@ tryFindingObject ::
   -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
-  playerLoc <- getLocation pl
-  allItems <- getAllObjectsInRoom IncludeScenery IncludeDoors playerLoc
+  (playerLocObj, domainEnc) <- getEnclosingObject $ (view $ #objectData % #containedBy) pl
+  -- okay, if we bother doing a proper scanning loop it'll go here
+  -- but for now, we just want to consider anything recursively present. that'll do.
+  allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors (tag domainEnc playerLocObj)
   findObjectsFrom t allItems True
 
 findObjectsFrom ::

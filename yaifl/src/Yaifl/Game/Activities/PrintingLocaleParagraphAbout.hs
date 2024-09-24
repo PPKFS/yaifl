@@ -19,7 +19,6 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
-import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
 import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as ES

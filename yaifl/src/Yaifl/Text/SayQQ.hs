@@ -147,7 +147,7 @@ liftSayingWithMethod method (SayArticle pref t) =
           (ConE $ mkName "SayArticle")
           (LitT $ StrTyLit $ uncapitaliseString pref) -- SayArticle @"foo"
         )
-        (ConE $ mkName $ isCapitalised t) -- Capitalised?
+        (ConE $ mkName $ isCapitalised pref) -- Capitalised?
       )
       (VarE $ mkName $ toString t)
     )
