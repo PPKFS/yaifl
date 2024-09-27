@@ -198,6 +198,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.PortRoyal3
     Yaifl.Test.Chapter3.SlightlyWrong
     Yaifl.Test.Chapter3.StarryVoid
+    Yaifl.Test.Chapter3.Tamed
     Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
     Yaifl.Test.Chapter3.UpAndUp
     Yaifl.Test.Chapter3.Verbosity

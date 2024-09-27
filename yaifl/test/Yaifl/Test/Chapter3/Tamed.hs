@@ -19,6 +19,7 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds (ThingPortable(..))
 import Yaifl.Game.Create
 import Yaifl.Model.Rules (parseAction)
+import System.Random.Stateful
 
 ex13 :: (Text, [Text], Game PlainWorldModel ())
 ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
@@ -34,8 +35,8 @@ tamedWorld = do
     ! #opacity Transparent
     ! #opened Closed
     ! done
-  l <- addAnimal "lion"
-    ! #location tc
+  l <- addThing "lion"
+    ! #location (inThe tc)
     ! done
   ped <- addSupporter "pedestal"
     ! #enterable Enterable
@@ -43,7 +44,7 @@ tamedWorld = do
   p <- getPlayer
   p `isNowOn` ped
   everyTurn [whenIn tc] $ do
-    r <- uniformRIO @Bool
+    r <- uniformM globalStdGen
     if r then
       [saying|The lion eyes you with obvious discontent.|]
       else [saying|Though the lion does not move, you are aware that it is watching you closely.|]

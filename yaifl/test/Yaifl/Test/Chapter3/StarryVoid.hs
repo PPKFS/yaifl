@@ -4,7 +4,7 @@ import Yaifl
 import Yaifl.Game.Actions.Going
 import Yaifl.Game.Create
 
-import Yaifl.Model.Actions.Args (getPlayer, silentAction)
+import Yaifl.Model.Actions.Args (silentAction)
 import Yaifl.Model.Entity
 import Yaifl.Model.Kinds
 import Yaifl.Model.Query
