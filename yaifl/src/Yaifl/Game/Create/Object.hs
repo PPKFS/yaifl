@@ -8,6 +8,7 @@ module Yaifl.Game.Create.Object
   , addRegion
   , addBaseObjects
   , done
+  , AddObjects
   ) where
 
 import Yaifl.Prelude
@@ -33,6 +34,16 @@ import qualified Data.Text as T
 import Yaifl.Model.Tag (tagObject)
 
 done = defaults
+
+-- | Type synonym for adding new objects.
+type AddObjects wm es = (
+  ObjectUpdate wm :> es
+  , Display (WMText wm)
+  , IsString (WMText wm)
+  , State Metadata :> es
+  , Pointed (WMObjSpecifics wm)
+  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es
+  )
 
 makeObject ::
   Display (WMText wm)
@@ -119,6 +130,7 @@ addThing ::
   -> "location" :? EnclosingEntity
   -> "type" :? ObjectKind
   -> "thingData" :? ThingData wm
+  -> "portable" :? ThingPortable
   -> Eff es ThingEntity
 addThing n
   (argDef #initialAppearance "" -> ia)
@@ -127,8 +139,10 @@ addThing n
   (argF #modify -> stateUpdate)
   (argF #location -> loc)
   (argDef #type (ObjectKind "thing") -> ki)
-  (argDef #thingData (blankThingData ia) -> td) = do
-    t <- addThingInternal n ia d ki s (Just td) loc
+  (argDef #thingData (blankThingData ia) -> td)
+  (argF #portable -> p) = do
+    let td' = td & (#portable %~ maybe id const p)
+    t <- addThingInternal n ia d ki s (Just td') loc
     whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyThing t (`runLocalState` su)
     pure t
 

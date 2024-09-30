@@ -27,6 +27,7 @@ data ActionCollection wm = ActionCollection
   , closing :: ClosingAction wm
   , switchingOn :: SwitchingOnAction wm
   , taking :: TakingAction wm
+  --, entering :: EnteringAction wm
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActionCollection

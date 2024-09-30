@@ -21,7 +21,7 @@ module Yaifl.Game.Create.RoomConnection
   , addDoorToConnection
   , getConnectionViaDoor
   , isNowMapped
-
+  , isNowOn
   , addDirectionFrom
   ) where
 
@@ -39,13 +39,17 @@ import Yaifl.Model.Entity
 import Yaifl.Model.ObjectLike
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Room
-import Yaifl.Model.TH ( makeDirections )
+import Yaifl.Model.TH ( makeDirections, WMWithProperty )
 import Yaifl.Model.WorldModel ( WMDirection )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say
 import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Prelude hiding (Down)
+import Yaifl.Model.Kinds.Supporter (SupporterEntity)
+import Yaifl.Game.Move (move)
+import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Enclosing
 
 getAllConnections ::
   Room wm
@@ -258,3 +262,16 @@ isNowhere ::
 isNowhere r d = do
   fromRoom <- getRoom r
   modifyRoom @wm fromRoom (connectionLens d .~ Nothing)
+
+isNowOn ::
+  RuleEffects wm es
+  => WMWithProperty wm Enclosing
+  => ThingLike wm t
+  => t
+  -> SupporterEntity
+  -> Eff es ()
+isNowOn t e = do
+  t' <- getThing t
+  e' <- getEnclosingObject (coerceTag e)
+  let e'' = TaggedObject (coerceTag @_ @EnclosingTag e, fst e')
+  void $ move t' e''

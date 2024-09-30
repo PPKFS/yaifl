@@ -31,7 +31,6 @@ module Yaifl.Model.Effects
   , NoMissingObjects
   , MissingObject(..)
   , NoMissingRead
-  , AddObjects
   ) where
 
 import Yaifl.Prelude
@@ -90,14 +89,6 @@ type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, Objec
 -- | Type synonym for reading objects with a way to handle missing IDs.
 type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, WithMetadata es)
 
--- | Type synonym for adding new objects.
-type AddObjects wm es = (
-  ObjectUpdate wm :> es
-  , Display (WMText wm)
-  , IsString (WMText wm)
-  , State Metadata :> es
-  , Pointed (WMObjSpecifics wm)
-  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es)
 
 withoutMissingObjects ::
   HasCallStack

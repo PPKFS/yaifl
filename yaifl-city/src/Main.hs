@@ -27,7 +27,7 @@ defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 game :: Game PlainWorldModel ()
 game = do
   setTitle fullTitle
-  a <- runPlan apartmentTowerPlan (injectDirection West, 10)
+  a <- constructApartmentBuilding
   print a
   before (ActionRule #going) [] "before climbing rule" $ \_ -> do
     [saying|You climb up the stairs to the next floor.|]

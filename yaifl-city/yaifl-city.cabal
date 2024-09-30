@@ -36,7 +36,8 @@ common common-options
     split >= 0.2.4 && < 2.0,
     text-display >= 0.0.5 && < 1.0,
     breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
-    solitude >= 0.0.0.0 && <= 10.0.0.0
+    solitude >= 0.0.0.0 && <= 10.0.0.0,
+    random
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints

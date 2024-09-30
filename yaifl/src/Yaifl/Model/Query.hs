@@ -415,10 +415,16 @@ enclosingContains e o = do
 -- My hope is that this can vanish at some point but enclosing is the weird one
 -- we want this class because we want an easier way of doing `propertyAT` for enclosing
 class EnclosingObject o where
-  enclosingL :: Lens' o Enclosing
+  enclosingL :: Getter o Enclosing
 
 instance EnclosingObject (Room wm) where
-  enclosingL = #objectData % #enclosing
+  enclosingL = castOptic $ #objectData % #enclosing
+
+instance  WMWithProperty wm Enclosing => EnclosingObject (AnyObject wm, Enclosing) where
+  enclosingL = to (\o -> getEnclosing @wm (toTag o) ( fst o))
 
 instance WMWithProperty wm Enclosing => EnclosingObject (TaggedObject (Thing wm) EnclosingTag)  where
-  enclosingL = lens (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o)) (\o enc -> o & (coerced % (_2 @(EnclosingEntity, Thing wm)) % #specifics % propertyAT .~ enc))
+  enclosingL = to (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o))
+
+instance WMWithProperty wm Enclosing => EnclosingObject (TaggedEnclosing wm) where
+  enclosingL = to $ (\(TaggedObject (e, o)) -> getEnclosing e o)

@@ -1,0 +1,58 @@
+
+apartment_building:
+  name: Apartment Building
+  nodes:
+    lobby: room_lobby
+    office: room_apartment_office
+    next_floor:
+      type: apartment_floor
+      parameters:
+        floor_number: 1
+  connections:
+    lobby:
+      south:
+        to: out
+        door: apartment_building_door
+      up:
+        to: next_floor
+        door: stairs
+      northwest:
+        to: office
+        door: door
+
+apartment_floor:
+  parameters:
+    floor_number: int
+  name: Apartment Floor {floor_number}
+  nodes:
+    landing: room_landing
+    apartment1: apartment
+    apartment2: apartment
+    apartment3: apartment
+    apartment4: apartment
+  connections:
+    apartment1:
+      northwest:
+        to: landing
+        door: apartment_door
+    apartment2:
+      northeast:
+        to: landing
+        door: apartment_door
+    apartment3:
+      southwest:
+        to: landing
+        door: apartment_door
+    apartment4:
+      southeast:
+        to: landing
+        door: apartment_door
+    landing:
+      conditional:
+        if: floor_number > 8
+        then:
+
+
+
+
+

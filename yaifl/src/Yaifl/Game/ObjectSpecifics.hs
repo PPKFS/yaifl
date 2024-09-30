@@ -1,5 +1,3 @@
-
-
 module Yaifl.Game.ObjectSpecifics
   ( -- * Specifics
   ObjectSpecifics(..)
@@ -188,14 +186,22 @@ addContainer ::
   -> "openable" :? Openable
   -> "opened" :? Opened
   -> "location" :? EnclosingEntity
+  -> "portable" :? ThingPortable
   -> Eff es ContainerEntity
 addContainer n ia d
-  (argF #carryingCapacity -> cc) (argF #opacity -> op) (argF #enterable -> e) (argF #openable -> o) (argF #opened -> od) (argF #location -> l) = do
+  (argF #carryingCapacity -> cc)
+  (argF #opacity -> op)
+  (argF #enterable -> e)
+  (argF #openable -> o)
+  (argF #opened -> od)
+  (argF #location -> l)
+  (argF #portable -> p) = do
     let cs = makeContainer cc op e o od
     c <- addThing @wm n ia d
         ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
         ! #type (ObjectKind "container")
         ! paramF #location l
+        ! paramF #portable p
         ! done
     pure $ tag @Container @ContainerTag cs c
 

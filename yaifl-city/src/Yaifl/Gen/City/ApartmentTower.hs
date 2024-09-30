@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Yaifl.Gen.City.ApartmentTower
-  ( apartmentTowerPlan
-
+  ( constructApartmentBuilding
   ) where
 
 import Yaifl.Prelude hiding (State, Down)
@@ -18,12 +18,55 @@ import Yaifl.Gen.City.Building
 import Control.Placeholder (pattern TODO, todo)
 import GHC.TypeLits
 import Yaifl.Text.DynamicText
-import Yaifl.Model.Kinds (Room, getRoom)
+import Yaifl.Model.Kinds
 import Yaifl.Model.Entity
 import Yaifl.Model.Rules (RuleEffects)
 import Effectful.State.Static.Local
 import Yaifl.Model.Effects (setRoom)
+import System.Random.Stateful
 
+windows :: [a] -> [(a, a)]
+windows = mapMaybe ((\case
+  [x,y] -> Just (x, y)
+  _ -> Nothing) . take 2) . tails
+
+constructApartmentBuilding ::
+  (WMDirection wm ~ Direction)
+  => IOE :> es
+  => BuildingGeneration wm es
+  => Eff es ()
+constructApartmentBuilding = do
+  f <- constructFoyer
+  (numberFloors :: Int) <- uniformRM (1, 20) globalStdGen
+  fs <- forM [1 .. numberFloors] $ constructApartmentBuildingFloor
+  forM_ (windows $ f:fs) $ \(f1, f2) -> do
+    f2 `isAbove` f1
+    addDoor "staircase"
+      ! #front (f1, Up)
+      ! #back (f2, Down)
+      ! #initialAppearance "it's the stairs"
+      ! #modify (#objectData % #described .= Undescribed)
+      ! done
+  pass
+
+constructApartmentBuildingFloor :: BuildingGeneration wm es
+  => Int -> Eff es RoomEntity
+constructApartmentBuildingFloor floorNum = do
+  addRoom (fromString $ "Apartment Building, Floor " <> show floorNum <> "; Hallway")
+    ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
+    ! done
+
+constructFoyer ::
+  BuildingGeneration wm es
+  => Eff es RoomEntity
+constructFoyer = do
+  addRoom "Apartment building foyer"
+    ! #description "the foyer"
+    ! done
+
+
+
+{-
 data TowerBuildingPlan es inputs base floor (building :: Type) = TowerBuildingPlan
   { baseOptions :: Options es inputs base
   , foyerOptions :: Options es base floor
@@ -195,3 +238,4 @@ instance Blueprintable SpokePlan where
     let sp = SpokePlan @_ @'Shell r1 r2 r3 r4
     mapM_ (uncurry (buildAction sp)) $ zip [centre, top, left, right] [r1, r2, r3, r4]
     pure sp
+-}

@@ -16,6 +16,7 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Enclosing
 
 type RawAnyObject wm = Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to
@@ -61,3 +62,7 @@ instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
 
 type TaggedEnclosing wm = TaggedObject (AnyObject wm) EnclosingTag
+
+instance TaggedAs (AnyObject wm, Enclosing) EnclosingTag where
+  toTag (o, e) = tag e o
+
