@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Yaifl.Gen.City.ApartmentTower
   ( constructApartmentBuilding
+  , addStaircases
   ) where
 
 import Yaifl.Prelude hiding (State, Down)
@@ -20,49 +21,89 @@ import GHC.TypeLits
 import Yaifl.Text.DynamicText
 import Yaifl.Model.Kinds
 import Yaifl.Model.Entity
-import Yaifl.Model.Rules (RuleEffects)
-import Effectful.State.Static.Local
+import Yaifl.Model.Rules
+import Effectful.State.Static.Local hiding (modify)
 import Yaifl.Model.Effects (setRoom)
 import System.Random.Stateful
+import Yaifl.Text.Say
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Model.Query
+import Yaifl.Model.Kinds.Door
+import Yaifl.Model.Tag
+import Data.Text (toLower)
+import Yaifl.Game.Create
+import Yaifl
+import Effectful.Writer.Static.Local
+import qualified Data.Set as S
 
 windows :: [a] -> [(a, a)]
 windows = mapMaybe ((\case
   [x,y] -> Just (x, y)
   _ -> Nothing) . take 2) . tails
 
+addStaircases :: (WMDirection wm ~ Direction)
+  => (WMText wm ~ DynamicText wm)
+  => BuildingGeneration wm es
+  => Eff es ()
+addStaircases = do
+  modify @Metadata (#kindDAG % at (ObjectKind "staircase") ?~ ObjectKindInfo (S.fromList ["door"]) [] [] )
+  afterPrintingTheNameOf [aKindOf "door"] "adding staircase info" $ \_ -> do
+    withThing $ \t -> do
+      r <- execWriter $
+              do
+                let d = fromMaybe (error "not a door") $ getDoorMaybe t
+                pLoc <- getPlayer >>= getLocation
+                getConnectionViaDoor (tag d t) pLoc & \case
+                  Nothing -> sayTell (display t)
+                  Just (r, conn) -> sayTell $ " (leading " <> toLower (show $ view #direction conn) <> ")"
+      return (Just r)
+
 constructApartmentBuilding ::
+  forall wm es.
   (WMDirection wm ~ Direction)
+  => (WMText wm ~ DynamicText wm)
   => IOE :> es
   => BuildingGeneration wm es
   => Eff es ()
 constructApartmentBuilding = do
   f <- constructFoyer
   (numberFloors :: Int) <- uniformRM (1, 20) globalStdGen
-  fs <- forM [1 .. numberFloors] $ constructApartmentBuildingFloor
-  forM_ (windows $ f:fs) $ \(f1, f2) -> do
+  fs <- forM [1 .. numberFloors] constructApartmentBuildingFloor
+  forM_ (zip [1 .. numberFloors] (windows $ f:fs)) $ \(i, (f1, f2)) -> do
     f2 `isAbove` f1
-    addDoor "staircase"
+    addDoor (if even i then "staircase" else "rickety staircase")
       ! #front (f1, Up)
       ! #back (f2, Down)
-      ! #initialAppearance "it's the stairs"
-      ! #modify (#objectData % #described .= Undescribed)
+      ! #modify (#objectType .= ObjectKind "staircase")
       ! done
   pass
 
 constructApartmentBuildingFloor :: BuildingGeneration wm es
   => Int -> Eff es RoomEntity
 constructApartmentBuildingFloor floorNum = do
-  addRoom (fromString $ "Apartment Building, Floor " <> show floorNum <> "; Hallway")
+  addRoom ("Apartment Building, Floor " <> show floorNum <> "; Hallway")
     ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
     ! done
 
 constructFoyer ::
-  BuildingGeneration wm es
+  (WMDirection wm ~ Direction)
+  => BuildingGeneration wm es
   => Eff es RoomEntity
 constructFoyer = do
-  addRoom "Apartment building foyer"
-    ! #description "the foyer"
+  f <- addRoom "Apartment building Foyer"
+    ! #description "The foyer of the apartment block is run-down and tired. At the far end of the slightly dark corridor is a staircase \
+\ leading upwards to the apartments. A dirty door to the west leads to what you assume is the receptionist's office."
     ! done
+  o <- addRoom "Apartment building office"
+    ! #description "it's an office"
+    ! done
+  addDoor "dirty wooden door"
+    ! #front (o, West)
+    ! #back (f, East)
+    ! done
+
+  o `isWestOf` f
+  return f
 
 
 

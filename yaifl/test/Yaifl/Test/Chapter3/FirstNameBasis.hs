@@ -1,14 +1,14 @@
 module Yaifl.Test.Chapter3.FirstNameBasis where
 
 import Yaifl.Prelude
+
 import Yaifl
-import Yaifl.Test.Common
 import Yaifl.Game.Create
-import Yaifl.Model.Query
-import Yaifl.Text.Say
 import Yaifl.Model.Kinds
+import Yaifl.Model.Query
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
+import Yaifl.Text.Say
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)
@@ -17,8 +17,7 @@ firstNameBasisWorld :: Game PlainWorldModel ()
 firstNameBasisWorld = do
   setTitle "First Name Basis"
   addRoom "The Crew Lounge"
-    ! #description [wrappedText|Deliberately spartan:
-the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground.|]
+    ! #description "Deliberately spartan: the crew feels weight restrictions here first, so there aren't any chairs, just a few thin pads on the ground."
     ! done
 
   thp <- addDevice "holographic projector"

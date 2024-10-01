@@ -29,3 +29,4 @@ printingRoomDescriptionDetailsImpl = Activity "printing room description details
       ]
     })
   (blankRulebook "after printing room description details about something")
+  (const)

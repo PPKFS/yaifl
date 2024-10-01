@@ -6,6 +6,7 @@ module Yaifl.Model.Kinds.Thing
   , ThingHandled(..)
   , ThingData(..)
   , blankThingData
+
   , Thing(..)
   , tagThing
   , defaultPlayerID
@@ -28,7 +29,7 @@ data ThingLit = Lit | NotLit
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
 -- | If a thing is wearable, and if so who (or what) is currently wearing it.
-data ThingWearability = NotWearable | Wearable (Maybe Entity)
+data ThingWearability = NotWearable | Wearable (Maybe ThingEntity)
   deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | If a thing appears in "You can also see..." paragraphs.
@@ -39,12 +40,14 @@ data ThingDescribed = Undescribed | Described
 data ThingPortable = Portable | FixedInPlace
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
--- | If the thing has been picked up or otherwise interacted with by the player.
+-- | If the thing has been picked up or otherwise interacted with by the player. Things which have been handled
+-- will no longer display their initial appearance in descriptions.
 data ThingHandled = Handled | NotHandled
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
-data ThingConcealed = Concealed | NotConcealed
-  deriving stock (Eq, Show, Read, Enum, Ord, Generic)
+-- | If a thing is concealed, and if so who (or what) is currently concealing it.
+data ThingConcealed = NotConcealed | Concealed (Maybe ThingEntity)
+  deriving stock (Eq, Show, Read, Ord, Generic)
 
 -- | Properties that define a `Yaifl.Model.Kinds.Object.Thing`.
 data ThingData wm = ThingData
@@ -66,6 +69,7 @@ deriving stock instance (Show (WMText wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
 makePrismLabels ''ThingWearability
+makePrismLabels ''ThingConcealed
 
 -- | A default thing (when given an initial appearance).
 blankThingData :: WMText wm -> ThingData wm
@@ -113,7 +117,7 @@ thingIsWorn = isJust . preview (#objectData % #wearable % #_Wearable)
 thingIsConcealed ::
   Thing wm
   -> Bool
-thingIsConcealed = (== Concealed) . view (#objectData % #concealed)
+thingIsConcealed = isJust . preview (#objectData % #concealed % #_Concealed)
 
 thingIsScenery ::
   Thing wm

@@ -44,9 +44,9 @@ cantCloseIfClosed :: ActionRule wm (ClosingAction wm) (Thing wm)
 cantCloseIfClosed = notImplementedRule "can't close cloed things"
 
 standardClose :: WMWithProperty wm Openability => ActionRule wm (ClosingAction wm) (Thing wm)
-standardClose = makeRule "standard closing rule" [] $ \thing -> do
+standardClose = makeRule "standard closing rule" [] $ \Args{variables=thing} -> do
   -- now the noun is closed.
-  closeIt (variables thing)
+  closeIt thing
   rulePass
 
 standardReport :: ActionRule wm (ClosingAction wm) (Thing wm)

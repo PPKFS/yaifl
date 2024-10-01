@@ -85,6 +85,7 @@ printingLocaleParagraphAboutImpl = Activity "printing a locale paragraph about s
       ]
     })
   (blankRulebook "after printing a locale paragraph")
+  (const)
 
 -- normally this just removes "you can see yourself"
 dontMentionUndescribed :: LocaleParagraphAboutRule wm

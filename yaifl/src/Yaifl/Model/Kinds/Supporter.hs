@@ -19,15 +19,15 @@ module Yaifl.Model.Kinds.Supporter
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Query
 import Yaifl.Model.Effects
-import Yaifl.Model.Metadata
 import Yaifl.Model.Entity
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Container
+import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Metadata
+import Yaifl.Model.Query
 import Yaifl.Model.TH
+import Yaifl.Model.Tag
 
 data Supporter = Supporter
   { enclosing :: Enclosing

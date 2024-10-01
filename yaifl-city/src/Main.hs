@@ -44,6 +44,7 @@ main = do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
+          addStaircases
           game
           -- this just moves the actions from the indexed, static, standard library collection
           -- into the dynamic collection
@@ -57,7 +58,7 @@ main = do
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
                 failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
-                setInputBuffer $ "east" : replicate 5 "up"
+                setInputBuffer $ "up" : "up" : "up" : "x staircase" : "down" : "x stairs" : []
                 runTurnsFromBuffer
                 (w2 :: World PlainWorldModel) <- get
                 let (x, _) = runPureEff $ runStateShared w2 $ do

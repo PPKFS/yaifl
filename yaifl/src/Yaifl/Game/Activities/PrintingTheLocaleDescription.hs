@@ -73,6 +73,7 @@ printingTheLocaleDescriptionImpl = Activity "Printing the locale description of 
       ]
     })
   (blankRulebook "After printing the locale description")
+  (const)
 
 findNotable ::
   WithChoosingNotableLocaleObjects wm

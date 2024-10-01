@@ -87,6 +87,7 @@ data Metadata = Metadata
   , oxfordCommaEnabled :: Bool -- ^ should we use the oxford comma in lists?
   , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
   , bufferedInput :: [Text]
+  , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
   -- more to come I guess
   } deriving stock (Generic)
 makeFieldLabelsNoPrefix ''Metadata

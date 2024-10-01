@@ -3,6 +3,7 @@ module Yaifl.Model.Activity
   , ActivityRule
   , ActivityRule'
   , WithActivity
+  , ActivityLens
   , WithPrintingDescriptionOfADarkRoom
   , WithPrintingNameOfADarkRoom
   , WithListingNondescriptItems
@@ -13,6 +14,7 @@ module Yaifl.Model.Activity
   , makeActivity
   , whenHandling
   , whenHandling'
+  , afterActivityRules
   ) where
 
 import Yaifl.Prelude hiding ( Reader, runReader )
@@ -46,10 +48,14 @@ data Activity wm resps v r = Activity
     , responses :: resps -> Response wm v
     , beforeRules :: ActivityRulebook wm resps v r ()
     , carryOutRules :: ActivityRulebook wm resps v r r
-    , afterRules :: ActivityRulebook wm resps v r ()
+    , afterRules :: ActivityRulebook wm resps v r r
+    , combineResults :: Maybe r -> Maybe r -> Maybe r
     } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Activity
+
+afterActivityRules :: Lens' (Activity wm resps v r) (ActivityRulebook wm resps v r r)
+afterActivityRules = #afterRules
 
 type ActivityLens wm resps v r = Lens' (WMActivities wm) (Activity wm resps v r)
 
@@ -66,6 +72,7 @@ makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "
   (blankRulebook ("Before " <> n))
   ((blankRulebook ("Carry Out " <> n)) { rules = rs })
   (blankRulebook ("After " <> n))
+  (const)
 
 beginActivity ::
   forall wm resps v r es.
@@ -130,6 +137,7 @@ endActivity ::
   HasCallStack
   => RuleEffects wm es
   => Display v
+  => Display r
   => Refreshable wm v
   => ActivityLens wm resps v r
   -> Eff es (Maybe v)
@@ -158,6 +166,6 @@ doActivity acL c = do
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
     x <- runRulebookAndReturnVariables (Just aSpan) True (beforeRules ac) c
     mr <- runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) (maybe c fst x)
-    _ <- runRulebookAndReturnVariables (Just aSpan) True (afterRules ac) (maybe c fst mr)
+    er <- runRulebookAndReturnVariables (Just aSpan) True (afterRules ac) (maybe c fst mr)
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
-    return $ snd =<< mr)
+    return $ (combineResults ac) (snd =<< mr) (snd =<< er))

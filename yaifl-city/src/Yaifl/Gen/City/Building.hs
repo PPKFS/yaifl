@@ -16,6 +16,8 @@ import Yaifl.Model.HasProperty
 import Yaifl.Game.Create
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Model.Kinds.Door
+import Yaifl.Text.Say (WithPrintingNameOfSomething)
 
 data Building wm = Building
   { name :: Text
@@ -51,10 +53,12 @@ type BuildingGeneration wm es =
   ( Pointed (WMRegionData wm)
   , ObjectUpdate wm :> es
   , RuleEffects wm es
+  , WithPrintingNameOfSomething wm
   , NoMissingObjects wm es
   , WMStdDirections wm
   , WMWithProperty wm MultiLocated
   , WMWithProperty wm Enclosing
+  , WMWithProperty wm Door
   , WMHasObjSpecifics wm
   , AddObjects wm es
   , Semigroup (WMText wm)

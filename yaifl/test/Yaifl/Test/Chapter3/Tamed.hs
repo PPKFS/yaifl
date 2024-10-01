@@ -12,7 +12,7 @@ import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
 import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Device
-import Yaifl.Model.Kinds.Person
+import Yaifl.Game.Create.RoomConnection
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Actions.Args
@@ -52,7 +52,7 @@ tamedWorld = do
       ! #initialAppearance "Off to one side is a magician's booth, used in disappearing acts. The exterior is covered with painted gilt stars."
       ! #enterable Enterable
       ! #openable NotOpenable
-      ! #modify (#objectData % #portability .~ FixedInPlace)
+      ! #portable FixedInPlace
       ! done
   tsv <- addRoom "Starry Vastness"
       ! done

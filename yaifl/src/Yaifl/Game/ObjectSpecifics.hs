@@ -119,17 +119,19 @@ addDoor ::
   -> "back" :! (RoomEntity, WMDirection wm)
   -> "initialAppearance" :? WMText wm
   -> "description" :? WMText wm -- ^ Description.
+  -> "described" :? ThingDescribed
   -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
   -> "thingData" :? ThingData wm -- ^ Optional details; if 'Nothing' then the default is used.
   -> Eff es DoorEntity
-addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #modify pass -> upD) (argF #thingData -> mbD) = do
+addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #described Described -> desc) (argDef #modify pass -> upD) (argF #thingData -> mbD) = do
   let ds = blankDoor (fst f) (fst b)
   d <- addThing @wm n ia des
     ! #specifics (inj (Proxy @wm) $ DoorSpecifics ds)
     ! #modify (do
       upD
       #objectData % #portable .= FixedInPlace
-      #objectData % #pushableBetweenRooms .= False)
+      #objectData % #pushableBetweenRooms .= False
+      #objectData % #described .= desc)
     ! #type (ObjectKind "door")
     ! paramF #thingData mbD
     ! #location (coerceTag $ fst f)

@@ -106,7 +106,8 @@ getMentionedThing = do
 
 withThing ::
   forall wm es a.
-  State (AdaptiveNarrative wm) :> es
+  HasCallStack
+  => State (AdaptiveNarrative wm) :> es
   => State Metadata :> es
   => ObjectLookup wm :> es
   => Breadcrumbs :> es

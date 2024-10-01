@@ -53,7 +53,7 @@ import Yaifl.Model.Kinds.Enclosing
 
 getAllConnections ::
   Room wm
-  -> Map (WMDirection wm) Connection
+  -> Map (WMDirection wm) (Connection wm)
 getAllConnections r = r ^. #objectData % #mapConnections % coerced
 
 connectionInDirection ::
@@ -78,21 +78,21 @@ getConnection ::
   WMStdDirections wm
   => WMDirection wm
   -> Room wm
-  -> Maybe (RoomEntity, Connection)
+  -> Maybe (RoomEntity, Connection wm)
 getConnection dir = (view #otherSide &&& id) <$$> preview (connectionLens dir % _Just)
 
 getConnectionViaDoor ::
   DoorEntity
   -> Room wm
-  -> Maybe (RoomEntity, Connection)
+  -> Maybe (RoomEntity, Connection wm)
 getConnectionViaDoor door = ((view #otherSide &&& id) <$$> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
 
 connectionLens ::
   forall wm.
   WMStdDirections wm
   => WMDirection wm
-  -> Lens' (Room wm) (Maybe Connection)
-connectionLens dir = (#objectData :: Lens' (Room wm) (RoomData wm)) % #mapConnections % coercedTo @(Map.Map (WMDirection wm) Connection ) % at dir
+  -> Lens' (Room wm) (Maybe (Connection wm))
+connectionLens dir = (#objectData :: Lens' (Room wm) (RoomData wm)) % #mapConnections % coercedTo @(Map.Map (WMDirection wm) (Connection wm)) % at dir
 
 makeConnection ::
   WMStdDirections wm
@@ -100,7 +100,7 @@ makeConnection ::
   -> WMDirection wm
   -> Room wm
   -> (Room wm -> Room wm)
-makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoom r) Nothing
+makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoom r) Nothing dir
 
 addDirectionFrom ::
   WMStdDirections wm
@@ -233,7 +233,7 @@ modifyAndVerifyConnection ::
   => RoomEntity
   -> WMDirection wm
   -> RoomEntity
-  -> (Connection -> Connection)
+  -> (Connection wm -> Connection wm)
   -> Eff es ()
 modifyAndVerifyConnection fromRoomE' fromDir destE f = do
   fromRoom <- getRoom fromRoomE'

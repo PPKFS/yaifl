@@ -53,15 +53,21 @@ instance SayableValue a wm => SayableValue (Maybe a) wm where
 
 instance WithPrintingNameOfSomething wm => SayableValue (Room wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell o = do
+    t <- doActivity #printingNameOfSomething (toAny o)
+    tell (fromMaybe "" t)
 
 instance WithPrintingNameOfSomething wm => SayableValue (Thing wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell o = do
+    t <- doActivity #printingNameOfSomething (toAny o)
+    tell (fromMaybe "" t)
 
 instance WithPrintingNameOfSomething wm => SayableValue (AnyObject wm) wm where
   say = printName
-  sayTell o = sayTell $ o ^. #name
+  sayTell o = do
+    t <- doActivity #printingNameOfSomething (toAny o)
+    tell (fromMaybe "" t)
 
 data SayingForm s =
   The s -- [The foo]
@@ -253,11 +259,12 @@ printName o = do
   [saying|{toSay}|]
 
 printingNameOfSomethingImpl :: SayableValue (WMText s) s => Activity s () (AnyObject s) Text
-printingNameOfSomethingImpl = makeActivity "Printing the name of something"
+printingNameOfSomethingImpl = (makeActivity "Printing the name of something"
     [makeRule "" [] (\o -> do
       regarding (Just o)
       t <- sayText $ o ^. #name
-      pure $ Just t) ]
+      pure $ Just t) ])
+    { combineResults = \mbA mbB -> (<> (fromMaybe "" mbB))  <$> mbA }
 
 sayParameterName ::
   NoMissingObjects wm es

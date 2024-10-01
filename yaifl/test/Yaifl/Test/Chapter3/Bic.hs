@@ -36,5 +36,5 @@ ex2World = do
     ! done
 
   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" $ do
-      traverseThings (\t -> when (isBlankDescription t) [saying|{t} has no description.|] >> return Nothing)
+      traverseThings (\t -> when (isBlankDescription t) [saying|{t} has no description.|] >> rulePass)
       rulePass

@@ -4,6 +4,10 @@ module Yaifl.Game.Create.Rule
   , insteadOf
   , theObject
   , whenIn
+  , afterActivity
+  , theObject'
+  , afterPrintingTheNameOf
+  , aKindOf
   , ActionOrActivity(..)
   ) where
 
@@ -19,6 +23,10 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds
+import Yaifl.Model.Activity
+import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Text.Say (WithPrintingNameOfSomething)
+import Yaifl.Model.Metadata (isKind)
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)
@@ -49,6 +57,18 @@ after a precs t f = do
     ActionRule an -> an % #afterRules %= addRuleLast rule
   pass
 
+afterActivity ::
+  State (ActivityCollector wm) :> es
+  => ActivityLens wm resps v r
+  -> [Precondition wm v]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm v) => v -> Eff es' (Maybe r)) -- ^ Rule function.
+  -> Eff es ()
+afterActivity a precs t f = do
+  let rule = makeRule t precs f
+  #activityCollection % a % afterActivityRules %= addRuleLast rule
+  pass
+
 insteadOf ::
   State (ActionCollection wm) :> es
   => ActionOrActivity wm resps goesWith v
@@ -75,6 +95,19 @@ theObject o = Precondition
       pure $ args ^? #variables % argsMainObjectMaybe == Just o'
   }
 
+theObject' ::
+  ThingLike wm o
+  => o
+  -> Precondition wm (AnyObject wm)
+theObject' o = Precondition
+  { preconditionName = do
+      e <- getThing o
+      pure $ "to the object " <> display (e ^. #name)
+  , checkPrecondition = \args -> do
+      o' <- getThing o
+      pure $ args `objectEquals` o'
+  }
+
 whenIn ::
   TaggedAs e EnclosingTag
   => ObjectLike wm e
@@ -88,3 +121,21 @@ whenIn e = Precondition
       hierarchy <- getContainingHierarchy (args ^. #source)
       pure $ elem (toTag e) hierarchy
   }
+
+aKindOf ::
+  ObjectKind
+  -> Precondition wm (AnyObject wm)
+aKindOf k@(ObjectKind kName) = Precondition
+  { preconditionName = return $ "is of kind " <> kName
+  , checkPrecondition = \noun -> do
+      noun `isKind` k
+  }
+
+afterPrintingTheNameOf ::
+  WithPrintingNameOfSomething wm
+  => State (ActivityCollector wm) :> es
+  => [Precondition wm (AnyObject wm)]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm (AnyObject wm)) => AnyObject wm -> Eff es' (Maybe Text)) -- ^ Rule function.
+  -> Eff es ()
+afterPrintingTheNameOf = afterActivity #printingNameOfSomething

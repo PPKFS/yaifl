@@ -175,6 +175,12 @@ class ArgsHaveMainObject argVars obj | argVars -> obj where
 class ArgsMightHaveMainObject argVars obj | argVars -> obj where
   argsMainObjectMaybe :: AffineTraversal' argVars obj
 
+instance (ArgsHaveMainObject vars o) => ArgsHaveMainObject (Args wm vars) o where
+  argsMainObject = #variables % argsMainObject
+
+instance (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject (Args wm vars) o where
+  argsMainObjectMaybe = #variables % argsMainObjectMaybe
+
 instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject vars o where
   argsMainObjectMaybe = castOptic argsMainObject
 

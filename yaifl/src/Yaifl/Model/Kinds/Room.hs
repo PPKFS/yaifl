@@ -32,18 +32,25 @@ data ConnectionExplicitness = Explicit | Implicit
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
 -- | A connection from one room to another.
-data Connection = Connection
+data Connection wm = Connection
   { explicitness :: ConnectionExplicitness
   , otherSide :: RoomEntity
   , doorThrough :: Maybe DoorEntity
-  } deriving stock (Eq, Show, Read, Ord, Generic)
+  , direction :: WMDirection wm
+  } deriving stock (Generic)
+
+deriving stock instance (Eq (WMDirection wm)) => Eq (Connection wm)
+deriving stock instance (Show (WMDirection wm)) => Show (Connection wm)
+deriving stock instance (Read (WMDirection wm)) => Read (Connection wm)
+deriving stock instance (Ord (WMDirection wm)) => Ord (Connection wm)
+
 
 -- | The connections from one room to another, stored by direction.
 newtype MapConnections wm = MapConnections
-  { unMapConnections :: Map.Map (WMDirection wm) Connection
+  { unMapConnections :: Map.Map (WMDirection wm) (Connection wm)
   }
 
-deriving newtype instance (Generic (Map (WMDirection wm) Connection)) => Generic (MapConnections wm)
+deriving newtype instance (Generic (Map (WMDirection wm) (Connection wm))) => Generic (MapConnections wm)
 deriving newtype instance (Ord (WMDirection wm)) => Ord (MapConnections wm)
 deriving newtype instance (Read (WMDirection wm), Ord (WMDirection wm)) => Read (MapConnections wm)
 deriving newtype instance (Show (WMDirection wm)) => Show (MapConnections wm)

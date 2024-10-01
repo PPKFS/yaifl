@@ -78,6 +78,7 @@ import Yaifl.Game.Parser
 import Yaifl.Game.Actions.Taking
 import Yaifl.Model.Kinds.Device
 import Yaifl.Game.Activities.PrintingRoomDescriptionDetails
+import qualified Data.Set as S
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -177,6 +178,7 @@ blankMetadata = Metadata
   , oxfordCommaEnabled = True
   , parserMatchThreshold = 0.66
   , bufferedInput = []
+  , mentionedThings = S.empty
   }
 
 newWorld ::
