@@ -22,7 +22,7 @@ import Data.Text (replace)
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
-import Language.Haskell.TH (Name, Q, Dec, nameBase)
+import Language.Haskell.TH (Name, Q, Dec, nameBase )
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.HasProperty
 -- | The functions we *don't* want to autogenerate for a given property
@@ -39,7 +39,7 @@ myDefaultParseMode :: ParseMode
 myDefaultParseMode = defaultParseMode
   { parseFilename = []
   , baseLanguage = Haskell2010
-  , extensions = map EnableExtension [DataKinds, ExplicitForAll, ScopedTypeVariables ]
+  , extensions = map EnableExtension [DataKinds, ExplicitForAll, ScopedTypeVariables, FlexibleContexts ]
   }
 
 -- | Generate 0-3 of @getPropMaybe@, @setProp@, and @modifyProp@.
@@ -74,7 +74,7 @@ makeDirections ::
 makeDirections std dirs = do
   v <- mapM (\n -> do
     let replaceTH' y x = if std then replaceTH (replace "XSUBHERE2" "(injectDirection XSUBHERE)" y) x else replaceTH (replace "XSUBHERE2" "XSUBHERE" y) x
-        r1 = replaceTH' "isXSUBHEREOf :: NoMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
+        r1 = replaceTH' "isXSUBHEREOf :: HasCallStack => NoMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
         r2 = replaceTH' "isXSUBHEREOfOneWay :: NoMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
     return $ r1 <> r2
     ) dirs

@@ -6,26 +6,16 @@ module Yaifl.Gen.City.ApartmentTower
   ) where
 
 import Yaifl.Prelude hiding (State, Down)
-import Yaifl.Gen.Plan
-import Yaifl.Model.Kinds.Region
 import Yaifl.Game.Create.Object
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Query (isSubregionOf)
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Game.Create.RoomConnection
-import Yaifl.Game.ObjectSpecifics (addDoor)
-import Yaifl.Gen.City.Apartment
 import Yaifl.Gen.City.Building
-import Control.Placeholder (pattern TODO, todo)
-import GHC.TypeLits
 import Yaifl.Text.DynamicText
 import Yaifl.Model.Kinds
 import Yaifl.Model.Entity
 import Yaifl.Model.Rules
-import Effectful.State.Static.Local hiding (modify)
-import Yaifl.Model.Effects (setRoom)
 import System.Random.Stateful
-import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Door
@@ -47,7 +37,7 @@ addStaircases :: (WMDirection wm ~ Direction)
   => Eff es ()
 addStaircases = do
   modify @Metadata (#kindDAG % at (ObjectKind "staircase") ?~ ObjectKindInfo (S.fromList ["door"]) [] [] )
-  afterPrintingTheNameOf [aKindOf "door"] "adding staircase info" $ \_ -> do
+  afterPrintingTheNameOf [aKindOf "door", duringActivity #listingContents] "adding staircase info" $ \_ -> do
     withThing $ \t -> do
       r <- execWriter $
               do
@@ -70,7 +60,7 @@ constructApartmentBuilding = do
   (numberFloors :: Int) <- uniformRM (1, 20) globalStdGen
   fs <- forM [1 .. numberFloors] constructApartmentBuildingFloor
   forM_ (zip [1 .. numberFloors] (windows $ f:fs)) $ \(i, (f1, f2)) -> do
-    f2 `isAbove` f1
+    -- f2 `isAbove` f1
     addDoor (if even i then "staircase" else "rickety staircase")
       ! #front (f1, Up)
       ! #back (f2, Down)

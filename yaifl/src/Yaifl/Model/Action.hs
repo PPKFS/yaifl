@@ -140,6 +140,8 @@ data ActionPhrase (wm :: WorldModel) =
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
   , whenPlayBegins :: Rulebook wm Unconstrained () Bool
+  , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+  , everyTurn :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
   , actionProcessing :: ActionProcessing wm
   } deriving stock ( Generic )
 

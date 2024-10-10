@@ -8,11 +8,14 @@ module Yaifl.Game.Create.Rule
   , theObject'
   , afterPrintingTheNameOf
   , aKindOf
+  , duringActivity
+  , everyTurn
+  , whenPlayerIsIn
   , ActionOrActivity(..)
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Action
+import Yaifl.Model.Action ( Action, WorldActions )
 import Yaifl.Game.Actions.Collection (ActionCollection)
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Entity
@@ -122,6 +125,20 @@ whenIn e = Precondition
       pure $ elem (toTag e) hierarchy
   }
 
+whenPlayerIsIn ::
+  TaggedAs e EnclosingTag
+  => ObjectLike wm e
+  => e
+  -> Precondition wm a
+whenPlayerIsIn e = Precondition
+  { preconditionName = do
+      e' <- getObject e
+      pure $ "when in the location " <> display (e' ^. #name)
+  , checkPrecondition = const $ do
+      hierarchy <- getPlayer >>= getContainingHierarchy
+      pure $ elem (toTag e) hierarchy
+  }
+
 aKindOf ::
   ObjectKind
   -> Precondition wm (AnyObject wm)
@@ -139,3 +156,22 @@ afterPrintingTheNameOf ::
   -> (forall es'. (RuleEffects wm es', Refreshable wm (AnyObject wm)) => AnyObject wm -> Eff es' (Maybe Text)) -- ^ Rule function.
   -> Eff es ()
 afterPrintingTheNameOf = afterActivity #printingNameOfSomething
+
+everyTurn ::
+  State (WorldActions wm) :> es
+  => Text
+  -> [Precondition wm ()]
+  -> (forall es'. (RuleEffects wm es') => Eff es' ()) -- ^ Rule function.
+  -> Eff es ()
+everyTurn preReqs n r = #everyTurn %= addRuleLast (makeRule preReqs n (const $ r >> rulePass))
+
+duringActivity ::
+  forall wm resps v r a.
+  ActivityLens wm resps v r
+  -> Precondition wm a
+duringActivity l = Precondition
+  { preconditionName = do
+      n <- use @(ActivityCollector wm) $ #activityCollection % l % #name
+      return $ "during the activity " <> n
+  , checkPrecondition = const $ isJust <$> (use @(ActivityCollector wm) $ #activityCollection % l % #currentVariables)
+  }

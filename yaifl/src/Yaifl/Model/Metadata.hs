@@ -37,6 +37,8 @@ module Yaifl.Model.Metadata (
 
   , kindIsUnderstoodAs
   , kindPluralIsUnderstoodAs
+  , random
+  , randomR
   ) where
 
 import Breadcrumbs
@@ -46,6 +48,7 @@ import Yaifl.Model.Entity
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.ObjectKind
 import qualified Data.Set as S
+import System.Random ( StdGen, UniformRange, uniformR, Uniform, uniform )
 
 -- | Whether the room descriptions should be printed verbosely sometimes, all the time, or never.
 data RoomDescriptions =
@@ -88,6 +91,7 @@ data Metadata = Metadata
   , parserMatchThreshold :: Double -- ^ at what cutoff should we consider something a parser match?
   , bufferedInput :: [Text]
   , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
+  , rng :: StdGen
   -- more to come I guess
   } deriving stock (Generic)
 makeFieldLabelsNoPrefix ''Metadata
@@ -248,3 +252,24 @@ kindPluralIsUnderstoodAs ::
   -> Eff es ()
 kindPluralIsUnderstoodAs kind otherKinds =
   #kindDAG % at kind % _Just % #pluralUnderstandAs %= (otherKinds<>)
+
+randomR ::
+  UniformRange a
+  => WithMetadata es
+  => (a, a)
+  -> Eff es a
+randomR ran = do
+  r <- use #rng
+  let (res, rng2) = uniformR ran r
+  #rng .= rng2
+  pure res
+
+random ::
+  Uniform a
+  => WithMetadata es
+  => Eff es a
+random = do
+  r <- use #rng
+  let (res, rng2) = uniform r
+  #rng .= rng2
+  pure res

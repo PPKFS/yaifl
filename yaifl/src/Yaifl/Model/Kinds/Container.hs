@@ -151,3 +151,6 @@ inThe = coerceTag
 
 instance Taggable (TaggedEntity ContainerTag) EnclosingTag
 instance Taggable Container ContainerTag
+
+instance TaggedAs (TaggedEntity ContainerTag) EnclosingTag where
+  toTag = coerceTag

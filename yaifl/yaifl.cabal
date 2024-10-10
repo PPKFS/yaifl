@@ -157,6 +157,8 @@ library
     Yaifl.Game.Create
     Yaifl.Prelude
 
+    Yaifl.Game.TurnSequence
+
   build-depends:
     , effectful-th
     , enummapset

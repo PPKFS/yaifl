@@ -30,15 +30,15 @@ import Yaifl.Model.Metadata (isKind)
 
 -- | Something which can be resolved into an `AnyObject`.
 class HasID o => ObjectLike wm o where
-  getObject :: NoMissingRead wm es => o -> Eff es (AnyObject wm)
+  getObject :: (HasCallStack, NoMissingRead wm es) => o -> Eff es (AnyObject wm)
 
 -- | Something which can be resolved into a `Thing`.
 class HasID o => ThingLike wm o where
-  getThing :: NoMissingRead wm es => o -> Eff es (Thing wm)
+  getThing :: (HasCallStack, NoMissingRead wm es) => o -> Eff es (Thing wm)
 
 -- | Something which can be resolved into a `Room`.
 class HasID o => RoomLike wm o where
-  getRoom :: NoMissingRead wm es => o -> Eff es (Room wm)
+  getRoom :: (HasCallStack, NoMissingRead wm es) => o -> Eff es (Room wm)
 
 instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tag) where
   getObject = getObject . unTagObject
@@ -79,10 +79,10 @@ instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
   getObject = getObject . snd
 
 instance ThingLike wm (TaggedEntity ThingTag) where
-  getThing o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
+  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
 
 instance RoomLike wm (TaggedEntity RoomTag) where
-  getRoom o = fromMaybe (error $ "taggedentity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
+  getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
 
 objectIsKind ::
   NoMissingObjects wm es

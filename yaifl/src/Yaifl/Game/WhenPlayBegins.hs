@@ -1,7 +1,5 @@
 module Yaifl.Game.WhenPlayBegins
-  ( whenPlayBeginsName
-  , whenPlayBeginsRules
-  , introText
+  ( whenPlayBeginsRules
   ) where
 
 import Yaifl.Prelude
@@ -9,18 +7,18 @@ import qualified Data.Text as T
 import qualified Prettyprinter.Render.Terminal as PPTTY
 
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
-import Yaifl.Model.Metadata ( Metadata )
 import Yaifl.Game.Move ( move )
-import Yaifl.Model.Query ( getCurrentPlayer )
-import Yaifl.Text.Print ( Print, setStyle, printText )
-import Yaifl.Model.Kinds.Enclosing ( Enclosing )
+import Yaifl.Model.Actions.Args
+import Yaifl.Model.Effects
 import Yaifl.Model.HasProperty ( WMWithProperty )
+import Yaifl.Model.Kinds.Enclosing ( Enclosing )
+import Yaifl.Model.Metadata ( Metadata )
+import Yaifl.Model.ObjectLike
+import Yaifl.Model.Query ( getCurrentPlayer )
+import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run ( failRuleWithError )
-import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Effects
-import Yaifl.Model.Actions.Args
-import Yaifl.Model.ObjectLike
+import Yaifl.Text.Print ( Print, setStyle, printText )
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

@@ -18,6 +18,7 @@ import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Door
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
+import Yaifl.Game.Activities.ListingContents (WithListingContents)
 
 data Building wm = Building
   { name :: Text
@@ -54,6 +55,7 @@ type BuildingGeneration wm es =
   , ObjectUpdate wm :> es
   , RuleEffects wm es
   , WithPrintingNameOfSomething wm
+  , WithListingContents wm
   , NoMissingObjects wm es
   , WMStdDirections wm
   , WMWithProperty wm MultiLocated

@@ -23,7 +23,7 @@ midsummerDayWorld = do
     ! #location (inThe tc)
     ! done
   th <- addRoom "Treehouse" ! done
-  th `isAbove` (coerce tc)
+  th `isAbove` ga
   addContainer "cardboard box" ! done
   pass
 

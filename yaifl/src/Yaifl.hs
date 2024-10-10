@@ -73,12 +73,15 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.Kinds.Room
 import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
-import Yaifl.Model.Input (waitForInput, Input)
+import Yaifl.Model.Input (waitForInput)
 import Yaifl.Game.Parser
 import Yaifl.Game.Actions.Taking
 import Yaifl.Model.Kinds.Device
 import Yaifl.Game.Activities.PrintingRoomDescriptionDetails
 import qualified Data.Set as S
+import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRules)
+import Yaifl.Model.Rules.Run
+import System.Random.Stateful
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -150,6 +153,8 @@ blankActions = WorldActions
   { actionsMap = DM.empty
   , whenPlayBegins = whenPlayBeginsRules
   , actionProcessing = actionProcessingRules
+  , turnSequence = turnSequenceRules
+  , everyTurn = everyTurnRules
   }
 
 blankStores :: WorldStores s
@@ -179,6 +184,7 @@ blankMetadata = Metadata
   , parserMatchThreshold = 0.66
   , bufferedInput = []
   , mentionedThings = S.empty
+  , rng = mkStdGen 69
   }
 
 newWorld ::
@@ -284,22 +290,22 @@ addOutOfWorld cs e = forM_ cs $ \c ->
   #actionsMap % at c ?= OtherAction e
 
 runTurnsFromBuffer ::
-  State Metadata :> es
-  => Input :> es
-  => Print :> es
-  => ActionHandler wm :> es
+  RuleEffects wm es
+  => State (WorldActions wm) :> es
   => Eff es ()
 runTurnsFromBuffer = do
-  b <- use #bufferedInput
+  b <- use @Metadata #bufferedInput
   unless (null b) $ runTurn >> runTurnsFromBuffer
 
 runTurn ::
-  Input :> es
-  => Print :> es
-  => ActionHandler wm :> es
+  forall wm es.
+  State (WorldActions wm) :> es
+  => RuleEffects wm es
   => Eff es ()
 runTurn = do
   let actionOpts = ActionOptions False False
+  wa <- get @(WorldActions wm)
+  runRulebook Nothing False (wa ^. #turnSequence) ()
   printPrompt actionOpts
   i <- waitForInput
   printText i

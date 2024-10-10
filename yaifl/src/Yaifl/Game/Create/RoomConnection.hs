@@ -103,7 +103,8 @@ makeConnection ::
 makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoom r) Nothing dir
 
 addDirectionFrom ::
-  WMStdDirections wm
+  HasCallStack
+  => WMStdDirections wm
   => NoMissingObjects wm es
   => WMDirection wm
   -> RoomEntity
@@ -143,7 +144,8 @@ inDirection (arg #thisRoom -> tr) (arg #leads -> l) (arg #here -> t) (argDef #is
 -- the connection to be made explicitly is from baseRoom (south) -> roomIsOf
 -- then the implicit reverse connection is roomIsOf (opposite south) -> baseRoom
 isDirectionFromInternal ::
-  WMStdDirections wm
+  HasCallStack
+  => WMStdDirections wm
   => NoMissingObjects wm es
   => Bool
   -> WMDirection wm
@@ -198,7 +200,8 @@ isOutsideFrom ::
 isOutsideFrom = isOutOf
 
 isAbove ::
-  WMStdDirections wm
+  HasCallStack
+  => WMStdDirections wm
   => NoMissingObjects wm es
   => RoomEntity
   -> RoomEntity
