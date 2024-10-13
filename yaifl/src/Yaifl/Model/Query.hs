@@ -423,8 +423,8 @@ instance EnclosingObject (Room wm) where
 instance  WMWithProperty wm Enclosing => EnclosingObject (AnyObject wm, Enclosing) where
   enclosingL = to (\o -> getEnclosing @wm (toTag o) ( fst o))
 
-instance WMWithProperty wm Enclosing => EnclosingObject (TaggedObject (Thing wm) EnclosingTag)  where
+instance (TaggedAs (TaggedObject (Thing wm) tag) EnclosingTag, WMWithProperty wm Enclosing) => EnclosingObject (TaggedObject (Thing wm) tag) where
   enclosingL = to (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o))
 
 instance WMWithProperty wm Enclosing => EnclosingObject (TaggedEnclosing wm) where
-  enclosingL = to $ (\(TaggedObject (e, o)) -> getEnclosing e o)
+  enclosingL = to (\(TaggedObject (e, o)) -> getEnclosing e o)

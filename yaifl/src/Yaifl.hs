@@ -82,6 +82,7 @@ import qualified Data.Set as S
 import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRules)
 import Yaifl.Model.Rules.Run
 import System.Random.Stateful
+import Yaifl.Game.Actions.Entering (enteringAction)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -144,6 +145,7 @@ addStandardActions = do
   addAction closing
   addAction switchingOn
   addAction taking
+  addAction entering
   pass
 
 blankActions ::
@@ -226,6 +228,7 @@ blankActionCollection = ActionCollection
   , closing = closingAction
   , switchingOn = switchingOnAction
   , taking = takingAction
+  , entering = enteringAction
   }
 
 blankWorld ::

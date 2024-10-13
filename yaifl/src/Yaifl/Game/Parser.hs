@@ -20,7 +20,7 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
 import Data.List.Split
-import Data.List (lookup)
+import Data.List (lookup, groupBy)
 import Effectful.Error.Static
 import Yaifl.Model.Effects
 import Data.Char (isSpace)
@@ -196,7 +196,7 @@ findVerb cmd = do
       removePartialInMiddleOfWord (_matchPart, x, _) = case T.uncons x of
         Nothing -> True
         Just (a, _b) -> isSpace a
-  return $ filter removePartialInMiddleOfWord possVerbs
+  return $ fromMaybe [] $ viaNonEmpty head $ groupBy (\x y -> T.length (x ^. _1) == T.length (y ^. _1)) $ filter removePartialInMiddleOfWord possVerbs
 
 parseArgumentType ::
   forall wm es.

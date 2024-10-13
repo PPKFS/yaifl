@@ -27,6 +27,7 @@ module Yaifl.Model.Kinds.Container
   , isOpenableContainer
   , isOpenTransparentContainer
   , isOpaqueContainer
+  , TaggedContainer
   ) where
 
 import Yaifl.Prelude
@@ -144,13 +145,21 @@ makeContainer cc op e oa opd = (Container
 data ContainerTag
 type ContainerEntity = TaggedEntity ContainerTag
 
+type TaggedContainer wm = TaggedObject (Thing wm) ContainerTag
+
 inThe ::
   ContainerEntity
   -> EnclosingEntity
 inThe = coerceTag
 
-instance Taggable (TaggedEntity ContainerTag) EnclosingTag
+instance Taggable ContainerEntity EnclosingTag
 instance Taggable Container ContainerTag
+
+instance TaggedAs (TaggedContainer wm) ContainerTag where
+  toTag = fst . unTagObject
+
+instance TaggedAs (TaggedContainer wm) EnclosingTag where
+  toTag = coerceTag . fst . unTagObject
 
 instance TaggedAs (TaggedEntity ContainerTag) EnclosingTag where
   toTag = coerceTag
