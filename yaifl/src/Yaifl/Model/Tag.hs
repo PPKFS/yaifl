@@ -16,6 +16,7 @@ module Yaifl.Model.Tag
    -- ** Tagging
   , TaggedObject(..)
   , unsafeTagObject
+  , getTaggedObject
   , tagObject
   ) where
 
@@ -53,6 +54,11 @@ class Taggable taggableWith taggableTo where
 
 -- you can always tag something as itself
 instance Taggable (TaggedEntity a) a
+
+getTaggedObject ::
+  TaggedObject o tag
+  -> o
+getTaggedObject = snd . unTagObject
 
 tagObject ::
   Taggable tagWith taggableTo

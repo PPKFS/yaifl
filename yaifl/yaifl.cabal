@@ -85,6 +85,7 @@ library
     Yaifl.Game.Actions.Opening
     Yaifl.Game.Actions.SwitchingOn
     Yaifl.Game.Actions.Taking
+    Yaifl.Game.Actions.Waiting
     Yaifl.Game.Actions.OutOfWorld
 
     Yaifl.Game.Activities.ChoosingNotableLocaleObjects
@@ -168,6 +169,8 @@ library
     , prettyprinter
     , prettyprinter-ansi-terminal
     , split
+    , MonadRandom
+    , random-shuffle
 
 test-suite yaifl-test
   import:             common-options

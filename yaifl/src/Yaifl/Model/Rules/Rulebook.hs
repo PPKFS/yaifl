@@ -24,6 +24,7 @@ module Yaifl.Model.Rules.Rulebook
   , rulePass
   , ruleWhenJustM
   , ruleGuard
+  , ruleWhen
   , ruleGuardM
   , forThing
   , stopTheAction
@@ -113,6 +114,13 @@ ruleGuard ::
   -> m (Maybe b, Maybe r)
   -> m (Maybe b, Maybe r)
 ruleGuard cond f = if cond then f else pure (Nothing, Nothing)
+
+ruleWhen ::
+  Monad m
+  => Bool
+  -> m (Maybe r)
+  -> m (Maybe r)
+ruleWhen cond f = if cond then f else rulePass
 
 ruleGuardM ::
   Monad m

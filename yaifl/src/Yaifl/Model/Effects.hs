@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Model.Effects
-Copyright   : (c) Avery 2023
+Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 

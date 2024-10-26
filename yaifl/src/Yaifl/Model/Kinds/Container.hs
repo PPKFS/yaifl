@@ -153,6 +153,7 @@ inThe ::
 inThe = coerceTag
 
 instance Taggable ContainerEntity EnclosingTag
+instance Taggable Container EnclosingTag
 instance Taggable Container ContainerTag
 
 instance TaggedAs (TaggedContainer wm) ContainerTag where

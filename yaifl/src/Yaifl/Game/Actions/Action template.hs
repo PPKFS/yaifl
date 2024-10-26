@@ -14,7 +14,7 @@ import Yaifl.Text.SayQQ
 
 data SwitchingOnResponses wm
 
-type SwitchingOnAction wm = Action wm ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter) (Thing wm)
+type SwitchingOnAction wm = Action wm () 'TakesThingParameter (Thing wm)
 switchingOnAction :: SwitchingOnAction wm
 switchingOnAction = (makeAction "switching on")
   { name = "switching on"

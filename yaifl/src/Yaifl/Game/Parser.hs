@@ -53,6 +53,17 @@ runAction uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
       (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
       ap aSpan act args
 
+filterFirstM :: (Monad m, Foldable t) => Text -> t (m (Either Text a)) -> m (Either Text a)
+filterFirstM def = foldlM fn (Left def)
+  where
+    fn memo action = case memo of
+      Right _ -> pure memo
+      Left err -> do
+        x <- action
+        case x of
+          Left err2 -> pure $ Left $ err2 <> (if err == "." then "" else ", and ") <> err
+          Right r -> pure (Right r)
+
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
@@ -77,40 +88,40 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
     possVerbs <- findVerb t
     actor <- getPlayer
     ts <- getGlobalTime
+    let verbAc :: (Text, Text, ActionPhrase wm) -> Eff es (Either Text Bool)
+        verbAc ac = failHorriblyIfMissing $ case ac of
+          (matched, r, Interpret (InterpretAs x params)) -> do
+            addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
+            runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
+          (matched, r, RegularAction (WrappedAction (a :: Action wm resps goesWith v))) -> do
+            addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
+            runActionHandlerAsWorldActions $ do
+              -- attempt to work out our nouns
+              nouns <- parseNouns (Proxy @goesWith) (matches a) (T.strip r)
+              let actuallyRunIt parsedArgs match = failHorriblyIfMissing $ do
+                    let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
+                    case v of
+                      Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+                      Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
+              case nouns of
+                Left ex -> pure (Left ex)
+                Right (PluralParameter xs, parsedArgs) -> do
+                  addAnnotation $ "Running a set of plural actions..." <> matched
+                  rs <- sequence <$> forM xs (\x -> do
+                    let acName = a ^. #name
+                    n <- failHorriblyIfMissing $ sayParameterName x
+                    failHorriblyIfMissing $ [saying|({acName} {n}) |]
+                    runOnParagraph
+                    actuallyRunIt parsedArgs x)
+                  pure $ second and rs
+                Right (match, parsedArgs) -> actuallyRunIt parsedArgs match
+          (matched, _, OtherAction (OutOfWorldAction name runIt)) ->  do
+            addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
+            runActionHandlerAsWorldActions $ failHorriblyIfMissing $ runIt
+            pure $ Right True
     ac <- case possVerbs of
-      [] -> return . Left $ "I have no idea what you meant by '" <> t <> "'."
-      xs:x:_ -> return $ Left $ "Did you mean one of" <> prettyPrintList (map (show . view _1) [xs, x]) <> "?"
-      [(matched, r, Interpret (InterpretAs x params))] -> do
-        addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
-        runActionHandlerAsWorldActions $ parseAction (actionOpts { hidePrompt = True }) params (x <> r)
-      -- we've successfully resolved it into an action
-      [(matched, r, RegularAction (WrappedAction (a :: Action wm resps goesWith v)))] -> do
-        addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
-        runActionHandlerAsWorldActions $ do
-          -- attempt to work out our nouns
-          nouns <- parseNouns (Proxy @goesWith) (matches a) (T.strip r)
-          let actuallyRunIt parsedArgs match = do
-                let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
-                case v of
-                  Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-                  Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
-          case nouns of
-            Left ex -> pure (Left ex)
-            Right (PluralParameter xs, parsedArgs) -> do
-              addAnnotation $ "Running a set of plural actions..." <> matched
-              rs <- sequence <$> forM xs (\x -> do
-                let acName = a ^. #name
-                n <- sayParameterName x
-                [saying|({acName} {n}) |]
-                runOnParagraph
-                actuallyRunIt parsedArgs x)
-              pure $ second and rs
-            Right (match, parsedArgs) -> actuallyRunIt parsedArgs match
-      [(matched, _, OtherAction (OutOfWorldAction name runIt))] -> do
-        addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
-        runActionHandlerAsWorldActions runIt
-        pure $ Right True
-
+      [] -> return $ Left ("I have no idea what you meant by '" <> t <> "'.")
+      _ -> filterFirstM "." $ map (inject . verbAc) possVerbs
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
@@ -196,7 +207,7 @@ findVerb cmd = do
       removePartialInMiddleOfWord (_matchPart, x, _) = case T.uncons x of
         Nothing -> True
         Just (a, _b) -> isSpace a
-  return $ fromMaybe [] $ viaNonEmpty head $ groupBy (\x y -> T.length (x ^. _1) == T.length (y ^. _1)) $ filter removePartialInMiddleOfWord possVerbs
+  return $ filter removePartialInMiddleOfWord possVerbs
 
 parseArgumentType ::
   forall wm es.
@@ -273,14 +284,14 @@ findObjectsFrom t allItems considerAmbiguity = do
   let singularMatches = filter ((> threshold) . fst . snd) scores
   let pluralMatches = filter ((> threshold) . snd . snd) scores
   case (singularMatches, pluralMatches) of
-    ([], []) -> pure $ Left $ "I can't see anything called \"" <> t <> "\"."
+    ([], []) -> pure $ Left $ "I can't see anything called \"" <> t <> "\""
     -- just one singular thing
     ([x], []) -> pure . Right . Right $ toAny (fst x)
     ([], xs) -> pure . Right . Left $ map (toAny @wm . fst) xs
     (xs, []) -> if considerAmbiguity
       then handleAmbiguity (map fst xs)
-      else pure $ Left "I still didn't know what you meant."
-    (_x, _xs) -> pure $ Left "I saw both a single thing and plural things that could be that."
+      else pure $ Left "I still didn't know what you meant"
+    (_x, _xs) -> pure $ Left "I saw both a single thing and plural things that could be that"
 
 handleAmbiguity ::
   WithListWriting wm

@@ -426,5 +426,5 @@ instance  WMWithProperty wm Enclosing => EnclosingObject (AnyObject wm, Enclosin
 instance (TaggedAs (TaggedObject (Thing wm) tag) EnclosingTag, WMWithProperty wm Enclosing) => EnclosingObject (TaggedObject (Thing wm) tag) where
   enclosingL = to (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o))
 
-instance WMWithProperty wm Enclosing => EnclosingObject (TaggedEnclosing wm) where
+instance WMWithProperty wm Enclosing => EnclosingObject (TaggedAnyEnclosing wm) where
   enclosingL = to (\(TaggedObject (e, o)) -> getEnclosing e o)

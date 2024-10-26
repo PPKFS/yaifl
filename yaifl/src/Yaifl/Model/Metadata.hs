@@ -29,6 +29,7 @@ module Yaifl.Model.Metadata (
   , isRuntime
   -- * Querying
   , isPlayer
+  , whenPlayer
   -- ** Timestamps
   , getGlobalTime
   , tickGlobalTime
@@ -187,6 +188,14 @@ isPlayer ::
   => o
   -> Eff es Bool
 isPlayer o = (getID o ==) . getID <$> use #currentPlayer
+
+whenPlayer ::
+  HasID o
+  => State Metadata :> es
+  => o
+  -> Eff es ()
+  -> Eff es ()
+whenPlayer o = whenM (isPlayer o)
 
 -- | Determine whether an object is of a certain type. This is separate to anything on Haskell's side
 -- and the type system.

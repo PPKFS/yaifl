@@ -83,6 +83,7 @@ import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRules)
 import Yaifl.Model.Rules.Run
 import System.Random.Stateful
 import Yaifl.Game.Actions.Entering (enteringAction)
+import Yaifl.Game.Actions.Waiting
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -258,8 +259,15 @@ addGoingSynonyms = do
   forM_ (universe @(WMDirection wm)) $ \dir -> do
     let allTerms = toTextDir (Proxy @wm) dir
         dirN = (T.toLower . fromString . show) dir
-    forM_ allTerms $ \term ->
-      actionsMapL % at term ?= Interpret (InterpretAs ("go " <> dirN) [NoParameter])
+    forM_ allTerms $ \term -> addInterpretAs term ("go " <> dirN) [NoParameter]
+
+addInterpretAs ::
+  State (WorldActions wm) :> es
+  => Text
+  -> Text
+  -> [NamedActionParameter wm]
+  -> Eff es ()
+addInterpretAs term interp params = actionsMapL % at term ?= Interpret (InterpretAs interp params)
 
 addBaseActions ::
   WMStdDirections wm
@@ -271,7 +279,9 @@ addBaseActions ::
 addBaseActions = do
   addStandardActions
   addGoingSynonyms
+  addInterpretAs "z" "wait" [NoParameter]
   addOutOfWorldActions
+
 
 -- https://github.com/ganelson/inform/blob/06cfa98854af5289170e8565d0265b316a9f3745/inform7/extensions/standard_rules/Sections/Command%20Grammar.w#L225
 addOutOfWorldActions ::
@@ -282,6 +292,7 @@ addOutOfWorldActions = do
   addOutOfWorld ["superbrief", "short"] superbriefAction
   addOutOfWorld ["verbose", "long"] verboseAction
   addOutOfWorld ["brief", "normal"] briefAction
+
 
 addOutOfWorld ::
   forall wm es.

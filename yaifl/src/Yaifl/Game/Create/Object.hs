@@ -32,6 +32,7 @@ import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
 import Yaifl.Model.Tag (tagObject)
+import Yaifl.Model.Kinds.AnyObject
 
 done = defaults
 
@@ -65,6 +66,7 @@ makeObject n d ty isT specifics details = do
     (if not (T.null shownName) && isUpper (T.head shownName) then Proper else Improper) d e ty t t (fromMaybe identityElement specifics) details)
 
 addObject ::
+  forall wm s d es.
   Pointed s
   => WMWithProperty wm Enclosing
   => AddObjects wm es
@@ -95,7 +97,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
             Just loc -> do
               encLoc <- getObject loc
               asThingOrRoom
-                (void . move t . tagObject @EnclosingEntity @EnclosingTag loc)
+                (void . move @_ @_ @(EnclosingThing wm) t . tagObject @EnclosingEntity @EnclosingTag loc)
                 (void . move t)
                 encLoc
         )

@@ -4,7 +4,8 @@ module Yaifl.Model.Kinds.AnyObject
   , AnyObject(..)
   , _Room
   , _Thing
-  , TaggedEnclosing
+  , TaggedAnyEnclosing
+  , EnclosingThing
   ) where
 
 import Yaifl.Prelude
@@ -16,7 +17,6 @@ import Yaifl.Model.Kinds.Room
 import Yaifl.Model.Kinds.Thing
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Enclosing
 
 type RawAnyObject wm = Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to
@@ -58,11 +58,15 @@ instance CanBeAny wm (AnyObject wm) where
   toAny = id
   fromAny = Just
 
+instance CanBeAny wm (TaggedObject (Thing wm) ThingTag) where
+  toAny = toAny . snd . unTagObject
+  fromAny o = (\t -> TaggedObject (tag t (getID t), t)) <$> fromAny o
+
+instance CanBeAny wm (TaggedObject (Room wm) RoomTag) where
+  toAny = toAny . snd . unTagObject
+  fromAny o = (\t -> TaggedObject (tag t (getID t), t)) <$> fromAny o
+
 instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
 
-type TaggedEnclosing wm = TaggedObject (AnyObject wm) EnclosingTag
-
-instance TaggedAs (AnyObject wm, Enclosing) EnclosingTag where
-  toTag (o, e) = tag e o
-
+type TaggedAnyEnclosing wm = TaggedObject (AnyObject wm) EnclosingTag

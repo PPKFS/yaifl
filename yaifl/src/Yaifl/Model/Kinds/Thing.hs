@@ -9,6 +9,7 @@ module Yaifl.Model.Kinds.Thing
 
   , Thing(..)
   , tagThing
+  , EnclosingThing
   , defaultPlayerID
   , thingIsLit
   , thingIsWorn
@@ -92,6 +93,8 @@ instance HasID (Thing wm) where
 -- sense) which is why this is named slightly differently.
 defaultPlayerID :: TaggedEntity ThingTag
 defaultPlayerID = unsafeTagEntity $ Entity 1
+
+type EnclosingThing wm = TaggedObject (Thing wm) EnclosingTag
 
 instance Taggable (Thing wm) ThingTag
 
