@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Game.Actions.Waiting where
 
 import Yaifl.Model.Action
@@ -8,22 +9,28 @@ import Yaifl.Text.Responses
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Model.WorldModel
-import Yaifl.Text.Say (SayableValue(..), sayText)
+import Yaifl.Text.Say
 import Yaifl.Text.SayQQ
+import Yaifl.Model.Metadata
 
 data WaitingResponses wm
 
 type WaitingAction wm = Action wm () 'TakesNoParameter ()
+type WaitingRule wm = ActionRule wm (WaitingAction wm) ()
 
 waitingAction :: WaitingAction wm
 waitingAction = (makeAction "waiting")
   { name = "waiting"
-  , understandAs = error ""
-  , matches = error ""
-  , parseArguments = error ""
-  , beforeRules = makeActionRulebook "before waiting rulebook" []
-  , insteadRules = makeActionRulebook "instead of waiting rulebook" []
-  , checkRules = makeActionRulebook "check waiting rulebook" []
-  , carryOutRules = makeActionRulebook "carry out waiting rulebook" []
-  , reportRules = makeActionRulebook "report waiting rulebook" []
+  , understandAs = ["wait", "z"]
+  , parseArguments = actionOnNothing
+  , reportRules = makeActionRulebook "report waiting rulebook" [ standardReportWaiting ]
   }
+
+standardReportWaiting :: WaitingRule wm
+standardReportWaiting = makeRule "standard waiting rule" [] $ \Args{..} -> do
+  ifM (isPlayer source)
+    (unless (silently actionOptions) $
+      [saying|Time #{pass}.|]
+    )
+    [saying|{The source} #{wait}.|]
+  rulePass

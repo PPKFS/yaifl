@@ -147,6 +147,7 @@ addStandardActions = do
   addAction switchingOn
   addAction taking
   addAction entering
+  addAction waiting
   pass
 
 blankActions ::
@@ -230,6 +231,7 @@ blankActionCollection = ActionCollection
   , switchingOn = switchingOnAction
   , taking = takingAction
   , entering = enteringAction
+  , waiting = waitingAction
   }
 
 blankWorld ::
@@ -279,7 +281,6 @@ addBaseActions ::
 addBaseActions = do
   addStandardActions
   addGoingSynonyms
-  addInterpretAs "z" "wait" [NoParameter]
   addOutOfWorldActions
 
 

@@ -17,6 +17,7 @@ module Yaifl.Model.Action
   , actionName
   , actionsMapL
   , actionOnOneThing
+  , actionOnNothing
   , makeAction
   ) where
 
@@ -169,3 +170,8 @@ actionOnOneThing ::
   ParseArguments wm (UnverifiedArgs wm 'TakesThingParameter) (Thing wm)
 actionOnOneThing = ParseArguments $ \(UnverifiedArgs Args{..}) ->
     return $ Right $ fst variables
+
+actionOnNothing ::
+  ParseArguments wm (UnverifiedArgs wm 'TakesNoParameter) ()
+actionOnNothing = ParseArguments $ \_ ->
+    return $ Right ()
