@@ -69,6 +69,7 @@ makeVerbForms :: Text -> VerbForms
 makeVerbForms "be" = VerbForms "be" "being" "been" Nothing "is" "was"
 makeVerbForms "have" = VerbForms "have" "having" "had" Nothing "has" "had"
 makeVerbForms "do" = VerbForms "do" "doing" "done" Nothing "does" "did"
+makeVerbForms "pass" = VerbForms "pass" "passing" "passed" Nothing "passes" "passed"
 makeVerbForms x = VerbForms x (x <> "s") (x <> "ed") Nothing (x <> "s") (x <> "ed")
 
 makeVerbTabulation :: VerbForms -> Tabulation

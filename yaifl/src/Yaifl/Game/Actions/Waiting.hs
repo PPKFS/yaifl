@@ -18,7 +18,7 @@ data WaitingResponses wm
 type WaitingAction wm = Action wm () 'TakesNoParameter ()
 type WaitingRule wm = ActionRule wm (WaitingAction wm) ()
 
-waitingAction :: WaitingAction wm
+waitingAction :: WithPrintingNameOfSomething wm => WaitingAction wm
 waitingAction = (makeAction "waiting")
   { name = "waiting"
   , understandAs = ["wait", "z"]
@@ -26,7 +26,7 @@ waitingAction = (makeAction "waiting")
   , reportRules = makeActionRulebook "report waiting rulebook" [ standardReportWaiting ]
   }
 
-standardReportWaiting :: WaitingRule wm
+standardReportWaiting :: WithPrintingNameOfSomething wm => WaitingRule wm
 standardReportWaiting = makeRule "standard waiting rule" [] $ \Args{..} -> do
   ifM (isPlayer source)
     (unless (silently actionOptions) $

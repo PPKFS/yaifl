@@ -171,6 +171,12 @@ instance SayableValue (SayLiteral "can't") wm where
 instance SayableValue (SayLiteral "lead") wm where
   sayTell = sayVerb @"lead"
 
+instance SayableValue (SayLiteral "pass") wm where
+  sayTell = sayVerb @"pass"
+
+instance SayableValue (SayLiteral "wait") wm where
+  sayTell = sayVerb @"wait"
+
 instance SayableValue (SayLiteral "are") wm where
   sayTell s = sayVerb @"be" (coerce s)
 

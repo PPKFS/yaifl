@@ -262,6 +262,7 @@ addGoingSynonyms = do
     let allTerms = toTextDir (Proxy @wm) dir
         dirN = (T.toLower . fromString . show) dir
     forM_ allTerms $ \term -> addInterpretAs term ("go " <> dirN) [NoParameter]
+  addInterpretAs "out" "exit" [NoParameter]
 
 addInterpretAs ::
   State (WorldActions wm) :> es
