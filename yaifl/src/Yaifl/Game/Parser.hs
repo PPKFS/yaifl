@@ -67,6 +67,7 @@ filterFirstM def = foldlM fn (Left def)
 runActionHandlerAsWorldActions ::
   forall es wm a.
   State (WorldActions wm) :> es
+  => IOE :> es
   => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => Breadcrumbs :> es
   => ObjectLookup wm :> es
@@ -121,7 +122,8 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
             pure $ Right True
     ac <- case possVerbs of
       [] -> return $ Left ("I have no idea what you meant by '" <> t <> "'.")
-      _ -> filterFirstM "." $ map (inject . verbAc) possVerbs
+      _ -> do
+        filterFirstM "." $ map (inject . verbAc) possVerbs
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')

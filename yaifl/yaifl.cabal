@@ -78,6 +78,7 @@ library
     Yaifl.Game.Actions.Collection
     Yaifl.Game.Actions.Examining
     Yaifl.Game.Actions.Entering
+    Yaifl.Game.Actions.Exiting
     Yaifl.Game.Actions.Going
     Yaifl.Game.Actions.Looking
     Yaifl.Game.Actions.Looking.Locale
