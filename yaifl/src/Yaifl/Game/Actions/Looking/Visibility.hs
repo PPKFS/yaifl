@@ -22,6 +22,7 @@ import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as DES
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
+import Yaifl.Text.Say
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =
@@ -65,7 +66,7 @@ getVisibilityLevels e = do
   vh <- findVisibilityHolder e
   if vh `objectEquals` e
       then return [e]
-      else (vh :) <$> getVisibilityLevels vh
+      else (e :) <$> getVisibilityLevels vh
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder ::

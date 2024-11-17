@@ -12,6 +12,7 @@ module Yaifl.Model.Action
   , WorldActions(..)
   , WrappedAction(..)
   , ParseArgumentEffects
+  , ParseArgumentResult(..)
   , addAction
   , makeActionRulebook
   , actionName
@@ -57,9 +58,15 @@ newtype InsteadRules wm = InsteadRules
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
+data ParseArgumentResult v =
+  FailedParse Text
+  | SuccessfulParse v
+  | ConversionTo Text
+  deriving stock (Eq, Ord, Show, Generic, Functor)
+
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
-  { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (Either Text v)
+  { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ParseArgumentResult v)
   }
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
@@ -116,7 +123,7 @@ makeAction n = Action
   , understandAs = [n]
   , matches = []
   , responses = \_ -> notImplementedResponse "no response"
-  , parseArguments = ParseArguments $ const $ pure $ Left "not parsed"
+  , parseArguments = ParseArguments $ const $ pure $ FailedParse "not parsed"
   , beforeRules = makeActionRulebook ("before " <> n <> " rulebook") []
   , insteadRules = makeActionRulebook ("instead " <> n <> " rulebook") []
   , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook") []
@@ -169,9 +176,9 @@ addAction ac = do
 actionOnOneThing ::
   ParseArguments wm (UnverifiedArgs wm 'TakesThingParameter) (Thing wm)
 actionOnOneThing = ParseArguments $ \(UnverifiedArgs Args{..}) ->
-    return $ Right $ fst variables
+    return $ SuccessfulParse $ fst variables
 
 actionOnNothing ::
   ParseArguments wm (UnverifiedArgs wm 'TakesNoParameter) ()
 actionOnNothing = ParseArguments $ \_ ->
-    return $ Right ()
+    return $ SuccessfulParse ()

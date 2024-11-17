@@ -20,7 +20,7 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
 import Data.List.Split
-import Data.List (lookup, groupBy)
+import Data.List (lookup)
 import Effectful.Error.Static
 import Yaifl.Model.Effects
 import Data.Char (isSpace)
@@ -39,16 +39,18 @@ runAction ::
   Refreshable wm v
   => State (WorldActions wm) :> es
   => RuleEffects wm es
-  => UnverifiedArgs wm goesWith
+  => ActionOptions wm
+  -> UnverifiedArgs wm goesWith
   -> Action wm resps goesWith v
   -> Eff es (Maybe Bool)
-runAction uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
+runAction opts uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
   mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
   case mbArgs of
-    Left err -> do
+    FailedParse err -> do
       addAnnotation err
       pure (Just False)
-    Right args -> do
+    ConversionTo newCommand -> rightToMaybe <$> parseAction opts [] newCommand
+    SuccessfulParse args -> do
       -- running an action is simply evaluating the action processing rulebook.
       (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
       ap aSpan act args
@@ -103,7 +105,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
                     let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
                     case v of
                       Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-                      Just v' -> Right <$> tryAction a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
+                      Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
               case nouns of
                 Left ex -> pure (Left ex)
                 Right (PluralParameter xs, parsedArgs) -> do
@@ -221,7 +223,7 @@ parseArgumentType ::
   -> Eff es (Either Text (NamedActionParameter wm))
 parseArgumentType TakesDirectionParameter t = pure $ maybe
   (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
-parseArgumentType TakesNoParameter "" = pure $ Right NoParameter
+parseArgumentType TakesNoParameter str = if T.null str then pure $ Right NoParameter else pure $ Left $ "expected nothing but got " <> str
 parseArgumentType (TakesOneOf ap1 ap2) t = do
   mbRes <- parseArgumentType ap1 t
   case mbRes of
@@ -362,9 +364,10 @@ tryAction ::
   => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Print :> es
-  => Action wm resps goesWith v -- ^ text of command
+  => ActionOptions wm
+  -> Action wm resps goesWith v -- ^ text of command
   -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp
   -> Eff es Bool
-tryAction a f = do
+tryAction opts a f = do
   addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
-  fromMaybe False <$> runAction f a
+  fromMaybe False <$> runAction opts f a

@@ -225,7 +225,7 @@ addSupporter n ia d
         sup = Supporter enc (fromMaybe NotEnterable e)
     c <- addThing @wm n ia d
         ! #specifics (inj (Proxy @wm) $ SupporterSpecifics sup)
-        ! #type (ObjectKind "container")
+        ! #type (ObjectKind "supporter")
         ! paramF #location l
         ! done
     pure $ tag @_ @SupporterTag sup c

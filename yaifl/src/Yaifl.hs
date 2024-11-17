@@ -84,6 +84,7 @@ import Yaifl.Model.Rules.Run
 import System.Random.Stateful
 import Yaifl.Game.Actions.Entering (enteringAction)
 import Yaifl.Game.Actions.Waiting
+import Yaifl.Game.Actions.Exiting (exitingAction)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -148,6 +149,7 @@ addStandardActions = do
   addAction taking
   addAction entering
   addAction waiting
+  addAction exiting
   pass
 
 blankActions ::
@@ -231,6 +233,7 @@ blankActionCollection = ActionCollection
   , switchingOn = switchingOnAction
   , taking = takingAction
   , entering = enteringAction
+  , exiting = exitingAction
   , waiting = waitingAction
   }
 

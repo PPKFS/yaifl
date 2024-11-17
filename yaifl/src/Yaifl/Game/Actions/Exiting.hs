@@ -17,24 +17,29 @@ import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Tag
 import Yaifl.Model.Entity (EnclosingTag)
-import Yaifl.Model.Query (getEnclosingObject, getEnclosingMaybe)
+import Yaifl.Model.Query
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
 
 data ExitingResponses wm
 
-type ExitingAction wm = Action wm () 'TakesThingParameter (EnclosingThing wm)
+type ExitingAction wm = Action wm () ('TakesOneOf 'TakesObjectParameter 'TakesNoParameter) (EnclosingThing wm)
 
 exitingAction :: (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container) => ExitingAction wm
 exitingAction = (makeAction "exiting")
   { name = "exiting"
-  , understandAs = ["exit", "go out", "get out"]
+  , understandAs = ["exit", "get out"]
   , matches = [("from", TakesObjectParameter)]
-  , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
-      let mbCont = getEnclosingMaybe (toAny $ fst variables)
-      case mbCont of
-        Nothing -> return $ Left "that's not exitable"
-        Just x -> return $ Right (tagObject x (fst variables))
+  , parseArguments = ParseArguments $ \(UnverifiedArgs a@Args{..}) -> do
+      outFrom <- case fst variables of
+          Left thingToExit -> return (toAny thingToExit)
+          Right _ -> getObject $ source ^. #objectData % #containedBy
+      return $ asThingOrRoom
+        (\t ->
+          case getEnclosingMaybe (toAny t) of
+            Nothing -> FailedParse "that's not exitable"
+            Just x -> SuccessfulParse (tagObject x t))
+        (return $ ConversionTo "go out") outFrom
   , beforeRules = makeActionRulebook "before exiting rulebook" []
   , insteadRules = makeActionRulebook "instead of exiting rulebook" []
   , checkRules = makeActionRulebook "check exiting rulebook"
@@ -52,7 +57,7 @@ exitingAction = (makeAction "exiting")
 type ExitingRule wm = ActionRule wm (ExitingAction wm) (EnclosingThing wm)
 
 convertExitGoing :: ExitingRule wm
-convertExitGoing = notImplementedRule "convert exit door"
+convertExitGoing = notImplementedRule "convert exit to going"
 
 cantExitGetOff :: ExitingRule wm
 cantExitGetOff = notImplementedRule "convert exit direction"
@@ -68,7 +73,7 @@ cantExitClosedContainers = makeRule "can't exit closed containers rule" [] $ \a@
   ruleWhen (isClosedContainer <$?> asC) $ do
     -- if the player is the actor:
     whenPlayer s $
-      [saying|#{We} #{can't get} into the closed {t}.|]
+      [saying|#{We} #{can't get} out of the closed {t}.|]
     return (Just False)
 
 
@@ -76,4 +81,4 @@ cantExceedCapacity :: ExitingRule wm
 cantExceedCapacity = notImplementedRule "can't exit if this exceeds carrying capacity"
 
 standardExiting :: WMWithProperty wm Enclosing => ExitingRule wm
-standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> bool (Just True) Nothing <$> move (source a) v
+standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> say "awawa" >> rulePass

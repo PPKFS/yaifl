@@ -40,9 +40,9 @@ move objectToMove oLoc = failHorriblyIfMissing moveBlock
       c' <- getObject c
       oLoc' <- getObject oLoc
       let (oldLocEnc :: Enclosing) = getEnclosing c c'
-      addTag "object to move" (display $ getID objectToMove')
-      addTag "current location" (display $ getID  c')
-      addTag "new location" (display $ getID oLoc')
+      addTag "object to move" (display $ objectToMove')
+      addTag "current location" (display $ c')
+      addTag "new location" (display $ oLoc')
       modifySpan (\s -> s { _spanName = display (objectToMove' ^. #name) })
       let (movedObj, oldLocation, newLocation) = moveObjects (tag oldLocEnc (getID oLoc')) objectToMove' oldLocEnc loc
       setThing movedObj

@@ -5,10 +5,6 @@ import Yaifl.Model.Action
 import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Text.Responses
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.WorldModel
 import Yaifl.Text.Say
 import Yaifl.Model.Kinds
 import Yaifl.Model.HasProperty
@@ -16,8 +12,7 @@ import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Tag
-import Yaifl.Model.Entity (EnclosingTag)
-import Yaifl.Model.Query (getEnclosingObject, getEnclosingMaybe)
+import Yaifl.Model.Query (getEnclosingMaybe)
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
 
@@ -34,8 +29,8 @@ enteringAction = (makeAction "entering")
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
       let mbCont = getEnclosingMaybe (toAny $ fst variables)
       case mbCont of
-        Nothing -> return $ Left "that's not enterable"
-        Just x -> return $ Right (tagObject x (fst variables))
+        Nothing -> return $ FailedParse "that's not enterable"
+        Just x -> return $ SuccessfulParse (tagObject x (fst variables))
   , beforeRules = makeActionRulebook "before entering rulebook" []
   , insteadRules = makeActionRulebook "instead of entering rulebook" []
   , checkRules = makeActionRulebook "check entering rulebook"

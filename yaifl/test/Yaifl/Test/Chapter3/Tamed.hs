@@ -26,7 +26,7 @@ ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
 tamedWorld :: Game PlainWorldModel ()
 tamedWorld = do
   setTitle "Tamed"
-  tcr <- addRoom "The Center Ring" ! done
+  tcr <- addRoom "Center Ring" ! done
 
   tc <- addContainer "cage"
     ! #enterable Enterable
@@ -62,5 +62,13 @@ tamedWorld = do
   pass
 
 tamedTestMeWith :: [Text]
-tamedTestMeWith = ["get in cage", "open cage", "get in cage", "z", "close cage", "out", "open cage", "get on pedestal",
+tamedTestMeWith = [
+  -- (on the pedestal)
+  "get in cage", "open cage",
+  -- (getting off the pedestal)
+  "get in cage", "z", "close cage",
+  -- You can't get out of the closed cage.
+  "out", "open cage",
+  -- (getting out of the cage)
+  "get on pedestal",
   "get off", "look", "enter booth", "out"]

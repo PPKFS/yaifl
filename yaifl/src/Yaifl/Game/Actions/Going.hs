@@ -115,7 +115,7 @@ goingActionSet ::
   (ParseArgumentEffects wm es, WMStdDirections wm, WMWithProperty wm Door)
   => WithPrintingNameOfSomething wm
   => UnverifiedArgs wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter))
-  -> Eff es (ArgumentParseResult (GoingActionVariables wm))
+  -> Eff es (ParseArgumentResult (GoingActionVariables wm))
 goingActionSet (UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
   thingGoneWith <- getMatchingThing "with"
@@ -156,7 +156,7 @@ goingActionSet (UnverifiedArgs Args{..}) = do
         Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
         Just roomGoneTo -> do
           addAnnotation $ "target was " <> show target
-          pure $ Right $ GoingActionVariables
+          pure $ SuccessfulParse $ GoingActionVariables
             { thingGoneWith
             , roomGoneFrom
             , doorGoneThrough = conn ^. #doorThrough
@@ -171,7 +171,7 @@ cantGoThatWay ::
   => Thing wm
   -> Maybe (Thing wm)
   -> Room wm
-  -> Eff es (ArgumentParseResult a)
+  -> Eff es (ParseArgumentResult a)
 cantGoThatWay source mbDoorThrough fromRoom = do
   whenM (isPlayer source) $ do
     let possExits = Map.keys $ getAllConnections fromRoom
@@ -182,7 +182,7 @@ cantGoThatWay source mbDoorThrough fromRoom = do
         [saying|#{We} #{can't go} that way.|]
         say $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
       Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
-  pure $ Left "Can't go that way"
+  pure $ FailedParse "Can't go that way"
 
 getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
 getMatchingThing matchElement = do

@@ -8,7 +8,7 @@ module Yaifl.Game.Actions.Looking
 
 import Yaifl.Prelude hiding ( Reader )
 
-import Breadcrumbs ( addTag )
+import Breadcrumbs ( addTag, addAnnotation )
 
 import Effectful.Reader.Static
 import Yaifl.Model.Action
@@ -47,8 +47,8 @@ data LookingResponses wm =
 roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => LookingResponses wm -> Response wm (Args wm (LookingActionVariables wm))
 roomDescriptionResponsesImpl = \case
   RoomDescriptionHeadingA -> Response $ const [sayingTell|Darkness|]
-  RoomDescriptionHeadingB intermediateLevel -> Response $ \_ -> [sayingTell|(on {the intermediateLevel})|]
-  RoomDescriptionHeadingC intermediateLevel -> Response $ \_ -> [sayingTell|(in {the intermediateLevel})|]
+  RoomDescriptionHeadingB intermediateLevel -> Response $ \_ -> [sayingTell| (on {the intermediateLevel})|]
+  RoomDescriptionHeadingC intermediateLevel -> Response $ \_ -> [sayingTell| (in {the intermediateLevel})|]
   RoomDescriptionBodyA -> Response $ const [sayingTell|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
 
 type LookingAction wm = Action wm (LookingResponses wm) ('Optionally 'TakesConstantParameter) (LookingActionVariables wm)
@@ -69,12 +69,13 @@ lookingAction = (makeAction "looking")
     -- 100 up.
       -- loc may be a thing (a container) or a room (the more likely case)
       loc <- getObject (source ^. #objectData % #containedBy)
+      addAnnotation $ "actor is located at " <> display loc
       vl <- getVisibilityLevels loc
       lightLevels <- recalculateLightOfParent source
       acName <- case fst variables of
         Nothing -> pure "looking"
         Just acName -> pure acName
-      return $ Right $ LookingActionVariables loc (take lightLevels vl) acName
+      return $ SuccessfulParse $ LookingActionVariables loc (take lightLevels vl) acName
   , carryOutRules = makeActionRulebook "carry out looking"
         [ roomDescriptionHeading
         , roomDescriptionBody
@@ -90,6 +91,7 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
     (\a@Args{variables=(LookingActionVariables _ lvls _)} -> do
       -- say bold type;
       setStyle (Just PPTTY.bold)
+      addAnnotation $ "levels " <> mconcat (map display lvls)
       let mbVisCeil = viaNonEmpty last lvls
       whenJust mbVisCeil $ addTag "visibility ceiling" . display
       loc <- getActorLocation a
@@ -117,7 +119,7 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
             --  say "[The visibility ceiling]";
             [saying|{The visCeil}|]
       -- repeat with intermediate level count running from 2 to the visibility level count:
-      mapM_ (foreachVisibilityHolder a) (drop 1 lvls)
+      mapM_ (foreachVisibilityHolder a) (fromMaybe [] $ viaNonEmpty init lvls)
       -- say line break;
       [saying|#{linebreak}|]
       runOnLookingParagraph

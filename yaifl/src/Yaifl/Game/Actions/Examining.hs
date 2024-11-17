@@ -55,7 +55,7 @@ examiningAction = (makeAction "examining")
   { understandAs = ["examine", "examining", "look closely at", "x"]
   , parseArguments = ParseArguments (\(UnverifiedArgs Args{..}) -> do
       let examiningSubject = ET $ fst variables
-      return $ Right $ EAV {examiningSubject, examiningTextPrinted = False})
+      return $ SuccessfulParse $ EAV {examiningSubject, examiningTextPrinted = False})
   , checkRules = makeActionRulebook "check examining rulebook" [ actionRequiresLight ]
   , carryOutRules = makeActionRulebook "carry out examining rulebook" [
         standardExamining

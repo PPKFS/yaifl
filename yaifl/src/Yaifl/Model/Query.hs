@@ -242,7 +242,8 @@ getAllObjectsInEnclosing incScenery incDoors r = do
     case mbE of
       Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tag enc' t)
       Nothing -> return []) things
-  return $ (things <> recursedThings)
+  enclosingItself <- getThingMaybe r
+  return $ ordNub ((maybeToList enclosingItself) <> things <> recursedThings)
 
 getContainingHierarchy ::
   NoMissingObjects wm es

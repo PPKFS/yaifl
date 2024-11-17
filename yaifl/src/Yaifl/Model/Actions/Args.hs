@@ -9,7 +9,6 @@ module Yaifl.Model.Actions.Args
   , NamedActionParameter(..)
   , ActionOptions(..)
   , UnverifiedArgs(..)
-  , ArgumentParseResult
   , ActionParameterType(..)
   , GoesWith(..)
   --, withPlayerSource
@@ -158,8 +157,6 @@ instance {-# OVERLAPPING #-} Refreshable wm v => Refreshable wm (Args wm v) wher
     v <- refreshVariables (variables av)
     o <- getThing (tagThing $ source av)
     return $ av { source = o, variables = v }
-
-type ArgumentParseResult v = Either Text v
 
 -- | Before 'Args' are parsed, the variable is just a command string
 -- the action has to parse them, ideally into some intermediary mix of `ArgSubject`.

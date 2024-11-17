@@ -14,7 +14,7 @@ import Yaifl.Model.HasProperty ( WMWithProperty )
 import Yaifl.Model.Kinds.Enclosing ( Enclosing )
 import Yaifl.Model.Metadata ( Metadata )
 import Yaifl.Model.ObjectLike
-import Yaifl.Model.Query ( getCurrentPlayer )
+import Yaifl.Model.Query ( getCurrentPlayer, getLocation, isVoid )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run ( failRuleWithError )
@@ -78,5 +78,6 @@ positionPlayer = do
   fre <- use #firstRoom
   fr <- getRoom fre
   pl <- getCurrentPlayer
-  m <- move pl fr
-  if m then return Nothing else failRuleWithError "Failed to move the player."
+  plLoc <- getLocation pl
+  when (isVoid plLoc) $ void $ move pl fr
+  return Nothing
