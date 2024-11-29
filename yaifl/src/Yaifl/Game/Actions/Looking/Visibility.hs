@@ -46,6 +46,16 @@ data LookingActionVariables wm = LookingActionVariables
   }
   deriving stock (Eq, Generic)
 
+getVisibleLevels ::
+  NoMissingObjects wm es
+  => HasLookingProperties wm
+  => Thing wm -> Eff es [AnyObject wm]
+getVisibleLevels source = do
+  loc <- getObject (source ^. #objectData % #containedBy)
+  vl <- getVisibilityLevels loc
+  lightLevels <- recalculateLightOfParent source
+  return $ take lightLevels vl
+
 visibilityCount ::
   LookingActionVariables wm
   -> Int

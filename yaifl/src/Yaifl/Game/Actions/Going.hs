@@ -235,7 +235,7 @@ getContainingThingHierarchy ::
   => Thing wm
   -> Eff es [Thing wm]
 getContainingThingHierarchy o = do
-  cont <- getThingMaybe (o ^. #objectData % #containedBy)
+  cont <- getThingMaybe $ thingContainedBy o
   case cont of
     --no objects, just a room
     Nothing -> return []

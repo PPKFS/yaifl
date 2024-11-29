@@ -20,12 +20,13 @@ import Yaifl.Model.Entity (EnclosingTag)
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds.Supporter
 
 data ExitingResponses wm
 
 type ExitingAction wm = Action wm () ('TakesOneOf 'TakesObjectParameter 'TakesNoParameter) (EnclosingThing wm)
 
-exitingAction :: (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container) => ExitingAction wm
+exitingAction :: (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container, WMWithProperty wm Supporter) => ExitingAction wm
 exitingAction = (makeAction "exiting")
   { name = "exiting"
   , understandAs = ["exit", "get out"]
@@ -33,12 +34,15 @@ exitingAction = (makeAction "exiting")
   , parseArguments = ParseArguments $ \(UnverifiedArgs a@Args{..}) -> do
       outFrom <- case fst variables of
           Left thingToExit -> return (toAny thingToExit)
-          Right _ -> getObject $ source ^. #objectData % #containedBy
+          Right _ -> getObject $ thingContainedBy source
       return $ asThingOrRoom
         (\t ->
           case getEnclosingMaybe (toAny t) of
             Nothing -> FailedParse "that's not exitable"
-            Just x -> SuccessfulParse (tagObject x t))
+            Just x ->
+              case getSupporterMaybe t of
+                Nothing -> SuccessfulParse (tagObject x t)
+                Just _ -> ConversionTo "get off")
         (return $ ConversionTo "go out") outFrom
   , beforeRules = makeActionRulebook "before exiting rulebook" []
   , insteadRules = makeActionRulebook "instead of exiting rulebook" []

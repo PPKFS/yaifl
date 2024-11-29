@@ -21,7 +21,7 @@ import Effectful.Error.Static (Error, runError)
 import Yaifl.Model.Store
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.Input
-import Yaifl.Text.ListWriter
+import Yaifl.Game.Actions.Looking.Visibility
 
 
 type EffStack (wm :: WorldModel) = '[
@@ -69,7 +69,7 @@ convertToUnderlyingStack ::
   forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
-  => WithListWriting wm
+  => HasLookingProperties wm
   => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
@@ -176,7 +176,7 @@ updateIt newObj mbExisting = case mbExisting of
 
 runGame ::
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => WithListWriting wm
+  => HasLookingProperties wm
   => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm

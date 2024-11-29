@@ -26,6 +26,7 @@ import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Model.Kinds.Thing (thingContainedBy)
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA
@@ -162,7 +163,7 @@ alsoSee = Rule "You can also see" [] (\v ->
       -- of something. this will happen unless the author
       -- manually adds some notable object that isn't present in the room
       let allHolders = DEM.foldl' (\xs li -> flip cons xs $ asThingOrRoom
-            (\t -> Just $ t ^. #objectData % #containedBy)
+            (Just . thingContainedBy)
             (const Nothing) (toAny $ localeObject li)) [] lp
       case allHolders of
         -- no items

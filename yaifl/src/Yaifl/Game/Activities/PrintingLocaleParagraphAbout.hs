@@ -25,6 +25,7 @@ import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
 import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
+import Yaifl.Model.Query
 
 setLocalePriority ::
   Thing s
@@ -97,7 +98,11 @@ dontMentionUndescribed = Rule "don’t mention undescribed items in room descrip
         )
 
 dontMentionSupporter :: LocaleParagraphAboutRule wm
-dontMentionSupporter = notImplementedRule "don't mention player's supporter in room descriptions rule"
+dontMentionSupporter = Rule "don't mention player's supporter in room descriptions rule" []
+  (\(v, li@(LocaleInfo _ e _)) -> do
+    pl <- getCurrentPlayer
+    ruleGuardM (isSupporter e &&^ pure (thingContainedBy pl `objectEquals` e)) $ removeFromLocale e v li)
+
 
 dontMentionScenery :: LocaleParagraphAboutRule wm
 dontMentionScenery = Rule "don't mention scenery in room descriptions rule" []

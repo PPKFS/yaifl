@@ -21,7 +21,7 @@ source-repository-package
 packages:
   yaifl/yaifl.cabal
   yaifl-city/yaifl-city.cabal
-  --yaifl-agents/yaifl-agents.cabal
+  yaifl-debugger/yaifl-debugger.cabal
 
 -- documentation: true
 haddock-all: true

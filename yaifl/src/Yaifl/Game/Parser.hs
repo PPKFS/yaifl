@@ -32,6 +32,8 @@ import Yaifl.Text.ListWriter
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Input (waitForInput, Input)
 import Yaifl.Model.Tag
+import Yaifl.Game.Actions.Looking.Visibility
+import Yaifl.Model.Kinds.Enclosing
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -76,7 +78,7 @@ runActionHandlerAsWorldActions ::
   => ObjectTraverse wm :> es
   => ObjectUpdate wm :> es
   => Print :> es
-  => WithListWriting wm
+  => HasLookingProperties wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
@@ -142,7 +144,7 @@ parseNouns ::
   => ObjectUpdate wm :> es
   => Print :> es
   => Input :> es
-  => WithListWriting wm
+  => HasLookingProperties wm
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => State (ResponseCollector wm) :> es
@@ -216,7 +218,7 @@ findVerb cmd = do
 parseArgumentType ::
   forall wm es.
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  => WithListWriting wm
+  => HasLookingProperties wm
   => RuleEffects wm es
   => ActionParameterType
   -> Text
@@ -248,7 +250,7 @@ parseArgumentType a t = pure $ Left $ "not implemented yet" <> show a <> " " <> 
 
 tryFindingAnyObject ::
   forall wm es.
-  WithListWriting wm
+  HasLookingProperties wm
   => RuleEffects wm es
   => Text
   -> Eff es (Either Text (NamedActionParameter wm))
@@ -260,17 +262,31 @@ tryFindingAnyObject t = do
     Left err -> pure $ Left err
 
 tryFindingObject ::
-  WithListWriting wm
-  => RuleEffects wm es
+  forall wm es.
+  RuleEffects wm es
+  => HasLookingProperties wm
   => Text
   -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 tryFindingObject t = failHorriblyIfMissing $ do
   pl <- getCurrentPlayer
-  (playerLocObj, domainEnc) <- getEnclosingObject $ (view $ #objectData % #containedBy) pl
+  let getUppermostDomain :: (AnyObject wm, Enclosing) -> Eff (Error MissingObject : es) (AnyObject wm, Enclosing)
+      getUppermostDomain (obj, enc) = do
+        asThingOrRoom
+          (\t' -> do
+            vs <- getVisibleLevels t'
+            case vs of
+              [] -> pure (obj, enc)
+              x:xs -> let c = last (x :| xs) in return $ maybe (obj, enc) (c,) $ getEnclosingMaybe c
+            )
+          (const $ return $ (obj, enc))
+          obj
+
+  (playerLocObj, domainEnc) <- getUppermostDomain =<< getEnclosingObject (thingContainedBy pl)
   -- okay, if we bother doing a proper scanning loop it'll go here
   -- but for now, we just want to consider anything recursively present. that'll do.
   allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors (tag domainEnc playerLocObj)
   findObjectsFrom t allItems True
+
 
 findObjectsFrom ::
   forall wm es.

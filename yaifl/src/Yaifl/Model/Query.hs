@@ -235,15 +235,17 @@ getAllObjectsInEnclosing ::
   -> Eff es [Thing wm]
 getAllObjectsInEnclosing incScenery incDoors r = do
   (_, enc) <- getEnclosingObject r
+
   let allItemIDs = ES.toList $ enc ^. #contents
   things <- mapM getThing allItemIDs
+  -- recurse downwards
   recursedThings <- mconcat <$> mapM (\t -> do
     let mbE = getEnclosingMaybe (toAny t)
     case mbE of
       Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tag enc' t)
       Nothing -> return []) things
   enclosingItself <- getThingMaybe r
-  return $ ordNub ((maybeToList enclosingItself) <> things <> recursedThings)
+  return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)
 
 getContainingHierarchy ::
   NoMissingObjects wm es

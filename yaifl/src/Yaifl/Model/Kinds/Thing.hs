@@ -15,6 +15,7 @@ module Yaifl.Model.Kinds.Thing
   , thingIsWorn
   , thingIsConcealed
   , thingIsScenery
+  , thingContainedBy
   ) where
 
 import Yaifl.Prelude
@@ -126,3 +127,8 @@ thingIsScenery ::
   Thing wm
   -> Bool
 thingIsScenery = view (#objectData % #isScenery)
+
+thingContainedBy ::
+  Thing wm
+  -> EnclosingEntity
+thingContainedBy = view (#objectData % #containedBy)

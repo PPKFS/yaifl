@@ -36,7 +36,7 @@ move objectToMove oLoc = failHorriblyIfMissing moveBlock
     moveBlock = withSpan' "move" "" $ do
       objectToMove' <- refreshThing objectToMove
       let loc :: Enclosing = oLoc ^. enclosingL
-      let (c :: EnclosingEntity) = objectToMove' ^. #objectData % #containedBy
+      let (c :: EnclosingEntity) = thingContainedBy objectToMove'
       c' <- getObject c
       oLoc' <- getObject oLoc
       let (oldLocEnc :: Enclosing) = getEnclosing c c'
