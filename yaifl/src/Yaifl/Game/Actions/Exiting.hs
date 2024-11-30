@@ -42,8 +42,8 @@ exitingAction = (makeAction "exiting")
             Just x ->
               case getSupporterMaybe t of
                 Nothing -> SuccessfulParse (tagObject x t)
-                Just _ -> ConversionTo "get off")
-        (return $ ConversionTo "go out") outFrom
+                Just _ -> ConversionTo "get off " [ThingParameter t])
+        (return $ ConversionTo "go out" []) outFrom
   , beforeRules = makeActionRulebook "before exiting rulebook" []
   , insteadRules = makeActionRulebook "instead of exiting rulebook" []
   , checkRules = makeActionRulebook "check exiting rulebook"

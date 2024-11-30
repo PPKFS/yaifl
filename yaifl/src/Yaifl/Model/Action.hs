@@ -58,15 +58,15 @@ newtype InsteadRules wm = InsteadRules
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
-data ParseArgumentResult v =
+data ParseArgumentResult wm v =
   FailedParse Text
   | SuccessfulParse v
-  | ConversionTo Text
-  deriving stock (Eq, Ord, Show, Generic, Functor)
+  | ConversionTo Text [NamedActionParameter wm]
+  deriving stock (Show, Generic, Functor)
 
 -- | `ParseArguments` is the equivalent of Inform7's `set rulebook variables`.
 newtype ParseArguments wm ia v = ParseArguments
-  { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ParseArgumentResult v)
+  { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ParseArgumentResult wm v)
   }
 
 -- | An 'Action' is a command that the player types, or that an NPC chooses to execute.

@@ -115,7 +115,7 @@ goingActionSet ::
   (ParseArgumentEffects wm es, WMStdDirections wm, WMWithProperty wm Door)
   => WithPrintingNameOfSomething wm
   => UnverifiedArgs wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter))
-  -> Eff es (ParseArgumentResult (GoingActionVariables wm))
+  -> Eff es (ParseArgumentResult wm (GoingActionVariables wm))
 goingActionSet (UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
   thingGoneWith <- getMatchingThing "with"
@@ -171,7 +171,7 @@ cantGoThatWay ::
   => Thing wm
   -> Maybe (Thing wm)
   -> Room wm
-  -> Eff es (ParseArgumentResult a)
+  -> Eff es (ParseArgumentResult wm a)
 cantGoThatWay source mbDoorThrough fromRoom = do
   whenM (isPlayer source) $ do
     let possExits = Map.keys $ getAllConnections fromRoom

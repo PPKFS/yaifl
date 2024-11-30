@@ -51,7 +51,7 @@ runAction opts uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
     FailedParse err -> do
       addAnnotation err
       pure (Just False)
-    ConversionTo newCommand -> rightToMaybe <$> parseAction opts [] newCommand
+    ConversionTo newCommand args -> rightToMaybe <$> parseAction opts args newCommand
     SuccessfulParse args -> do
       -- running an action is simply evaluating the action processing rulebook.
       (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
