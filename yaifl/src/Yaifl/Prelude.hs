@@ -4,6 +4,8 @@ module Yaifl.Prelude
   , module Effectful.Optics
   , module Named
   , module Data.Text.Display
+  , whileM
+  , And
   ) where
 
 import Solitude
@@ -17,3 +19,14 @@ class Pointed s where
 
 instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
   identityElement = mempty
+
+whileM :: Monad m => (a -> Bool) -> m a -> m a
+whileM pr f = do
+  a <- f
+  if pr a then whileM pr f else return a
+
+
+type And :: ([k] -> Constraint) -> ([k] -> Constraint) -> [k] -> Constraint
+
+class And c1 c2 l
+instance (c1 l, c2 l) => And c1 c2 l

@@ -13,6 +13,7 @@ module Yaifl.Model.Action
   , WrappedAction(..)
   , ParseArgumentEffects
   , ParseArgumentResult(..)
+  , ActionInterrupt(..)
   , addAction
   , makeActionRulebook
   , actionName
@@ -103,6 +104,9 @@ data OutOfWorldAction wm = OutOfWorldAction
 -- their arguments to be pre-verified; this allows for the passing of state.
 type ActionRulebook wm ac v = Rulebook wm ((:>) (Reader ac)) (Args wm v) Bool
 type ActionRule wm ac v = Rule wm ((:>) (Reader ac)) (Args wm v) Bool
+
+data ActionInterrupt = ContinueAction | StopAction
+
 makeFieldLabelsNoPrefix ''Action
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
