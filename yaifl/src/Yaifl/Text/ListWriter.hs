@@ -34,6 +34,7 @@ import Yaifl.Text.Say
 
 import qualified Data.EnumSet as ES
 import qualified Data.Text as T
+import Breadcrumbs
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
@@ -247,6 +248,10 @@ writeListR = do
   let adjustedList = if fromStart then coalesceList contents else contents
   when prefacingWithIsAre $ do
     a <- getMentionedThing
+    case listToMaybe adjustedList of
+      Nothing -> pass
+      Just (SingleObject o) -> regarding (Just o)
+      Just _ -> regardingMany
     sayTellResponse V a
     if withNewlines
     then tell ":\n"
@@ -386,6 +391,8 @@ writeAfterEntry _numberOfItem itemMember = do
         else
           pure False
       when (recurseFlag && asEnglishSentence) $ whenJust (viaNonEmpty head nonConcealedThings) $ \thing1 -> do
+        -- apparently we need to do this, because we want to say (on which ARE plurals) based on the first element of the list
+        -- not on the plurality of the thing(s) doing the containing.
         regarding (Just thing1)
         sayTellResponse V thingWrittenAbout
         saySpace
@@ -536,7 +543,8 @@ listWriterResponsesImpl = \case
   -- "[regarding list writer internals][are] nothing" (W) TODO
   W -> constResponse "is nothing"
   -- "[regarding list writer internals][are]" (V) TODO
-  V -> constResponse "is"
+  V -> Response $ \_o -> do
+    [sayingTell|#{are}|]
   Y -> constResponse "nothing"
   x -> constResponse $ "need to do response " <> show x <> " "
 

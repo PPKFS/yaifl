@@ -12,6 +12,7 @@ import Yaifl.Test.Chapter3.StarryVoid
 import Yaifl.Test.Chapter3.UpAndUp
 import Yaifl.Test.Chapter3.Verbosity
 import Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair
+import Yaifl.Test.Chapter3.DisenchantmentBay
 import qualified Data.Map as M
 import Yaifl (PlainWorldModel, Game)
 import Yaifl.Test.Chapter3.FirstNameBasis
@@ -35,4 +36,5 @@ spec _allTenses = M.fromList
   , c3Harness ex11 -- First Name Basis
   , c3Harness ex12 -- Midsummer Day
   , c3Harness ex13 -- Tamed
+  , c3Harness ex14 -- Disenchantment Bay
   ]

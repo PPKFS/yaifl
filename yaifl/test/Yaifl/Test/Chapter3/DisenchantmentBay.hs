@@ -1,66 +1,51 @@
-module Yaifl.Test.Chapter3.Tamed where
+module Yaifl.Test.Chapter3.DisenchantmentBay where
 
 import Yaifl.Prelude
-import Yaifl.Game.EffectHandlers
+
 import Yaifl (PlainWorldModel)
-import Yaifl.Model.Metadata
+
 import Yaifl.Game.Create.Object
-import Yaifl.Model.Query
-import Yaifl.Text.SayQQ
-import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.DynamicText
-import Yaifl.Text.Say
+import Yaifl.Game.EffectHandlers
 import Yaifl.Game.ObjectSpecifics
-import Yaifl.Model.Kinds.Device
-import Yaifl.Model.Kinds.Person
+import Yaifl.Model.Kinds (NamePlurality (..))
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Actions.Args
-import Yaifl.Model.Kinds (ThingPortable(..))
-import Yaifl.Game.Create
-import Yaifl.Model.Rules (parseAction)
+import Yaifl.Model.Kinds.Supporter
+import Yaifl.Model.Metadata
+import Yaifl.Test.Common
+import Yaifl.Model.Kinds.Object
 
 ex14 :: (Text, [Text], Game PlainWorldModel ())
 ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)
 
-tamedWorld :: Game PlainWorldModel ()
-tamedWorld = do
+disenchantmentBayWorld :: Game PlainWorldModel ()
+disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
-  tcr <- addRoom "The Center Ring" ! done
+  _tc <- addRoom "The Cabin" ! #description
+    [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
+a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
+vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the
+wall contains several fishing rods.
 
-  tc <- addContainer "cage"
-    ! #enterable Enterable
+Scratched windows offer a view of the surrounding bay, and there is a door south to the deck.
+A sign taped to one wall announces the menu of tours offered by the Yakutat Charter Boat Company.|]
+
+  gc <- addContainer "glass case"
     ! #openable Openable
     ! #opacity Transparent
     ! #opened Closed
     ! done
-  l <- addAnimal "lion"
-    ! #location tc
+  _fr <- addThing "collection of fishing rods"
+    ! #location (inThe gc)
     ! done
-  ped <- addSupporter "pedestal"
+  b <- addSupporter "bench"
     ! #enterable Enterable
     ! done
-  p <- getPlayer
-  p `isNowOn` ped
-  everyTurn [whenIn tc] $ do
-    r <- uniformRIO @Bool
-    if r then
-      [saying|The lion eyes you with obvious discontent.|]
-      else [saying|Though the lion does not move, you are aware that it is watching you closely.|]
-  tmb <- addContainer "magician's booth"
-      ! #initialAppearance "Off to one side is a magician's booth, used in disappearing acts. The exterior is covered with painted gilt stars."
-      ! #enterable Enterable
-      ! #openable NotOpenable
-      ! #modify (#objectData % #portability .~ FixedInPlace)
-      ! done
-  tsv <- addRoom "Starry Vastness"
-      ! done
-  tsv `isInsideFrom` tcr
-
-  insteadOf (ActionRule #entering) [theObject tmb] $ \_ -> do
-    Nothing <$ parseAction normalAction [] "in"
+  addThing "blue vinyl cushions"
+    ! #modify (#namePlurality .= PluralNamed)
+    ! #location (onThe b)
+    ! done
   pass
 
-tamedTestMeWith :: [Text]
-tamedTestMeWith = ["get in cage", "open cage", "get in cage", "z", "close cage", "out", "open cage", "get on pedestal",
-  "get off", "look", "enter booth", "out"]
+disenchantmentBayTestMeWith :: [Text]
+disenchantmentBayTestMeWith = ["examine case", "get rods", "open case", "get rods", "sit on bench", "take cushions", "get up"]

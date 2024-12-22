@@ -199,6 +199,7 @@ test-suite yaifl-test
   other-modules:
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
+    Yaifl.Test.Chapter3.DisenchantmentBay
     Yaifl.Test.Chapter3.FirstNameBasis
     Yaifl.Test.Chapter3.MidsummerDay
     Yaifl.Test.Chapter3.PortRoyal

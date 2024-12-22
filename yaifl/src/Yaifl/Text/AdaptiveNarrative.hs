@@ -27,6 +27,7 @@ data AdaptiveNarrative wm = AdaptiveNarrative
   --, adaptiveTextViewpoint :: NarrativeViewpoint
   , tense :: Tense
   , priorNamedObject :: Maybe (AnyObject wm)
+  , priorQuantity :: Int
   } deriving stock (Generic)
 
 blankAdaptiveNarrative :: AdaptiveNarrative wm
@@ -35,6 +36,7 @@ blankAdaptiveNarrative = AdaptiveNarrative
   --, adaptiveTextViewpoint = FirstPersonPlural
   , tense = Present
   , priorNamedObject = Nothing
+  , priorQuantity = 0
   }
 
 regarding ::
@@ -42,7 +44,15 @@ regarding ::
   => CanBeAny wm a
   => Maybe a
   -> Eff es ()
-regarding mbObj = #priorNamedObject .= (toAny <$> mbObj)
+regarding mbObj = do
+  #priorNamedObject .= (toAny <$> mbObj)
+  #priorQuantity .= 1
+
+regardingMany ::
+  State (AdaptiveNarrative wm) :> es
+  => Eff es ()
+regardingMany = do
+  #priorQuantity .= 2
 
 regardingNothing ::
   State (AdaptiveNarrative wm) :> es
@@ -124,9 +134,10 @@ getPersonageOfObject ::
   => Eff es VerbPersonage
 getPersonageOfObject = do
   o <- getMentioned
+  q <- use @(AdaptiveNarrative wm) #priorQuantity
   case o of
     Nothing -> pure ThirdPersonSingular
     Just someObj -> do
       ifM (isPlayer someObj)
         (use @(AdaptiveNarrative wm) #narrativeViewpoint)
-        (pure $ if someObj ^. #namePlurality == PluralNamed then ThirdPersonPlural else ThirdPersonSingular)
+        (pure $ if someObj ^. #namePlurality == PluralNamed || q > 1 then ThirdPersonPlural else ThirdPersonSingular)
