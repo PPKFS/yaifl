@@ -109,6 +109,7 @@ type ActionRulebook wm ac v = Rulebook wm ((:>) (Reader ac)) (Args wm v) Bool
 type ActionRule wm ac v = Rule wm ((:>) (Reader ac)) (Args wm v) Bool
 
 data ActionInterrupt = ContinueAction | StopAction
+  deriving stock (Eq, Ord, Enum, Bounded, Generic, Read, Show)
 
 makeFieldLabelsNoPrefix ''Action
 

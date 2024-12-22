@@ -16,6 +16,8 @@ import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Supporter
 import Breadcrumbs
+import Yaifl.Game.Move
+import Yaifl.Model.Entity
 
 data ExitingResponses wm
 
@@ -49,7 +51,7 @@ exitingAction = (makeAction "exiting")
   , carryOutRules = makeActionRulebook "carry out exiting rulebook" [ standardExiting ]
   , reportRules = makeActionRulebook "report exiting rulebook"
     [ notImplementedRule "standard report exiting"
-    , notImplementedRule "describe room emerged into"
+    , describeExited
     ]
   }
 
@@ -81,7 +83,9 @@ cantExceedCapacity :: ExitingRule wm
 cantExceedCapacity = notImplementedRule "can't exit if this exceeds carrying capacity"
 
 standardExiting :: WMWithProperty wm Enclosing => ExitingRule wm
-standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> rulePass
+standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> do
+  o <- getObject (thingContainedBy $ getTaggedObject v)
+  bool (Just True) Nothing <$> move (source a) (tagObject @_ @EnclosingTag (thingContainedBy $ getTaggedObject v) o)
 
 describeExited ::
   ExitingRule wm

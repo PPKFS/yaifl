@@ -15,10 +15,12 @@ import Yaifl.Model.Kinds.Supporter
 import Yaifl.Game.Move (move)
 import Yaifl.Model.Query
 import Yaifl.Model.Entity
+import Yaifl.Model.Kinds.AnyObject
+import Breadcrumbs
 
 data GettingOffResponses wm
 
-type GettingOffAction wm = Action wm () 'TakesThingParameter (SupporterThing wm)
+type GettingOffAction wm = Action wm () ('TakesOneOf 'TakesThingParameter 'TakesNoParameter) (SupporterThing wm)
 
 gettingOffAction :: (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container, WMWithProperty wm Supporter) => GettingOffAction wm
 gettingOffAction = (makeAction "getting off")
@@ -26,10 +28,12 @@ gettingOffAction = (makeAction "getting off")
   , understandAs = ["get off"]
   , matches = [("from", TakesThingParameter)]
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
-      let mbS = getSupporterMaybe (fst variables)
-      case mbS of
-        Nothing -> return $ FailedParse "can't get off a not-supporter"
-        Just s -> return $ SuccessfulParse (tagObject s (fst variables))
+      offFrom <- case fst variables of
+          Left thingToExit -> return (Just thingToExit)
+          Right _ -> getThingMaybe $ thingContainedBy source
+      let mbS = getSupporterMaybe =<< offFrom
+      case (offFrom, mbS) of
+        (Just t, Just s) -> return $ SuccessfulParse (tagObject s t)
           {-
           if the actor is on the noun, continue the action;
           if the actor is carried by the noun, continue the action;
@@ -38,10 +42,11 @@ gettingOffAction = (makeAction "getting off")
                   tense]moment[otherwise]time[end if]." (A);
           stop the action.
           -}
-  , carryOutRules = makeActionRulebook "carry out gettingOff rulebook" [ standardGettingOff ]
+        _ -> return $ FailedParse "can't get off a not-supporter"
+  , carryOutRules = makeActionRulebook "carry out getting off rulebook" [ standardGettingOff ]
   , reportRules = makeActionRulebook "report getting off rulebook"
-    [ notImplementedRule "standard report getting off"
-    , notImplementedRule "describe room stood up into"
+    [ reportGettingOff
+    , describeExited
     ]
   }
 
@@ -54,4 +59,21 @@ standardGettingOff = makeRule "standard getting off rule" [] $ \Args{source=s, v
   let supporterHolder = thingContainedBy (getTaggedObject v)
   e' <- getEnclosingObject supporterHolder
   move s (tagObject @_ @EnclosingTag (snd e') (fst e'))
+  rulePass
+
+reportGettingOff ::
+  WithPrintingNameOfSomething wm
+  => GettingOffRule wm
+reportGettingOff = makeRule "standard report getting off rule" [] $ \a@Args{source=s, variables=v} -> do
+  -- if the action is not silent:
+  unlessSilent a
+    -- say "[The actor] [get] off [the noun]." (A);
+    [saying|{The s} #{get} off {the v}.|]
+  rulePass
+
+describeExited ::
+  GettingOffRule wm
+describeExited = makeRule "describe room stood up into rule" forPlayer' $ \a@Args{variables=v} -> do
+  -- TODO: reckon darkness
+  parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look"
   rulePass

@@ -111,7 +111,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
                       Nothing -> do
                         addAnnotation $ (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
                         return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-                      Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
+                      Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = actor, variables = (v', parsedArgs) })
               case nouns of
                 Left ex -> do
                   addAnnotation ex

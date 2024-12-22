@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl
-version:       0.0.11.584
+version:       0.0.12.686
 synopsis:      Yet another interactive fiction library.
 description:   Yet another interactive fiction library.
 homepage:      https://github.com/PPKFS/yaifl
@@ -47,7 +47,7 @@ common common-options
     -fprint-potential-instances -fno-warn-unused-do-bind -haddock
     -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages
 
-  default-language:   GHC2021
+  default-language:   GHC2024
   default-extensions:
     DataKinds
     DefaultSignatures

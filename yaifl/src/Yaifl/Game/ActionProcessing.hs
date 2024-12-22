@@ -13,6 +13,7 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
+import Yaifl.Model.Actions.Args
 
 
 actionProcessingRules :: forall wm. ActionProcessing wm
@@ -64,9 +65,13 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
   , Rule "report stage rule"
       []
         ( \v -> do
-          ignoreSpanIfEmptyRulebook reportRules
-          r <- runRulebookAndReturnVariables (Just aSpan) False reportRules v
-          return (first Just $ fromMaybe (v, Nothing) r))
+          addAnnotation $ show (silently (actionOptions v))
+          if silently (actionOptions v)
+          then return (Just v, Nothing)
+          else do
+            ignoreSpanIfEmptyRulebook reportRules
+            r <- runRulebookAndReturnVariables (Just aSpan) False reportRules v
+            return (first Just $ fromMaybe (v, Nothing) r))
   , notImplementedRule "clean actions rule"
   ]) u)
   where
