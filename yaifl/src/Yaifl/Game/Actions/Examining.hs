@@ -102,7 +102,7 @@ examineDevices :: ExamineRule wm
 examineDevices = notImplementedRule "examine devices rule"
 
 examineSupporters :: forall wm. HasExaminingProperties wm => ExamineRule wm
-examineSupporters = Rule "examine supporters rule" forPlayer' $ \a@Args{..} -> do
+examineSupporters = Rule "examine supporters rule" forPlayer' $ \a@Args{} -> do
   let o = a ^? #variables % argsMainObjectMaybe
   flip (maybe (return (Nothing, Nothing))) (getSupporterMaybe =<< o) $ \sup -> do
     -- if something described which is not scenery is on the noun and something which

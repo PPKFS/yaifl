@@ -15,6 +15,7 @@ module Yaifl.Model.Kinds.Supporter
   , SupporterTag
   , Supporter(..)
   , getSupporterMaybe
+  , SupporterThing
   ) where
 
 import Yaifl.Prelude
@@ -28,6 +29,7 @@ import Yaifl.Model.Metadata
 import Yaifl.Model.Query
 import Yaifl.Model.TH
 import Yaifl.Model.Tag
+import Yaifl.Model.Kinds.Thing ( Thing )
 
 data Supporter = Supporter
   { enclosing :: Enclosing
@@ -44,6 +46,7 @@ isSupporter o = getObject o >>= (`isKind` "supporter")
 
 data SupporterTag
 type SupporterEntity = TaggedEntity SupporterTag
+type SupporterThing wm = TaggedObject (Thing wm) SupporterTag
 
 onThe ::
   SupporterEntity

@@ -43,7 +43,6 @@ import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.Metadata
-import Effectful.Error.Static (Error)
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMText wm) wm => Display (WMText wm) => Eff (es : ConcreteRuleStack wm) a)
 

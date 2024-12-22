@@ -92,7 +92,7 @@ carryOutGoingRules = makeActionRulebook "carry out going rulebook"
 describeRoomGoneInto :: GoingRule wm
 describeRoomGoneInto = makeRule "describe room gone into rule" [] $ \a -> ifM
   (isPlayer (source a))
-  (unless (silently . actionOptions $ a) (void $ do
+  (unlessSilent a (void $ do
     runOnLookingParagraph
     parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look") >> rulePass)
   (error "other actors cant report going yet")

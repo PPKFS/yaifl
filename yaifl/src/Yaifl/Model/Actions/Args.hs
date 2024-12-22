@@ -15,6 +15,7 @@ module Yaifl.Model.Actions.Args
   , getPlayer
   , getActorLocation
   , silentAction
+  , unlessSilent
   , normalAction
   --, blankArgs
   --, playerArgs
@@ -132,6 +133,13 @@ silentAction = ActionOptions True True
 
 normalAction :: ActionOptions wm
 normalAction = ActionOptions False False
+
+unlessSilent ::
+  Applicative m
+  => Args wm v
+  -> m ()
+  -> m ()
+unlessSilent args = unless (silently . actionOptions $ args)
 
 -- | Arguments for an action, activity, or rulebook.
 data Args wm v = Args

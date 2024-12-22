@@ -123,6 +123,9 @@ isRoom ::
   -> Bool
 isRoom = not . isThing
 
+instance {-# OVERLAPPABLE #-} HasID o => IsObject o where
+  isThing = isThing . getID
+
 -- | This is safe as long as we only ever generate object IDs under the right principle.
 instance IsObject Entity where
   isThing = (> 0)

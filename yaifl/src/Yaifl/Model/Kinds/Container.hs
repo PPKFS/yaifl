@@ -10,6 +10,7 @@ module Yaifl.Model.Kinds.Container
   , setContainer
   , modifyContainer
   , isOpaqueClosedContainer
+  , isContainer
   , makeContainer
   , inThe
 
@@ -38,11 +39,13 @@ import Yaifl.Model.HasProperty ( WMWithProperty )
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
+import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty, ObjectLike (..) )
 import Yaifl.Model.TH ( makeSpecificsWithout )
 import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Model.Kinds.Object
 import qualified Data.EnumSet as ES
+import Yaifl.Model.Metadata
+import Yaifl.Model.Kinds (Thing)
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent
@@ -63,6 +66,14 @@ data Container = Container
 makeFieldLabelsNoPrefix ''Container
 makeSpecificsWithout [] ''Container
 makeSpecificsWithout [] ''Enterable
+
+-- | Check if @o@ is of the @container@ type.
+isContainer ::
+  NoMissingObjects wm es
+  => ObjectLike wm o
+  => o
+  -> Eff es Bool
+isContainer o = getObject o >>= (`isKind` "container")
 
 isOpaqueClosedContainer ::
   Container

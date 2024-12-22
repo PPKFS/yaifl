@@ -41,7 +41,7 @@ standardReportSwitchingOn = makeRule "standard report switching on rule" [] $ \a
   let actor = source args
       noun = variables args
   -- if the action is not silent:
-  unless (silently . actionOptions $ args)
+  unlessSilent args
     [saying|{The actor} #{switch} {the noun} on.|]
     --say "[The actor] [switch] [the noun] on." (A).
   rulePass

@@ -21,6 +21,8 @@ module Yaifl.Model.Action
   , actionOnOneThing
   , actionOnNothing
   , makeAction
+
+  , withActionInterrupt'
   ) where
 
 import Yaifl.Prelude hiding (Reader)
@@ -36,6 +38,7 @@ import qualified Data.Text as T
 import Yaifl.Text.Responses
 import Effectful.Reader.Static
 import Yaifl.Model.Kinds.Thing
+import Effectful.Error.Static
 
 newtype ActionProcessing wm = ActionProcessing
   (forall es resp goesWith v.
@@ -108,6 +111,17 @@ type ActionRule wm ac v = Rule wm ((:>) (Reader ac)) (Args wm v) Bool
 data ActionInterrupt = ContinueAction | StopAction
 
 makeFieldLabelsNoPrefix ''Action
+
+withActionInterrupt' ::
+  Eff (Error ActionInterrupt : es) (Maybe Bool)
+  -> Eff es (Maybe Bool)
+withActionInterrupt' f = do
+  r <- runErrorNoCallStack f
+  case r of
+    -- TODO: investigate what the callstack adds
+    Left ContinueAction -> rulePass
+    Left StopAction -> return $ Just False
+    Right x -> return x
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
 actionName :: Lens' (Action wm resp goesWith v) Text

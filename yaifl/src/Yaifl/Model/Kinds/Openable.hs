@@ -53,7 +53,7 @@ closeIt ::
   => WMWithProperty wm Openability
   => Thing wm
   -> Eff es ()
-closeIt = flip modifyOpenability (#opened .~ Open)
+closeIt = flip modifyOpenability (#opened .~ Closed)
 
 defaultContainerOpenability :: Openability
 defaultContainerOpenability = Openability Open NotOpenable

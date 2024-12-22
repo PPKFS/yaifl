@@ -102,14 +102,20 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
             addAnnotation $ "Action parse was successful; going with the verb " <> view actionName a <> " after matching " <> matched
             runActionHandlerAsWorldActions $ do
               -- attempt to work out our nouns
-              nouns <- parseNouns (Proxy @goesWith) (matches a) (T.strip r)
+              -- TODO: handle more additional args
+              nouns <- parseNouns (Proxy @goesWith) (matches a) (listToMaybe additionalArgs) (T.strip r)
               let actuallyRunIt parsedArgs match = failHorriblyIfMissing $ do
+                    addAnnotation $ show match <> show additionalArgs
                     let v = tryParseArguments (Proxy @goesWith) (S.fromList $ filter (/= NoParameter) $ match:additionalArgs)
                     case v of
-                      Nothing -> return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+                      Nothing -> do
+                        addAnnotation $ (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
+                        return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
                       Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = ActionOptions False False, timestamp = ts, source = actor, variables = (v', parsedArgs) })
               case nouns of
-                Left ex -> pure (Left ex)
+                Left ex -> do
+                  addAnnotation ex
+                  pure (Left ex)
                 Right (PluralParameter xs, parsedArgs) -> do
                   addAnnotation $ "Running a set of plural actions..." <> matched
                   rs <- sequence <$> forM xs (\x -> do
@@ -119,7 +125,9 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
                     runOnParagraph
                     actuallyRunIt parsedArgs x)
                   pure $ second and rs
-                Right (match, parsedArgs) -> actuallyRunIt parsedArgs match
+                Right (match, parsedArgs) -> do
+                  addAnnotation $ "matched " <> show match <> " and parsed " <> show parsedArgs
+                  actuallyRunIt parsedArgs match
           (matched, _, OtherAction (OutOfWorldAction name runIt)) ->  do
             addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
             runActionHandlerAsWorldActions $ failHorriblyIfMissing $ runIt
@@ -151,16 +159,19 @@ parseNouns ::
   => State Metadata :> es
   => Proxy (goesWith :: ActionParameterType)
   -> [(Text, ActionParameterType)]
+  -> Maybe (NamedActionParameter wm)
   -> Text
   -> Eff es (Either Text (NamedActionParameter wm, [(Text, NamedActionParameter wm)]))
-parseNouns _ wordsToMatch command = runErrorNoCallStack $ failHorriblyIfMissing $ do
+parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorriblyIfMissing $ do
   let isMatchWord = flip elem (map fst wordsToMatch)
       parts = (split . whenElt) isMatchWord (words command)
   case parts of
     -- no matches at all
-    [] -> pure (NoParameter, [])
+    [] -> pure (fromMaybe NoParameter mbParameter, [])
+    [[]] -> pure (fromMaybe NoParameter mbParameter, [])
     -- one "vanilla" word (e.g. pet cat) and optionally some match words (e.g. pet cat with brush)
     cmdArgWords:matchedWords -> do
+      addAnnotation $ "split is " <> show cmdArgWords <> " and " <> show matchedWords <> " from " <> show parts
       cmdArgs <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
       -- then for each run of matching words we want to try and parse the rest of the list
       matchWords <- mapM (\case

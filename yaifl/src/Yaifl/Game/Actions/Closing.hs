@@ -56,7 +56,7 @@ standardReport = makeRule "standard report closing rule" [] $ \args -> do
   -- if the action is not silent:
   if pl && not (silently . actionOptions $ args)
   then
-    -- say "[We] [open] [the noun]." (A);
+    -- say "[We] [close] [the noun]." (A);
     sayResponse ReportClosingResponseA args
   else
     pass

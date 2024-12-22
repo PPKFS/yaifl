@@ -19,6 +19,7 @@ import Yaifl.Game.Actions.Taking
 import Yaifl.Game.Actions.Entering
 import Yaifl.Game.Actions.Waiting
 import Yaifl.Game.Actions.Exiting (ExitingAction)
+import Yaifl.Game.Actions.GettingOff (GettingOffAction)
 
 -- | The standard actions before they are existentially wrapped. This is so we can modify them during
 -- world construction as we lose the type information later and cannot modify a `WrappedAction`.
@@ -33,6 +34,7 @@ data ActionCollection wm = ActionCollection
   , entering :: EnteringAction wm
   , waiting :: WaitingAction wm
   , exiting :: ExitingAction wm
+  , gettingOff :: GettingOffAction wm
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''ActionCollection

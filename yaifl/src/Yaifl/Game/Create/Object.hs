@@ -32,7 +32,6 @@ import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
 import Yaifl.Model.Tag (tagObject)
-import Yaifl.Model.Kinds.AnyObject
 
 done = defaults
 
