@@ -204,6 +204,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.DisenchantmentBay2
     Yaifl.Test.Chapter3.FirstNameBasis
     Yaifl.Test.Chapter3.MidsummerDay
+    Yaifl.Test.Chapter3.Replanting
     Yaifl.Test.Chapter3.PortRoyal
     Yaifl.Test.Chapter3.PortRoyal2
     Yaifl.Test.Chapter3.PortRoyal3

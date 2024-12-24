@@ -19,6 +19,7 @@ import Yaifl (PlainWorldModel, Game)
 import Yaifl.Test.Chapter3.FirstNameBasis
 import Yaifl.Test.Chapter3.MidsummerDay
 import Yaifl.Test.Chapter3.Tamed
+import Yaifl.Test.Chapter3.Replanting
 
 c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
@@ -39,4 +40,5 @@ spec _allTenses = M.fromList
   , c3Harness ex13 -- Tamed
   , c3Harness ex14 -- Disenchantment Bay
   , c3Harness ex15 -- Disenchantment Bay 2
+  , c3Harness ex16 -- Replanting
   ]
