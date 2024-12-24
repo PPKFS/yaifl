@@ -4,6 +4,7 @@ module Yaifl.Game.Actions.Closing where
 import Yaifl.Model.Action
 import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
+import Yaifl.Model.Action
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Rules.Rulebook
@@ -32,6 +33,7 @@ closingAction :: WMWithProperty wm Openability => WithPrintingNameOfSomething wm
 closingAction = (makeAction "closing")
   { understandAs = ["close", "closing"]
   , responses = closingResponses
+  , touchableNouns = oneTouchableThing
   , parseArguments = actionOnOneThing
   , carryOutRules = makeActionRulebook "carry out closing rulebook" [ standardClose ]
   , reportRules = makeActionRulebook "report closing rulebook" [ standardReport ]

@@ -407,7 +407,6 @@ writeAfterEntry _numberOfItem itemMember = do
         when tersely $ sayTellResponse B thingWrittenAbout
       pass
 
-
 printBriefDetailsAbout ::
   Writer Text :> es
   => WithListWriting wm

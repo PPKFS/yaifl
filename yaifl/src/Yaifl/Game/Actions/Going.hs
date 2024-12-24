@@ -180,7 +180,7 @@ cantGoThatWay source mbDoorThrough fromRoom = do
       Nothing -> do
         rn <- sayText (fromRoom ^. #name)
         [saying|#{We} #{can't go} that way.|]
-        say $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
+        -- say $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
       Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
   pure $ FailedParse "Can't go that way"
 

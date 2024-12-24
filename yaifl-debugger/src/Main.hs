@@ -33,8 +33,8 @@ import Brick.Widgets.Core
 import Brick.Util (fg, on)
 
 main :: IO ()
-main = void $ M.defaultMain theApp initialState
-
+main = putStrLn "some other day"  -- void $ M.defaultMain theApp initialState
+{-}
 drawUI :: (Show a) => L.List () a -> [Widget ()]
 drawUI l = [ui]
     where
@@ -104,3 +104,4 @@ theApp =
           , M.appStartEvent = return ()
           , M.appAttrMap = const theMap
           }
+-}

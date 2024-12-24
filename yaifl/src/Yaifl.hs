@@ -86,6 +86,7 @@ import Yaifl.Game.Actions.Entering (enteringAction)
 import Yaifl.Game.Actions.Waiting
 import Yaifl.Game.Actions.Exiting (exitingAction)
 import Yaifl.Game.Actions.GettingOff (gettingOffAction)
+import Yaifl.Game.Accessibility
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -163,6 +164,7 @@ blankActions = WorldActions
   , actionProcessing = actionProcessingRules
   , turnSequence = turnSequenceRules
   , everyTurn = everyTurnRules
+  , accessibilityRules = accessibility
   }
 
 blankStores :: WorldStores s
@@ -199,6 +201,7 @@ newWorld ::
   Pointed (WMObjSpecifics wm)
   => HasLookingProperties wm
   => HasDirectionalTerms wm
+  => WMHasObjSpecifics wm
   => WMStdDirections wm
   => Eff (EffStack wm) ()
 newWorld = failHorriblyIfMissing $ do

@@ -7,6 +7,7 @@ module Yaifl.Game.ObjectSpecifics
   , addPerson
   , addContainer
   , addSupporter
+  , addBaseObjects
   ) where
 
 import Yaifl.Prelude
@@ -60,9 +61,10 @@ instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
 
 instance MayHaveProperty ObjectSpecifics Enclosing where
   propertyAT = _EnclosingSpecifics
+    `thenATraverse` (_PersonSpecifics % #carrying)
     `thenATraverse` (_ContainerSpecifics % #enclosing)
     `thenATraverse` (_SupporterSpecifics % #enclosing)
-    `thenATraverse` (_PersonSpecifics % #carrying)
+
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
   propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
@@ -240,12 +242,28 @@ addPerson ::
   -> "initialAppearance" :? WMText wm
   -> "description" :? WMText wm -- ^ Description.
   -> "carrying" :? Enclosing
+  -> "modify" :? Eff '[State (Thing wm)] ()
   -> Eff es ThingEntity
-addPerson n (Arg g) ia d (argF #carrying -> e) = addThing @wm n ia d
+addPerson n (Arg g) ia d (argF #carrying -> e) (argF #modify -> m) = addThing @wm n ia d
   ! #specifics (inj (Proxy @wm) (PersonSpecifics (Person g (fromMaybe defaultPersonEnclosing e))))
   ! #type (case g of
     Male -> ObjectKind "man"
     Female -> ObjectKind "woman"
     NonBinary -> ObjectKind "person"
     Other _ -> ObjectKind "person")
+  ! paramF #modify m
   ! done
+
+addBaseObjects ::
+  WMWithProperty wm Enclosing
+  => WMHasObjSpecifics wm
+  => AddObjects wm es
+  => Eff es ()
+addBaseObjects = do
+  v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
+  addPerson "yourself" ! #description "It's you, looking handsome as always" !
+    #gender NonBinary !
+    #modify (do
+      #objectData % #described .= Undescribed
+      #nameProperness .= Proper) ! done
+  #firstRoom .= v

@@ -30,6 +30,8 @@ data AdaptiveNarrative wm = AdaptiveNarrative
   , priorQuantity :: Int
   } deriving stock (Generic)
 
+makeFieldLabelsNoPrefix ''AdaptiveNarrative
+
 blankAdaptiveNarrative :: AdaptiveNarrative wm
 blankAdaptiveNarrative = AdaptiveNarrative
   { narrativeViewpoint = SecondPersonSingular

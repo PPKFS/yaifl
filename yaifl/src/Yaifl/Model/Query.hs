@@ -41,6 +41,7 @@ module Yaifl.Model.Query
   , getEnclosingObject
   , enclosingContains
   , getAllObjectsInEnclosing
+  , getCommonAncestor
   ) where
 
 import Yaifl.Prelude
@@ -415,6 +416,31 @@ enclosingContains e o = do
   hier <- getContainingHierarchy =<< getThing o
   return $ e `elem` hier
 
+getCommonAncestor ::
+  NoMissingObjects wm es
+  => ThingLike wm o1
+  => ThingLike wm o2
+  => o1
+  -> o2
+  -> Eff es EnclosingEntity
+getCommonAncestor t1' t2' = do
+  t1 <- getThing t1'
+  t2 <- getThing t2'
+  let actorHolder = thingContainedBy t1
+      nounHolder = thingContainedBy t2
+  if actorHolder == nounHolder
+  then return actorHolder
+  else
+    do
+      acHier <- getContainingHierarchy t1
+      nounHier <- getContainingHierarchy t2
+      -- we can cheat doing a proper lowest common ancestor. we can take one of the hierarchies
+      -- (which one is irrelevant), and find the earliest possible match in the other list
+      let commAncestor (l1h :| l1s) l2 = if l1h `elem` l2 then l1h else commAncestor
+            (case l1s of
+              [] -> error "no common ancestor"
+              x:xs -> x :| xs) l2
+      return $ commAncestor acHier nounHier
 -- My hope is that this can vanish at some point but enclosing is the weird one
 -- we want this class because we want an easier way of doing `propertyAT` for enclosing
 class EnclosingObject o where

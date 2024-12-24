@@ -34,7 +34,7 @@ enteringAction ::
   => EnteringAction wm
 enteringAction = (makeAction "entering")
   { name = "entering"
-  , understandAs = ["enter", "go in", "go into", "enter into", "get into", "get in", "get on"]
+  , understandAs = ["enter", "go in", "go into", "enter into", "get into", "get in", "get on", "sit in", "sit on"]
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
       let mbCont = getEnclosingMaybe (toAny $ fst variables)
       case mbCont of

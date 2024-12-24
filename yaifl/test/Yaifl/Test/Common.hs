@@ -18,6 +18,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import Yaifl.Model.Input
+import Yaifl.Game.ObjectSpecifics
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -67,6 +68,7 @@ defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 testHarness ::
   forall wm a.
   HasStandardProperties wm
+  => WMHasObjSpecifics wm
   => HasCallStack
   => Bool
   -> Text

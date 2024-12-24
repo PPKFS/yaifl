@@ -49,7 +49,7 @@ runAction opts uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
   mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
   case mbArgs of
     FailedParse err -> do
-      addAnnotation err
+      addAnnotation $ "Failed to parse the arguments for the action " <> (act ^. #name) <> " because " <> err
       pure (Just False)
     ConversionTo newCommand args -> rightToMaybe <$> parseAction opts args newCommand
     SuccessfulParse args -> do
@@ -114,7 +114,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
                       Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = actor, variables = (v', parsedArgs) })
               case nouns of
                 Left ex -> do
-                  addAnnotation ex
+                  addAnnotation $ "noun parsing failed because " <> ex
                   pure (Left ex)
                 Right (PluralParameter xs, parsedArgs) -> do
                   addAnnotation $ "Running a set of plural actions..." <> matched

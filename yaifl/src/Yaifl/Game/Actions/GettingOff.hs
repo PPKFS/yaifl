@@ -6,7 +6,7 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Thing ( EnclosingThing, thingContainedBy )
+import Yaifl.Model.Kinds.Thing ( thingContainedBy )
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Container
@@ -15,34 +15,43 @@ import Yaifl.Model.Kinds.Supporter
 import Yaifl.Game.Move (move)
 import Yaifl.Model.Query
 import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.AnyObject
-import Breadcrumbs
+import Yaifl.Model.Metadata
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.Verb (Tense(..))
 
 data GettingOffResponses wm
 
 type GettingOffAction wm = Action wm () ('TakesOneOf 'TakesThingParameter 'TakesNoParameter) (SupporterThing wm)
 
-gettingOffAction :: (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container, WMWithProperty wm Supporter) => GettingOffAction wm
+gettingOffAction :: forall wm. (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container, WMWithProperty wm Supporter) => GettingOffAction wm
 gettingOffAction = (makeAction "getting off")
   { name = "getting off"
-  , understandAs = ["get off"]
+  , understandAs = ["get off", "get up"]
   , matches = [("from", TakesThingParameter)]
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
       offFrom <- case fst variables of
           Left thingToExit -> return (Just thingToExit)
           Right _ -> getThingMaybe $ thingContainedBy source
       let mbS = getSupporterMaybe =<< offFrom
+      present <- (Present ==) <$> use @(AdaptiveNarrative wm) #tense
       case (offFrom, mbS) of
         (Just t, Just s) -> return $ SuccessfulParse (tagObject s t)
           {-
           if the actor is on the noun, continue the action;
           if the actor is carried by the noun, continue the action;
-          if the actor is the player:
-              say "But [we] [aren't] on [the noun] at the f story tense is present
-                  tense]moment[otherwise]time[end if]." (A);
           stop the action.
           -}
-        _ -> return $ FailedParse "can't get off a not-supporter"
+        (Just something, Nothing) -> do
+          -- if the actor is the player:
+          -- say "But [we] [aren't] on [the noun] at the f story tense is present
+          -- tense]moment[otherwise]time[end if]." (A);
+          whenPlayer source
+            [saying|But #{we} #{aren't} on {the something} at the {?if present}moment{?else}time{?end if}.|]
+          return $ FailedParse "can't get off a not-supporter"
+        (Nothing, _) -> do
+          whenPlayer source
+            [saying|But #{we} #{aren't} on anything at the {?if present}moment{?else}time{?end if}.|]
+          return $ FailedParse "can't get off nothing"
   , carryOutRules = makeActionRulebook "carry out getting off rulebook" [ standardGettingOff ]
   , reportRules = makeActionRulebook "report getting off rulebook"
     [ reportGettingOff

@@ -66,6 +66,7 @@ makeVerb x = let forms = makeVerbForms x in Verb forms (makeVerbTabulation forms
 -- even though many of these forms at used, I may as well add them for completeness sake
 -- I believe that the expansion of a verb is always in active.
 makeVerbForms :: Text -> VerbForms
+makeVerbForms "aren't" = VerbForms "aren't" "being" "was" Nothing "is" "are"
 makeVerbForms "be" = VerbForms "be" "being" "been" Nothing "is" "was"
 makeVerbForms "have" = VerbForms "have" "having" "had" Nothing "has" "had"
 makeVerbForms "do" = VerbForms "do" "doing" "done" Nothing "does" "did"
@@ -73,7 +74,8 @@ makeVerbForms "pass" = VerbForms "pass" "passing" "passed" Nothing "passes" "pas
 makeVerbForms x = VerbForms x (x <> "s") (x <> "ed") Nothing (x <> "s") (x <> "ed")
 
 makeVerbTabulation :: VerbForms -> Tabulation
-makeVerbTabulation v@VerbForms{infinitive="be"} = toBeTabulation v
+makeVerbTabulation v@VerbForms{infinitive="aren't"} = toBeTabulation True v
+makeVerbTabulation v@VerbForms{infinitive="be"} = toBeTabulation False v
 makeVerbTabulation v@VerbForms{infinitive="have"} = toHaveTabulation v
 makeVerbTabulation v@VerbForms{infinitive="do"} = toDoTabulation v
 makeVerbTabulation v@VerbForms{infinitive="be able to"} = toBeAbleToTabulation v
@@ -82,11 +84,11 @@ makeVerbTabulation x = regularVerbConjugation x
 tabulate :: Verb -> Tense -> VerbSense -> VerbPersonage -> Text
 tabulate = (`runTabulation` Active) . tabulation
 
-toBeTabulation :: VerbForms -> Tabulation
-toBeTabulation v = toHaveAndToBe v toBePresent toBePast
+toBeTabulation :: Bool -> VerbForms -> Tabulation
+toBeTabulation isAbbreviated v = toHaveAndToBe isAbbreviated v toBePresent toBePast
 
-toHaveAndToBe :: VerbForms -> (VerbPersonage -> Text) -> (VerbPersonage -> Text) -> Tabulation
-toHaveAndToBe v present past = Tabulation $ \case
+toHaveAndToBe :: Bool -> VerbForms -> (VerbPersonage -> Text) -> (VerbPersonage -> Text) -> Tabulation
+toHaveAndToBe isAbbreviated v present past = Tabulation $ \case
   -- pretty sure this is junk?
   -- Alice is carried by
   -- Alice is being?
@@ -96,7 +98,7 @@ toHaveAndToBe v present past = Tabulation $ \case
   Active -> \case
     Present -> \case
       Positive -> present
-      Negative -> \vp -> present vp #| "not"
+      Negative -> \vp -> (\x -> if isAbbreviated then (x <>"n't") else ( x #| "not")) $ present vp
     Past -> \case
       Positive -> past
       Negative -> \vp -> past vp #| "not"
@@ -121,7 +123,7 @@ toBePast = \case
 -- the lantern had had?
 
 toHaveTabulation :: VerbForms -> Tabulation
-toHaveTabulation v = toHaveAndToBe v toHavePresent (const "had")
+toHaveTabulation v = toHaveAndToBe False v toHavePresent (const "had")
 
 toHavePresent :: VerbPersonage -> Text
 toHavePresent = \case

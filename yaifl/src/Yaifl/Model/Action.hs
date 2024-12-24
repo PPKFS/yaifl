@@ -23,6 +23,8 @@ module Yaifl.Model.Action
   , makeAction
 
   , withActionInterrupt'
+
+  , oneTouchableThing
   ) where
 
 import Yaifl.Prelude hiding (Reader)
@@ -43,6 +45,7 @@ import Effectful.Error.Static
 newtype ActionProcessing wm = ActionProcessing
   (forall es resp goesWith v.
     RuleEffects wm es
+    => State (WorldActions wm) :> es
     => Refreshable wm v
     => SpanID
     -> Action wm resp goesWith v
@@ -81,6 +84,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionParameterType) v where
     { name :: Text
     , understandAs :: [Text]
     , matches :: [(Text, ActionParameterType)]
+    , touchableNouns :: Args wm v -> [Thing wm]
     , responses :: resps -> Response wm (Args wm v)
     , parseArguments :: ParseArguments wm (UnverifiedArgs wm goesWith) v
     , beforeRules :: ActionRulebook wm (Action wm resps goesWith v) v
@@ -111,6 +115,28 @@ type ActionRule wm ac v = Rule wm ((:>) (Reader ac)) (Args wm v) Bool
 data ActionInterrupt = ContinueAction | StopAction
   deriving stock (Eq, Ord, Enum, Bounded, Generic, Read, Show)
 
+data ActionPhrase (wm :: WorldModel) =
+  Interpret (InterpretAs wm)
+  | RegularAction (WrappedAction wm)
+  | OtherAction (OutOfWorldAction wm)
+  deriving stock ( Generic )
+
+-- | If we should interpret some verb as another action (possibly which then points to another interpret as)
+data InterpretAs wm = InterpretAs
+  { toParseAs :: Text
+  , withArgs :: [NamedActionParameter wm]
+  }
+
+data WorldActions (wm :: WorldModel) = WorldActions
+  { actionsMap :: Map Text (ActionPhrase wm)
+  , whenPlayBegins :: Rulebook wm Unconstrained () Bool
+  , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+  , everyTurn :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+  , actionProcessing :: ActionProcessing wm
+  , accessibilityRules :: Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
+  } deriving stock ( Generic )
+
+makeFieldLabelsNoPrefix ''WorldActions
 makeFieldLabelsNoPrefix ''Action
 
 withActionInterrupt' ::
@@ -128,12 +154,6 @@ withActionInterrupt' f = do
 actionName :: Lens' (Action wm resp goesWith v) Text
 actionName = #name
 
--- | If we should interpret some verb as another action (possibly which then points to another interpret as)
-data InterpretAs wm = InterpretAs
-  { toParseAs :: Text
-  , withArgs :: [NamedActionParameter wm]
-  }
-
 makeAction ::
   Text
   -> Action wm resp goesWith v
@@ -141,6 +161,7 @@ makeAction n = Action
   { name = n
   , understandAs = [n]
   , matches = []
+  , touchableNouns = const []
   , responses = \_ -> notImplementedResponse "no response"
   , parseArguments = ParseArguments $ const $ pure $ FailedParse "not parsed"
   , beforeRules = makeActionRulebook ("before " <> n <> " rulebook") []
@@ -157,22 +178,6 @@ makeActionRulebook ::
   -> [Rule wm ((:>) (Reader (Action wm resps goesWith v))) (Args wm v) Bool] -- ^ the list of rules.
   -> ActionRulebook wm (Action wm resps goesWith v) v
 makeActionRulebook n = Rulebook n Nothing
-
-data ActionPhrase (wm :: WorldModel) =
-  Interpret (InterpretAs wm)
-  | RegularAction (WrappedAction wm)
-  | OtherAction (OutOfWorldAction wm)
-  deriving stock ( Generic )
-
-data WorldActions (wm :: WorldModel) = WorldActions
-  { actionsMap :: Map Text (ActionPhrase wm)
-  , whenPlayBegins :: Rulebook wm Unconstrained () Bool
-  , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
-  , everyTurn :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
-  , actionProcessing :: ActionProcessing wm
-  } deriving stock ( Generic )
-
-makeFieldLabelsNoPrefix ''WorldActions
 
 actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
@@ -201,3 +206,9 @@ actionOnNothing ::
   ParseArguments wm (UnverifiedArgs wm 'TakesNoParameter) ()
 actionOnNothing = ParseArguments $ \_ ->
     return $ SuccessfulParse ()
+
+oneTouchableThing ::
+  ArgsHaveMainObject (Args wm v) (Thing wm)
+  => Args wm v
+  -> [Thing wm]
+oneTouchableThing a = one $ view argsMainObject a

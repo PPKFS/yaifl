@@ -21,7 +21,7 @@ ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorl
 disenchantmentBayWorld :: Game PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
-  _tc <- addRoom "The Cabin" ! #description
+  addRoom "The Cabin" ! #description
     [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
 a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
 vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the
@@ -35,7 +35,7 @@ A sign taped to one wall announces the menu of tours offered by the Yakutat Char
     ! #opacity Transparent
     ! #opened Closed
     ! done
-  _fr <- addThing "collection of fishing rods"
+  addThing "collection of fishing rods"
     ! #location (inThe gc)
     ! done
   b <- addSupporter "bench"

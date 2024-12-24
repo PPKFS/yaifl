@@ -6,7 +6,6 @@ module Yaifl.Game.Create.Object
   , addRoom
   , addRoom'
   , addRegion
-  , addBaseObjects
   , done
   , AddObjects
   ) where
@@ -182,17 +181,6 @@ addRoom ::
   -> "description" :? WMText wm -- ^ Description.
   -> Eff es RoomEntity
 addRoom n (argDef #description "" -> d) = addRoom' n d pass
-
-addBaseObjects ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
-  => Eff es ()
-addBaseObjects = do
-  v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
-  addThing "yourself" ! #description "It's you, looking handsome as always" ! #modify (do
-    #objectData % #described .= Undescribed
-    #nameProperness .= Proper) ! done
-  #firstRoom .= v
 
 addRegion ::
   Pointed (WMRegionData wm)

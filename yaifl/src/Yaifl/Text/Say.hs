@@ -124,11 +124,21 @@ sayVerb ::
   KnownSymbol v
   => RuleEffects wm es
   => Writer Text :> es
+  => VerbSense
+  -> SayLiteral v
+  -> Eff es ()
+sayVerb sense (SayLiteral cap) = do
+    v <- conjugateVerb sense $ makeVerb (toText $ symbolVal (Proxy @v))
+    withCapitalisation cap v
+
+sayVerb' ::
+  forall v wm es.
+  KnownSymbol v
+  => RuleEffects wm es
+  => Writer Text :> es
   => SayLiteral v
   -> Eff es ()
-sayVerb (SayLiteral cap) = do
-    v <- conjugateVerb Positive $ makeVerb (toText $ symbolVal (Proxy @v))
-    withCapitalisation cap v
+sayVerb' = sayVerb Positive
 
 instance SayableValue Int wm where
   sayTell x = tell (display x)
@@ -160,48 +170,51 @@ instance SayableValue (SayLiteral "it") wm where
     withCapitalisation cap "it"
 
 instance SayableValue (SayLiteral "see") wm where
-  sayTell = sayVerb @"see"
+  sayTell = sayVerb' @"see"
 
 instance SayableValue (SayLiteral "go") wm where
-  sayTell = sayVerb @"go"
+  sayTell = sayVerb' @"go"
 
 instance SayableValue (SayLiteral "can't") wm where
-  sayTell = sayVerb @"can't"
+  sayTell = sayVerb @"can" Negative . coerce
 
 instance SayableValue (SayLiteral "lead") wm where
-  sayTell = sayVerb @"lead"
+  sayTell = sayVerb' @"lead"
 
 instance SayableValue (SayLiteral "pass") wm where
-  sayTell = sayVerb @"pass"
+  sayTell = sayVerb' @"pass"
 
 instance SayableValue (SayLiteral "wait") wm where
-  sayTell = sayVerb @"wait"
+  sayTell = sayVerb' @"wait"
 
 instance SayableValue (SayLiteral "are") wm where
-  sayTell s = sayVerb @"be" (coerce s)
+  sayTell s = sayVerb' @"be" (coerce s)
 
 instance SayableValue (SayLiteral "can") wm where
-  sayTell s = sayVerb @"be able to" (coerce s)
+  sayTell s = sayVerb' @"be able to" (coerce s)
 
 instance SayableValue (SayLiteral "get") wm where
-  sayTell s = sayVerb @"get" (coerce s)
+  sayTell s = sayVerb' @"get" (coerce s)
 
 instance SayableValue (SayLiteral "look") wm where
-  sayTell = sayVerb @"look"
+  sayTell = sayVerb' @"look"
 
 instance SayableValue (SayLiteral "open") wm where
-  sayTell = sayVerb @"open"
+  sayTell = sayVerb' @"open"
 
 instance SayableValue (SayLiteral "close") wm where
-  sayTell = sayVerb @"close"
+  sayTell = sayVerb' @"close"
 
 instance SayableValue (SayLiteral "switch") wm where
-  sayTell = sayVerb @"switch"
+  sayTell = sayVerb' @"switch"
 
 instance SayableValue (SayLiteral "paragraphBreak") wm where
   sayTell _ = sayTell ("\n\n" :: Text)
   say _ = do
     void $ modifyBuffer (#lastMessageContext % #shouldPrintPbreak .~ True)
+
+instance SayableValue (SayLiteral "aren't") wm where
+  sayTell = sayVerb @"aren't" Negative
 
 getPlayerPronoun :: Eff es Text
 getPlayerPronoun = pure "they"

@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl
-version:       0.0.12.686
+version:       0.0.13.724
 synopsis:      Yet another interactive fiction library.
 description:   Yet another interactive fiction library.
 homepage:      https://github.com/PPKFS/yaifl
@@ -8,10 +8,10 @@ bug-reports:   https://github.com/PPKFS/yaifl/issues
 license:       MIT
 author:        Avery
 maintainer:    Avery <thecommunistduck@hotmail.co.uk>
-copyright:     2022-2023 Avery
+copyright:     2022-2024 Avery
 category:      Game Development
 build-type:    Simple
-tested-with:   GHC == 9.8.2
+tested-with:   GHC == 9.10.1
 
 source-repository head
   type:     git
@@ -161,6 +161,7 @@ library
     Yaifl.Prelude
 
     Yaifl.Game.TurnSequence
+    Yaifl.Game.Accessibility
 
   build-depends:
     , effectful-th
