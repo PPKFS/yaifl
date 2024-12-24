@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl
-version:       0.0.13.724
+version:       0.0.14.727
 synopsis:      Yet another interactive fiction library.
 description:   Yet another interactive fiction library.
 homepage:      https://github.com/PPKFS/yaifl
@@ -201,6 +201,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Bic
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.DisenchantmentBay
+    Yaifl.Test.Chapter3.DisenchantmentBay2
     Yaifl.Test.Chapter3.FirstNameBasis
     Yaifl.Test.Chapter3.MidsummerDay
     Yaifl.Test.Chapter3.PortRoyal

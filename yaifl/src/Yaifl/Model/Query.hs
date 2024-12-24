@@ -42,6 +42,8 @@ module Yaifl.Model.Query
   , enclosingContains
   , getAllObjectsInEnclosing
   , getCommonAncestor
+
+  , makeItScenery
   ) where
 
 import Yaifl.Prelude
@@ -441,6 +443,10 @@ getCommonAncestor t1' t2' = do
               [] -> error "no common ancestor"
               x:xs -> x :| xs) l2
       return $ commAncestor acHier nounHier
+
+makeItScenery :: Eff '[State (Thing wm)] ()
+makeItScenery = (#objectData % #isScenery .= True)
+
 -- My hope is that this can vanish at some point but enclosing is the weird one
 -- we want this class because we want an easier way of doing `propertyAT` for enclosing
 class EnclosingObject o where

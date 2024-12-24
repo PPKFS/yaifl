@@ -106,7 +106,7 @@ dontMentionSupporter = Rule "don't mention player's supporter in room descriptio
 
 dontMentionScenery :: LocaleParagraphAboutRule wm
 dontMentionScenery = Rule "don't mention scenery in room descriptions rule" []
-  (\(v, li@(LocaleInfo _ e _)) -> ruleGuardM (e `isKind` "scenery") $ removeFromLocale e v li)
+  (\(v, li@(LocaleInfo _ e _)) -> ruleGuard (thingIsScenery e) $ removeFromLocale e v li)
 
 offerItems :: LocaleParagraphAboutRule wm
 offerItems = notImplementedRule "offer items to writing a paragraph about rule"

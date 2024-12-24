@@ -1,4 +1,4 @@
-module Yaifl.Test.Chapter3.DisenchantmentBay where
+module Yaifl.Test.Chapter3.DisenchantmentBay2 where
 
 import Yaifl.Prelude
 
@@ -13,9 +13,10 @@ import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.Metadata
 import Yaifl.Test.Common
 import Yaifl.Model.Kinds.Object
+import Yaifl.Model.Query
 
-ex14 :: (Text, [Text], Game PlainWorldModel ())
-ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)
+ex15 :: (Text, [Text], Game PlainWorldModel ())
+ex15 = ("Disenchantment Bay 2", disenchantmentBayTestMeWith, disenchantmentBayWorld)
 
 disenchantmentBayWorld :: Game PlainWorldModel ()
 disenchantmentBayWorld = do
@@ -33,18 +34,29 @@ A sign taped to one wall announces the menu of tours offered by the Yakutat Char
     ! #openable Openable
     ! #opacity Transparent
     ! #opened Closed
+    ! #modify makeItScenery
     ! done
   addThing "collection of fishing rods"
     ! #location (inThe gc)
     ! done
   b <- addSupporter "bench"
     ! #enterable Enterable
+    ! #modify makeItScenery
     ! done
   addThing "blue vinyl cushions"
-    ! #modify (#namePlurality .= PluralNamed)
+    ! #modify (makeItScenery >> #namePlurality .= PluralNamed)
     ! #location (onThe b)
     ! done
+  mapM_ (\n -> addThing n ! #modify (makeItScenery >> #namePlurality .= PluralNamed) ! done)
+    [ "navigational instruments"
+    , "scratched windows"
+    , "radios"
+    ]
+  mapM_ (\n -> addThing n ! #modify makeItScenery ! done)
+    [ "sign"
+    , "radar display"
+    ]
   pass
 
 disenchantmentBayTestMeWith :: [Text]
-disenchantmentBayTestMeWith = ["examine case", "get rods", "open case", "get rods", "sit on bench", "take cushions", "get up"]
+disenchantmentBayTestMeWith = ["examine instruments", "x windows", "x sign", "x display", "x radios"]

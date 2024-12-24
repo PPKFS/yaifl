@@ -191,6 +191,7 @@ addContainer ::
   -> "opened" :? Opened
   -> "location" :? EnclosingEntity
   -> "portable" :? ThingPortable
+  -> "modify" :? Eff '[State (Thing wm)] ()
   -> Eff es ContainerEntity
 addContainer n ia d
   (argF #carryingCapacity -> cc)
@@ -199,13 +200,15 @@ addContainer n ia d
   (argF #openable -> o)
   (argF #opened -> od)
   (argF #location -> l)
-  (argF #portable -> p) = do
+  (argF #portable -> p)
+  (argF #modify -> m) = do
     let cs = makeContainer cc op e o od
     c <- addThing @wm n ia d
         ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
         ! #type (ObjectKind "container")
         ! paramF #location l
         ! paramF #portable p
+        ! paramF #modify m
         ! done
     pure $ tag @Container @ContainerTag cs c
 
@@ -220,15 +223,17 @@ addSupporter ::
   -> "carryingCapacity" :? Int
   -> "location" :? EnclosingEntity
   -> "enterable" :? Enterable
+  -> "modify" :? Eff '[State (Thing wm)] ()
   -> Eff es SupporterEntity
 addSupporter n ia d
-  (argF #carryingCapacity -> cc) (argF #location -> l) (argF #enterable -> e) = do
+  (argF #carryingCapacity -> cc) (argF #location -> l) (argF #enterable -> e) (argF #modify -> m) = do
     let enc = (blankEnclosing { capacity = cc <|> Just 100 })
         sup = Supporter enc (fromMaybe NotEnterable e)
     c <- addThing @wm n ia d
         ! #specifics (inj (Proxy @wm) $ SupporterSpecifics sup)
         ! #type (ObjectKind "supporter")
         ! paramF #location l
+        ! paramF #modify m
         ! done
     pure $ tag @_ @SupporterTag sup c
 
