@@ -7,6 +7,7 @@ module Yaifl.Game.ObjectSpecifics
   , addPerson
   , addContainer
   , addSupporter
+  , addBackdrop
   , addBaseObjects
   ) where
 
@@ -36,6 +37,7 @@ import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
 import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Model.Kinds.Supporter
+import Yaifl.Model.Kinds.Backdrop
 
 data ObjectSpecifics =
   NoSpecifics
@@ -46,7 +48,8 @@ data ObjectSpecifics =
   | DeviceSpecifics Device
   | PersonSpecifics Person
   | SupporterSpecifics Supporter
-  deriving stock (Eq, Show, Read)
+  | BackdropSpecifics Backdrop
+  deriving stock (Eq, Show, Read, Generic)
 
 makePrisms ''ObjectSpecifics
 
@@ -67,7 +70,8 @@ instance MayHaveProperty ObjectSpecifics Enclosing where
 
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
-  propertyAT = _DoorSpecifics % #multiLocated --`thenATraverse` (_ContainerSpecifics % containerEnclosing)
+  propertyAT = _DoorSpecifics % #multiLocated
+    `thenATraverse` (_BackdropSpecifics % coerced @_ @MultiLocated)
 
 instance MayHaveProperty ObjectSpecifics Container where
   propertyAT = castOptic _ContainerSpecifics
@@ -91,6 +95,9 @@ instance MayHaveProperty ObjectSpecifics Person where
 
 instance MayHaveProperty ObjectSpecifics Supporter where
   propertyAT = castOptic _SupporterSpecifics
+
+instance MayHaveProperty ObjectSpecifics Backdrop where
+  propertyAT = castOptic _BackdropSpecifics
 
 localST ::
   State st :> es
@@ -144,6 +151,36 @@ addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #described Described
   let tagged = tag @Door @DoorTag ds d
   addDoorToConnection tagged f b
   pure (tag ds d)
+
+addBackdrop ::
+  forall wm es.
+  WMHasObjSpecifics wm
+  => WMWithProperty wm Enclosing
+  => WMWithProperty wm MultiLocated
+  => RuleEffects wm es
+  => AddObjects wm es
+  => WMText wm -- ^ name
+  -> "initialAppearance" :? WMText wm
+  -> "description" :? WMText wm -- ^ Description.
+  -> "described" :? ThingDescribed
+  -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
+  -> "locations" :! (NonEmpty EnclosingEntity)
+  -> Eff es ThingEntity
+addBackdrop n ia des (argDef #described Described -> desc) (argDef #modify pass -> upD) (argF #locations -> Identity (l:|ls)) = do
+  d <- addThing @wm n ia des
+    ! #specifics (inj (Proxy @wm) $ BackdropSpecifics (Backdrop (MultiLocated (S.fromList $ l:ls))))
+    ! #modify (do
+      upD
+      -- A backdrop is usually scenery.
+      makeItScenery
+      #objectData % #portable .= FixedInPlace
+      #objectData % #pushableBetweenRooms .= False
+      #objectData % #described .= desc)
+    ! #type (ObjectKind "backdrop")
+    ! #location l
+    ! done
+  updateMultiLocatedObject d
+  pure d
 
 updateMultiLocatedObject ::
   WMWithProperty wm MultiLocated

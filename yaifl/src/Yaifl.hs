@@ -87,6 +87,7 @@ import Yaifl.Game.Actions.Waiting
 import Yaifl.Game.Actions.Exiting (exitingAction)
 import Yaifl.Game.Actions.GettingOff (gettingOffAction)
 import Yaifl.Game.Accessibility
+import Yaifl.Model.Kinds.Person
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -96,6 +97,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Container
   , WMWithProperty s Enterable
   , WMWithProperty s Device
+  , WMWithProperty s Person
   , HasLookingProperties s
   , WMStdDirections s
   , WMWithProperty s Door
@@ -191,7 +193,7 @@ blankMetadata = Metadata
   , kindDAG = M.map (\s  -> ObjectKindInfo s [] []) makeKindDAG
   , traceAnalysisLevel = Maximal
   , oxfordCommaEnabled = True
-  , parserMatchThreshold = 0.66
+  , parserMatchThreshold = 0.1
   , bufferedInput = []
   , mentionedThings = S.empty
   , rng = mkStdGen 69

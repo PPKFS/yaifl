@@ -39,6 +39,8 @@ import Yaifl.Model.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Input
 import Yaifl.Model.Actions.Args
+import Yaifl.Model.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
+import Yaifl.Model.HasProperty
 
 sayText ::
   SayableValue s wm
@@ -159,10 +161,33 @@ instance SayableValue (SayLiteral "we") wm where
       SecondPersonPlural -> "you"
       ThirdPersonPlural -> "they"
 
+instance WMWithProperty wm Person => SayableValue (SayLiteral "they're") wm where
+  sayTell (SayLiteral cap) = do
+    mbO <- getMentioned
+
+    case mbO of
+      Nothing -> tell "it" -- I guess...
+      Just o -> do
+        p <- isPlayer o
+        let persInfo = getPersonMaybe o
+        if
+        -- if the prior naming context is plural:
+        -- say "they";
+          | o ^. #namePlurality == PluralNamed -> withCapitalisation cap $ "they"
+        -- otherwise if the item is the player:
+          | p -> if cap then [saying|#{We}|] else [saying|#{we}|]
+          | isMale <$?> persInfo -> withCapitalisation cap $ "he"
+          | isFemale <$?> persInfo -> withCapitalisation cap $ "she"
+          | otherwise -> withCapitalisation cap $ "that"
+    [sayingTell|#{'re}|]
+
 instance SayableValue (SayLiteral "linebreak") wm where
   sayTell _ = sayTell ("\n" :: Text)
   say _ = do
     void $ modifyBuffer (#lastMessageContext % #shouldPrintLinebreak .~ True)
+
+instance SayableValue (SayLiteral "'re") wm where
+  sayTell = sayVerb' @"'re"
 
 instance SayableValue (SayLiteral "it") wm where
   sayTell (SayLiteral cap) = do

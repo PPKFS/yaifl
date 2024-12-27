@@ -74,6 +74,7 @@ makeVerbForms "pass" = VerbForms "pass" "passing" "passed" Nothing "passes" "pas
 makeVerbForms x = VerbForms x (x <> "s") (x <> "ed") Nothing (x <> "s") (x <> "ed")
 
 makeVerbTabulation :: VerbForms -> Tabulation
+makeVerbTabulation v@VerbForms{infinitive="'re"} = toBeJustEnd True v toBePresentEnd toBePast
 makeVerbTabulation v@VerbForms{infinitive="aren't"} = toBeTabulation True v
 makeVerbTabulation v@VerbForms{infinitive="be"} = toBeTabulation False v
 makeVerbTabulation v@VerbForms{infinitive="have"} = toHaveTabulation v
@@ -86,6 +87,28 @@ tabulate = (`runTabulation` Active) . tabulation
 
 toBeTabulation :: Bool -> VerbForms -> Tabulation
 toBeTabulation isAbbreviated v = toHaveAndToBe isAbbreviated v toBePresent toBePast
+
+
+toBeJustEnd :: Bool -> VerbForms -> (VerbPersonage -> Text) -> (VerbPersonage -> Text) -> Tabulation
+toBeJustEnd isAbbreviated v present past = Tabulation $ \case
+  -- pretty sure this is junk?
+  -- Alice is carried by
+  -- Alice is being?
+  -- Alice was being?
+  -- but let's try it anyway
+  Passive -> \vs t vp -> tabulate toBe vs t vp #| pastParticiple v
+  Active -> \case
+    Present -> \case
+      Positive -> present
+      Negative -> \vp -> (\x -> if isAbbreviated then (x <>"n't") else ( x #| "not")) $ present vp
+    Past -> \case
+      Positive -> past
+      Negative -> \vp -> past vp #| "not"
+    Perfect -> \_vs _vp -> "have" #| pastParticiple v
+    PastPerfect -> \_vs _vp -> "vargl" #| pastParticiple v
+    Future -> \case
+      Positive -> const $ "will" #| infinitive v
+      Negative -> const $ "will not" #| infinitive v
 
 toHaveAndToBe :: Bool -> VerbForms -> (VerbPersonage -> Text) -> (VerbPersonage -> Text) -> Tabulation
 toHaveAndToBe isAbbreviated v present past = Tabulation $ \case
@@ -113,6 +136,12 @@ toBePresent = \case
   FirstPersonSingular -> "am"
   ThirdPersonSingular -> "is"
   _ -> "are"
+
+toBePresentEnd :: VerbPersonage -> Text
+toBePresentEnd = \case
+  FirstPersonSingular -> "'m"
+  ThirdPersonSingular -> "'s"
+  _ -> "'re"
 
 toBePast :: VerbPersonage -> Text
 toBePast = \case

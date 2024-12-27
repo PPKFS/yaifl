@@ -23,7 +23,7 @@ import qualified Data.IntMap as IM
 newtype Store a = Store
   { unStore :: EM.EnumMap Entity a
   } deriving stock (Show, Generic)
-    deriving newtype (Eq, Ord, Read, Foldable)
+    deriving newtype (Eq, Ord, Read, Foldable, Functor)
 
 -- | A store with no items.
 emptyStore :: Store a
@@ -49,6 +49,9 @@ alterNewtypeEMF upd k unwrap wrap' m = wrap' <$> alterEMF upd k (unwrap m)
 
 instance At (Store a) where
   at k = lensVL $ \f -> alterNewtypeEMF f k unStore Store
+
+instance Traversable Store where
+  sequenceA (Store s) = Store <$> sequenceA s
 
 type instance IxValue (Store a) = a
 type instance Index (Store a) = Entity

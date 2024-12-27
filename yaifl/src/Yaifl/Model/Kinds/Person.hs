@@ -26,3 +26,13 @@ defaultPersonEnclosing = Enclosing
 
 makeFieldLabelsNoPrefix ''Person
 makeSpecificsWithout [] ''Person
+
+isMale ::
+  Person
+  -> Bool
+isMale = (== Male) . gender
+
+isFemale ::
+  Person
+  -> Bool
+isFemale = (== Female) . gender

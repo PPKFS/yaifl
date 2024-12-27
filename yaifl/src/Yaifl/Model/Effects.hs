@@ -61,9 +61,9 @@ data ObjectUpdate (wm :: WorldModel) :: Effect where
 
 -- | Effect for traversing all objects in the world.
 data ObjectTraverse (wm :: WorldModel) :: Effect where
-  TraverseThings :: (Thing wm -> m (Maybe (Thing wm))) -> ObjectTraverse wm m ()
-  TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectTraverse wm m ()
-  TraverseRegions :: (Region wm -> m (Maybe (Region wm))) -> ObjectTraverse wm m ()
+  TraverseThings :: (Thing wm -> m (Maybe (Thing wm))) -> ObjectTraverse wm m [Thing wm]
+  TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectTraverse wm m [Room wm]
+  TraverseRegions :: (Region wm -> m (Maybe (Region wm))) -> ObjectTraverse wm m [Region wm]
 
 makeEffect ''ObjectLookup
 makeEffect ''ObjectUpdate
@@ -73,7 +73,7 @@ traverseThings_ ::
   ObjectTraverse wm :> es
   => (Thing wm -> Eff es (Maybe (Thing wm)))
   -> Eff es ()
-traverseThings_ f = traverseThings (\t -> f t >> return Nothing)
+traverseThings_ f = void $ traverseThings (\t -> f t >> return Nothing)
 
 -- | Error payload for when an object is not present in the world.
 -- However, most places currently just throw instead of doing any kind of error recovery...

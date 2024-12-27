@@ -118,6 +118,7 @@ library
 
     Yaifl.Model.Kinds.Animal
     Yaifl.Model.Kinds.AnyObject
+    Yaifl.Model.Kinds.Backdrop
     Yaifl.Model.Kinds.Container
     Yaifl.Model.Kinds.Device
     Yaifl.Model.Kinds.Direction
@@ -202,6 +203,7 @@ test-suite yaifl-test
     Yaifl.Test.Chapter3.Common
     Yaifl.Test.Chapter3.DisenchantmentBay
     Yaifl.Test.Chapter3.DisenchantmentBay2
+    Yaifl.Test.Chapter3.DisenchantmentBay4
     Yaifl.Test.Chapter3.FirstNameBasis
     Yaifl.Test.Chapter3.MidsummerDay
     Yaifl.Test.Chapter3.Replanting

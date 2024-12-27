@@ -14,9 +14,12 @@ import Yaifl.Model.Query (getEnclosingMaybe)
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Tag
 import Yaifl.Model.Entity
+import Yaifl.Model.Metadata
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Model.Kinds.Person
 
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)
-takingAction :: WMWithProperty wm Enclosing => WithPrintingNameOfSomething wm => TakingAction wm
+takingAction :: WMWithProperty wm Person => WMWithProperty wm Enclosing => WithPrintingNameOfSomething wm => TakingAction wm
 takingAction = (makeAction "taking")
   { name = "taking"
   , understandAs = ["take", "get", "grab"]
@@ -65,8 +68,12 @@ cantTakeWhatYoureInside = notImplementedRule "cantTakeWhatYoureInside rule"
 cantTakeWhatsAlreadyTaken :: TakingRule wm
 cantTakeWhatsAlreadyTaken = notImplementedRule "cantTakeWhatsAlreadyTaken rule"
 
-cantTakeScenery :: TakingRule wm
-cantTakeScenery = notImplementedRule "cantTakeScenery rule"
+cantTakeScenery :: WMWithProperty wm Person => TakingRule wm
+cantTakeScenery = makeRule "can't take scenery" [ Precondition (pure "only scenery") (pure . thingIsScenery . variables)] $ \args -> do
+  whenPlayer (source args) $ do
+    regarding (Just $ variables args)
+    [saying|#{They're} hardly portable.|]
+  return (Just False)
 
 cantTakeFixedInPlace :: TakingRule wm
 cantTakeFixedInPlace = notImplementedRule "cantTakeFixedInPlace rule"

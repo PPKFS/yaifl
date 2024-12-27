@@ -308,7 +308,7 @@ findObjectsFrom ::
   -> Bool
   -> Eff es (Either Text (Either [AnyObject wm] (AnyObject wm)))
 findObjectsFrom t allItems considerAmbiguity = do
-  let phraseSet = S.fromList . words $ t
+  let phraseSet = S.delete "the" . S.fromList . words $ t
   -- the scores here are likelihood that it's matching as a singular or part of a plural
   scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems
   threshold <- use @Metadata #parserMatchThreshold

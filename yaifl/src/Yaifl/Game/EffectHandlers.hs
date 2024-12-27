@@ -103,19 +103,22 @@ runTraverseAsLookup ::
 runTraverseAsLookup = interpret $ \env -> \case
   TraverseThings f -> do
     m <- use $ #stores % #things
-    mapM_ (\aT -> do
+    toList <$> mapM (\aT -> do
       r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
-      whenJust r setThing) m
+      whenJust r setThing
+      return (fromMaybe aT r)) m
   TraverseRooms f -> do
     m <- use $ #stores % #rooms
-    mapM_ (\aT -> do
+    toList <$> mapM (\aT -> do
       r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
-      whenJust r setRoom) m
+      whenJust r setRoom
+      return (fromMaybe aT r)) m
   TraverseRegions f -> do
     m <- use $ #stores % #regions
-    mapM_ (\aT -> do
+    toList <$> mapM (\aT -> do
       r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
-      whenJust r setRegion) m
+      whenJust r setRegion
+      return (fromMaybe aT r)) m
 
 runQueryAsLookup ::
   HasCallStack

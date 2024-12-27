@@ -14,7 +14,7 @@ import Yaifl.Text.ResponseCollection
 import Yaifl.Model.Rules.RuleEffects
 
 import qualified Data.Text as T
-import Yaifl.Text.AdaptiveNarrative
+
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import Yaifl.Model.Input
@@ -122,3 +122,6 @@ updateNarrative p t w = w & #adaptiveNarrative % #narrativeViewpoint .~ p & #ada
 
 readTraceId :: IO TraceID
 readTraceId = TraceID <$> readFileBS "traceid.temp"
+
+fromI7TestMe :: Text -> [Text]
+fromI7TestMe = map T.strip . T.splitOn "/"
