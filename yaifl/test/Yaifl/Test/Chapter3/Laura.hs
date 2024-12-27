@@ -1,4 +1,4 @@
-module Yaifl.Test.Chapter3.DisenchantmentBay4 where
+module Yaifl.Test.Chapter3.Laura where
 
 import Yaifl.Prelude
 
@@ -20,11 +20,11 @@ import Yaifl.Model.Kinds.Room
 import qualified Data.List.NonEmpty as NE
 
 ex18 :: (Text, [Text], Game PlainWorldModel ())
-ex18 = ("Disenchantment Bay 4", disenchantmentBayTestMeWith, disenchantmentBayWorld)
+ex18 = ("Laura", lauraTestMeWith, lauraWorld)
 
-disenchantmentBayWorld :: Game PlainWorldModel ()
-disenchantmentBayWorld = do
-  setTitle "Disenchantment Bay"
+lauraWorld :: Game PlainWorldModel ()
+lauraWorld = do
+  setTitle "Laura"
   addRoom "The Cabin" ! #description
     [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
 a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
@@ -68,5 +68,5 @@ A sign taped to one wall announces the menu of tours offered by the Yakutat Char
 
   pass
 
-disenchantmentBayTestMeWith :: [Text]
-disenchantmentBayTestMeWith = fromI7TestMe "examine sign / examine glacier / examine instruments / examine windows / examine radar / examine radios / take the cushions / take the glacier"
+lauraTestMeWith :: [Text]
+lauraTestMeWith = fromI7TestMe "examine sign / examine glacier / examine instruments / examine windows / examine radar / examine radios / take the cushions / take the glacier"

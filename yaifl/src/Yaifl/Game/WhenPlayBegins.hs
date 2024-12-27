@@ -17,7 +17,6 @@ import Yaifl.Model.ObjectLike
 import Yaifl.Model.Query ( getCurrentPlayer, getLocation, isVoid )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.Rules.Run ( failRuleWithError )
 import Yaifl.Text.Print ( Print, setStyle, printText )
 
 whenPlayBeginsName :: Text
