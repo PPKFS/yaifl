@@ -81,7 +81,7 @@ data Metadata = Metadata
   , roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
   , globalTime :: Timestamp -- ^ See `Timestamp`.
   , darknessWitnessed :: Bool -- ^ Whether the player has seen the description of a dark room.
-  , currentPlayer :: TaggedEntity ThingTag -- ^ The ID of the current player.
+  , currentPlayer :: TaggedEntity PersonTag -- ^ The ID of the current player.
   , currentStage :: CurrentStage -- ^ See `CurrentStage`.
   , previousRoom :: TaggedEntity RoomTag -- ^ The last room that was added during construction (to implicitly place new objects).
   , firstRoom :: TaggedEntity RoomTag -- ^ The starting room.

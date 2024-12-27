@@ -62,7 +62,7 @@ visibilityCount ::
 visibilityCount = length . view #visibilityLevels
 
 instance Refreshable wm (LookingActionVariables wm) where
-  refreshVariables av = do
+  refresh av = do
     lf <- getObject (lookingFrom av)
     vls <- mapM getObject (visibilityLevels av)
     return $ av { lookingFrom = lf, visibilityLevels = vls }

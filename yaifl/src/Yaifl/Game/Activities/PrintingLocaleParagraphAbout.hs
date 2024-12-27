@@ -26,6 +26,7 @@ import Yaifl.Text.ListWriter
 import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
 import Yaifl.Model.Query
+import Yaifl.Model.Tag
 
 setLocalePriority ::
   Thing s
@@ -142,7 +143,7 @@ describeOnMentionedSupporters ::
 describeOnMentionedSupporters = Rule "describe what's on mentioned supporters in room descriptions rule" []
   (\(v, li@(LocaleInfo _ e isMentioned)) ->
     forThing e $ \thing -> do
-      enc <- view (#objectData % #containedBy) <$> getPlayer
+      enc <- thingContainedBy . getTaggedObject <$> getPlayer
       -- if the item is mentioned and the item is not undescribed and the item is
       -- not scenery and the item does not enclose the player:
       ruleGuard

@@ -31,11 +31,19 @@ data ExaminingResponses =
 newtype ExaminingTarget wm = ET { unwrapTarget :: Either (WMDirection wm) (Thing wm) }
   deriving stock (Generic)
 
+instance Refreshable wm (ExaminingTarget wm) where
+  refresh a@(ET (Left _)) = pure a
+  refresh (ET (Right t)) = refreshThing t >>= \x -> return (ET (Right x))
+
 data ExaminingActionVariables wm = EAV
   { examiningSubject :: ExaminingTarget wm
   , examiningTextPrinted :: Bool
   } deriving stock (Generic)
 
+instance Refreshable wm (ExaminingActionVariables wm) where
+  refresh eav = EAV
+    <$> refresh (examiningSubject eav)
+    <*> pure (examiningTextPrinted eav)
 makeFieldLabelsNoPrefix ''ExaminingActionVariables
 makeFieldLabelsNoPrefix ''ExaminingTarget
 

@@ -90,7 +90,7 @@ processRuleList rbSpan skipParagraphBreaks (Rule{..} : xs) args = do
     Left _ -> processRuleList rbSpan skipParagraphBreaks xs args
     Right (v, res) -> do
       whenJust v (\v' -> addAnnotationTo (Just rbSpan) $ "Updated rulebook variables to " <> display v')
-      newArgs <- refreshVariables $ fromMaybe args v
+      newArgs <- refresh $ fromMaybe args v
       case res of
         Nothing -> processRuleList rbSpan skipParagraphBreaks xs newArgs
         Just r -> do

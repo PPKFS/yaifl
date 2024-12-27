@@ -22,6 +22,8 @@ module Yaifl.Model.Entity
   , EnclosingEntity
   , DoorTag
   , DoorEntity
+  , PersonTag
+  , PersonEntity
   ) where
 
 import Yaifl.Prelude
@@ -73,6 +75,8 @@ data EnclosingTag
 -- | Phantom type for tagging doors.
 data DoorTag
 
+data PersonTag
+
 -- | Shorthand for enclosing entities.
 type EnclosingEntity = TaggedEntity EnclosingTag
 -- | Shorthand for room entities.
@@ -81,3 +85,5 @@ type RoomEntity = TaggedEntity RoomTag
 type ThingEntity = TaggedEntity ThingTag
 -- | Shorthand for door entities.
 type DoorEntity = TaggedEntity DoorTag
+
+type PersonEntity = TaggedEntity PersonTag

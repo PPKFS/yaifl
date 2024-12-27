@@ -135,7 +135,7 @@ whenPlayerIsIn e = Precondition
       e' <- getObject e
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = const $ do
-      hierarchy <- getPlayer >>= getContainingHierarchy
+      hierarchy <- getPlayer' >>= getContainingHierarchy
       pure $ elem (toTag e) hierarchy
   }
 

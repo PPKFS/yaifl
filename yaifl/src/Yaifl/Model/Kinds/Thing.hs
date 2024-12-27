@@ -10,6 +10,7 @@ module Yaifl.Model.Kinds.Thing
   , Thing(..)
   , tagThing
   , EnclosingThing
+  , TaggedPerson
   , defaultPlayerID
   , thingIsLit
   , thingIsWorn
@@ -92,12 +93,16 @@ instance HasID (Thing wm) where
 
 -- | The player who is created at the start of the game. This can change (whereas e.g. the Void changing makes no
 -- sense) which is why this is named slightly differently.
-defaultPlayerID :: TaggedEntity ThingTag
+defaultPlayerID :: TaggedEntity PersonTag
 defaultPlayerID = unsafeTagEntity $ Entity 1
 
 type EnclosingThing wm = TaggedObject (Thing wm) EnclosingTag
 
 instance Taggable (Thing wm) ThingTag
+
+type TaggedPerson wm = TaggedObject (Thing wm) PersonTag
+instance TaggedAs (TaggedPerson wm) EnclosingTag where
+  toTag = coerceTag @_ @EnclosingTag . fst . unTagObject
 
 -- | Tag a thing entity.
 tagThing ::

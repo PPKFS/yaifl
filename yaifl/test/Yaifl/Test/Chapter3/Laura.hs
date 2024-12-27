@@ -18,55 +18,30 @@ import Yaifl.Model.Effects (traverseRooms)
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Room
 import qualified Data.List.NonEmpty as NE
+import Yaifl.Model.Kinds (isNowCarriedBy)
+import Yaifl.Model.Kinds.Person
 
-ex18 :: (Text, [Text], Game PlainWorldModel ())
-ex18 = ("Laura", lauraTestMeWith, lauraWorld)
+ex19 :: (Text, [Text], Game PlainWorldModel ())
+ex19 = ("Laura", lauraTestMeWith, lauraWorld)
 
 lauraWorld :: Game PlainWorldModel ()
 lauraWorld = do
   setTitle "Laura"
-  addRoom "The Cabin" ! #description
-    [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
-a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
-vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the
-wall contains several fishing rods.
+  addRoom "City of Angels" ! done
 
-Scratched windows offer a view of the surrounding bay, and there is a door south to the deck.
-A sign taped to one wall announces the menu of tours offered by the Yakutat Charter Boat Company.|]
-
-  gc <- addContainer "glass case"
-    ! #openable Openable
-    ! #opacity Transparent
-    ! #opened Closed
-    ! #modify makeItScenery
+  -- this one is made very easy because we don't have natural english problems
+  ip <- addThing "incriminating photograph of a woman with blonde hair" ! done
+  dr <- addThing "drawing of a man with brown eyes" !
+    #modify (do
+      pass
+      )
     ! done
-  addThing "collection of fishing rods"
-    ! #location (inThe gc)
-    ! done
-  b <- addSupporter "bench"
-    ! #enterable Enterable
-    ! #modify makeItScenery
-    ! done
-  addThing "blue vinyl cushions"
-    ! #modify (makeItScenery >> #namePlurality .= PluralNamed)
-    ! #location (onThe b)
-    ! done
-  mapM_ (\(n, d) -> addThing n ! #description d ! #modify (makeItScenery >> #namePlurality .= PluralNamed) ! done)
-    [ ("navigational instruments", "Knowing what they do is the Captain's job.")
-    , ("scratched windows", "They're a bit the worse for wear, but you can still get an impressive view of the glacier through them. There were whales earlier, but they're gone now.")
-    , ("radios", "With any luck you will not need to radio for help, but it is reassuring that these things are here.")
-    ]
-  mapM_ (\(n, d) -> addThing n ! #description d ! #modify makeItScenery ! done)
-    [ ("sign", "You can get half-day and full-day sight-seeing tours, and half-day and full-day fishing trips.")
-    , ("radar display", "Apparently necessary to avoid the larger icebergs.")
-    ]
-  allRooms <- traverseRooms (const (return Nothing))
-  case allRooms of
-    [] -> error "impossible; traverseRooms is broken"
-    r:rs -> addBackdrop "view of the Malaspina glacier" ! #description "The Malaspina glacier covers much of the nearby slope, and -- beyond it -- an area as large as Rhode Island."
-              ! #locations (NE.map (coerceTag . tagRoom) $ r :| rs) ! done
-
+  p <- getPlayer
+  ip `isNowCarriedBy` p
+  dr `isNowCarriedBy` p
   pass
 
 lauraTestMeWith :: [Text]
-lauraTestMeWith = fromI7TestMe "examine sign / examine glacier / examine instruments / examine windows / examine radar / examine radios / take the cushions / take the glacier"
+lauraTestMeWith = fromI7TestMe [wrappedText|x photograph / x incriminating photograph of a woman with blonde hair
+/ x hair / x blonde / x woman with blonde hair / x incriminating photograph of a woman / x drawing / x man / x of
+/ x drawing of man / x drawing of a man / x drawing of a man with brown eyes / x drawing of a brown-eyed man / x brown eyes|]

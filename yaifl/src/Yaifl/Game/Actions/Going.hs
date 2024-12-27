@@ -52,6 +52,14 @@ data GoingActionVariables wm = GoingActionVariables
   , thingGoneWith :: Maybe (Thing wm)
   } deriving stock ( Generic )
 
+instance Refreshable wm (GoingActionVariables wm) where
+  refresh GoingActionVariables{..} = GoingActionVariables
+    <$> refresh roomGoneFrom
+    <*> refresh roomGoneTo
+    <*> pure doorGoneThrough
+    <*> refresh vehicleGoneBy
+    <*> refresh thingGoneWith
+
 data GoingResponses = GR ()
 
 type GoingAction wm = Action wm GoingResponses ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter)) (GoingActionVariables wm)

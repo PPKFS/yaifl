@@ -84,11 +84,11 @@ usePlayersHoldallIfNeeded = notImplementedRule "usePlayersHoldallIfNeeded rule"
 cantExceedCarryingCapacity :: TakingRule wm
 cantExceedCarryingCapacity = notImplementedRule "cantExceedCarryingCapacity rule"
 
-standardTakingRule :: WMWithProperty wm Enclosing => TakingRule wm
+standardTakingRule :: WMWithProperty wm Person => WMWithProperty wm Enclosing => TakingRule wm
 standardTakingRule = makeRule "standard taking rule" [] $ \args -> do
-  case getEnclosingMaybe (toAny $ source args) of
+  case getPersonMaybe (source args) of
     Nothing -> error $ "was not able to take something: " <> (display (source args))
-    Just x -> move (variables args) (tagObject @Enclosing @EnclosingTag x (source args))
+    Just x -> (variables args) `isNowCarriedBy` (tagPersonObject x $ source args)
   rulePass
 
 standardReportTakingRule :: WithPrintingNameOfSomething wm => TakingRule wm

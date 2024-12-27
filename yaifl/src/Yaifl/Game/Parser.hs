@@ -111,7 +111,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
                       Nothing -> do
                         addAnnotation $ (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
                         return $ Left (("Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)) :: Text)
-                      Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = actor, variables = (v', parsedArgs) })
+                      Just v' -> Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = getTaggedObject actor, variables = (v', parsedArgs) })
               case nouns of
                 Left ex -> do
                   addAnnotation $ "noun parsing failed because " <> ex
@@ -312,16 +312,19 @@ findObjectsFrom t allItems considerAmbiguity = do
   -- the scores here are likelihood that it's matching as a singular or part of a plural
   scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems
   threshold <- use @Metadata #parserMatchThreshold
-  let singularMatches = filter ((> threshold) . fst . snd) scores
-  let pluralMatches = filter ((> threshold) . snd . snd) scores
+  let singularMatches = sortOn ((1-) . fst . snd) $ filter ((> threshold) . fst . snd) scores
+  let pluralMatches = sortOn ((1-) . snd . snd) $ filter ((> threshold) . snd . snd) scores
   case (singularMatches, pluralMatches) of
     ([], []) -> pure $ Left $ "I can't see anything called \"" <> t <> "\""
     -- just one singular thing
     ([x], []) -> pure . Right . Right $ toAny (fst x)
     ([], xs) -> pure . Right . Left $ map (toAny @wm . fst) xs
-    (xs, []) -> if considerAmbiguity
-      then handleAmbiguity (map fst xs)
-      else pure $ Left "I still didn't know what you meant"
+    (x@(x1:x2:_), [])
+      | ((x1 ^. _2 % _1) == (x2 ^. _2 % _1)) ->
+          if considerAmbiguity
+          then handleAmbiguity (map fst x)
+          else pure $ Left "I still didn't know what you meant"
+    (x1:_xs, []) -> pure . Right . Right $ toAny (fst x1)
     (_x, _xs) -> pure $ Left "I saw both a single thing and plural things that could be that"
 
 handleAmbiguity ::

@@ -67,7 +67,7 @@ regardingThePlayer ::
   => NoMissingObjects wm es
   => Eff es ()
 regardingThePlayer = do
-  p <- getPlayer @wm
+  p <- getPlayer' @wm
   regarding $ Just $ toAny p
 
 getMentioned ::

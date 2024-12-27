@@ -1,6 +1,7 @@
 module Yaifl.Model.Query
   ( -- * Types
   ObjectLike(..)
+  , Refreshable(..)
   -- * Missing Objects
   , failHorriblyIfMissing
 
@@ -36,7 +37,7 @@ module Yaifl.Model.Query
   , getEnclosing
   , setEnclosing
   , EnclosingObject(..)
-  , getPlayer
+  , getPlayer'
   , getDescribableContents
   , getEnclosingObject
   , enclosingContains
@@ -67,7 +68,45 @@ import Yaifl.Model.Kinds.Region
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Enclosing
 import Effectful.Error.Static (Error, throwError)
+import Yaifl.Model.Store
+import Data.Bitraversable
 
+-- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the
+-- refresh function is called to replace and update the objects
+class Refreshable wm av where
+  refresh :: forall es. (NoMissingObjects wm es) => av -> Eff es av
+
+instance {-# OVERLAPPING #-} Refreshable wm o => Refreshable wm (TaggedObject o tag) where
+  refresh (TaggedObject (i, o)) = TaggedObject . (i, ) <$> refresh o
+
+instance (Refreshable wm a, Refreshable wm b) => Refreshable wm (a, b) where
+  refresh (a, b) = refresh a >>= \a' -> refresh b >>= return . (a', )
+
+instance Refreshable wm a => Refreshable wm (Store a) where
+  refresh = mapM refresh
+
+instance Refreshable wm a => Refreshable wm (Maybe a) where
+  refresh t = case t of
+    Nothing -> return t
+    Just x -> Just <$> refresh x
+
+instance (Refreshable wm b, Refreshable wm a) => Refreshable wm (Either a b) where
+  refresh = bimapM refresh refresh
+
+instance Refreshable wm Int where
+  refresh = pure
+
+instance Refreshable wm (Thing wm) where
+  refresh t = getThing (tagThing t)
+
+instance Refreshable wm (AnyObject wm) where
+  refresh t = getObject (getID t)
+
+instance Refreshable wm () where
+  refresh = const pass
+
+instance Refreshable wm (Room wm) where
+  refresh r = getRoom (tagRoom r)
 getThingMaybe ::
   ObjectLookup wm :> es
   => WithMetadata es
@@ -311,7 +350,6 @@ roomsInRegion r = do
   rs <- mapM roomsInRegion subRegs
   pure $ S.unions $ rooms r : rs
 
-
 getPropertyOrThrow ::
   HasID i
   => Error MissingObject :> es
@@ -390,17 +428,17 @@ getEnclosingObject e = do
   let enc = getEnclosing e o
   pure (o, enc)
 
-getPlayer ::
+getPlayer' ::
   NoMissingObjects wm es
   => Eff es (Thing wm)
-getPlayer = use #currentPlayer >>= getThing
+getPlayer' = use #currentPlayer >>= getThing
 
 getDescribableContents ::
   NoMissingObjects wm es
   => Enclosing
   -> Eff es [Thing wm]
 getDescribableContents e = do
-  p <- getPlayer
+  p <- getPlayer'
   catMaybes <$> mapM (\i -> do
     item <- getThing i
     if thingIsScenery item || p `objectEquals` i {- || todo: falsely unoccupied -}

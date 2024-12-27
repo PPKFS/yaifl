@@ -98,7 +98,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionParameterType) v where
 
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
-    GoesWith goesWith
+    (Refreshable wm v, GoesWith goesWith)
     => Action wm resp goesWith v
     -> WrappedAction wm
 
@@ -190,6 +190,7 @@ getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $ [ befo
 -- | Add an action to the registry.
 addAction ::
   (State (WorldActions wm) :> es, Breadcrumbs :> es)
+  => Refreshable wm v
   => GoesWith goesWith
   => Action wm resp goesWith v
   -> Eff es ()

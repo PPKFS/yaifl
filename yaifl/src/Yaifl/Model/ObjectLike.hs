@@ -81,6 +81,10 @@ instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
 instance ThingLike wm (TaggedEntity ThingTag) where
   getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
 
+instance ThingLike wm (TaggedEntity PersonTag) where
+  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
+
+
 instance RoomLike wm (TaggedEntity RoomTag) where
   getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
 

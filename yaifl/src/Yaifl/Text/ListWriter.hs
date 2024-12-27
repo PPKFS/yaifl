@@ -34,7 +34,6 @@ import Yaifl.Text.Say
 
 import qualified Data.EnumSet as ES
 import qualified Data.Text as T
-import Breadcrumbs
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm
@@ -59,6 +58,11 @@ instance Display (WMText wm) => Display (ListWritingItem wm) where
   displayBuilder (SingleObject o) = displayBuilder o
   displayBuilder _ = "some list items"
 
+instance Refreshable wm (ListWritingItem wm) where
+  refresh = \case
+    SingleObject t -> SingleObject <$> refreshThing t
+    GroupedItems ls -> GroupedItems <$> mapM refresh ls
+    EquivalenceClass eq -> EquivalenceClass <$> mapM refreshThing eq
 data ListWritingParameters (wm :: WorldModel) = ListWritingParameters
   { contents :: [ListWritingItem wm]
   , initialDepth :: Int
@@ -107,6 +111,11 @@ instance Display (ListWritingParameters wm) where
 
 instance Display (ListWritingVariables wm) where
   displayBuilder = pure ""
+
+instance Refreshable wm (ListWritingParameters wm) where
+  refresh lwp = do
+    contents <- mapM refresh (contents lwp)
+    return $ lwp { contents }
 
 blankListWritingParameters :: [Thing wm] -> ListWritingParameters wm
 blankListWritingParameters c = ListWritingParameters

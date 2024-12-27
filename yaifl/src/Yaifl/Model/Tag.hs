@@ -85,6 +85,8 @@ instance TaggedAs (TaggedEntity RoomTag) EnclosingTag where
 instance TaggedAs (TaggedEntity DoorTag) ThingTag where
   toTag = coerce
 
+instance Taggable (TaggedEntity PersonTag) EnclosingTag
+
 -- | If we can tag a `TaggedEntity a` as a @b@, we can just coerce the entity
 -- rather than passing it twice.
 coerceTag ::

@@ -54,7 +54,7 @@ data Precondition wm v = Precondition
 forPlayer :: Precondition wm (Args wm v)
 forPlayer = Precondition (pure "actor is the player") $ \v -> do
   p <- getPlayer
-  pure $ p == v ^. #source
+  pure $ p `objectEquals` (v ^. #source)
 
 forPlayer' :: [Precondition wm (Args wm v)]
 forPlayer' = [forPlayer]
