@@ -140,7 +140,7 @@ examineContainers = Rule "examine containers rule" forPlayer' $ \a@Args{..} -> d
     -- if the noun is closed and the noun is opaque, make no decision;
     flip (maybe (return (Nothing, Nothing))) (getContainerMaybe =<< o) $ \cont -> do
       p <- getPlayer
-      playerInObject <- enclosingContains (tag (cont ^. #enclosing) obj) p
+      playerInObject <- enclosingContains (tagEntity (cont ^. #enclosing) obj) p
       if isOpaqueClosedContainer cont then return (Nothing, Nothing) else do
         -- if something described which is not scenery is in the noun and something which
         -- is not the player is in the noun and the noun is not falsely-unoccupied:

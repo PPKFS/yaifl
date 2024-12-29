@@ -4,7 +4,6 @@ module Yaifl.Game.Actions.Closing where
 import Yaifl.Model.Action
 import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.Action
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Rules.Rulebook

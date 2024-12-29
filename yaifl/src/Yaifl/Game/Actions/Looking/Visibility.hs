@@ -18,11 +18,9 @@ import Yaifl.Model.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as DES
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Metadata
-import Yaifl.Text.Say
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

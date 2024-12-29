@@ -17,8 +17,6 @@ import Yaifl.Model.Query
 import Yaifl.Model.Effects (traverseRooms)
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Room
-import qualified Data.List.NonEmpty as NE
-import Yaifl.Model.Kinds (isNowCarriedBy)
 import Yaifl.Model.Kinds.Person
 
 ex19 :: (Text, [Text], Game PlainWorldModel ())

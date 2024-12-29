@@ -21,12 +21,13 @@ import qualified Data.EnumSet as ES
 import Yaifl.Model.Kinds.AnyObject
 
 move ::
+  forall l wm es.
   Breadcrumbs :> es
   => State Metadata :> es
   => ObjectQuery wm es
   => Display (WMText wm)
   => WMWithProperty wm Enclosing
-  => EnclosingObject l
+  => IsEnclosingObject l
   => ObjectLike wm l
   => Thing wm
   -> l
@@ -35,16 +36,17 @@ move objectToMove oLoc = failHorriblyIfMissing moveBlock
   where
     moveBlock = withSpan' "move" "" $ do
       objectToMove' <- refreshThing objectToMove
-      let loc :: Enclosing = oLoc ^. enclosingL
+      let loc :: Enclosing = getEnclosing oLoc
       let (c :: EnclosingEntity) = thingContainedBy objectToMove'
       c' <- getObject c
       oLoc' <- getObject oLoc
-      let (oldLocEnc :: Enclosing) = getEnclosing c c'
+      let (taggedEnc :: TaggedAnyEnclosing wm) = tagObject c c'
+      let (oldLocEnc :: Enclosing) = getEnclosing taggedEnc
       addTag "object to move" (display $ objectToMove')
       addTag "current location" (display $ c')
       addTag "new location" (display $ oLoc')
       modifySpan (\s -> s { _spanName = display (objectToMove' ^. #name) })
-      let (movedObj, oldLocation, newLocation) = moveObjects (tag oldLocEnc (getID oLoc')) objectToMove' oldLocEnc loc
+      let (movedObj, oldLocation, newLocation) = moveObjects (tagEntity oldLocEnc (getID oLoc')) objectToMove' oldLocEnc loc
       setThing movedObj
       setEnclosing c' oldLocation
       setEnclosing oLoc' newLocation
@@ -54,9 +56,9 @@ move objectToMove oLoc = failHorriblyIfMissing moveBlock
 moveObjects :: EnclosingEntity -> Thing wm -> Enclosing -> Enclosing -> (Thing wm, Enclosing, Enclosing)
 moveObjects newId t oldLoc newLocEncl = let (newLoc', t') = nowContains newId newLocEncl t in (t', oldLoc `noLongerContains` t, newLoc')
 noLongerContains :: Enclosing -> Thing wm -> Enclosing
-noLongerContains cont obj = cont & (#contents %~ ES.delete (tagThing obj))
+noLongerContains cont obj = cont & (#contents %~ ES.delete (tagThingEntity obj))
 nowContains :: EnclosingEntity -> Enclosing -> Thing wm -> (Enclosing, Thing wm)
-nowContains contId cont obj = (cont & (#contents %~ ES.insert (tagThing obj)), obj & (#objectData % #containedBy .~ contId))
+nowContains contId cont obj = (cont & (#contents %~ ES.insert (tagThingEntity obj)), obj & (#objectData % #containedBy .~ contId))
 
 updateToContain ::
   NoMissingObjects wm es
@@ -66,4 +68,4 @@ updateToContain ::
   -> Thing wm
   -> Eff es ()
 updateToContain cont enc obj = do
-  setEnclosing cont (enc & (#contents %~ ES.insert (tagThing obj)))
+  setEnclosing cont (enc & (#contents %~ ES.insert (tagThingEntity obj)))

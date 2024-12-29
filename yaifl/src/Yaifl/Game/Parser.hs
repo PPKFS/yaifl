@@ -292,10 +292,10 @@ tryFindingObject t = failHorriblyIfMissing $ do
           (const $ return $ (obj, enc))
           obj
 
-  (playerLocObj, domainEnc) <- getUppermostDomain =<< getEnclosingObject (thingContainedBy pl)
+  (playerLocObj, domainEnc) <- (\t -> getUppermostDomain (getTaggedObject t, getEnclosing t)) =<< getEnclosingObject (thingContainedBy pl)
   -- okay, if we bother doing a proper scanning loop it'll go here
   -- but for now, we just want to consider anything recursively present. that'll do.
-  allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors (tag domainEnc playerLocObj)
+  allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors (tagEntity domainEnc playerLocObj)
   findObjectsFrom t allItems True
 
 

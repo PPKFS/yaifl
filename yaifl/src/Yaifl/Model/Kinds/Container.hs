@@ -39,7 +39,7 @@ import Yaifl.Model.HasProperty ( WMWithProperty )
 import Yaifl.Model.Kinds.AnyObject
 import Yaifl.Model.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty, ObjectLike (..) )
+import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty, ObjectLike (..), IsEnclosing )
 import Yaifl.Model.TH ( makeSpecificsWithout )
 import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Object
@@ -167,11 +167,4 @@ instance Taggable ContainerEntity EnclosingTag
 instance Taggable Container EnclosingTag
 instance Taggable Container ContainerTag
 
-instance TaggedAs (TaggedContainer wm) ContainerTag where
-  toTag = fst . unTagObject
-
-instance TaggedAs (TaggedContainer wm) EnclosingTag where
-  toTag = coerceTag . fst . unTagObject
-
-instance TaggedAs (TaggedEntity ContainerTag) EnclosingTag where
-  toTag = coerceTag
+instance IsEnclosing ContainerEntity

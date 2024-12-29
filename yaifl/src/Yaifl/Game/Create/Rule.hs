@@ -18,10 +18,8 @@ import Yaifl.Prelude
 import Yaifl.Model.Action ( Action, WorldActions )
 import Yaifl.Game.Actions.Collection (ActionCollection)
 import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Entity
 import Yaifl.Model.ObjectLike
 import Yaifl.Model.Query
-import Yaifl.Model.Tag
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
@@ -112,8 +110,8 @@ theObject' o = Precondition
   }
 
 whenIn ::
-  TaggedAs e EnclosingTag
-  => ObjectLike wm e
+  ObjectLike wm e
+  => IsEnclosing e
   => e
   -> Precondition wm (Args wm v)
 whenIn e = Precondition
@@ -122,12 +120,12 @@ whenIn e = Precondition
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = \args -> do
       hierarchy <- getContainingHierarchy (args ^. #source)
-      pure $ elem (toTag e) hierarchy
+      pure $ elem (getEnclosingEntity e) hierarchy
   }
 
 whenPlayerIsIn ::
-  TaggedAs e EnclosingTag
-  => ObjectLike wm e
+  ObjectLike wm e
+  => IsEnclosing e
   => e
   -> Precondition wm a
 whenPlayerIsIn e = Precondition
@@ -136,7 +134,7 @@ whenPlayerIsIn e = Precondition
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = const $ do
       hierarchy <- getPlayer' >>= getContainingHierarchy
-      pure $ elem (toTag e) hierarchy
+      pure $ elem (getEnclosingEntity e) hierarchy
   }
 
 aKindOf ::

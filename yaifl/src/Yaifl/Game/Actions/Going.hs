@@ -149,13 +149,13 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
-    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tag ds (getID door)) roomGoneFrom) =<< getDoorMaybe door
+    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom) =<< getDoorMaybe door
     Nothing -> do
       mbThrough <- getMatchingThing "through"
       pure $ do
             door <- mbThrough
             ds <- getDoorMaybe door
-            getConnectionViaDoor (tag ds (getID door)) roomGoneFrom
+            getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom
   case mbTargetAndConn of
     Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
     Just (target, conn) -> do
@@ -269,15 +269,14 @@ inTheRegion r = Precondition (lookupRegion r >>= \(Right o) -> pure $ "in the re
 -}
 throughTheDoor ::
   forall d wm.
-  TaggedAs d DoorTag
+  HasID d
   => d
   -> Precondition wm (Args wm (GoingActionVariables wm))
-throughTheDoor d = Precondition (pure "through a specific door") $ \v -> pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)
+throughTheDoor d = Precondition (pure "through a specific door") $ \v -> pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID d)
 
 throughTheClosedDoor ::
   forall d wm.
-  TaggedAs d DoorTag
-  => WMWithProperty wm Openability
+  WMWithProperty wm Openability
   => ThingLike wm d
   => d
   -> Precondition wm (Args wm (GoingActionVariables wm))
@@ -285,4 +284,4 @@ throughTheClosedDoor d = Precondition (pure "through a specific closed door") $ 
   o <- getThing d
   pure $
     isClosed o &&
-    (getID <$> doorGoneThrough (variables v)) == Just (getID $ toTag @d @DoorTag d)
+    (getID <$> doorGoneThrough (variables v)) == Just (getID d)

@@ -39,7 +39,6 @@ import Yaifl.Model.Metadata
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Model.Entity
 import Yaifl.Game.ObjectSpecifics
-import Yaifl.Game.Create.Object
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
 import Yaifl.Model.Kinds.Enclosing

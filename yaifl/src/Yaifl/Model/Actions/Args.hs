@@ -26,7 +26,6 @@ module Yaifl.Model.Actions.Args
 
 import Yaifl.Prelude hiding (show)
 
-import Yaifl.Model.ObjectLike
 import Yaifl.Model.Kinds.Object
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Effects
@@ -157,7 +156,7 @@ instance Display (Args wm v) where
 instance {-# OVERLAPPING #-} Refreshable wm v => Refreshable wm (Args wm v) where
   refresh av = do
     v <- refresh (variables av)
-    o <- getThing (tagThing $ source av)
+    o <- refresh $ source av
     return $ av { source = o, variables = v }
 
 -- | Before 'Args' are parsed, the variable is just a command string

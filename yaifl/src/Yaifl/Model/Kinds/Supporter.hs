@@ -56,5 +56,7 @@ onThe = coerceTag
 instance Taggable Supporter SupporterTag
 instance Taggable (TaggedEntity SupporterTag) EnclosingTag
 
+instance IsEnclosing SupporterEntity
+
 makeFieldLabelsNoPrefix ''Supporter
 makeSpecificsWithout [] ''Supporter

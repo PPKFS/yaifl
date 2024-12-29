@@ -48,7 +48,6 @@ import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Prelude hiding (Down)
 import Yaifl.Model.Kinds.Supporter (SupporterEntity)
 import Yaifl.Game.Move (move)
-import Yaifl.Model.Tag
 import Yaifl.Model.Kinds.Enclosing
 
 getAllConnections ::
@@ -275,6 +274,5 @@ isNowOn ::
   -> Eff es ()
 isNowOn t e = do
   t' <- getThing t
-  e' <- getEnclosingObject (coerceTag e)
-  let e'' = TaggedObject (coerceTag @_ @EnclosingTag e, fst e')
-  void $ move t' e''
+  e' <- getEnclosingObject e
+  void $ move t' e'

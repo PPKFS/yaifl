@@ -95,7 +95,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
             Just loc -> do
               encLoc <- getObject loc
               asThingOrRoom
-                (void . move @_ @_ @(EnclosingThing wm) t . tagObject @EnclosingEntity @EnclosingTag loc)
+                (void . move @(EnclosingThing wm) @_ @_ t . tagObject @EnclosingEntity @EnclosingTag loc)
                 (void . move t)
                 encLoc
         )
@@ -116,7 +116,7 @@ addThingInternal ::
 addThingInternal name ia desc objtype specifics details mbLoc = do
   t <- Thing <$> addObject (setThing . Thing) name desc objtype
         True specifics (fromMaybe (blankThingData ia) details) mbLoc
-  pure (tagThing t)
+  pure (tagThingEntity t)
 
 addThing ::
   forall wm es.

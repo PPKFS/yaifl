@@ -9,12 +9,10 @@ import Yaifl.Text.Say
 import Yaifl.Model.Kinds.Thing ( thingContainedBy )
 import Yaifl.Model.HasProperty
 import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Tag
+import Yaifl.Model.Tag ( getTaggedObject, tagObject )
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Game.Move (move)
 import Yaifl.Model.Query
-import Yaifl.Model.Entity
 import Yaifl.Model.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
@@ -23,7 +21,7 @@ data GettingOffResponses wm
 
 type GettingOffAction wm = Action wm () ('TakesOneOf 'TakesThingParameter 'TakesNoParameter) (SupporterThing wm)
 
-gettingOffAction :: forall wm. (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Container, WMWithProperty wm Supporter) => GettingOffAction wm
+gettingOffAction :: forall wm. (WithPrintingNameOfSomething wm, WMWithProperty wm Enclosing, WMWithProperty wm Supporter) => GettingOffAction wm
 gettingOffAction = (makeAction "getting off")
   { name = "getting off"
   , understandAs = ["get off", "get up"]
@@ -67,7 +65,7 @@ standardGettingOff ::
 standardGettingOff = makeRule "standard getting off rule" [] $ \Args{source=s, variables=v} -> do
   let supporterHolder = thingContainedBy (getTaggedObject v)
   e' <- getEnclosingObject supporterHolder
-  move s (tagObject @_ @EnclosingTag (snd e') (fst e'))
+  move s e'
   rulePass
 
 reportGettingOff ::

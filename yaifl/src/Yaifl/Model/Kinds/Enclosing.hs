@@ -38,6 +38,3 @@ blankEnclosing = Enclosing
 type EnclosingEntity = TaggedEntity EnclosingTag
 
 instance Taggable Enclosing EnclosingTag
-
-instance HasID x => TaggedAs (x, Enclosing) EnclosingTag where
-  toTag (o, e) = tag e o

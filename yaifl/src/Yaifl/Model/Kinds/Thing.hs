@@ -8,9 +8,8 @@ module Yaifl.Model.Kinds.Thing
   , blankThingData
 
   , Thing(..)
-  , tagThing
+  , tagThingEntity
   , EnclosingThing
-  , TaggedPerson
   , defaultPlayerID
   , thingIsLit
   , thingIsWorn
@@ -100,15 +99,11 @@ type EnclosingThing wm = TaggedObject (Thing wm) EnclosingTag
 
 instance Taggable (Thing wm) ThingTag
 
-type TaggedPerson wm = TaggedObject (Thing wm) PersonTag
-instance TaggedAs (TaggedPerson wm) EnclosingTag where
-  toTag = coerceTag @_ @EnclosingTag . fst . unTagObject
-
 -- | Tag a thing entity.
-tagThing ::
+tagThingEntity ::
   Thing wm
   -> TaggedEntity ThingTag
-tagThing r = tag r (r ^. #objectId)
+tagThingEntity r = tagEntity r (r ^. #objectId)
 
 instance IsObject (Thing wm) where
   isThing = const True

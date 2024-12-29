@@ -117,13 +117,7 @@ instance Taggable (Room wm) RoomTag
 tagRoom ::
   Room wm
   -> TaggedEntity RoomTag
-tagRoom r = tag r (r ^. #objectId)
-
-instance (TaggedAs (Room wm) RoomTag) where
-  toTag = tagRoom
-
-instance (TaggedAs (Room wm) EnclosingTag) where
-  toTag = coerceTag . tagRoom
+tagRoom r = tagEntity r (r ^. #objectId)
 
 instance IsObject (Room wm) where
   isThing = const False

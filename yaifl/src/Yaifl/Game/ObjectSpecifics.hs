@@ -148,9 +148,9 @@ addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #described Described
       -- A door is always fixed in place.
       -- A door is never pushable between rooms.
   updateMultiLocatedObject d
-  let tagged = tag @Door @DoorTag ds d
+  let tagged = tagEntity @Door @DoorTag ds d
   addDoorToConnection tagged f b
-  pure (tag ds d)
+  pure (tagEntity ds d)
 
 addBackdrop ::
   forall wm es.
@@ -194,9 +194,9 @@ updateMultiLocatedObject tl = do
   case getMultiLocatedMaybe t of
     Nothing -> noteError (const ()) "the object had no multilocated component"
     Just ml -> mapM_ (\x -> do
-      obj <- getObject x
-      let enc = getEnclosing x obj
-      updateToContain obj enc t) (S.toList $ ml ^. #locations)
+      obj <- getEnclosingObject x
+      let enc = getEnclosing obj
+      updateToContain (getTaggedObject obj) enc t) (S.toList $ ml ^. #locations)
 
 addDevice ::
   forall wm es.
@@ -247,7 +247,7 @@ addContainer n ia d
         ! paramF #portable p
         ! paramF #modify m
         ! done
-    pure $ tag @Container @ContainerTag cs c
+    pure $ tagEntity @Container @ContainerTag cs c
 
 addSupporter ::
   forall wm es.
@@ -272,7 +272,7 @@ addSupporter n ia d
         ! paramF #location l
         ! paramF #modify m
         ! done
-    pure $ tag @_ @SupporterTag sup c
+    pure $ tagEntity @_ @SupporterTag sup c
 
 addPerson ::
   forall wm es.

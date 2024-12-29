@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module Yaifl.Model.Kinds.Person where
 
 import Yaifl.Prelude
@@ -57,11 +58,14 @@ getPerson ::
   -> Person
 getPerson = fromMaybe (error "person property witness was violated") . getPersonMaybe . getTaggedObject
 
-instance EnclosingObject Person where
-  enclosingL = castOptic #carrying
+type TaggedPerson wm = TaggedObject (Thing wm) PersonTag
+
+instance WMWithProperty wm Person => IsEnclosingObject (TaggedPerson wm) where
+  getEnclosing = view #carrying . getPerson
 
 isNowCarriedBy ::
   NoMissingObjects wm es
+  => WMWithProperty wm Person
   => WMWithProperty wm Enclosing
   => ThingLike wm t
   => t

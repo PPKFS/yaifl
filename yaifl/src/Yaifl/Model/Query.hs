@@ -34,12 +34,12 @@ module Yaifl.Model.Query
   , defaultPropertySetter
   , modifyProperty
   , getEnclosingMaybe
-  , getEnclosing
   , setEnclosing
-  , EnclosingObject(..)
+  , IsEnclosingObject(..)
+  , IsEnclosing(..)
+  , getEnclosingObject
   , getPlayer'
   , getDescribableContents
-  , getEnclosingObject
   , enclosingContains
   , getAllObjectsInEnclosing
   , getCommonAncestor
@@ -76,8 +76,8 @@ import Data.Bitraversable
 class Refreshable wm av where
   refresh :: forall es. (NoMissingObjects wm es) => av -> Eff es av
 
-instance {-# OVERLAPPING #-} Refreshable wm o => Refreshable wm (TaggedObject o tag) where
-  refresh (TaggedObject (i, o)) = TaggedObject . (i, ) <$> refresh o
+instance {-# OVERLAPPING #-} (HasID o, Refreshable wm o) => Refreshable wm (TaggedObject o tagEntity) where
+  refresh obj = tagObject obj <$> refresh (getTaggedObject obj)
 
 instance (Refreshable wm a, Refreshable wm b) => Refreshable wm (a, b) where
   refresh (a, b) = refresh a >>= \a' -> refresh b >>= return . (a', )
@@ -97,7 +97,7 @@ instance Refreshable wm Int where
   refresh = pure
 
 instance Refreshable wm (Thing wm) where
-  refresh t = getThing (tagThing t)
+  refresh t = getThing (tagThingEntity t)
 
 instance Refreshable wm (AnyObject wm) where
   refresh t = getObject (getID t)
@@ -227,7 +227,7 @@ refreshThing tl = do
   r <- getThing tl
   ifM (traceGuard Medium)
     (do
-      r'' <- getThing (tagThing r)
+      r'' <- getThing (tagThingEntity r)
       when ((r'' ^. #modifiedTime) /= (r ^. #modifiedTime)) $ noteRuntimeError (const ()) $ "Refreshed thing with ID" <> show (display $ view #name r) <> " and found an outdated object"
       return r'')
     (pure r)
@@ -249,8 +249,8 @@ unwrapAny ::
   AnyObject wm
   -> Either (TaggedEntity ThingTag) (TaggedEntity RoomTag)
 unwrapAny a = case (preview _Thing a, preview _Room a) of
-    (Just x, _) -> Left (tag x (a ^. #objectId))
-    (_, Just x) -> Right (tag x (a ^. #objectId))
+    (Just x, _) -> Left (tagEntity x (a ^. #objectId))
+    (_, Just x) -> Right (tagEntity x (a ^. #objectId))
     _ -> error "impossible"
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
@@ -276,15 +276,15 @@ getAllObjectsInEnclosing ::
   -> EnclosingEntity
   -> Eff es [Thing wm]
 getAllObjectsInEnclosing incScenery incDoors r = do
-  (_, enc) <- getEnclosingObject r
-
-  let allItemIDs = ES.toList $ enc ^. #contents
+  e <- getEnclosingObject r
+  let e' = getEnclosing e
+  let allItemIDs = ES.toList $ e' ^. #contents
   things <- mapM getThing allItemIDs
   -- recurse downwards
   recursedThings <- mconcat <$> mapM (\t -> do
     let mbE = getEnclosingMaybe (toAny t)
     case mbE of
-      Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tag enc' t)
+      Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tagEntity enc' t)
       Nothing -> return []) things
   enclosingItself <- getThingMaybe r
   return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)
@@ -411,22 +411,37 @@ setEnclosing e v = asThingOrRoom
   (`defaultPropertySetter` v)
   (\o -> modifyRoom o (#objectData % #enclosing .~ v)) (toAny @wm e)
 
-getEnclosing ::
-  WMWithProperty wm Enclosing
-  => EnclosingEntity
-  -> AnyObject wm
-  -> Enclosing
-getEnclosing _ = fromMaybe (error "property witness was violated") . getEnclosingMaybe
+class IsEnclosingObject o where
+  getEnclosing :: o -> Enclosing
+  default getEnclosing :: CanBeAny wm o => WMWithProperty wm Enclosing => o -> Enclosing
+  getEnclosing = fromMaybe (error "property witness was violated") . getEnclosingMaybe . toAny
 
-getEnclosingObject ::
-  NoMissingObjects wm es
-  => WMWithProperty wm Enclosing
-  => EnclosingEntity
-  -> Eff es (AnyObject wm, Enclosing)
-getEnclosingObject e = do
-  o <- getObject e
-  let enc = getEnclosing e o
-  pure (o, enc)
+class IsEnclosing o where
+  getEnclosingEntity :: o -> EnclosingEntity
+  default getEnclosingEntity :: HasID o => o -> EnclosingEntity
+  getEnclosingEntity = unsafeTagEntity . getID
+
+instance IsEnclosing RoomEntity where
+  getEnclosingEntity = coerceTag
+
+instance IsEnclosing EnclosingEntity where
+  getEnclosingEntity = id
+
+instance WMWithProperty wm Enclosing => IsEnclosingObject (TaggedObject (AnyObject wm) EnclosingTag) where
+  getEnclosing = fromMaybe (error "property witness was violated") . getEnclosingMaybe . getTaggedObject
+
+instance WMWithProperty wm Enclosing => IsEnclosingObject (TaggedObject (Thing wm) EnclosingTag) where
+  getEnclosing = fromMaybe (error "property witness was violated") . getEnclosingMaybe . toAny . getTaggedObject
+
+instance IsEnclosingObject (Room wm) where
+  getEnclosing = view (#objectData % #enclosing)
+
+getEnclosingObject :: (IsEnclosing o, HasCallStack, NoMissingRead wm es) => o -> Eff es (TaggedAnyEnclosing wm)
+getEnclosingObject theObj = do
+    let e = getEnclosingEntity theObj
+    o <- getObject e
+    let taggedObj = tagObject e o
+    pure $ taggedObj
 
 getPlayer' ::
   NoMissingObjects wm es
@@ -484,20 +499,3 @@ getCommonAncestor t1' t2' = do
 
 makeItScenery :: Eff '[State (Thing wm)] ()
 makeItScenery = (#objectData % #isScenery .= True)
-
--- My hope is that this can vanish at some point but enclosing is the weird one
--- we want this class because we want an easier way of doing `propertyAT` for enclosing
-class EnclosingObject o where
-  enclosingL :: Getter o Enclosing
-
-instance EnclosingObject (Room wm) where
-  enclosingL = castOptic $ #objectData % #enclosing
-
-instance  WMWithProperty wm Enclosing => EnclosingObject (AnyObject wm, Enclosing) where
-  enclosingL = to (\o -> getEnclosing @wm (toTag o) ( fst o))
-
-instance (TaggedAs (TaggedObject (Thing wm) tag) EnclosingTag, WMWithProperty wm Enclosing) => EnclosingObject (TaggedObject (Thing wm) tag) where
-  enclosingL = to (\o -> getEnclosing @wm (toTag o) (toAny . snd . unTagObject $ o))
-
-instance WMWithProperty wm Enclosing => EnclosingObject (TaggedAnyEnclosing wm) where
-  enclosingL = to (\(TaggedObject (e, o)) -> getEnclosing e o)

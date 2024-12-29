@@ -58,14 +58,6 @@ instance CanBeAny wm (AnyObject wm) where
   toAny = id
   fromAny = Just
 
-instance CanBeAny wm (TaggedObject (Thing wm) ThingTag) where
-  toAny = toAny . snd . unTagObject
-  fromAny o = (\t -> TaggedObject (tag t (getID t), t)) <$> fromAny o
-
-instance CanBeAny wm (TaggedObject (Room wm) RoomTag) where
-  toAny = toAny . snd . unTagObject
-  fromAny o = (\t -> TaggedObject (tag t (getID t), t)) <$> fromAny o
-
 instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
 

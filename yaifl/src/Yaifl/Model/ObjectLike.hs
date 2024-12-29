@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Model.Objects.ObjectLike
-Copyright   : (c) Avery 2022-2023
+Copyright   : (c) Avery 2022-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -40,13 +40,13 @@ class HasID o => ThingLike wm o where
 class HasID o => RoomLike wm o where
   getRoom :: (HasCallStack, NoMissingRead wm es) => o -> Eff es (Room wm)
 
-instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tag) where
+instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tagEntity) where
   getObject = getObject . unTagObject
 
-instance (RoomLike wm o) => RoomLike wm (TaggedObject o tag) where
+instance (RoomLike wm o) => RoomLike wm (TaggedObject o tagEntity) where
   getRoom = getRoom . snd . unTagObject
 
-instance (ThingLike wm o) => ThingLike wm (TaggedObject o tag) where
+instance (ThingLike wm o) => ThingLike wm (TaggedObject o tagEntity) where
   getThing = getThing . snd . unTagObject
 
 instance ObjectLike wm (Thing wm) where
@@ -68,7 +68,7 @@ instance ObjectLike wm (TaggedEntity anyTag) where
   getObject e = getObject (unTag e)
 
 instance ThingLike wm DoorEntity where
-  getThing = getThing . (toTag @_ @ThingTag)
+  getThing = getThing . coerceTag @_ @ThingTag
 
 instance ObjectLike wm Entity where
   getObject e = if isThing (getID e)
