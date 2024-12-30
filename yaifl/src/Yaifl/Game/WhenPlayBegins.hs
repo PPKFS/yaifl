@@ -9,11 +9,11 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Game.Move ( move )
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.Effects
-import Yaifl.Model.HasProperty ( WMWithProperty )
-import Yaifl.Model.Kinds.Enclosing ( Enclosing )
-import Yaifl.Model.Metadata ( Metadata )
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Effects
+import Yaifl.Core.HasProperty ( WMWithProperty )
+import Yaifl.Core.Kinds.Enclosing ( Enclosing )
+import Yaifl.Core.Metadata ( Metadata )
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query ( getCurrentPlayer, getLocation, isVoid )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook

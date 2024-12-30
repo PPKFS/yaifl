@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Entity
+Module      : Yaifl.Core.Entity
 Copyright   : (c) Avery 2022-2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -7,13 +7,16 @@ Maintainer  : ppkfs@outlook.com
 Object IDs.
 -}
 
-module Yaifl.Model.Entity
+module Yaifl.Core.Entity
   ( -- * Entities
     Entity(..)
   , HasID(..)
   , TaggedEntity(unTag)
   , unsafeTagEntity
   -- ** Tags
+  -- These are here because these ones are foundational enough that they need to be
+  -- forward-declared (things and rooms are foundational, enclosing is required for rooms,
+  -- doors are required for room connections, person is needed for the current player in metadata)
   , ThingTag
   , ThingEntity
   , RoomTag

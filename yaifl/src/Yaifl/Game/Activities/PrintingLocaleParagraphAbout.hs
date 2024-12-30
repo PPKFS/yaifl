@@ -6,27 +6,27 @@ module Yaifl.Game.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Prelude
 
 import Yaifl.Model.Activity
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Game.Actions.Looking.Locale
-import Yaifl.Model.Entity
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Entity
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
 import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
 import Yaifl.Model.Query
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 
 setLocalePriority ::
   Thing s

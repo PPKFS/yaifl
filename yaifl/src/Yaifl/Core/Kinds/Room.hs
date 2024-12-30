@@ -1,4 +1,4 @@
-module Yaifl.Model.Kinds.Room
+module Yaifl.Core.Kinds.Room
   ( ConnectionExplicitness(..)
   , Connection(..)
   , MapConnections(..)
@@ -9,20 +9,21 @@ module Yaifl.Model.Kinds.Room
   , IsVisited(..)
   , blankRoomData
   , Room(..)
-  , tagRoom
+  , tagRoomEntity
   , voidID
   , isNotVisited
   , roomIsLighted
+  , isVoid
 
   ) where
 
 import Yaifl.Prelude
 
 import GHC.Records
-import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Tag
+import Yaifl.Core.Entity
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Tag
 import Yaifl.Model.WorldModel
 import qualified Data.Map.Strict as Map
 
@@ -114,10 +115,10 @@ instance Taggable (Room wm) EnclosingTag
 instance Taggable (Room wm) RoomTag
 
 -- | Tag a room entity.
-tagRoom ::
+tagRoomEntity ::
   Room wm
   -> TaggedEntity RoomTag
-tagRoom r = tagEntity r (r ^. #objectId)
+tagRoomEntity r = tagEntity r (r ^. #objectId)
 
 instance IsObject (Room wm) where
   isThing = const False
@@ -131,3 +132,9 @@ roomIsLighted ::
   Room wm
   -> Bool
 roomIsLighted = (== Lighted) . view (#objectData % #darkness)
+
+isVoid ::
+  HasID a
+  => a
+  -> Bool
+isVoid = (unTag voidID ==) . getID

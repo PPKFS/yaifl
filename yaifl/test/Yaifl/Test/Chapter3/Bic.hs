@@ -2,7 +2,7 @@ module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl
 import Yaifl.Game.Create.Object
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Model.Kinds
 import Yaifl.Model.Rules
 import Yaifl.Prelude

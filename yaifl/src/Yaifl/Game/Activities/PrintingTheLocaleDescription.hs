@@ -11,8 +11,8 @@ import Breadcrumbs
 
 import Yaifl.Model.Activity
 import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
-import Yaifl.Model.Store ( Store(unStore) )
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Store ( Store(unStore) )
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Text.Responses
 import Yaifl.Model.Rules.RuleEffects
@@ -24,9 +24,9 @@ import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Thing (thingContainedBy)
+import Yaifl.Core.Metadata
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Thing (thingContainedBy)
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA

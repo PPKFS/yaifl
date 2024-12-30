@@ -22,9 +22,9 @@ import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
 import Yaifl.Prelude
 import Yaifl.Model.Activity
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Effects
+import Yaifl.Core.Metadata
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Effects
 import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Rules.Rulebook
@@ -33,14 +33,14 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import qualified Data.Text as T
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Input
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
 
 sayText ::
   SayableValue s wm

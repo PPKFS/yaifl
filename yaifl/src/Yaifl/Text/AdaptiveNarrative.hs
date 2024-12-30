@@ -3,12 +3,12 @@ module Yaifl.Text.AdaptiveNarrative where
 import Yaifl.Prelude
 
 import Breadcrumbs
-import Yaifl.Model.Effects
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Metadata
+import Yaifl.Core.Effects
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata
 import Yaifl.Model.Query
 import Yaifl.Text.Verb
 

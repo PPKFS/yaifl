@@ -34,12 +34,12 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.WorldModel ( WorldModel )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.Metadata
-import Yaifl.Model.Effects
+import Yaifl.Core.Metadata
+import Yaifl.Core.Effects
 import qualified Data.Text as T
 import Yaifl.Text.Responses
 import Effectful.Reader.Static
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Effectful.Error.Static
 
 newtype ActionProcessing wm = ActionProcessing

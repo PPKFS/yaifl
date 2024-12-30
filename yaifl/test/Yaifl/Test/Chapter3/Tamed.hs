@@ -3,7 +3,7 @@ module Yaifl.Test.Chapter3.Tamed where
 import Yaifl.Prelude
 import Yaifl.Game.EffectHandlers
 import Yaifl (PlainWorldModel)
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Game.Create.Object
 import Yaifl.Model.Query
 import Yaifl.Text.SayQQ

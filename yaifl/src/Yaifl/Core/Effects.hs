@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Effects
+Module      : Yaifl.Core.Effects
 Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -8,7 +8,7 @@ Effects for getting, setting, modifying, traversing over the `Object` collection
 type synonyms for bundling common constraints together.
 -}
 
-module Yaifl.Model.Effects
+module Yaifl.Core.Effects
   ( -- * Effects
   ObjectLookup(..)
   , lookupThing
@@ -39,12 +39,12 @@ import Breadcrumbs
 import Effectful.Error.Static
 import Effectful.TH
 
-import Yaifl.Model.Metadata
-import Yaifl.Model.Entity
+import Yaifl.Core.Metadata
+import Yaifl.Core.Entity
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Region
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Room
 
 -- | Effect for reading objects from the world.
 data ObjectLookup (wm :: WorldModel) :: Effect where
@@ -88,7 +88,6 @@ type ObjectQuery wm es = (ObjectLookup wm :> es, ObjectUpdate wm :> es)
 type NoMissingObjects wm es = (WithMetadata es, Error MissingObject :> es, ObjectQuery wm es, Display (WMText wm))
 -- | Type synonym for reading objects with a way to handle missing IDs.
 type NoMissingRead wm es = (Error MissingObject :> es, ObjectLookup wm :> es, WithMetadata es)
-
 
 withoutMissingObjects ::
   HasCallStack

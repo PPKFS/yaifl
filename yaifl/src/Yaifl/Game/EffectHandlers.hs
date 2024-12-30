@@ -7,10 +7,10 @@ import Effectful.Dispatch.Dynamic
 import Effectful.Reader.Static
 import Yaifl.Model.Action
 import Yaifl.Game.Parser
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.Entity
-import Yaifl.Model.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.Effects
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
@@ -18,7 +18,7 @@ import Yaifl.Text.Print
 import Yaifl.Game.World
 import Yaifl.Game.Actions.Collection
 import Effectful.Error.Static (Error, runError)
-import Yaifl.Model.Store
+import Yaifl.Core.Store
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.Input
 import Yaifl.Game.Actions.Looking.Visibility

@@ -72,6 +72,22 @@ library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules:
+    Yaifl.Prelude
+
+    Yaifl.Core.Entity
+    Yaifl.Core.Store
+    Yaifl.Core.Tag
+
+    Yaifl.Core.Kinds.AnyObject
+    Yaifl.Core.Kinds.Object
+    Yaifl.Core.Kinds.Room
+    Yaifl.Core.Kinds.Thing
+
+    Yaifl.Core.ObjectLike
+
+    Yaifl.Core.Refreshable
+    Yaifl.Core.HasProperty
+
     Yaifl
     Yaifl.Game.ActionProcessing
     Yaifl.Game.Actions.Closing
@@ -112,39 +128,40 @@ library
     Yaifl.Model.Actions.Args
     Yaifl.Model.Activity
 
-    Yaifl.Model.Effects
-    Yaifl.Model.Entity
-    Yaifl.Model.HasProperty
+    Yaifl.Core.Effects
+
+
+
+
+
 
     Yaifl.Model.Kinds.Animal
-    Yaifl.Model.Kinds.AnyObject
     Yaifl.Model.Kinds.Backdrop
     Yaifl.Model.Kinds.Container
     Yaifl.Model.Kinds.Device
     Yaifl.Model.Kinds.Direction
     Yaifl.Model.Kinds.Door
-    Yaifl.Model.Kinds.Enclosing
-    Yaifl.Model.Kinds.Object
+    Yaifl.Core.Kinds.Enclosing
+
     Yaifl.Model.Kinds.Openable
     Yaifl.Model.Kinds.Person
     Yaifl.Model.Kinds.Region
-    Yaifl.Model.Kinds.Room
-    Yaifl.Model.Kinds.Supporter
-    Yaifl.Model.Kinds.Thing
 
-    Yaifl.Model.Metadata
+    Yaifl.Model.Kinds.Supporter
+
+    Yaifl.Core.Metadata
     Yaifl.Model.Input
     Yaifl.Model.MultiLocated
-    Yaifl.Model.ObjectLike
+
     Yaifl.Model.ObjectKind
     Yaifl.Model.Query
     Yaifl.Model.Rules.RuleEffects
     Yaifl.Model.Rules.Rulebook
     Yaifl.Model.Rules.Run
-    Yaifl.Model.Store
-    Yaifl.Model.TH
-    Yaifl.Model.Tag
+
+
     Yaifl.Model.WorldModel
+    Yaifl.Model.TH
 
     Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
@@ -156,10 +173,8 @@ library
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
 
-    Yaifl.Model.Rules
-    Yaifl.Model.Kinds
     Yaifl.Game.Create
-    Yaifl.Prelude
+
 
     Yaifl.Game.TurnSequence
     Yaifl.Game.Accessibility
@@ -173,8 +188,6 @@ library
     , prettyprinter
     , prettyprinter-ansi-terminal
     , split
-    , MonadRandom
-    , random-shuffle
 
 test-suite yaifl-test
   import:             common-options

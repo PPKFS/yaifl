@@ -8,16 +8,16 @@ module Yaifl.Model.Kinds.Door
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Openable as O
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Query
 import Yaifl.Model.TH
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 
 import qualified Data.Set as S
 

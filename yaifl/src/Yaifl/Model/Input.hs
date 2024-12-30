@@ -6,7 +6,7 @@ module Yaifl.Model.Input
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.TH ( makeEffect )
 

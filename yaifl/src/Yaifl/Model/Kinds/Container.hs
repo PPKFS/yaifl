@@ -33,18 +33,18 @@ module Yaifl.Model.Kinds.Container
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.HasProperty ( WMWithProperty )
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.HasProperty ( WMWithProperty )
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty, ObjectLike (..), IsEnclosing )
 import Yaifl.Model.TH ( makeSpecificsWithout )
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Object
 import qualified Data.EnumSet as ES
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds (Thing)
 
 -- | If the container is see-through.

@@ -35,14 +35,14 @@ import Yaifl.Prelude
 import Breadcrumbs
 
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Metadata
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Metadata
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMText wm) wm => Display (WMText wm) => Eff (es : ConcreteRuleStack wm) a)
 

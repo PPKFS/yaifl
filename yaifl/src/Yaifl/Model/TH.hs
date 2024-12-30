@@ -1,11 +1,13 @@
 {-|
 Module      : Yaifl.Model.Properties.TH
-Copyright   : (c) Avery 2023
+Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
 Template Haskell generation of property queries (get, set, and modify) and directions (isDirectionOf
 and isDirectionOfOneWay).
+
+At some point this really should be done properly so we can drop the src-exts dependency.
 -}
 
 module Yaifl.Model.TH
@@ -13,20 +15,20 @@ module Yaifl.Model.TH
   , makePropertyFunction
   , SpecificsFunctions(..)
   , makeDirections
-  , module Yaifl.Model.HasProperty
-  , module Yaifl.Model.Kinds.AnyObject
+  , module Yaifl.Core.HasProperty
+  , module Yaifl.Core.Kinds.AnyObject
   ) where
 
-import Yaifl.Prelude
 import Data.Text (replace)
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase )
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Prelude
 -- | The functions we *don't* want to autogenerate for a given property
--- because we want to do something special with them (e.g. see `Yaifl.Model.Kinds.Enclosing`
+-- because we want to do something special with them (e.g. see `Yaifl.Core.Kinds.Enclosing`
 -- in `Yaifl.Model.Query` where @getEnclosingMaybe@ does something special with
 -- rooms).
 data SpecificsFunctions =

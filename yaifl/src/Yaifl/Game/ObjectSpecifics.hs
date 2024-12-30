@@ -13,26 +13,26 @@ module Yaifl.Game.ObjectSpecifics
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Metadata ( noteError )
+import Yaifl.Core.Metadata ( noteError )
 import Yaifl.Model.Kinds.Direction (WMStdDirections)
-import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Entity
+import Yaifl.Core.Kinds.Object
 import Yaifl.Game.Create.Object
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Game.Move
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.ObjectLike
 import Yaifl.Game.Create.RoomConnection
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
-import Yaifl.Model.HasProperty ( MayHaveProperty(..), WMWithProperty )
+import Yaifl.Core.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
+import Yaifl.Core.HasProperty ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query
 import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMText, WMDirection )
 import qualified Data.Set as S
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
 import Yaifl.Model.Rules (RuleEffects)

@@ -1,4 +1,4 @@
-module Yaifl.Model.Kinds.AnyObject
+module Yaifl.Core.Kinds.AnyObject
   ( IsObject(..)
   , CanBeAny(..)
   , AnyObject(..)
@@ -6,17 +6,18 @@ module Yaifl.Model.Kinds.AnyObject
   , _Thing
   , TaggedAnyEnclosing
   , EnclosingThing
+  , asThingOrRoom
   ) where
 
 import Yaifl.Prelude
 
 import GHC.Records
-import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Entity
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Tag
 
 type RawAnyObject wm = Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to
@@ -62,3 +63,21 @@ instance IsObject (AnyObject wm) where
   isThing = isJust . fromAny @wm @(Thing wm)
 
 type TaggedAnyEnclosing wm = TaggedObject (AnyObject wm) EnclosingTag
+
+unwrapAny ::
+  AnyObject wm
+  -> Either (TaggedEntity ThingTag) (TaggedEntity RoomTag)
+unwrapAny a = case (preview _Thing a, preview _Room a) of
+    (Just x, _) -> Left (tagEntity x (a ^. #objectId))
+    (_, Just x) -> Right (tagEntity x (a ^. #objectId))
+    _ -> error "impossible"
+
+asThingOrRoom ::
+  (Thing wm -> a)
+  -> (Room wm -> a)
+  -> AnyObject wm
+  -> a
+asThingOrRoom tf rf a = case (preview _Thing a, preview _Room a) of
+    (Just x, _) -> tf x
+    (_, Just x) -> rf x
+    _ -> error "impossible"

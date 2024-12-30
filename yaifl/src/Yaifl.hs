@@ -16,7 +16,7 @@ module Yaifl (
   , runTurnsFromBuffer
   , runTurn
 
-  , module Yaifl.Model.Metadata
+  , module Yaifl.Core.Metadata
   , module Yaifl.Game.World
   , module Yaifl.Model.WorldModel
   ) where
@@ -35,14 +35,14 @@ import Yaifl.Game.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Game.Activities.ListingContents
 import Yaifl.Game.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Game.Activities.PrintingTheLocaleDescription
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.HasProperty
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Rules.RuleEffects
@@ -64,12 +64,12 @@ import Yaifl.Game.Actions.Collection
 import Breadcrumbs
 import Yaifl.Model.Query (failHorriblyIfMissing)
 import Yaifl.Game.Actions.Examining
-import Yaifl.Model.Store
+import Yaifl.Core.Store
 import Yaifl.Game.Actions.Closing
 import Yaifl.Game.Actions.Opening
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Room
 import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
 import Yaifl.Model.Input (waitForInput)

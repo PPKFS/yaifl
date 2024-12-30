@@ -13,24 +13,24 @@ module Yaifl.Game.Create.Object
 import Yaifl.Prelude
 import Breadcrumbs
 
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
+import Yaifl.Core.Metadata
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
 import Yaifl.Game.Move ( move )
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.Room ( RoomData, blankRoomData, tagRoom, Room (..) )
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Enclosing ( Enclosing )
-import Yaifl.Model.HasProperty ( WMWithProperty )
+import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, tagRoom, Room (..) )
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Enclosing ( Enclosing )
+import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Model.WorldModel
 
 import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
-import Yaifl.Model.Tag (tagObject)
+import Yaifl.Core.Tag (tagObject)
 
 done = defaults
 

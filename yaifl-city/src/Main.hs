@@ -7,7 +7,7 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.ResponseCollection
 import Breadcrumbs
 import Yaifl.Model.Input
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Text.Print
 import Yaifl.Model.Rules.Run
 import Yaifl.Text.SayQQ

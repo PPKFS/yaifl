@@ -13,13 +13,13 @@ import Yaifl.Game.Create.RoomConnection
 import Yaifl.Gen.City.Building
 import Yaifl.Text.DynamicText
 import Yaifl.Model.Kinds
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Model.Rules
 import System.Random.Stateful
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Door
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 import Data.Text (toLower)
 import Yaifl.Game.Create
 import Yaifl
@@ -43,7 +43,7 @@ addStaircases = do
               do
                 let d = fromMaybe (error "not a door") $ getDoorMaybe t
                 pLoc <- getPlayer >>= getLocation
-                getConnectionViaDoor (tag d t) pLoc & \case
+                getConnectionViaDoor (tagEntity d t) pLoc & \case
                   Nothing -> sayTell (display t)
                   Just (r, conn) -> sayTell $ " (leading " <> toLower (show $ view #direction conn) <> ")"
       return (Just r)

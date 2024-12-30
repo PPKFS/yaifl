@@ -5,7 +5,7 @@ import Yaifl.Game.Actions.Going
 import Yaifl.Game.Create
 
 import Yaifl.Model.Actions.Args (silentAction)
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Model.Kinds
 import Yaifl.Model.Query
 import Yaifl.Model.Rules

@@ -18,10 +18,10 @@ module Yaifl.Model.Kinds.Openable
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Effects
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Query
 import Yaifl.Model.TH
 

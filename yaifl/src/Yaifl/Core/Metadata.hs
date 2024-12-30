@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Metadata
+Module      : Yaifl.Core.Metadata
 Copyright   : (c) Avery 2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -9,7 +9,7 @@ and helpers for the construction phase). Should not be dependent on anything maj
 because most things rely on this in some form.
 -}
 
-module Yaifl.Model.Metadata (
+module Yaifl.Core.Metadata (
   -- * Metadata Components
   RoomDescriptions(..)
   , Timestamp(..)
@@ -45,8 +45,8 @@ module Yaifl.Model.Metadata (
 import Breadcrumbs
 import Data.Text.Display
 import Yaifl.Prelude
-import Yaifl.Model.Entity
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Entity
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.ObjectKind
 import qualified Data.Set as S
 import System.Random ( StdGen, UniformRange, uniformR, Uniform, uniform )

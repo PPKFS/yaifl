@@ -5,8 +5,8 @@
 module Yaifl.Game.Actions.Looking.Locale where
 
 import Yaifl.Prelude
-import Yaifl.Model.Store
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Store
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds
 import Yaifl.Model.Query
 

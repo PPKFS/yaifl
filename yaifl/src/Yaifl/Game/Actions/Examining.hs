@@ -5,7 +5,7 @@ import Yaifl.Prelude
 
 import Yaifl.Model.Action
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.HasProperty (WMWithProperty)
+import Yaifl.Core.HasProperty (WMWithProperty)
 import Yaifl.Model.Kinds
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Query
@@ -16,7 +16,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.ListWriter
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 import Yaifl.Model.Kinds.Supporter
 
 data ExaminingResponses =

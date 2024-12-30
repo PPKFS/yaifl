@@ -6,19 +6,19 @@ module Yaifl.Game.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Prelude
 
 import Yaifl.Model.Activity hiding (name)
-import Yaifl.Model.Entity ( HasID(..) )
-import Yaifl.Model.Store
-import Yaifl.Model.Kinds.Object( Object(..) )
-import Yaifl.Model.Kinds.Enclosing ( Enclosing(..) )
-import Yaifl.Model.HasProperty ( WMWithProperty )
+import Yaifl.Core.Entity ( HasID(..) )
+import Yaifl.Core.Store
+import Yaifl.Core.Kinds.Object( Object(..) )
+import Yaifl.Core.Kinds.Enclosing ( Enclosing(..) )
+import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Model.Query ( getEnclosingMaybe )
 import Yaifl.Model.Rules.Rulebook (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
 import Breadcrumbs
 import Yaifl.Game.Actions.Looking.Locale
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.ObjectLike
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))
 

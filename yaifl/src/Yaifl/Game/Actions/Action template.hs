@@ -6,7 +6,7 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Responses
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Model.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText)

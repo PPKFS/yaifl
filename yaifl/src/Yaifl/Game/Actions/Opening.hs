@@ -6,12 +6,12 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Metadata
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Metadata
 import Yaifl.Text.Responses
 import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 
 data OpeningResponses =
   UnlessOpenableResponseA

@@ -5,7 +5,7 @@ module Yaifl.Game.Actions.OutOfWorld
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Action
 import Yaifl.Text.Say

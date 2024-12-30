@@ -18,12 +18,12 @@ import Yaifl.Game.Activities.PrintingInventoryDetails
 import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Activity
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Kinds
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Supporter
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Query
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.WorldModel

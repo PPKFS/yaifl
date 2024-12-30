@@ -4,7 +4,7 @@ module Yaifl.Model.ObjectKind
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 
 makeKindDAG :: Map ObjectKind (Set ObjectKind)
 makeKindDAG = fromList

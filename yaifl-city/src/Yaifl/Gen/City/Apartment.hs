@@ -10,7 +10,7 @@ import Control.Placeholder
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds.Region
 import Yaifl.Game.Create
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Model.Rules
 import Yaifl.Gen.City.Building
 

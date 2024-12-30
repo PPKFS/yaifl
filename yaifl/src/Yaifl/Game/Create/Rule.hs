@@ -17,17 +17,17 @@ module Yaifl.Game.Create.Rule
 import Yaifl.Prelude
 import Yaifl.Model.Action ( Action, WorldActions )
 import Yaifl.Game.Actions.Collection (ActionCollection)
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds
 import Yaifl.Model.Activity
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
-import Yaifl.Model.Metadata (isKind)
+import Yaifl.Core.Metadata (isKind)
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)

@@ -8,8 +8,8 @@ import Yaifl.Prelude
 import Yaifl.Model.Activity
 import Yaifl.Model.Kinds
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Text.Responses
 
 type WithPrintingInventoryDetails wm =

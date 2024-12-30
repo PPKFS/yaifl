@@ -7,11 +7,11 @@ module Yaifl.Game.Accessibility
 import Yaifl.Prelude
 
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.Effects
-import Yaifl.Model.HasProperty ( WMWithProperty )
+import Yaifl.Core.Effects
+import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Model.Query ( getContainingHierarchy, getCommonAncestor, getThingMaybe )
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds (objectEquals)
 import qualified Data.List.NonEmpty as NE
 import Yaifl.Model.Kinds.Container

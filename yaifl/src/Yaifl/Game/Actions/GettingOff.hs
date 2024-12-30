@@ -6,14 +6,14 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Thing ( thingContainedBy )
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.Tag ( getTaggedObject, tagObject )
+import Yaifl.Core.Kinds.Thing ( thingContainedBy )
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.Tag ( getTaggedObject, tagObject )
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Game.Move (move)
 import Yaifl.Model.Query
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
 

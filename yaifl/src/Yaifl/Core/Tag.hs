@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Objects.Tag
+Module      : Yaifl.Core.Tag
 Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -8,7 +8,8 @@ Machinery to tagEntity entities given a witness such that we can safely avoid Ma
 doing queries. For example, we can require that the object reference of the object
 that contains something is an object with an enclosing property.
 -}
-module Yaifl.Model.Tag
+
+module Yaifl.Core.Tag
   ( -- * Tagging things
     Taggable(..)
   , coerceTag
@@ -22,7 +23,7 @@ module Yaifl.Model.Tag
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 
 -- | A tagged object is a tuple of a tagged entity, and the object itself
 newtype TaggedObject o tagEntity = TaggedObject { unTagObject :: (TaggedEntity tagEntity, o) }
@@ -45,7 +46,7 @@ class Taggable taggableWith taggableTo where
   default tagEntity :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
   tagEntity _ = unsafeTagEntity . getID
 
--- you can always tagEntity something as itself
+-- | you can always tagEntity something as itself
 instance Taggable (TaggedEntity a) a
 instance Taggable DoorEntity ThingTag
 
@@ -74,6 +75,7 @@ instance Taggable (TaggedEntity RoomTag) EnclosingTag where
   tagEntity = const . coerce
 
 instance Taggable (TaggedEntity PersonTag) EnclosingTag
+instance Taggable (TaggedEntity PersonTag) ThingTag
 
 -- | If we can tagEntity a `TaggedEntity a` as a @b@, we can just coerce the entity
 -- rather than passing it twice.

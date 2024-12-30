@@ -7,18 +7,18 @@ import Yaifl.Prelude
 import Breadcrumbs
 
 
-import Yaifl.Model.Metadata ( Metadata(..) )
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.HasProperty
+import Yaifl.Core.Metadata ( Metadata(..) )
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
 import qualified Data.EnumSet as ES
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.AnyObject
 
 move ::
   forall l wm es.

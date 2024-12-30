@@ -1,4 +1,4 @@
-module Yaifl.Model.Kinds.Thing
+module Yaifl.Core.Kinds.Thing
   ( ThingLit(..)
   , ThingWearability(..)
   , ThingDescribed(..)
@@ -15,15 +15,16 @@ module Yaifl.Model.Kinds.Thing
   , thingIsWorn
   , thingIsConcealed
   , thingIsScenery
+  , makeItScenery
   , thingContainedBy
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Entity
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Entity
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Room
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 import GHC.Records
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
@@ -51,7 +52,7 @@ data ThingHandled = Handled | NotHandled
 data ThingConcealed = NotConcealed | Concealed (Maybe ThingEntity)
   deriving stock (Eq, Show, Read, Ord, Generic)
 
--- | Properties that define a `Yaifl.Model.Kinds.Object.Thing`.
+-- | Properties that define a `Yaifl.Core.Kinds.Object.Thing`.
 data ThingData wm = ThingData
   { containedBy :: EnclosingEntity
   , lit :: ThingLit
@@ -127,6 +128,9 @@ thingIsScenery ::
   Thing wm
   -> Bool
 thingIsScenery = view (#objectData % #isScenery)
+
+makeItScenery :: Eff '[State (Thing wm)] ()
+makeItScenery = (#objectData % #isScenery .= True)
 
 thingContainedBy ::
   Thing wm

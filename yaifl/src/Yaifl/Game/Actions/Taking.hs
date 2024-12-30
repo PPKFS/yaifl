@@ -3,18 +3,18 @@ module Yaifl.Game.Actions.Taking where
 import Yaifl.Model.Action
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Prelude
 import Yaifl.Text.Say
 import Yaifl.Game.Move
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Query (getEnclosingMaybe)
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Tag
-import Yaifl.Model.Entity
-import Yaifl.Model.Metadata
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Tag
+import Yaifl.Core.Entity
+import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Kinds.Person
 

@@ -11,32 +11,32 @@ module Yaifl.Game.Actions.Going
 import Yaifl.Prelude
 
 import Yaifl.Model.Action
-import Yaifl.Model.Entity
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Entity
+import Yaifl.Core.Metadata
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
 import Yaifl.Game.Create.RoomConnection
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
 import Breadcrumbs
 import Yaifl.Game.Move
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Kinds.Enclosing
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.WorldModel (WMDirection)
-import Yaifl.Model.Tag
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Tag
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Text.Print (runOnLookingParagraph)
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
 
 data GoingActionVariables wm = GoingActionVariables

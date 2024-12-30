@@ -10,13 +10,13 @@ import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Kinds.Supporter
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Test.Common
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Query
 import Yaifl.Game.Create
 import Yaifl.Model.Rules (Precondition(..), variables, say)
-import Yaifl.Model.Kinds.Thing ( thingIsScenery )
+import Yaifl.Core.Kinds.Thing ( thingIsScenery )
 
 ex16 :: (Text, [Text], Game PlainWorldModel ())
 ex16 = ("Replanting", replantingTestMeWith, replantingWorld)

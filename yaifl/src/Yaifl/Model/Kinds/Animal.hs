@@ -4,8 +4,8 @@ module Yaifl.Model.Kinds.Animal
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Effects
+import Yaifl.Core.ObjectLike
 
 isAnimal ::
   NoMissingObjects wm es

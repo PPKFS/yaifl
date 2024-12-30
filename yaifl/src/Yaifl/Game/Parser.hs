@@ -11,7 +11,7 @@ import Effectful.Dispatch.Dynamic
 import Yaifl.Model.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Kinds.Direction ( HasDirectionalTerms(..) )
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 import Yaifl.Model.Query
 import Yaifl.Text.Print
 import Yaifl.Model.Actions.Args
@@ -22,18 +22,18 @@ import Yaifl.Model.Rules.RuleEffects
 import Data.List.Split
 import Data.List (lookup)
 import Effectful.Error.Static
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Data.Char (isSpace)
 import qualified Data.Set as S
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.ListWriter
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Input (waitForInput, Input)
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 import Yaifl.Game.Actions.Looking.Visibility
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Kinds.Enclosing
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::

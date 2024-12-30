@@ -6,7 +6,7 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Metadata
+import Yaifl.Core.Metadata
 
 data WaitingResponses wm
 

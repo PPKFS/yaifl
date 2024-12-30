@@ -25,11 +25,11 @@ import Yaifl.Model.Actions.Args ( Refreshable )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds.AnyObject
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Responses
 import Effectful.Reader.Static
 import Yaifl.Model.Rules.Run
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 
 -- | A nicer wrapper around label optics for activities.
 type WithActivity (name :: Symbol) wm resps v r = LabelOptic' name A_Lens (WMActivities wm) (Activity wm resps v r)

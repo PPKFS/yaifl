@@ -7,19 +7,19 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Model.Kinds
-import Yaifl.Model.HasProperty
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.HasProperty
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Tag
+import Yaifl.Core.Tag
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Metadata
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.Kinds.Animal
 import Effectful.Error.Static
 import Yaifl.Model.Activity
-import Yaifl.Model.Store
+import Yaifl.Core.Store
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Game.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription)
 

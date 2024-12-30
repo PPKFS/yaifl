@@ -7,9 +7,9 @@ module Yaifl.Model.MultiLocated
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.HasProperty
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.TH
 

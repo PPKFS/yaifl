@@ -7,20 +7,20 @@ import Yaifl.Prelude
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Model.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
 import Yaifl.Game.Activities.PrintingTheLocaleDescription
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Effects
-import Yaifl.Model.ObjectLike
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Effects
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.HasProperty
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.WorldModel
 import qualified Data.EnumSet as DES
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Metadata
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Metadata
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

@@ -1,4 +1,14 @@
 
+Text
+
+Core
+
+Std
+- Actions
+- Kinds
+- Rulebooks
+- EffectHandlers
+
 
 object
   - thing

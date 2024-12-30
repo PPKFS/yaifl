@@ -26,14 +26,14 @@ module Yaifl.Model.Actions.Args
 
 import Yaifl.Prelude hiding (show)
 
-import Yaifl.Model.Kinds.Object
+import Yaifl.Core.Kinds.Object
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import GHC.Show
 import qualified Data.Set as S
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Room
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Person
 

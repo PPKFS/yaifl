@@ -8,7 +8,7 @@ Typeclasses for things which are XLike (can be resolved into an X in an @Eff es@
 constraints/effects).
 -}
 
-module Yaifl.Model.ObjectLike
+module Yaifl.Core.ObjectLike
   ( ObjectLike(..)
   , ThingLike(..)
   , RoomLike(..)
@@ -19,14 +19,14 @@ import Yaifl.Prelude
 
 import Effectful.Error.Static
 
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Room
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Metadata (isKind)
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata (isKind)
 
 -- | Something which can be resolved into an `AnyObject`.
 class HasID o => ObjectLike wm o where
@@ -61,6 +61,12 @@ instance ThingLike wm (Thing wm) where
 instance RoomLike wm (Room wm) where
   getRoom = pure
 
+instance ThingLike wm (TaggedEntity ThingTag) where
+  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
+
+instance RoomLike wm (TaggedEntity RoomTag) where
+  getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
+
 instance ObjectLike wm (AnyObject wm) where
   getObject = pure
 
@@ -70,6 +76,9 @@ instance ObjectLike wm (TaggedEntity anyTag) where
 instance ThingLike wm DoorEntity where
   getThing = getThing . coerceTag @_ @ThingTag
 
+instance ThingLike wm PersonEntity where
+  getThing = getThing . coerceTag @_ @ThingTag
+
 instance ObjectLike wm Entity where
   getObject e = if isThing (getID e)
     then lookupThing e >>= either (throwError . flip MissingObject e) (return . review _Thing)
@@ -77,16 +86,6 @@ instance ObjectLike wm Entity where
 
 instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
   getObject = getObject . snd
-
-instance ThingLike wm (TaggedEntity ThingTag) where
-  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
-
-instance ThingLike wm (TaggedEntity PersonTag) where
-  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
-
-
-instance RoomLike wm (TaggedEntity RoomTag) where
-  getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
 
 objectIsKind ::
   NoMissingObjects wm es

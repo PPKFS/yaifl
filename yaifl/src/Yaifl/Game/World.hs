@@ -3,17 +3,17 @@ module Yaifl.Game.World where
 import Yaifl.Prelude
 
 import Yaifl.Model.Action ( WorldActions )
-import Yaifl.Model.Entity ( Entity )
-import Yaifl.Model.Store
-import Yaifl.Model.Metadata ( Metadata )
+import Yaifl.Core.Entity ( Entity )
+import Yaifl.Core.Store
+import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Print ( Has(..), MessageBuffer )
 import Yaifl.Model.WorldModel ( WMValues, WorldModel )
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds.Region
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Room
 
 data World (wm :: WorldModel) = World
   { metadata :: Metadata

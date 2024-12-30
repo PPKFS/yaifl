@@ -20,16 +20,16 @@ module Yaifl.Model.Kinds.Supporter
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
 import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Kinds.Enclosing
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Metadata
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Metadata
 import Yaifl.Model.Query
 import Yaifl.Model.TH
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Thing ( Thing )
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Thing ( Thing )
 
 data Supporter = Supporter
   { enclosing :: Enclosing

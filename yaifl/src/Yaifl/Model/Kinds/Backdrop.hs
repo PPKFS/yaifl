@@ -5,8 +5,8 @@ module Yaifl.Model.Kinds.Backdrop
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Effects
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Effects
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.MultiLocated (MultiLocated)
 
 newtype Backdrop = Backdrop MultiLocated

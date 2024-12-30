@@ -31,14 +31,14 @@ import Breadcrumbs
 
 import Data.Text.Display
 
-import Yaifl.Model.Metadata ( whenConstructing, noteError )
+import Yaifl.Core.Metadata ( whenConstructing, noteError )
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.Kinds.Object
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity
+import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.Room
+import Yaifl.Core.Kinds.Room
 import Yaifl.Model.TH ( makeDirections, WMWithProperty )
 import Yaifl.Model.WorldModel ( WMDirection )
 
@@ -48,7 +48,7 @@ import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Prelude hiding (Down)
 import Yaifl.Model.Kinds.Supporter (SupporterEntity)
 import Yaifl.Game.Move (move)
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Kinds.Enclosing
 
 getAllConnections ::
   Room wm

@@ -1,7 +1,7 @@
 {-|
 Module      : Yaifl.Model.WorldModel
 Description : Some type family nonsense to avoid writing massive amounts of type parameters.
-Copyright   : (c) Avery 2022-2023
+Copyright   : (c) Avery 2022-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -24,11 +24,17 @@ module Yaifl.Model.WorldModel (
   , WMRead
   , WMOrd
   , WMEq
+
+  , WMWithProperty
   ) where
 
 import Yaifl.Prelude
+import Yaifl.Core.HasProperty
 
 -- | All the various type parameters wrapped into a single type.
+-- This allows us to tie the knot in some weird way - we need some way to refer
+-- to sets of activities or actions or object types, but these then need to depend
+-- on the fundamental types themselves.
 data WorldModel =
   WorldModel
     Type
@@ -78,3 +84,6 @@ type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 -- | Constraint that object specifics, values, and directions are Eqable.
 type WMEq wm = WMConstr Eq wm
+
+-- | A helper to define that a world model @wm@ has a Property.
+type WMWithProperty wm v = MayHaveProperty (WMObjSpecifics wm) v

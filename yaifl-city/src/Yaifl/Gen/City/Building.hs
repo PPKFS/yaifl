@@ -6,16 +6,16 @@ module Yaifl.Gen.City.Building
 ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Kinds
-import Yaifl.Model.Effects
+import Yaifl.Core.Effects
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
 import Yaifl.Game.Create
 import Yaifl.Model.MultiLocated
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Door
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
 import Yaifl.Game.Activities.ListingContents (WithListingContents)

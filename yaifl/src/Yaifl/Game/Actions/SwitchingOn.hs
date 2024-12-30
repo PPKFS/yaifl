@@ -6,9 +6,9 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Device
-import Yaifl.Model.HasProperty
+import Yaifl.Core.HasProperty
 
 type SwitchingOnAction wm = Action wm () 'TakesThingParameter (Thing wm)
 

@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Kinds.Object
+Module      : Yaifl.Core.Kinds.Object
 Copyright   : (c) Avery 2023-2024
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -7,7 +7,7 @@ Maintainer  : ppkfs@outlook.com
 A game object (a thing or a room).
 -}
 
-module Yaifl.Model.Kinds.Object (
+module Yaifl.Core.Kinds.Object (
   -- * Pointed sets
   Pointed(..)
   -- * Objects
@@ -25,7 +25,7 @@ module Yaifl.Model.Kinds.Object (
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 import Yaifl.Model.WorldModel (WMText)
 
 -- | If the object has a pluralised name.
@@ -40,7 +40,7 @@ data NameProperness = Improper | Proper
 data NamePrivacy = PrivatelyNamed | PubliclyNamed
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
--- | See also `Yaifl.Model.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
+-- | See also `Yaifl.Core.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
 -- there is no data or polymorphism connected to a type, so it's very possible to call something a supporter without
 -- having some supporter properties.
 newtype ObjectKind = ObjectKind

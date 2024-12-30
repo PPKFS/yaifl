@@ -3,17 +3,17 @@ module Yaifl.Model.Kinds.Person where
 
 import Yaifl.Prelude
 import Yaifl.Model.TH (makeSpecificsWithout)
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Effects
-import Yaifl.Model.HasProperty
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Effects
+import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.Enclosing
+import Yaifl.Core.Kinds.Enclosing
 import qualified Data.EnumSet as ES
-import Yaifl.Model.Tag
-import Yaifl.Model.Kinds.Thing
-import Yaifl.Model.ObjectLike
+import Yaifl.Core.Tag
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.ObjectLike
 import Yaifl.Game.Move
-import Yaifl.Model.Entity
+import Yaifl.Core.Entity
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)

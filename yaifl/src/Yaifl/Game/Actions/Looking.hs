@@ -15,13 +15,13 @@ import Yaifl.Model.Action
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Game.Actions.Looking.Visibility
 import Yaifl.Model.Activity
-import Yaifl.Model.Metadata
-import Yaifl.Model.Kinds.Object( Object(..), objectEquals )
-import Yaifl.Model.Effects
-import Yaifl.Model.Entity ( HasID(..) )
+import Yaifl.Core.Metadata
+import Yaifl.Core.Kinds.Object( Object(..), objectEquals )
+import Yaifl.Core.Effects
+import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Model.Query
-import Yaifl.Model.Kinds.Room ( IsVisited(..) )
-import Yaifl.Model.Store
+import Yaifl.Core.Kinds.Room ( IsVisited(..) )
+import Yaifl.Core.Store
 import Yaifl.Model.Kinds.Animal
 import Yaifl.Model.Kinds.Supporter ( isSupporter )
 import Yaifl.Model.Actions.Args
@@ -32,8 +32,8 @@ import Yaifl.Text.Print ( Print, setStyle, runOnLookingParagraph )
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
 import qualified Prettyprinter.Render.Terminal as PPTTY
-import Yaifl.Model.Kinds.AnyObject
-import Yaifl.Model.Kinds.Thing
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Input
 
 data LookingResponses wm =

@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.Kinds.Enclosing
+Module      : Yaifl.Core.Kinds.Enclosing
 Copyright   : (c) Avery 2023
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -7,7 +7,7 @@ Maintainer  : ppkfs@outlook.com
 A property component for things that can contain other things (rooms, supporters, containers, etc).
 -}
 
-module Yaifl.Model.Kinds.Enclosing (
+module Yaifl.Core.Kinds.Enclosing (
   -- * Enclosing
     Enclosing(..)
   , blankEnclosing
@@ -16,8 +16,8 @@ module Yaifl.Model.Kinds.Enclosing (
 import Yaifl.Prelude
 
 import Data.EnumSet ( EnumSet, empty )
-import Yaifl.Model.Entity
-import Yaifl.Model.Tag
+import Yaifl.Core.Entity
+import Yaifl.Core.Tag
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing
