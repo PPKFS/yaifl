@@ -9,7 +9,6 @@ import Yaifl.Prelude
 import Yaifl.Core.Entity
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds
 import Yaifl.Core.Effects
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Core.HasProperty

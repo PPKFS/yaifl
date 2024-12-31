@@ -6,8 +6,6 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Container
@@ -22,6 +20,12 @@ import Yaifl.Model.Activity
 import Yaifl.Core.Store
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Game.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription)
+import Yaifl.Model.WorldModel
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Query.Enclosing
 
 data EnteringResponses wm
 

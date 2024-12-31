@@ -35,17 +35,19 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty, ObjectLike (..), IsEnclosing )
+import Yaifl.Model.Query ( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Model.TH ( makeSpecificsWithout )
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Object
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Metadata
-import Yaifl.Model.Kinds (Thing)
+import Yaifl.Model.WorldModel
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Query.Enclosing
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent

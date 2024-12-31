@@ -20,10 +20,9 @@ import Yaifl.Core.Entity
 import Yaifl.Game.Move ( move )
 import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query
-import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, tagRoom, Room (..) )
+import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
-import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Model.WorldModel
 
 import qualified Data.Set as S
@@ -31,6 +30,8 @@ import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
 import Yaifl.Core.Tag (tagObject)
+import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Text.Say
 
 done = defaults
 
@@ -42,6 +43,7 @@ type AddObjects wm es = (
   , State Metadata :> es
   , Pointed (WMObjSpecifics wm)
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es
+  , SayableValue (WMText wm) wm
   )
 
 makeObject ::
@@ -99,7 +101,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
                 (void . move t)
                 encLoc
         )
-        (\r -> #previousRoom .= tagRoom r) obj'
+        (\r -> #previousRoom .= tagRoomEntity r) obj'
     pure obj
 
 addThingInternal ::
@@ -161,8 +163,8 @@ addRoomInternal ::
 addRoomInternal name desc objtype specifics details = do
   e <- Room <$> addObject (setRoom . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
   md <- get
-  when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoom e)
-  return (tagRoom e)
+  when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoomEntity e)
+  return (tagRoomEntity e)
 
 addRoom' ::
   WMWithProperty wm Enclosing

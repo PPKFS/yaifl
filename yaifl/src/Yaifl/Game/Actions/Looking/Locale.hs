@@ -7,8 +7,8 @@ module Yaifl.Game.Actions.Looking.Locale where
 import Yaifl.Prelude
 import Yaifl.Core.Store
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Model.Kinds
-import Yaifl.Model.Query
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Kinds.Thing
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables

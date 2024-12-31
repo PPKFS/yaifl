@@ -7,16 +7,16 @@ module Yaifl.Game.Accessibility
 import Yaifl.Prelude
 
 import Yaifl.Model.Actions.Args
-import Yaifl.Core.Effects
-import Yaifl.Core.HasProperty ( WMWithProperty )
-import Yaifl.Model.Query ( getContainingHierarchy, getCommonAncestor, getThingMaybe )
+import Yaifl.Model.WorldModel ( WMWithProperty )
+import Yaifl.Model.Query ( getThingMaybe )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.Kinds (objectEquals)
 import qualified Data.List.NonEmpty as NE
 import Yaifl.Model.Kinds.Container
 import Yaifl.Text.Say
-import Yaifl.Model.Rules (RuleEffects)
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Kinds.Object
 
 accessibility ::
   WithPrintingNameOfSomething wm
@@ -44,7 +44,7 @@ insideClosedContainers ::
   => RuleEffects wm es
   => WMWithProperty wm Container
   => Args wm (Thing wm) -> Eff es (Maybe Bool)
-insideClosedContainers a@Args{source=s, variables=v}= do
+insideClosedContainers Args{source=s, variables=v}= do
   commonAncestor <- getCommonAncestor s v
   -- this is everything (which should be nonempty) we may ned to reach through
   hier <- NE.takeWhile (/= commonAncestor) <$> getContainingHierarchy v

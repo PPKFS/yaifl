@@ -23,11 +23,12 @@ import Yaifl.Model.Query
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Kinds
 import Yaifl.Model.Activity
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
 import Yaifl.Core.Metadata (isKind)
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Kinds.Thing
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)

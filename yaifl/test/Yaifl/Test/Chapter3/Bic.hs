@@ -3,11 +3,12 @@ module Yaifl.Test.Chapter3.Bic where
 import Yaifl
 import Yaifl.Game.Create.Object
 import Yaifl.Core.Effects
-import Yaifl.Model.Kinds
-import Yaifl.Model.Rules
 import Yaifl.Prelude
 import Yaifl.Text.Say
 import qualified Data.Text as T
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Model.Rules.Rulebook
+import Yaifl.Core.Kinds.Object
 
 ex2 :: (Text, [a], Game PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)
@@ -36,5 +37,5 @@ ex2World = do
     ! done
 
   addWhenPlayBegins $ makeRule' "run property checks at the start of play rule" $ do
-      traverseThings (\t -> when (isBlankDescription t) [saying|{t} has no description.|] >> rulePass)
+      traverseThings_ (\t -> when (isBlankDescription t) [saying|{t} has no description.|] >> rulePass)
       rulePass

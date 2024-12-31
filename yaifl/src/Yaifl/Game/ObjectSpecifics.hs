@@ -26,18 +26,18 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
 import Yaifl.Core.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
-import Yaifl.Core.HasProperty ( MayHaveProperty(..), WMWithProperty )
+import Yaifl.Core.HasProperty ( MayHaveProperty(..) )
 import Yaifl.Model.MultiLocated
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Query
-import Yaifl.Model.WorldModel ( WMObjSpecifics, WorldModel(..), WMText, WMDirection )
 import qualified Data.Set as S
 import Yaifl.Core.Tag
 import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
-import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.Kinds.Backdrop
+import Yaifl.Model.WorldModel
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Query.Enclosing
 
 data ObjectSpecifics =
   NoSpecifics

@@ -6,11 +6,11 @@ module Yaifl.Game.Activities.PrintingRoomDescriptionDetails
 
 import Yaifl.Prelude
 import Yaifl.Model.Activity
-import Yaifl.Model.Kinds
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Text.Responses
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Model.WorldModel
 
 type WithPrintingRoomDescriptionDetails wm =
   ( WithActivity "printingRoomDescriptionDetails" wm () (Thing wm) ()

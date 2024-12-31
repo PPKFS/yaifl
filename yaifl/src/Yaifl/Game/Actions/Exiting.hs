@@ -6,18 +6,19 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Core.Tag
-import Yaifl.Model.Query
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Supporter
 import Breadcrumbs
 import Yaifl.Game.Move
 import Yaifl.Core.Entity
+import Yaifl.Model.WorldModel
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.ObjectLike
 
 data ExitingResponses wm
 
@@ -89,7 +90,7 @@ standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> do
 
 describeExited ::
   ExitingRule wm
-describeExited = makeRule "describe contents entered into" forPlayer' $ \a@Args{variables=v} -> do
+describeExited = makeRule "describe contents entered into" forPlayer' $ \a@Args{} -> do
   -- TODO: reckon darkness
   parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look"
   rulePass

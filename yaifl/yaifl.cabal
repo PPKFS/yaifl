@@ -88,6 +88,9 @@ library
     Yaifl.Core.Refreshable
     Yaifl.Core.HasProperty
 
+    Yaifl.Core.Query.Enclosing
+    Yaifl.Core.Query.Region
+
     Yaifl
     Yaifl.Game.ActionProcessing
     Yaifl.Game.Actions.Closing

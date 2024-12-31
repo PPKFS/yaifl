@@ -10,18 +10,15 @@ module Yaifl.Core.Query.Enclosing
   , IsEnclosingObject(..)
   , IsEnclosing(..)
   , getEnclosingObject
-  , getDescribableContents
   , enclosingContains
   , getCommonAncestor
   , getLocation
   ) where
 
 import Yaifl.Prelude
-import Breadcrumbs
 
 import Data.List.NonEmpty as NE (cons)
 
-import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
@@ -32,12 +29,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Tag
 
 import qualified Data.EnumSet as ES
-import qualified Data.Set as S
-import Yaifl.Model.Kinds.Region
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
-import Effectful.Error.Static (Error, throwError)
-import Yaifl.Core.Refreshable
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Query
 
@@ -57,6 +49,7 @@ getLocation t = do
 
 getAllObjectsInRoom ::
   RoomLike wm o
+  => WMWithProperty wm Enclosing
   => NoMissingObjects wm es
   => IncludeScenery
   -> IncludeDoors
@@ -64,8 +57,8 @@ getAllObjectsInRoom ::
   -> o
   -> Eff es [Thing wm]
 getAllObjectsInRoom incScenery incDoors recurse r = do
-  r <- getRoom r
-  getAllObjectsInEnclosing incScenery incDoors recurse (tagRoomEntity r)
+  r' <- getRoom r
+  getAllObjectsInEnclosing incScenery incDoors recurse (coerceTag $ tagRoomEntity r')
 
 getAllObjectsInEnclosing ::
   NoMissingObjects wm es
@@ -75,7 +68,7 @@ getAllObjectsInEnclosing ::
   -> RecurseAllObjects
   -> EnclosingEntity
   -> Eff es [Thing wm]
-getAllObjectsInEnclosing incScenery incDoors _recurse r = do
+getAllObjectsInEnclosing incScenery incDoors recurse r = do
   e <- getEnclosingObject r
   let e' = getEnclosing e
   let allItemIDs = ES.toList $ e' ^. #contents
@@ -84,7 +77,7 @@ getAllObjectsInEnclosing incScenery incDoors _recurse r = do
   recursedThings <- mconcat <$> mapM (\t -> do
     let mbE = getEnclosingMaybe (toAny t)
     case mbE of
-      Just enc' -> getAllObjectsInEnclosing incScenery incDoors (tagEntity enc' t)
+      Just enc' -> getAllObjectsInEnclosing incScenery incDoors recurse (tagEntity enc' t)
       Nothing -> return []) things
   enclosingItself <- getThingMaybe r
   return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)

@@ -14,13 +14,13 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Metadata
+import Yaifl.Model.Actions.Args
+import Yaifl.Core.Query.Enclosing
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =
@@ -149,10 +149,10 @@ isSeeThrough e = do
   let c = getContainerMaybe e
       en = getEnterableMaybe e
   s <- isSupporter e
-  isContainer <- isKind e "container"
+  isC <- isContainer e
   let
       isTransparent = fmap opacity c == Just Transparent
-      isEnterableNotContainer = en == Just Enterable && not isContainer
+      isEnterableNotContainer = en == Just Enterable && not isC
   return $ s --if it's a supporter
       || isTransparent -- it's transparent
       || isEnterableNotContainer -- it's enterable but not a container

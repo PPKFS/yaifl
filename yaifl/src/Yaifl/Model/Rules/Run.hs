@@ -16,12 +16,14 @@ import Yaifl.Model.Rules.Rulebook
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Print (modifyBuffer)
+import Yaifl.Model.WorldModel
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::
   HasCallStack
   => (Refreshable wm v, Display v, Display re)
   => RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => x es
   => Maybe SpanID
   -> Bool
@@ -40,6 +42,7 @@ runRulebookAndReturnVariables ::
   forall wm x v es re.
   HasCallStack
   => (Refreshable wm v, Display v, Display re)
+  => SayableValue (WMText wm) wm
   => x es
   => RuleEffects wm es
   => Maybe SpanID
@@ -63,6 +66,7 @@ runRulebookAndReturnVariables mbSpanId skipParagraphBreaks Rulebook{..} args =
 -- something that isn't a Nothing, or a default if you get to the end".
 processRuleList ::
   (Refreshable wm v, Display v, Display re)
+  => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => x es
   => SpanID

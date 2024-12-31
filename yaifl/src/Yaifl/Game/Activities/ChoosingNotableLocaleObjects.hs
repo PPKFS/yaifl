@@ -10,8 +10,6 @@ import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Store
 import Yaifl.Core.Kinds.Object( Object(..) )
 import Yaifl.Core.Kinds.Enclosing ( Enclosing(..) )
-import Yaifl.Core.HasProperty ( WMWithProperty )
-import Yaifl.Model.Query ( getEnclosingMaybe )
 import Yaifl.Model.Rules.Rulebook (makeRule)
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
@@ -19,6 +17,8 @@ import Breadcrumbs
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike
+import Yaifl.Model.WorldModel
+import Yaifl.Core.Query.Enclosing
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))
 

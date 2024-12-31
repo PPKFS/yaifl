@@ -4,7 +4,6 @@ module Yaifl.Game.Actions.Closing where
 import Yaifl.Model.Action
 import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
-import Yaifl.Core.HasProperty
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Responses
@@ -12,6 +11,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Model.WorldModel
 
 data ClosingResponses = ReportClosingResponseA
 {- data ClosingResponses wm = OR
@@ -50,7 +50,7 @@ standardClose = makeRule "standard closing rule" [] $ \Args{variables=thing} -> 
   closeIt thing
   rulePass
 
-standardReport :: ActionRule wm (ClosingAction wm) (Thing wm)
+standardReport :: SayableValue (WMText wm) wm => ActionRule wm (ClosingAction wm) (Thing wm)
 standardReport = makeRule "standard report closing rule" [] $ \args -> do
   -- if the actor is the player:
   pl <- isPlayer (source args)

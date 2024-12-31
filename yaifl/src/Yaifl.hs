@@ -42,7 +42,6 @@ import Yaifl.Game.ObjectSpecifics
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.HasProperty
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Rules.RuleEffects
@@ -62,7 +61,6 @@ import Yaifl.Game.EffectHandlers
 import Yaifl.Text.DynamicText
 import Yaifl.Game.Actions.Collection
 import Breadcrumbs
-import Yaifl.Model.Query (failHorriblyIfMissing)
 import Yaifl.Game.Actions.Examining
 import Yaifl.Core.Store
 import Yaifl.Game.Actions.Closing
@@ -87,6 +85,7 @@ import Yaifl.Game.Actions.Exiting (exitingAction)
 import Yaifl.Game.Actions.GettingOff (gettingOffAction)
 import Yaifl.Game.Accessibility
 import Yaifl.Model.Kinds.Person
+import Yaifl.Core.Effects
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -317,6 +316,7 @@ addOutOfWorld cs e = forM_ cs $ \c ->
 
 runTurnsFromBuffer ::
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => State (WorldActions wm) :> es
   => Eff es ()
 runTurnsFromBuffer = do
@@ -326,6 +326,7 @@ runTurnsFromBuffer = do
 runTurn ::
   forall wm es.
   State (WorldActions wm) :> es
+  => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => Eff es ()
 runTurn = do

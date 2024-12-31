@@ -15,7 +15,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Model.Query
 import Yaifl.Text.Print
 import Yaifl.Model.Actions.Args
-import Yaifl.Model.WorldModel ( WMDirection )
+import Yaifl.Model.WorldModel ( WMDirection, WMText )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
@@ -34,6 +34,7 @@ import Yaifl.Model.Input (waitForInput, Input)
 import Yaifl.Core.Tag
 import Yaifl.Game.Actions.Looking.Visibility
 import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.Query.Enclosing
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::
@@ -292,10 +293,10 @@ tryFindingObject t = failHorriblyIfMissing $ do
           (const $ return $ (obj, enc))
           obj
 
-  (playerLocObj, domainEnc) <- (\t -> getUppermostDomain (getTaggedObject t, getEnclosing t)) =<< getEnclosingObject (thingContainedBy pl)
+  (playerLocObj, domainEnc) <- (\t' -> getUppermostDomain (getTaggedObject t', getEnclosing t')) =<< getEnclosingObject (thingContainedBy pl)
   -- okay, if we bother doing a proper scanning loop it'll go here
   -- but for now, we just want to consider anything recursively present. that'll do.
-  allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors (tagEntity domainEnc playerLocObj)
+  allItems <- getAllObjectsInEnclosing IncludeScenery IncludeDoors Recurse (tagEntity domainEnc playerLocObj)
   findObjectsFrom t allItems True
 
 
@@ -349,6 +350,7 @@ handleAmbiguity ls = do
 
 scoreParserMatch ::
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => S.Set Text
   -> Thing wm
   -> Eff es (Double, Double)
@@ -384,7 +386,6 @@ parseDirection p cmd =
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
   NoMissingObjects wm es
-  => WithListWriting wm
   => Input :> es
   => Refreshable wm v
   => ActionHandler wm :> es

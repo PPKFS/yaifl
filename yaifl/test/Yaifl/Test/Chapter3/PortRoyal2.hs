@@ -5,7 +5,7 @@ import Yaifl.Game.Create.Object
 import Yaifl.Prelude
 import Yaifl.Test.Common
 import Yaifl.Game.Create
-import Yaifl.Model.Kinds
+import Yaifl.Model.Kinds.Direction (Direction(..))
 
 ex8 :: (Text, [Text], Game PlainWorldModel ())
 ex8 = ("Port Royal 2", portRoyal2TestMeWith, portRoyalWorld2)

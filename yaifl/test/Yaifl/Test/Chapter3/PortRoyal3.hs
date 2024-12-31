@@ -2,9 +2,9 @@ module Yaifl.Test.Chapter3.PortRoyal3 where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Model.Kinds
 import Yaifl.Game.Create
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Region
+import Yaifl.Model.Kinds.Direction
 import Yaifl.Test.Common
 
 ex10 :: (Text, [Text], Game PlainWorldModel ())

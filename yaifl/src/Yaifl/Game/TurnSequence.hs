@@ -9,11 +9,11 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run ( runRulebook )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Action
+import Yaifl.Model.WorldModel
 
 
 -- | The rulebook that runs at the start of the game.
-turnSequenceRules ::
-  Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+turnSequenceRules :: SayableValue (WMText wm) wm => Rulebook wm ((:>) (State (WorldActions wm))) () Bool
 turnSequenceRules = Rulebook
     "every turn"
     Nothing
@@ -29,6 +29,7 @@ turnSequenceRules = Rulebook
 everyTurnRule ::
   forall wm es.
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => State (WorldActions wm) :> es
   => Eff es (Maybe Bool)
 everyTurnRule = do

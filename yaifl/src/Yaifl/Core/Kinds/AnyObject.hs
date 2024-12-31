@@ -7,6 +7,7 @@ module Yaifl.Core.Kinds.AnyObject
   , TaggedAnyEnclosing
   , EnclosingThing
   , asThingOrRoom
+  , unwrapAny
   ) where
 
 import Yaifl.Prelude

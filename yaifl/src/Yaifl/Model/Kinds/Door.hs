@@ -10,7 +10,6 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Openable as O
 import Yaifl.Core.Kinds.Thing
@@ -20,6 +19,7 @@ import Yaifl.Model.TH
 import Yaifl.Core.Tag
 
 import qualified Data.Set as S
+import Yaifl.Model.WorldModel
 
 data Door = Door
   { isOneWay :: Bool

@@ -12,7 +12,6 @@ import Yaifl.Model.Kinds.Direction
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Gen.City.Building
 import Yaifl.Text.DynamicText
-import Yaifl.Model.Kinds
 import Yaifl.Core.Entity
 import Yaifl.Model.Rules
 import System.Random.Stateful

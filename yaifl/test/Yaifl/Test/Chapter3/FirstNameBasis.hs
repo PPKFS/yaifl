@@ -4,11 +4,12 @@ import Yaifl.Prelude
 
 import Yaifl
 import Yaifl.Game.Create
-import Yaifl.Model.Kinds
 import Yaifl.Model.Query
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
+import Yaifl.Model.Kinds.Device
+import Yaifl.Model.Kinds.Person
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)

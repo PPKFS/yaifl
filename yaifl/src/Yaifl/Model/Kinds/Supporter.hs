@@ -30,6 +30,9 @@ import Yaifl.Model.Query
 import Yaifl.Model.TH
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Thing ( Thing )
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.ObjectLike
+import Yaifl.Model.WorldModel
 
 data Supporter = Supporter
   { enclosing :: Enclosing

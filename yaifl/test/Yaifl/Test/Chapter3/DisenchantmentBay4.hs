@@ -64,7 +64,7 @@ A sign taped to one wall announces the menu of tours offered by the Yakutat Char
   case allRooms of
     [] -> error "impossible; traverseRooms is broken"
     r:rs -> addBackdrop "view of the Malaspina glacier" ! #description "The Malaspina glacier covers much of the nearby slope, and -- beyond it -- an area as large as Rhode Island."
-              ! #locations (NE.map (coerceTag . tagRoom) $ r :| rs) ! done
+              ! #locations (NE.map (coerceTag . tagRoomEntity) $ r :| rs) ! done
 
   pass
 

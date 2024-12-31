@@ -8,7 +8,7 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Device
-import Yaifl.Core.HasProperty
+import Yaifl.Model.WorldModel
 
 type SwitchingOnAction wm = Action wm () 'TakesThingParameter (Thing wm)
 

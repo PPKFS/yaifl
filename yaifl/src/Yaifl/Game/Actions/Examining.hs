@@ -5,10 +5,7 @@ import Yaifl.Prelude
 
 import Yaifl.Model.Action
 import Yaifl.Model.Actions.Args
-import Yaifl.Core.HasProperty (WMWithProperty)
-import Yaifl.Model.Kinds
 import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Query
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.WorldModel
 
@@ -18,6 +15,14 @@ import Yaifl.Text.Responses
 import Yaifl.Text.Say
 import Yaifl.Core.Tag
 import Yaifl.Model.Kinds.Supporter
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Effects
+import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Core.ObjectLike
+import qualified Data.EnumSet as ES
+import Yaifl.Core.Kinds.Object
 
 data ExaminingResponses =
   ExamineDirectionA
@@ -99,7 +104,7 @@ type ExamineRule wm = ActionRule wm (ExaminingAction wm) (ExaminingActionVariabl
 actionRequiresLight :: ExamineRule wm
 actionRequiresLight = notImplementedRule "action requires light"
 
-examineUndescribed :: ExamineRule wm
+examineUndescribed :: SayableValue (WMText wm) wm => ExamineRule wm
 examineUndescribed = makeRule "examine undescribed things rule" forPlayer' $ \a@Args{..} -> do
   -- if examine text printed is false:
   -- say "[We] [see] nothing special about [the noun]." (A).
@@ -186,3 +191,16 @@ standardExamining = Rule "standard examining rule" forPlayer' $ \a@Args{..} -> d
 
 reportOtherPeopleExamining :: ExamineRule wm
 reportOtherPeopleExamining = notImplementedRule "report others examining rule"
+
+getDescribableContents ::
+  NoMissingObjects wm es
+  => Enclosing
+  -> Eff es [Thing wm]
+getDescribableContents e = do
+  p <- getPlayer'
+  catMaybes <$> mapM (\i -> do
+    item <- getThing i
+    if thingIsScenery item || p `objectEquals` i {- || todo: falsely unoccupied -}
+    then pure Nothing
+    else pure (Just item)
+    ) (ES.toList $ view #contents e)

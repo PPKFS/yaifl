@@ -35,6 +35,7 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Input
+import Yaifl.Core.ObjectLike
 
 data LookingResponses wm =
   RoomDescriptionHeadingA

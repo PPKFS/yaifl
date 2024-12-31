@@ -6,12 +6,12 @@ import Yaifl.Prelude
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Metadata
 import Yaifl.Text.Responses
 import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Model.WorldModel
 
 data OpeningResponses =
   UnlessOpenableResponseA
@@ -54,7 +54,7 @@ cantOpenIfLocked = notImplementedRule "can't open nonopenable things"
 cantOpenIfOpen :: ActionRule wm (OpeningAction wm) (Thing wm)
 cantOpenIfOpen = notImplementedRule "can't open nonopenable things"
 
-standardReport :: ActionRule wm (OpeningAction wm) (Thing wm)
+standardReport :: SayableValue (WMText wm) wm => ActionRule wm (OpeningAction wm) (Thing wm)
 standardReport = makeRule "standard report opening rule" [] $ \args -> do
   -- if the actor is the player:
   pl <- isPlayer (source args)

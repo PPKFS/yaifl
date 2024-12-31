@@ -67,7 +67,7 @@ forKind k = Precondition (pure $ "of kind " <> show k) $ \v -> variables v `isKi
 data Rule wm (x :: [Effect] -> Constraint) v r = Rule
   { name :: Text
   , preconditions :: [Precondition wm v]
-  , runRule :: forall es. (RuleEffects wm es, Refreshable wm v, x es) => v -> Eff es (Maybe v, Maybe r)
+  , runRule :: forall es. (RuleEffects wm es, Refreshable wm v, x es, SayableValue (WMText wm) wm) => v -> Eff es (Maybe v, Maybe r)
   }
 
 class Unconstrained t

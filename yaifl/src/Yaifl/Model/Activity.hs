@@ -77,6 +77,7 @@ makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "
 beginActivity ::
   forall wm resps v r es.
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => Display v
   => Refreshable wm v
   => ActivityLens wm resps v r
@@ -95,6 +96,7 @@ beginActivity acL c = do
 
 whenHandling' ::
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => Display v
   => Display r
   => Refreshable wm v
@@ -106,6 +108,7 @@ whenHandling' acF f = whenHandling acF (const f)
 whenHandling ::
   forall wm resps v r a es.
   RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => Display v
   => Display r
   => Refreshable wm v
@@ -136,6 +139,7 @@ endActivity ::
   forall wm resps v r es.
   HasCallStack
   => RuleEffects wm es
+  => SayableValue (WMText wm) wm
   => Display v
   => Display r
   => Refreshable wm v
@@ -156,6 +160,7 @@ endActivity acF = do
 doActivity ::
   forall wm resps r v es.
   (RuleEffects wm es, Display r, Display v)
+  => SayableValue (WMText wm) wm
   => Refreshable wm v
   => ActivityLens wm resps v r
   -> v

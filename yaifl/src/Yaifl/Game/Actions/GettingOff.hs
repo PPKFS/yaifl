@@ -7,7 +7,6 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing ( thingContainedBy )
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Tag ( getTaggedObject, tagObject )
 import Yaifl.Model.Kinds.Supporter
@@ -16,6 +15,8 @@ import Yaifl.Model.Query
 import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
+import Yaifl.Model.WorldModel
+import Yaifl.Core.Query.Enclosing
 
 data GettingOffResponses wm
 
@@ -80,7 +81,7 @@ reportGettingOff = makeRule "standard report getting off rule" [] $ \a@Args{sour
 
 describeExited ::
   GettingOffRule wm
-describeExited = makeRule "describe room stood up into rule" forPlayer' $ \a@Args{variables=v} -> do
+describeExited = makeRule "describe room stood up into rule" forPlayer' $ \a@Args{} -> do
   -- TODO: reckon darkness
   parseAction ((actionOptions a) { silently = True }) [ConstantParameter "going"] "look"
   rulePass

@@ -21,7 +21,7 @@ instance Display (DynamicText wm) where
 instance IsString (DynamicText wm) where
   fromString = DynamicText . Left . toText
 
-instance SayableValue (DynamicText wm) wm where
+instance SayableValue (WMText wm) wm => SayableValue (DynamicText wm) wm where
   sayTell (DynamicText (Left t)) = tell t
   sayTell (DynamicText (Right (_, RuleLimitedEffect e))) = inject e
 

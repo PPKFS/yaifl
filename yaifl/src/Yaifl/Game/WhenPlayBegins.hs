@@ -10,14 +10,16 @@ import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Game.Move ( move )
 import Yaifl.Model.Actions.Args
 import Yaifl.Core.Effects
-import Yaifl.Core.HasProperty ( WMWithProperty )
+import Yaifl.Model.WorldModel ( WMWithProperty )
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Query ( getCurrentPlayer, getLocation, isVoid )
+import Yaifl.Model.Query ( getCurrentPlayer )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Print ( Print, setStyle, printText )
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Query.Enclosing
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

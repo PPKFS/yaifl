@@ -7,16 +7,11 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Prelude
 import Yaifl.Text.Say
-import Yaifl.Game.Move
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.Query (getEnclosingMaybe)
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Tag
-import Yaifl.Core.Entity
 import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Kinds.Person
+import Yaifl.Model.WorldModel
 
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)
 takingAction :: WMWithProperty wm Person => WMWithProperty wm Enclosing => WithPrintingNameOfSomething wm => TakingAction wm

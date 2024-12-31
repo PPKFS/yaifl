@@ -36,6 +36,8 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Room
 import Yaifl.Model.Query
 import Yaifl.Model.Kinds.Person
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Query.Enclosing
 
 data ActionParameterType =
   TakesNoParameter

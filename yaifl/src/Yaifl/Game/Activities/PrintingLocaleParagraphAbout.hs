@@ -11,7 +11,6 @@ import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Core.Entity
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Text.SayQQ
@@ -19,7 +18,6 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
-import Yaifl.Core.Metadata
 import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
@@ -27,6 +25,7 @@ import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
 import Yaifl.Model.Query
 import Yaifl.Core.Tag
+import Yaifl.Model.WorldModel
 
 setLocalePriority ::
   Thing s
@@ -68,7 +67,7 @@ type LocaleParagraphAboutRule wm = ActivityRule wm () (LocaleVariables wm, Local
   (c) Mark the item as mentioned but print nothing — this gets rid of the item, ensuring that it will not appear in the final "you can also see" sentence, and will not be considered by subsequent rules.
   (d) Do nothing at all — the item then becomes "nondescript" and appears in the final "you can also see" sentence, unless somebody else mentions it in the mean time.
 -}
-printingLocaleParagraphAboutImpl :: Activity wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
+printingLocaleParagraphAboutImpl :: SayableValue (WMText wm) wm => Activity wm () (LocaleVariables wm, LocaleInfo wm) (LocaleVariables wm)
 printingLocaleParagraphAboutImpl = Activity "printing a locale paragraph about something" Nothing Nothing
   (const $ notImplementedResponse "localeparagraph")
   (blankRulebook "before printing a locale paragraph")
@@ -112,7 +111,7 @@ dontMentionScenery = Rule "don't mention scenery in room descriptions rule" []
 offerItems :: LocaleParagraphAboutRule wm
 offerItems = notImplementedRule "offer items to writing a paragraph about rule"
 
-useInitialAppearance :: LocaleParagraphAboutRule wm
+useInitialAppearance :: SayableValue (WMText wm) wm => LocaleParagraphAboutRule wm
 useInitialAppearance = Rule "use initial appearance in room descriptions rule" []
   (\(v, li@(LocaleInfo _ e isMentioned)) ->
     forThing e $ \thing ->

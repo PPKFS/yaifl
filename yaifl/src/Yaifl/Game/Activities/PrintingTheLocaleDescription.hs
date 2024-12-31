@@ -27,6 +27,8 @@ import Yaifl.Text.ListWriter
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing (thingContainedBy)
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.ObjectLike
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA

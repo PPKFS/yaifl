@@ -2,30 +2,17 @@ module Yaifl.Core.Query.Region
   ( areInRegion
   , isInRegion
   , isSubregionOf
-
+  , modifyRegion
+  , roomsInRegion
   ) where
 
 import Yaifl.Prelude
-import Breadcrumbs
 
-import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Tag
 
-import qualified Data.EnumSet as ES
 import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region
-import Yaifl.Core.HasProperty
-import Yaifl.Core.Kinds.Enclosing
-import Effectful.Error.Static (Error, throwError)
-import Yaifl.Core.Refreshable
-import Yaifl.Model.WorldModel
 
 
 areInRegion ::
@@ -43,3 +30,29 @@ isInRegion ::
   -> Eff es ()
 isInRegion r reg = do
   modifyRegion reg (#rooms %~ S.insert r)
+
+modifyRegion ::
+  NoMissingObjects wm es
+  => RegionEntity
+  -> (Region wm -> Region wm)
+  -> Eff es ()
+modifyRegion o u = do
+  r <- lookupRegion o
+  whenRight_ r $ \r' -> setRegion (u r')
+
+isSubregionOf ::
+  NoMissingObjects wm es
+  => RegionEntity
+  -> RegionEntity
+  -> Eff es ()
+isSubregionOf subReg reg = do
+  modifyRegion reg (#subRegions %~ S.insert subReg)
+
+roomsInRegion ::
+  NoMissingObjects wm es
+  => Region wm
+  -> Eff es (S.Set RoomEntity)
+roomsInRegion r = do
+  subRegs <- rights <$> mapM lookupRegion (S.toList $ subRegions r)
+  rs <- mapM roomsInRegion subRegs
+  pure $ S.unions $ rooms r : rs

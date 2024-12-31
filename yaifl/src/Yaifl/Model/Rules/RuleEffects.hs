@@ -17,7 +17,7 @@ import Effectful.Writer.Static.Local
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Text.Print ( Print, printText )
-import Yaifl.Model.WorldModel ( WMActivities, WMResponses, WMText )
+import Yaifl.Model.WorldModel ( WMActivities, WMResponses )
 import Yaifl.Core.Effects
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Input

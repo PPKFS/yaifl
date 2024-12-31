@@ -8,7 +8,6 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
 import Yaifl.Model.Action
-import Yaifl.Model.Query
 import Yaifl.Model.Rules.Run
 import Yaifl.Text.ResponseCollection
 import Yaifl.Model.Rules.RuleEffects
@@ -19,6 +18,7 @@ import Yaifl.Text.Print
 import Yaifl.Text.Verb
 import Yaifl.Model.Input
 import Yaifl.Game.ObjectSpecifics
+import Yaifl.Core.Effects
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

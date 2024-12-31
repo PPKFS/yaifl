@@ -8,15 +8,17 @@ module Yaifl.Game.ActionProcessing
 import Yaifl.Prelude hiding (runReader, Reader)
 
 import Yaifl.Model.Action
-import Yaifl.Model.Query
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
 import Yaifl.Model.Actions.Args
+import Yaifl.Core.Effects
+import Yaifl.Text.Say
+import Yaifl.Model.WorldModel
 
 
-actionProcessingRules :: forall wm. ActionProcessing wm
+actionProcessingRules :: forall wm. SayableValue (WMText wm) wm => ActionProcessing wm
 actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm resp goesWith v) u -> do
   wa <- get @(WorldActions wm)
   runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) (Just aSpan) False (Rulebook @wm

@@ -5,7 +5,6 @@ import Yaifl.Prelude
 import Yaifl.Model.TH (makeSpecificsWithout)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Effects
-import Yaifl.Core.HasProperty
 import Yaifl.Model.Query
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.EnumSet as ES
@@ -14,6 +13,9 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Game.Move
 import Yaifl.Core.Entity
+import Yaifl.Model.WorldModel
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Refreshable
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)

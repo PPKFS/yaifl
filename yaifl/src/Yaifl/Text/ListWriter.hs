@@ -18,8 +18,6 @@ import Yaifl.Game.Activities.PrintingInventoryDetails
 import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Activity
-import Yaifl.Core.HasProperty
-import Yaifl.Model.Kinds
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Supporter
@@ -34,6 +32,11 @@ import Yaifl.Text.Say
 
 import qualified Data.EnumSet as ES
 import qualified Data.Text as T
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.ObjectLike
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm

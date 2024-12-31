@@ -9,11 +9,11 @@ module Yaifl.Model.Kinds.Device
 import Yaifl.Prelude
 
 import Yaifl.Core.Effects
-import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Query
 import Yaifl.Model.TH (makeSpecificsWithout)
+import Yaifl.Model.WorldModel
 
 newtype Device = Device
   { switchedOn :: Bool

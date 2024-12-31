@@ -2,12 +2,13 @@ module Yaifl.Test.Chapter3.SlightlyWrong where
 
 import Yaifl
 import Yaifl.Prelude
-import Yaifl.Model.Kinds
 import Yaifl.Game.Create
 import Yaifl.Test.Common
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Say
 import Yaifl.Text.DynamicText
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Object
 
 ex4 :: (Text, [Text], Game PlainWorldModel ())
 ex4 = ("Slightly Wrong", ex4TestMeWith, ex4World)

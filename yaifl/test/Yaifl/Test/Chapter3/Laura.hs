@@ -6,17 +6,8 @@ import Yaifl (PlainWorldModel)
 
 import Yaifl.Game.Create.Object
 import Yaifl.Game.EffectHandlers
-import Yaifl.Game.ObjectSpecifics
-import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Kinds.Supporter
 import Yaifl.Core.Metadata
 import Yaifl.Test.Common
-import Yaifl.Core.Kinds.Object
-import Yaifl.Model.Query
-import Yaifl.Core.Effects (traverseRooms)
-import Yaifl.Core.Tag
-import Yaifl.Core.Kinds.Room
 import Yaifl.Model.Kinds.Person
 
 ex19 :: (Text, [Text], Game PlainWorldModel ())

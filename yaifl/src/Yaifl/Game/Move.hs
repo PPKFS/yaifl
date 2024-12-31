@@ -14,11 +14,12 @@ import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.HasProperty
-import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Refreshable
 
 move ::
   forall l wm es.

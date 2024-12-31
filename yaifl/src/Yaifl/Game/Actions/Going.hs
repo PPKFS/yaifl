@@ -19,7 +19,6 @@ import Yaifl.Model.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Core.HasProperty
 import Yaifl.Game.Create.RoomConnection
 import Yaifl.Core.Effects
 import Yaifl.Text.SayQQ
@@ -28,8 +27,7 @@ import Breadcrumbs
 import Yaifl.Game.Move
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.Map as Map
-import qualified Data.Text as T
-import Yaifl.Model.WorldModel (WMDirection)
+import Yaifl.Model.WorldModel (WMWithProperty)
 import Yaifl.Core.Tag
 import Yaifl.Core.ObjectLike
 import Yaifl.Model.Kinds.Openable
@@ -38,6 +36,7 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
+import Yaifl.Core.Query.Enclosing
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -174,7 +173,6 @@ goingActionSet (UnverifiedArgs Args{..}) = do
 
 cantGoThatWay ::
   RuleEffects wm es
-  => Display (WMDirection wm)
   => WithPrintingNameOfSomething wm
   => Thing wm
   -> Maybe (Thing wm)
@@ -182,11 +180,11 @@ cantGoThatWay ::
   -> Eff es (ParseArgumentResult wm a)
 cantGoThatWay source mbDoorThrough fromRoom = do
   whenM (isPlayer source) $ do
-    let possExits = Map.keys $ getAllConnections fromRoom
+    let _possExits = Map.keys $ getAllConnections fromRoom
     case mbDoorThrough of
       -- say "[We] [can't go] that way." (A);
       Nothing -> do
-        rn <- sayText (fromRoom ^. #name)
+        _rn <- sayText (fromRoom ^. #name)
         [saying|#{We} #{can't go} that way.|]
         -- say $ " Perhaps we could try one of " <> T.intercalate ", " (map display possExits) <> " out of " <> rn <> " ?"
       Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]

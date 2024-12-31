@@ -39,16 +39,17 @@ import Yaifl.Core.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Model.Query
 import Yaifl.Core.Kinds.Room
-import Yaifl.Model.TH ( makeDirections, WMWithProperty )
-import Yaifl.Model.WorldModel ( WMDirection )
+import Yaifl.Model.TH ( makeDirections )
+import Yaifl.Model.WorldModel ( WMDirection, WMWithProperty, WMText )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say
-import Yaifl.Model.Rules (RuleEffects)
 import Yaifl.Prelude hiding (Down)
 import Yaifl.Model.Kinds.Supporter (SupporterEntity)
 import Yaifl.Game.Move (move)
 import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Query.Enclosing
 
 getAllConnections ::
   Room wm
@@ -99,7 +100,7 @@ makeConnection ::
   -> WMDirection wm
   -> Room wm
   -> (Room wm -> Room wm)
-makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoom r) Nothing dir
+makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoomEntity r) Nothing dir
 
 addDirectionFrom ::
   HasCallStack
@@ -217,6 +218,7 @@ isBelow = isDownOf
 
 addDoorToConnection ::
   WMStdDirections wm
+  => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => DoorEntity
   -> (RoomEntity, WMDirection wm)
@@ -231,6 +233,7 @@ addDoorToConnection d (front, frontDir) (back, backDir) = do
 modifyAndVerifyConnection ::
   forall wm es.
   WMStdDirections wm
+  => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => RoomEntity
   -> WMDirection wm

@@ -25,7 +25,6 @@ import Yaifl.Model.Activity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
-import Yaifl.Model.Query
 import Yaifl.Model.WorldModel
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
@@ -40,7 +39,7 @@ import Yaifl.Text.SayQQ
 import Yaifl.Model.Input
 import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
-import Yaifl.Core.HasProperty
+import Yaifl.Core.ObjectLike
 
 sayText ::
   SayableValue s wm

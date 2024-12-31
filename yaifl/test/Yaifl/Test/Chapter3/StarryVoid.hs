@@ -1,19 +1,22 @@
 module Yaifl.Test.Chapter3.StarryVoid where
 
+import Yaifl.Prelude
+
 import Yaifl
+import Yaifl.Core.Entity
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Query.Enclosing
 import Yaifl.Game.Actions.Going
 import Yaifl.Game.Create
-
-import Yaifl.Model.Actions.Args (silentAction)
-import Yaifl.Core.Entity
-import Yaifl.Model.Kinds
+import Yaifl.Model.Actions.Args
+import Yaifl.Model.Kinds.Direction
+import Yaifl.Model.Kinds.Openable
 import Yaifl.Model.Query
-import Yaifl.Model.Rules
-import Yaifl.Prelude
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Openable
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
