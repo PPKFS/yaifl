@@ -14,7 +14,7 @@ import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike

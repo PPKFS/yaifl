@@ -20,12 +20,13 @@ module Yaifl.Core.Kinds.Thing
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Core.Entity
-import Yaifl.Core.Tag
-import Yaifl.Core.Kinds.Room
-import Yaifl.Model.WorldModel
-import Yaifl.Core.Kinds.Object
+
 import GHC.Records
+import Yaifl.Core.Entity
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Tag
+import Yaifl.Core.WorldModel
 
 -- | If a thing provides light outwards; A lamp is lit, but a closed box with a light inside is not.
 data ThingLit = Lit | NotLit

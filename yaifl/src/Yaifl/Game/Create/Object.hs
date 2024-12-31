@@ -19,11 +19,11 @@ import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Game.Move ( move )
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 import qualified Data.Set as S
 import Yaifl.Model.Kinds.Region (RegionEntity, Region (..))

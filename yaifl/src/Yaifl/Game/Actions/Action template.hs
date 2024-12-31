@@ -3,12 +3,12 @@ module Yaifl.Game.Actions.SwitchingOn where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Responses
 import Yaifl.Core.Kinds.Object
 import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Text.Say (SayableValue(..), sayText)
 import Yaifl.Text.SayQQ
 

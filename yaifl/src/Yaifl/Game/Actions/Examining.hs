@@ -4,10 +4,10 @@ module Yaifl.Game.Actions.Examining where
 import Yaifl.Prelude
 
 import Yaifl.Model.Action
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.ListWriter
@@ -23,6 +23,8 @@ import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.ObjectLike
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.Object
+import Yaifl.Model.Kinds.Person
+import Yaifl.Core.Actions.GoesWith
 
 data ExaminingResponses =
   ExamineDirectionA

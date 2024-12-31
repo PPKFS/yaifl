@@ -29,7 +29,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Prelude
 -- | The functions we *don't* want to autogenerate for a given property
 -- because we want to do something special with them (e.g. see `Yaifl.Core.Kinds.Enclosing`
--- in `Yaifl.Model.Query` where @getEnclosingMaybe@ does something special with
+-- in `Yaifl.Core.Query.Object` where @getEnclosingMaybe@ does something special with
 -- rooms).
 data SpecificsFunctions =
   GetX
@@ -68,7 +68,7 @@ makePropertyFunction n sf = do
 replaceTH :: Text -> Text -> [Dec]
 replaceTH y x = either (\x' -> [error $ toText x']) id (parseDecsWithMode myDefaultParseMode $ toString $ replace "XSUBHERE" x y)
 
--- | Generate @isDirOf@ and @isDirOfOneWay@ for the base directions if @std@ is True, and for `Yaifl.Model.WorldModel.WMDirection` if False.
+-- | Generate @isDirOf@ and @isDirOfOneWay@ for the base directions if @std@ is True, and for `Yaifl.Core.WorldModel.WMDirection` if False.
 makeDirections ::
   Bool -- ^ Whether the directions should have an `Yaifl.Model.Kinds.Direction.injectDirection` wrapper if dealing with a supertype.
   -> [Text]

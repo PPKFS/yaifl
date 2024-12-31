@@ -1,19 +1,28 @@
-module Yaifl.Game.World where
+module Yaifl.Game.World
+  ( World(..)
+  , WorldStores(..)
+  , addAction
+  , addWhenPlayBegins
+  ) where
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Action ( WorldActions )
 import Yaifl.Core.Entity ( Entity )
 import Yaifl.Core.Store
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Print ( Has(..), MessageBuffer )
-import Yaifl.Model.WorldModel ( WMValues, WorldModel )
+import Yaifl.Core.WorldModel ( WMValues, WorldModel )
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds.Region
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Room
+import Yaifl.Model.Action
+import Yaifl.Game.ActionProcessing
+import Breadcrumbs
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Actions.GoesWith
 
 data World (wm :: WorldModel) = World
   { metadata :: Metadata
@@ -42,3 +51,14 @@ addWhenPlayBegins ::
   => Rule wm Unconstrained () Bool
   -> Eff es ()
 addWhenPlayBegins r = #whenPlayBegins %= addRuleLast r
+
+-- | Add an action to the registry.
+addAction ::
+  (State (WorldActions wm) :> es, Breadcrumbs :> es)
+  => Refreshable wm v
+  => GoesWith goesWith
+  => Action wm resp goesWith v
+  -> Eff es ()
+addAction ac = do
+  addAnnotation $ "Adding an action with the followingly named rules: " <> getAllRules ac
+  #actionsMap % at (ac ^. #name) ?= RegularAction (WrappedAction ac)

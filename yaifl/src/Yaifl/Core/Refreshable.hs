@@ -6,17 +6,17 @@ module Yaifl.Core.Refreshable
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
+
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Tag
-
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata
+import Yaifl.Core.ObjectLike
 import Yaifl.Core.Store
+import Yaifl.Core.Tag
 import Data.Bitraversable
 
 -- | All of the objects in the arguments are READ-ONLY. Whilst they can be swapped out, the

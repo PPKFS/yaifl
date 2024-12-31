@@ -9,11 +9,11 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Model.Query
 import Yaifl.Model.TH
 
 import qualified Data.Set as S
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Core.Query.Property
 
 newtype MultiLocated = MultiLocated
   { locations :: S.Set EnclosingEntity

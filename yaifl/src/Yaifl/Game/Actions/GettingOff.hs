@@ -3,7 +3,7 @@ module Yaifl.Game.Actions.GettingOff where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing ( thingContainedBy )
@@ -11,12 +11,13 @@ import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Tag ( getTaggedObject, tagObject )
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Game.Move (move)
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Actions.GoesWith
 
 data GettingOffResponses wm
 

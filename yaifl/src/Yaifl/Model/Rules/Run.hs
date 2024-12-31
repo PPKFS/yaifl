@@ -11,12 +11,12 @@ module Yaifl.Model.Rules.Run
 import Yaifl.Prelude
 
 import Breadcrumbs
-import Yaifl.Model.Actions.Args ( Refreshable(..) )
+import Yaifl.Core.Actions.Args ( Refreshable(..) )
 import Yaifl.Model.Rules.Rulebook
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Print (modifyBuffer)
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 -- | Run a rulebook. Mostly this just adds some logging baggage and tidies up the return type.
 runRulebook ::

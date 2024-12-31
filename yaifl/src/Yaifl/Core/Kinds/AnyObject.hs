@@ -12,13 +12,14 @@ module Yaifl.Core.Kinds.AnyObject
 
 import Yaifl.Prelude
 
+
 import GHC.Records
 import Yaifl.Core.Entity
 import Yaifl.Core.Kinds.Object
-import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.WorldModel
+import Yaifl.Core.Tag
+import Yaifl.Core.WorldModel
 
 type RawAnyObject wm = Object wm (Either (ThingData wm) (RoomData wm)) (WMObjSpecifics wm)
 -- | Either a room or a thing. The `Either` is over the object data so it's easier to

@@ -4,7 +4,7 @@ import Yaifl.Prelude
 
 import Yaifl
 import Yaifl.Game.Create
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say

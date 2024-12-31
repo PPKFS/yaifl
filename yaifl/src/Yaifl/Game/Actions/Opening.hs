@@ -3,7 +3,7 @@ module Yaifl.Game.Actions.Opening where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Core.Metadata
@@ -11,7 +11,8 @@ import Yaifl.Text.Responses
 import Yaifl.Text.SayQQ
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Core.Actions.GoesWith
 
 data OpeningResponses =
   UnlessOpenableResponseA

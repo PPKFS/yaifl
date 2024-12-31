@@ -5,13 +5,12 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic
 import Effectful.Reader.Static
-import Yaifl.Model.Action
 import Yaifl.Game.Parser
 import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Core.Entity
 import Yaifl.Core.Effects
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
@@ -22,6 +21,7 @@ import Yaifl.Core.Store
 import Yaifl.Model.Kinds.Region
 import Yaifl.Model.Input
 import Yaifl.Game.Actions.Looking.Visibility
+import Yaifl.Game.ActionProcessing
 
 
 type EffStack (wm :: WorldModel) = '[

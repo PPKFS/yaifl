@@ -14,8 +14,8 @@ import Yaifl.Model.Action
 import Yaifl.Core.Entity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
-import Yaifl.Model.Query
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Query.Object
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Kinds.Direction
@@ -27,7 +27,7 @@ import Breadcrumbs
 import Yaifl.Game.Move
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.Map as Map
-import Yaifl.Model.WorldModel (WMWithProperty)
+import Yaifl.Core.WorldModel (WMWithProperty)
 import Yaifl.Core.Tag
 import Yaifl.Core.ObjectLike
 import Yaifl.Model.Kinds.Openable
@@ -37,6 +37,7 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Door
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Actions.GoesWith
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").

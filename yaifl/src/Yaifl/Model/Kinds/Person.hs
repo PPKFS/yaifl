@@ -5,7 +5,7 @@ import Yaifl.Prelude
 import Yaifl.Model.TH (makeSpecificsWithout)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Effects
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Property
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Tag
@@ -13,7 +13,7 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Game.Move
 import Yaifl.Core.Entity
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
 
@@ -84,5 +84,9 @@ getPlayer ::
 getPlayer = do
   pr <- use #currentPlayer
   per <- getThing pr
-  let po = (tagObject pr per)
-  return po
+  return $ (tagObject pr per)
+
+getPlayer' ::
+  NoMissingObjects wm es
+  => Eff es (Thing wm)
+getPlayer' = use #currentPlayer >>= getThing

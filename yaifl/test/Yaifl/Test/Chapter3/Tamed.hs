@@ -8,10 +8,10 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Game.Create
 import Yaifl.Game.EffectHandlers
-import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Openable
 import Yaifl.Text.Say
+import Yaifl.Model.Kinds.Person
 
 ex13 :: (Text, [Text], Game PlainWorldModel ())
 ex13 = ("Tamed", tamedTestMeWith, tamedWorld)

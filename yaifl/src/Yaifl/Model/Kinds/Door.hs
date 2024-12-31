@@ -14,12 +14,12 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Model.Kinds.Openable as O
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.MultiLocated
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Property
 import Yaifl.Model.TH
 import Yaifl.Core.Tag
 
 import qualified Data.Set as S
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 data Door = Door
   { isOneWay :: Bool

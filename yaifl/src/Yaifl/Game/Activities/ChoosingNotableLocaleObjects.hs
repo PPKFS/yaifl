@@ -17,7 +17,7 @@ import Breadcrumbs
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))

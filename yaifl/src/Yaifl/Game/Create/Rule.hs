@@ -15,12 +15,11 @@ module Yaifl.Game.Create.Rule
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Model.Action ( Action, WorldActions )
+import Yaifl.Model.Action ( Action )
 import Yaifl.Game.Actions.Collection (ActionCollection)
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Query
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Activity
@@ -29,6 +28,8 @@ import Yaifl.Text.Say (WithPrintingNameOfSomething)
 import Yaifl.Core.Metadata (isKind)
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Model.Kinds.Person
+import Yaifl.Game.ActionProcessing
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)
@@ -162,7 +163,7 @@ everyTurn ::
   -> [Precondition wm ()]
   -> (forall es'. (RuleEffects wm es') => Eff es' ()) -- ^ Rule function.
   -> Eff es ()
-everyTurn preReqs n r = #everyTurn %= addRuleLast (makeRule preReqs n (const $ r >> rulePass))
+everyTurn preReqs n r = #everyTurnRules %= addRuleLast (makeRule preReqs n (const $ r >> rulePass))
 
 duringActivity ::
   forall wm resps v r a.

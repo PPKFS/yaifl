@@ -12,10 +12,10 @@ import Yaifl.Model.Action
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Model.Kinds.Direction ( HasDirectionalTerms(..) )
 import Yaifl.Core.Metadata
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Text.Print
-import Yaifl.Model.Actions.Args
-import Yaifl.Model.WorldModel ( WMDirection, WMText )
+import Yaifl.Core.Actions.Args
+import Yaifl.Core.WorldModel ( WMDirection, WMText )
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Yaifl.Model.Rules.RuleEffects
@@ -35,6 +35,9 @@ import Yaifl.Core.Tag
 import Yaifl.Game.Actions.Looking.Visibility
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Model.Kinds.Person
+import Yaifl.Core.Actions.GoesWith
+import Yaifl.Game.ActionProcessing
 
 -- | Run an action. This assumes that all parsing has been completed.
 runAction ::

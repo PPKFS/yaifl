@@ -21,9 +21,9 @@ import Yaifl.Prelude
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Property
 import Yaifl.Model.TH
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 -- | Whether the thing is open or not.
 data Opened = Open | Closed

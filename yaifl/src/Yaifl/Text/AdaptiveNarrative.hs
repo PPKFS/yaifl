@@ -9,8 +9,9 @@ import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Text.Verb
+import Yaifl.Model.Kinds.Person
 
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };

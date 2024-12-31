@@ -19,6 +19,7 @@ import Yaifl.Text.Verb
 import Yaifl.Model.Input
 import Yaifl.Game.ObjectSpecifics
 import Yaifl.Core.Effects
+import Yaifl.Game.ActionProcessing
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

@@ -3,10 +3,11 @@ module Yaifl.Game.Actions.Waiting where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Metadata
+import Yaifl.Core.Actions.GoesWith
 
 data WaitingResponses wm
 

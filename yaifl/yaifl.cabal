@@ -90,6 +90,10 @@ library
 
     Yaifl.Core.Query.Enclosing
     Yaifl.Core.Query.Region
+    Yaifl.Core.Query.Property
+
+    Yaifl.Core.Actions.GoesWith
+    Yaifl.Core.Actions.Args
 
     Yaifl
     Yaifl.Game.ActionProcessing
@@ -128,7 +132,7 @@ library
     Yaifl.Game.Create.Rule
 
     Yaifl.Model.Action
-    Yaifl.Model.Actions.Args
+
     Yaifl.Model.Activity
 
     Yaifl.Core.Effects
@@ -157,13 +161,13 @@ library
     Yaifl.Model.MultiLocated
 
     Yaifl.Model.ObjectKind
-    Yaifl.Model.Query
+    Yaifl.Core.Query.Object
     Yaifl.Model.Rules.RuleEffects
     Yaifl.Model.Rules.Rulebook
     Yaifl.Model.Rules.Run
 
 
-    Yaifl.Model.WorldModel
+    Yaifl.Core.WorldModel
     Yaifl.Model.TH
 
     Yaifl.Text.AdaptiveNarrative

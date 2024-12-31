@@ -24,7 +24,7 @@ import Yaifl.Core.Entity
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Tag
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import qualified Data.Map.Strict as Map
 
 -- | Whether a connection was made by the user or simply assumed (we can override assumed connections but

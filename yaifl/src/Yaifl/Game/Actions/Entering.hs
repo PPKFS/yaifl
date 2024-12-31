@@ -3,14 +3,14 @@ module Yaifl.Game.Actions.Entering where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Game.Move
 import Yaifl.Model.Kinds.Container
 import Yaifl.Core.Tag
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Metadata
 import Yaifl.Model.Kinds.Supporter
@@ -20,12 +20,13 @@ import Yaifl.Model.Activity
 import Yaifl.Core.Store
 import Yaifl.Game.Actions.Looking.Locale
 import Yaifl.Game.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription)
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Actions.GoesWith
 
 data EnteringResponses wm
 

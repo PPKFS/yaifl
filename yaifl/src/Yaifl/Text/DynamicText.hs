@@ -4,7 +4,7 @@ module Yaifl.Text.DynamicText
   , text
   ) where
 
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Prelude
 import Yaifl.Model.Rules.Rulebook
 import Effectful.Writer.Static.Local (Writer, tell)

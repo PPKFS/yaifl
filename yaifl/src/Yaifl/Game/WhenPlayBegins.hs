@@ -8,18 +8,19 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Game.Move ( move )
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
-import Yaifl.Model.WorldModel ( WMWithProperty )
+import Yaifl.Core.WorldModel ( WMWithProperty )
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Query ( getCurrentPlayer )
+import Yaifl.Core.Query.Object ( getCurrentPlayer )
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Print ( Print, setStyle, printText )
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Actions.GoesWith
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

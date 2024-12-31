@@ -8,15 +8,16 @@ import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Game.Actions.Going
 import Yaifl.Game.Create
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Kinds.Direction
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
+import Yaifl.Model.Kinds.Person
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)

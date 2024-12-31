@@ -3,7 +3,7 @@ module Yaifl.Game.Actions.Exiting where
 
 import Yaifl.Model.Action
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Core.Kinds.Enclosing
@@ -15,10 +15,11 @@ import Yaifl.Model.Kinds.Supporter
 import Breadcrumbs
 import Yaifl.Game.Move
 import Yaifl.Core.Entity
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
+import Yaifl.Core.Actions.GoesWith
 
 data ExitingResponses wm
 

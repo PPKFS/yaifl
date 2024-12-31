@@ -18,7 +18,7 @@ module Yaifl (
 
   , module Yaifl.Core.Metadata
   , module Yaifl.Game.World
-  , module Yaifl.Model.WorldModel
+  , module Yaifl.Core.WorldModel
   ) where
 
 import Yaifl.Prelude hiding ( Reader, runReader )
@@ -43,7 +43,7 @@ import Yaifl.Model.Kinds.Container
 import Yaifl.Model.Kinds.Door
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Model.Kinds.Openable
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Game.WhenPlayBegins
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative)
@@ -56,7 +56,7 @@ import qualified Data.Map as DM
 import qualified Data.Text as T
 import Yaifl.Text.ListWriter
 import Yaifl.Game.Actions.OutOfWorld
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Game.EffectHandlers
 import Yaifl.Text.DynamicText
 import Yaifl.Game.Actions.Collection
@@ -76,7 +76,7 @@ import Yaifl.Game.Actions.Taking
 import Yaifl.Model.Kinds.Device
 import Yaifl.Game.Activities.PrintingRoomDescriptionDetails
 import qualified Data.Set as S
-import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRules)
+import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
 import Yaifl.Model.Rules.Run
 import System.Random.Stateful
 import Yaifl.Game.Actions.Entering (enteringAction)
@@ -86,6 +86,7 @@ import Yaifl.Game.Actions.GettingOff (gettingOffAction)
 import Yaifl.Game.Accessibility
 import Yaifl.Model.Kinds.Person
 import Yaifl.Core.Effects
+import Yaifl.Core.Actions.GoesWith
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -163,7 +164,7 @@ blankActions = WorldActions
   , whenPlayBegins = whenPlayBeginsRules
   , actionProcessing = actionProcessingRules
   , turnSequence = turnSequenceRules
-  , everyTurn = everyTurnRules
+  , everyTurnRules = everyTurnRulesImpl
   , accessibilityRules = accessibility
   }
 

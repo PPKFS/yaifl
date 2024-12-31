@@ -26,13 +26,13 @@ import Yaifl.Model.Kinds.Container
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Metadata
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Property
 import Yaifl.Model.TH
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Thing ( Thing )
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 data Supporter = Supporter
   { enclosing :: Enclosing

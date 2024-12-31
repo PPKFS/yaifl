@@ -19,19 +19,20 @@ import Yaifl.Prelude
 
 import Data.List.NonEmpty as NE (cons)
 
-import Yaifl.Core.Kinds.Object
+
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Tag
-
-import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.WorldModel
-import Yaifl.Model.Query
+import Yaifl.Core.Kinds.Object
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Query.Property
+import Yaifl.Core.Tag
+import Yaifl.Core.WorldModel
+import Yaifl.Core.Query.Object
+import qualified Data.EnumSet as ES
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors

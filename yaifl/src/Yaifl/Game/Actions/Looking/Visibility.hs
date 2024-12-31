@@ -14,12 +14,12 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Kinds.Container
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Model.Kinds.Supporter
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Core.Query.Enclosing
 
 -- | An easier way to describe the requirements to look.

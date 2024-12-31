@@ -3,7 +3,7 @@ module Yaifl.Model.Kinds.Region where
 import Yaifl.Prelude
 import Yaifl.Core.Entity (TaggedEntity, RoomEntity)
 import qualified Data.Set as S
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Kinds.Object
 
 data RegionTag

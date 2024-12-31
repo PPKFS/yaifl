@@ -10,7 +10,7 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Text.Responses
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 type WithPrintingInventoryDetails wm =
   ( WithActivity "printingInventoryDetails" wm () (Thing wm) ()

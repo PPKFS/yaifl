@@ -9,7 +9,6 @@ import Yaifl.Model.Action
 import Yaifl.Game.Actions.Going
 import Yaifl.Game.Actions.Looking.Visibility
 import Yaifl.Prelude
-import Yaifl.Model.Actions.Args
 import Yaifl.Game.Actions.Examining
 import Yaifl.Game.Actions.Opening
 import Yaifl.Game.Actions.Closing
@@ -20,6 +19,7 @@ import Yaifl.Game.Actions.Entering
 import Yaifl.Game.Actions.Waiting
 import Yaifl.Game.Actions.Exiting (ExitingAction)
 import Yaifl.Game.Actions.GettingOff (GettingOffAction)
+import Yaifl.Core.Actions.GoesWith
 
 -- | The standard actions before they are existentially wrapped. This is so we can modify them during
 -- world construction as we lose the type information later and cannot modify a `WrappedAction`.

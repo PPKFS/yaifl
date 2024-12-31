@@ -1,4 +1,4 @@
-module Yaifl.Model.Query
+module Yaifl.Core.Query.Object
   ( -- * Types
 
   -- * Get
@@ -10,13 +10,6 @@ module Yaifl.Model.Query
   , modifyRoom
   , getCurrentPlayer
   , isUnderstoodAs
-
-  , getPropertyOrThrow
-  , defaultPropertyGetter
-  , defaultPropertySetter
-  , modifyProperty
-
-  , getPlayer'
 
   , makeItScenery
   ) where
@@ -34,10 +27,7 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.AnyObject
 
 import qualified Data.Set as S
-import Yaifl.Core.HasProperty
-import Effectful.Error.Static (Error, throwError)
 import Yaifl.Core.Refreshable
-import Yaifl.Model.WorldModel
 
 getThingMaybe ::
   ObjectLookup wm :> es
@@ -85,7 +75,6 @@ modifyRoom ::
   -> Eff es ()
 modifyRoom o u = modifyObjectFrom (fmap coerce refreshRoom) (setRoom . Room) o ((\(Room a) -> a) . u . Room)
 
-
 modifyObject ::
   NoMissingObjects wm es
   => ObjectLike wm o
@@ -126,51 +115,3 @@ isUnderstoodAs o ls = do
 
 makeUnderstandAsSets :: [Text] -> Set (Set Text)
 makeUnderstandAsSets = S.fromList . map (S.fromList . words)
-
-
-
-getPropertyOrThrow ::
-  HasID i
-  => Error MissingObject :> es
-  => Text
-  -> i
-  -> Maybe v
-  -> Eff es v
-getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <> t) (getID o)) pure
-
-defaultPropertySetter ::
-  NoMissingObjects wm es
-  => WMWithProperty wm v
-  => CanBeAny wm o
-  => o
-  -> v
-  -> Eff es ()
-defaultPropertySetter e v = modifyObject (toAny e) (#specifics % propertyAT .~ v)
-
-defaultPropertyGetter ::
-  forall wm o v.
-  WMWithProperty wm v
-  => CanBeAny wm o
-  => o
-  -> Maybe v
-defaultPropertyGetter o = preview (#specifics % propertyAT) (toAny o)
-
-modifyProperty ::
-  CanBeAny wm o
-  => (AnyObject wm -> Maybe p)
-  -> (AnyObject wm -> p -> Eff es ())
-  -> o
-  -> (p -> p)
-  -> Eff es ()
-modifyProperty g s o f = do
-  let e = g (toAny o)
-  when (isNothing e) (do
-    --logVerbose "Trying to modify a property of an object which does not exist"
-    pass)
-  whenJust e (s (toAny o) . f)
-
-getPlayer' ::
-  NoMissingObjects wm es
-  => Eff es (Thing wm)
-getPlayer' = use #currentPlayer >>= getThing
-

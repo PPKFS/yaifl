@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Model.WorldModel
+Module      : Yaifl.Core.WorldModel
 Description : Some type family nonsense to avoid writing massive amounts of type parameters.
 Copyright   : (c) Avery 2022-2024
 License     : MIT
@@ -8,7 +8,7 @@ Maintainer  : ppkfs@outlook.com
 To save having to write increasingly large amounts of type parameters.
 -}
 
-module Yaifl.Model.WorldModel (
+module Yaifl.Core.WorldModel (
   -- * World model
     WorldModel(..)
   -- ** Type families

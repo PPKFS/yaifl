@@ -35,7 +35,7 @@ import Yaifl.Model.Kinds.Device
 import Yaifl.Model.Kinds.Person
 import Yaifl.Model.Kinds.Supporter
 import Yaifl.Model.Kinds.Backdrop
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Core.Query.Enclosing
 

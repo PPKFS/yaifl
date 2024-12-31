@@ -18,14 +18,14 @@ import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
-import Yaifl.Model.Actions.Args
 import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
 import Yaifl.Game.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Tag
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Model.Kinds.Person
 
 setLocalePriority ::
   Thing s

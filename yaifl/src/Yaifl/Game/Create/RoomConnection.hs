@@ -37,10 +37,10 @@ import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room
 import Yaifl.Model.TH ( makeDirections )
-import Yaifl.Model.WorldModel ( WMDirection, WMWithProperty, WMText )
+import Yaifl.Core.WorldModel ( WMDirection, WMWithProperty, WMText )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say

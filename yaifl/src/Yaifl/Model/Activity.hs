@@ -21,10 +21,10 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs ( withSpan )
 import GHC.TypeLits
-import Yaifl.Model.Actions.Args ( Refreshable )
+import Yaifl.Core.Actions.Args ( Refreshable )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Responses
 import Effectful.Reader.Static

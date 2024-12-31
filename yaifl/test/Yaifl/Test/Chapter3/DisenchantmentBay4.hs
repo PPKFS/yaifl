@@ -13,7 +13,7 @@ import Yaifl.Model.Kinds.Supporter
 import Yaifl.Core.Metadata
 import Yaifl.Test.Common
 import Yaifl.Core.Kinds.Object
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Effects (traverseRooms)
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Room

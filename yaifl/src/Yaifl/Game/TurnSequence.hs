@@ -1,6 +1,7 @@
 module Yaifl.Game.TurnSequence
   ( turnSequenceRules
-  , everyTurnRules
+  , everyTurnRulesImpl
+  , everyTurn
   ) where
 
 import Yaifl.Prelude
@@ -8,8 +9,8 @@ import Yaifl.Prelude
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run ( runRulebook )
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Action
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Game.ActionProcessing
 
 
 -- | The rulebook that runs at the start of the game.
@@ -20,25 +21,25 @@ turnSequenceRules = Rulebook
     [ notImplementedRule "parse command"
     , notImplementedRule "scene changing"
     , notImplementedRule "make everything unmentioned"
-    , makeRule' "every turn" everyTurnRule
+    , makeRule' "every turn" everyTurn
     , notImplementedRule "timed events"
     , notImplementedRule "advance time"
     , notImplementedRule "update chronological records"
     ]
 
-everyTurnRule ::
+everyTurn ::
   forall wm es.
   RuleEffects wm es
   => SayableValue (WMText wm) wm
   => State (WorldActions wm) :> es
   => Eff es (Maybe Bool)
-everyTurnRule = do
+everyTurn = do
   wa <- get @(WorldActions wm)
-  runRulebook Nothing False (wa ^. #everyTurn) ()
+  runRulebook Nothing False (wa ^. #everyTurnRules) ()
 
-everyTurnRules ::
+everyTurnRulesImpl ::
   Rulebook wm ((:>) (State (WorldActions wm))) () Bool
-everyTurnRules = Rulebook
+everyTurnRulesImpl = Rulebook
     "every turn"
     Nothing
     [

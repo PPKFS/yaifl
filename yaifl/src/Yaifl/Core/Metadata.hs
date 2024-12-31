@@ -42,9 +42,11 @@ module Yaifl.Core.Metadata (
   , randomR
   ) where
 
-import Breadcrumbs
-import Data.Text.Display
+
 import Yaifl.Prelude
+
+import Breadcrumbs
+
 import Yaifl.Core.Entity
 import Yaifl.Core.Kinds.Object
 import Yaifl.Model.ObjectKind

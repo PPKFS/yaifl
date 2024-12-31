@@ -1,7 +1,7 @@
 module Yaifl.Game.Actions.Taking where
 
 import Yaifl.Model.Action
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
@@ -11,7 +11,8 @@ import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Model.Kinds.Person
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Core.Actions.GoesWith
 
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)
 takingAction :: WMWithProperty wm Person => WMWithProperty wm Enclosing => WithPrintingNameOfSomething wm => TakingAction wm

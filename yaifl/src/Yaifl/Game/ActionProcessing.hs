@@ -2,7 +2,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Game.ActionProcessing
-  ( actionProcessingRules
+  ( ActionProcessing(..)
+  , actionProcessingRules
+  , WorldActions(..)
+  , actionsMapL
   ) where
 
 import Yaifl.Prelude hiding (runReader, Reader)
@@ -12,10 +15,37 @@ import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
 import Yaifl.Text.Say
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
+import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Kinds.Thing
+
+
+data WorldActions (wm :: WorldModel) = WorldActions
+  { actionsMap :: Map Text (ActionPhrase wm)
+  , whenPlayBegins :: Rulebook wm Unconstrained () Bool
+  , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+  , everyTurnRules :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
+  , actionProcessing :: ActionProcessing wm
+  , accessibilityRules :: Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
+  } deriving stock ( Generic )
+
+
+actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
+actionsMapL = #actionsMap
+
+newtype ActionProcessing wm = ActionProcessing
+  (forall es resp goesWith v.
+    RuleEffects wm es
+    => State (WorldActions wm) :> es
+    => Refreshable wm v
+    => SpanID
+    -> Action wm resp goesWith v
+    -> Args wm v
+    -> Eff es (Maybe Bool)
+  )
 
 
 actionProcessingRules :: forall wm. SayableValue (WMText wm) wm => ActionProcessing wm
@@ -86,3 +116,5 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
     ]) u)
     where
       ignoreSpanIfEmptyRulebook r = if null (rules r) then ignoreSpan else pass
+
+makeFieldLabelsNoPrefix ''WorldActions

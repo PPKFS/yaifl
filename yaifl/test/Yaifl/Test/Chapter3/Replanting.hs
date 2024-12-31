@@ -7,7 +7,7 @@ import Yaifl (PlainWorldModel)
 import Yaifl.Game.Create.Object
 import Yaifl.Game.EffectHandlers
 import Yaifl.Core.Metadata
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Game.Create
 import Yaifl.Core.Kinds.Thing ( thingIsScenery )
 import Yaifl.Model.Rules.Rulebook

@@ -11,9 +11,9 @@ import Yaifl.Prelude
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Property
 import Yaifl.Model.TH (makeSpecificsWithout)
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 
 newtype Device = Device
   { switchedOn :: Bool

@@ -26,7 +26,7 @@ module Yaifl.Core.Kinds.Object (
 
 import Yaifl.Prelude
 import Yaifl.Core.Entity
-import Yaifl.Model.WorldModel (WMText)
+import Yaifl.Core.WorldModel (WMText)
 
 -- | If the object has a pluralised name.
 data NamePlurality = SingularNamed | PluralNamed

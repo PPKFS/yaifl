@@ -19,12 +19,12 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object( Object(..), objectEquals )
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity ( HasID(..) )
-import Yaifl.Model.Query
+import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room ( IsVisited(..) )
 import Yaifl.Core.Store
 import Yaifl.Model.Kinds.Animal
 import Yaifl.Model.Kinds.Supporter ( isSupporter )
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
@@ -35,6 +35,7 @@ import qualified Prettyprinter.Render.Terminal as PPTTY
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Model.Input
+import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.ObjectLike
 
 data LookingResponses wm =

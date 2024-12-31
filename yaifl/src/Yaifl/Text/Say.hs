@@ -25,7 +25,7 @@ import Yaifl.Model.Activity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
-import Yaifl.Model.WorldModel
+import Yaifl.Core.WorldModel
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
@@ -37,9 +37,9 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
 import Yaifl.Model.Input
-import Yaifl.Model.Actions.Args
 import Yaifl.Model.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.Core.ObjectLike
+import Yaifl.Core.Actions.GoesWith
 
 sayText ::
   SayableValue s wm

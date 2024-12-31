@@ -6,9 +6,9 @@ module Yaifl.Game.Accessibility
 
 import Yaifl.Prelude
 
-import Yaifl.Model.Actions.Args
-import Yaifl.Model.WorldModel ( WMWithProperty )
-import Yaifl.Model.Query ( getThingMaybe )
+import Yaifl.Core.Actions.Args
+import Yaifl.Core.WorldModel ( WMWithProperty )
+import Yaifl.Core.Query.Object ( getThingMaybe )
 import Yaifl.Model.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import qualified Data.List.NonEmpty as NE

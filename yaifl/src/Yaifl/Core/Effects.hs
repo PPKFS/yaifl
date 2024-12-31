@@ -39,12 +39,12 @@ import Breadcrumbs
 import Effectful.Error.Static
 import Effectful.TH
 
-import Yaifl.Core.Metadata
 import Yaifl.Core.Entity
-import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds.Region
-import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata
+import Yaifl.Core.WorldModel
+import Yaifl.Model.Kinds.Region
 
 -- | Effect for reading objects from the world.
 data ObjectLookup (wm :: WorldModel) :: Effect where

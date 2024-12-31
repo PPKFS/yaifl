@@ -4,20 +4,20 @@ module Yaifl.Model.Action
   ( Action(..)
   , ActionRulebook
   , ActionRule
-  , ActionProcessing(..)
   , ParseArguments(..)
   , ActionPhrase(..)
   , InterpretAs(..)
   , OutOfWorldAction(..)
-  , WorldActions(..)
+
   , WrappedAction(..)
   , ParseArgumentEffects
   , ParseArgumentResult(..)
   , ActionInterrupt(..)
-  , addAction
+
   , makeActionRulebook
   , actionName
-  , actionsMapL
+  , getAllRules
+
   , actionOnOneThing
   , actionOnNothing
   , makeAction
@@ -29,11 +29,10 @@ module Yaifl.Model.Action
 
 import Yaifl.Prelude hiding (Reader)
 
-import Breadcrumbs
 import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.WorldModel ( WorldModel )
+import Yaifl.Core.WorldModel ( WorldModel )
 import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Actions.Args
+import Yaifl.Core.Actions.Args
 import Yaifl.Core.Metadata
 import Yaifl.Core.Effects
 import qualified Data.Text as T
@@ -41,27 +40,7 @@ import Yaifl.Text.Responses
 import Effectful.Reader.Static
 import Yaifl.Core.Kinds.Thing
 import Effectful.Error.Static
-
-newtype ActionProcessing wm = ActionProcessing
-  (forall es resp goesWith v.
-    RuleEffects wm es
-    => State (WorldActions wm) :> es
-    => Refreshable wm v
-    => SpanID
-    -> Action wm resp goesWith v
-    -> Args wm v
-    -> Eff es (Maybe Bool)
-  )
-
-newtype InsteadRules wm = InsteadRules
-  (forall es resp goesWith v.
-    RuleEffects wm es
-    => Refreshable wm v
-    => SpanID
-    -> Action wm resp goesWith v
-    -> Args wm v
-    -> Eff es Bool
-  )
+import Yaifl.Core.Actions.GoesWith
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
@@ -127,16 +106,6 @@ data InterpretAs wm = InterpretAs
   , withArgs :: [NamedActionParameter wm]
   }
 
-data WorldActions (wm :: WorldModel) = WorldActions
-  { actionsMap :: Map Text (ActionPhrase wm)
-  , whenPlayBegins :: Rulebook wm Unconstrained () Bool
-  , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
-  , everyTurn :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
-  , actionProcessing :: ActionProcessing wm
-  , accessibilityRules :: Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
-  } deriving stock ( Generic )
-
-makeFieldLabelsNoPrefix ''WorldActions
 makeFieldLabelsNoPrefix ''Action
 
 withActionInterrupt' ::
@@ -179,24 +148,10 @@ makeActionRulebook ::
   -> ActionRulebook wm (Action wm resps goesWith v) v
 makeActionRulebook n = Rulebook n Nothing
 
-actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
-actionsMapL = #actionsMap
-
 getAllRules ::
   Action wm resp goesWith v
   -> Text
 getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $ [ beforeRules, checkRules, carryOutRules, reportRules ]
-
--- | Add an action to the registry.
-addAction ::
-  (State (WorldActions wm) :> es, Breadcrumbs :> es)
-  => Refreshable wm v
-  => GoesWith goesWith
-  => Action wm resp goesWith v
-  -> Eff es ()
-addAction ac = do
-  addAnnotation $ "Adding an action with the followingly named rules: " <> getAllRules ac
-  #actionsMap % at (ac ^. #name) ?= RegularAction (WrappedAction ac)
 
 actionOnOneThing ::
   ParseArguments wm (UnverifiedArgs wm 'TakesThingParameter) (Thing wm)
