@@ -13,7 +13,6 @@ import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText

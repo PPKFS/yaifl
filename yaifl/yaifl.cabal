@@ -163,6 +163,10 @@ library
     Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
     Yaifl.Text.ListWriter
+    Yaifl.Text.ListWriter.AfterEntry
+    Yaifl.Text.ListWriter.Parameters
+    Yaifl.Text.ListWriter.Responses
+    Yaifl.Text.ListWriter.WriteListR
     Yaifl.Text.Print
     Yaifl.Text.ResponseCollection
     Yaifl.Text.Responses
