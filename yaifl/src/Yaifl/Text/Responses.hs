@@ -14,9 +14,10 @@ import Yaifl.Prelude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
 import Yaifl.Core.WorldModel
 import GHC.TypeLits
-import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Text.SayQQ
 import Effectful.Reader.Static
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Text.SayableValue
 
 newtype Response wm v = Response { runResponse :: forall es. SayableValue (WMText wm) wm => (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 

@@ -1,14 +1,14 @@
 module Yaifl.Test.Chapter3.UpAndUp where
 
 import Yaifl
-import Yaifl.Game.Create.Object
+import Yaifl.Std.Create.Object
 import Yaifl.Prelude
 import Yaifl.Test.Common
-import Yaifl.Game.Create.RoomConnection
+import Yaifl.Std.Create.RoomConnection
 import Yaifl.Text.Say
-import Yaifl.Game.Create.Rule
-import Yaifl.Game.Actions.Going
-import Yaifl.Model.Rules.Rulebook
+import Yaifl.Std.Create.Rule
+import Yaifl.Std.Actions.Going
+import Yaifl.Core.Rules.Rulebook
 
 ex6 :: (Text, [Text], Game PlainWorldModel ())
 ex6 = ("Up and Up", upAndUpTestMeWith, upAndUp)

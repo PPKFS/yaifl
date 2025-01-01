@@ -10,7 +10,7 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Model.Kinds.Region
+import Yaifl.Std.Kinds.Region
 import qualified Data.Set as S
 
 

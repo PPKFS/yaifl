@@ -49,7 +49,7 @@ data WorldModel =
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir o v a r re) = objSpec
 
--- | Directions, which is required to be a superset of `Yaifl.Model.Kinds.Direction`.
+-- | Directions, which is required to be a superset of `Yaifl.Std.Kinds.Direction`.
 type family WMDirection (wm :: WorldModel) :: Type where
   WMDirection ('WorldModel objSpec dir o v a r re) = dir
 

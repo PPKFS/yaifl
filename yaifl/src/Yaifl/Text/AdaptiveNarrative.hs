@@ -11,7 +11,7 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.Query.Object
 import Yaifl.Text.Verb
-import Yaifl.Model.Kinds.Person
+import Yaifl.Std.Kinds.Person
 
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };

@@ -1,11 +1,11 @@
 module Yaifl.Test.Chapter3.PortRoyal2 where
 
 import Yaifl
-import Yaifl.Game.Create.Object
+import Yaifl.Std.Create.Object
 import Yaifl.Prelude
 import Yaifl.Test.Common
-import Yaifl.Game.Create
-import Yaifl.Model.Kinds.Direction (Direction(..))
+import Yaifl.Std.Create
+import Yaifl.Std.Kinds.Direction (Direction(..))
 
 ex8 :: (Text, [Text], Game PlainWorldModel ())
 ex8 = ("Port Royal 2", portRoyal2TestMeWith, portRoyalWorld2)

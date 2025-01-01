@@ -3,13 +3,13 @@ module Yaifl.Test.Chapter3.FirstNameBasis where
 import Yaifl.Prelude
 
 import Yaifl
-import Yaifl.Game.Create
+import Yaifl.Std.Create
 import Yaifl.Core.Query.Object
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Device
-import Yaifl.Model.Kinds.Person
+import Yaifl.Std.Kinds.Device
+import Yaifl.Std.Kinds.Person
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)

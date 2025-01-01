@@ -4,11 +4,11 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Game.Create.Object
-import Yaifl.Game.EffectHandlers
+import Yaifl.Std.Create.Object
+import Yaifl.Std.EffectHandlers
 import Yaifl.Core.Metadata
 import Yaifl.Test.Common
-import Yaifl.Model.Kinds.Person
+import Yaifl.Std.Kinds.Person
 
 ex19 :: (Text, [Text], Game PlainWorldModel ())
 ex19 = ("Laura", lauraTestMeWith, lauraWorld)

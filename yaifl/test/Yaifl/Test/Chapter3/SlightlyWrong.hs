@@ -2,7 +2,7 @@ module Yaifl.Test.Chapter3.SlightlyWrong where
 
 import Yaifl
 import Yaifl.Prelude
-import Yaifl.Game.Create
+import Yaifl.Std.Create
 import Yaifl.Test.Common
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Say

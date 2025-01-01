@@ -17,76 +17,74 @@ module Yaifl (
   , runTurn
 
   , module Yaifl.Core.Metadata
-  , module Yaifl.Game.World
+  , module Yaifl.Std.World
   , module Yaifl.Core.WorldModel
   ) where
 
 import Yaifl.Prelude hiding ( Reader, runReader )
 
-import Yaifl.Model.Action
-import Yaifl.Game.ActionProcessing
-import Yaifl.Game.Actions.Going
-import Yaifl.Game.Actions.Looking
-import Yaifl.Game.Actions.Looking.Locale
-import Yaifl.Game.Actions.Looking.Visibility
-import Yaifl.Game.Actions.SwitchingOn
-import Yaifl.Model.Activity
-import Yaifl.Game.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Game.Activities.ListingContents
-import Yaifl.Game.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Game.Activities.PrintingTheLocaleDescription
-import Yaifl.Core.Metadata
-import Yaifl.Model.Kinds.Direction
+import Breadcrumbs
+import System.Random.Stateful
+import Yaifl.Core.Action
+import Yaifl.Core.Actions.Args
+import Yaifl.Core.Actions.GoesWith
+import Yaifl.Core.Activity
+import Yaifl.Core.Effects
 import Yaifl.Core.Entity
-import Yaifl.Game.ObjectSpecifics
-import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Kinds.Door
+import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.Kinds.Openable
+import Yaifl.Core.Kinds.Room
+import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Rules.Run
+import Yaifl.Core.Store
 import Yaifl.Core.WorldModel
-import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Game.WhenPlayBegins
+import Yaifl.Std.Rulebooks.Accessibility
+import Yaifl.Std.Rulebooks.ActionProcessing
+import Yaifl.Std.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Std.Activities.ListingContents
+import Yaifl.Std.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Std.Activities.PrintingRoomDescriptionDetails
+import Yaifl.Std.Activities.PrintingTheLocaleDescription
+import Yaifl.Std.EffectHandlers
+import Yaifl.Std.ObjectSpecifics
+import Yaifl.Std.Parser
+import Yaifl.Std.Rulebooks.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
+import Yaifl.Std.Rulebooks.WhenPlayBegins
+import Yaifl.Std.World
+import Yaifl.Std.Actions.Closing
+import Yaifl.Std.Actions.Collection
+import Yaifl.Std.Actions.Entering (enteringAction)
+import Yaifl.Std.Actions.Examining
+import Yaifl.Std.Actions.Exiting (exitingAction)
+import Yaifl.Std.Actions.GettingOff (gettingOffAction)
+import Yaifl.Std.Actions.Going
+import Yaifl.Std.Actions.Looking
+import Yaifl.Std.Actions.Looking.Locale
+import Yaifl.Std.Actions.Looking.Visibility
+import Yaifl.Std.Actions.Opening
+import Yaifl.Std.Actions.OutOfWorld
+import Yaifl.Std.Actions.SwitchingOn
+import Yaifl.Std.Actions.Taking
+import Yaifl.Std.Actions.Waiting
+import Yaifl.Std.Kinds.Container
+import Yaifl.Std.Kinds.Device
+import Yaifl.Std.Kinds.Direction
+import Yaifl.Std.Kinds.Door
+import Yaifl.Std.Kinds.ObjectKind
+import Yaifl.Std.Kinds.Openable
+import Yaifl.Std.Kinds.Person
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative)
+import Yaifl.Text.DynamicText
+import Yaifl.Text.ListWriter
 import Yaifl.Text.Print
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.Say
-import Yaifl.Game.World
-
 import qualified Data.Map as DM
-import qualified Data.Text as T
-import Yaifl.Text.ListWriter
-import Yaifl.Game.Actions.OutOfWorld
-import Yaifl.Core.Actions.Args
-import Yaifl.Game.EffectHandlers
-import Yaifl.Text.DynamicText
-import Yaifl.Game.Actions.Collection
-import Breadcrumbs
-import Yaifl.Game.Actions.Examining
-import Yaifl.Core.Store
-import Yaifl.Game.Actions.Closing
-import Yaifl.Game.Actions.Opening
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
-import Yaifl.Model.ObjectKind
 import qualified Data.Map as M
-import Yaifl.Model.Input (waitForInput)
-import Yaifl.Game.Parser
-import Yaifl.Game.Actions.Taking
-import Yaifl.Model.Kinds.Device
-import Yaifl.Game.Activities.PrintingRoomDescriptionDetails
 import qualified Data.Set as S
-import Yaifl.Game.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
-import Yaifl.Model.Rules.Run
-import System.Random.Stateful
-import Yaifl.Game.Actions.Entering (enteringAction)
-import Yaifl.Game.Actions.Waiting
-import Yaifl.Game.Actions.Exiting (exitingAction)
-import Yaifl.Game.Actions.GettingOff (gettingOffAction)
-import Yaifl.Game.Accessibility
-import Yaifl.Model.Kinds.Person
-import Yaifl.Core.Effects
-import Yaifl.Core.Actions.GoesWith
+import qualified Data.Text as T
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 

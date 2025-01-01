@@ -7,11 +7,11 @@ module Yaifl.Gen.City.Apartment
 import Yaifl.Prelude
 import Yaifl.Gen.Plan
 import Control.Placeholder
-import Yaifl.Model.WorldModel
-import Yaifl.Model.Kinds.Region
-import Yaifl.Game.Create
+import Yaifl.Core.WorldModel
+import Yaifl.Std.Kinds.Region
+import Yaifl.Std.Create
 import Yaifl.Core.Entity
-import Yaifl.Model.Rules
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Gen.City.Building
 
 data RoomType = LivingRoom | Kitchen | Bathroom | Bedroom | Study

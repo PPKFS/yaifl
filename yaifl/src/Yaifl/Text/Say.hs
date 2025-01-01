@@ -21,13 +21,14 @@ import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
 import Yaifl.Prelude
-import Yaifl.Model.Activity
+import Yaifl.Core.Activity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Effects
 import Yaifl.Core.WorldModel
-import Yaifl.Model.Rules.Rulebook
-import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Text.SayableValue
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Text.Verb
@@ -36,8 +37,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Text.SayQQ
-import Yaifl.Model.Input
-import Yaifl.Model.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
+import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Actions.GoesWith
 

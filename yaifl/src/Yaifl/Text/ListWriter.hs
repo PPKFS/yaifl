@@ -14,16 +14,15 @@ import Yaifl.Prelude hiding (asks, Reader, runReader)
 
 import Effectful.Reader.Static
 import Effectful.Writer.Static.Local
-import Yaifl.Game.Activities.PrintingInventoryDetails
-import Yaifl.Game.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
+import Yaifl.Std.Activities.PrintingInventoryDetails
+import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
 import Yaifl.Core.Actions.Args
-import Yaifl.Model.Activity
+import Yaifl.Core.Activity
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Model.Kinds.Container
-import Yaifl.Model.Kinds.Supporter
+import Yaifl.Std.Kinds.Container
+import Yaifl.Std.Kinds.Supporter
 import Yaifl.Core.Metadata
 import Yaifl.Core.Query.Object
-import Yaifl.Model.Rules.RuleEffects
 import Yaifl.Core.WorldModel
 
 import Yaifl.Text.AdaptiveNarrative
@@ -37,7 +36,8 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Refreshable
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
-import Yaifl.Model.Kinds.Person
+import Yaifl.Std.Kinds.Person
+import Yaifl.Core.Rules.RuleEffects
 
 type WithListWriting wm = (
   WithPrintingNameOfSomething wm

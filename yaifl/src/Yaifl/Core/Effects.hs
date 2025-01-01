@@ -26,6 +26,8 @@ module Yaifl.Core.Effects
   , traverseThings_
   , traverseRegions
   , generateEntity
+  , Input(..)
+  , waitForInput
   -- ** Type synonyms
   , ObjectQuery
   , NoMissingObjects
@@ -44,7 +46,7 @@ import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.WorldModel
-import Yaifl.Model.Kinds.Region
+import Yaifl.Std.Kinds.Region
 
 -- | Effect for reading objects from the world.
 data ObjectLookup (wm :: WorldModel) :: Effect where
@@ -65,6 +67,10 @@ data ObjectTraverse (wm :: WorldModel) :: Effect where
   TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectTraverse wm m [Room wm]
   TraverseRegions :: (Region wm -> m (Maybe (Region wm))) -> ObjectTraverse wm m [Region wm]
 
+data Input :: Effect where
+  WaitForInput :: Input m Text
+
+makeEffect ''Input
 makeEffect ''ObjectLookup
 makeEffect ''ObjectUpdate
 makeEffect ''ObjectTraverse

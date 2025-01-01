@@ -3,7 +3,7 @@ module Main where
 import Yaifl.Prelude hiding (on)
 
 import Yaifl
-import Yaifl.Model.Action
+import Yaifl.Core.Action
 
 import Lens.Micro as L ((^.))
 import Lens.Micro.Mtl as L

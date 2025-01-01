@@ -74,101 +74,91 @@ library
   exposed-modules:
     Yaifl.Prelude
 
+    Yaifl.Core.Action
+    Yaifl.Core.Actions.Args
+    Yaifl.Core.Actions.GoesWith
+    Yaifl.Core.Activity
+
+    Yaifl.Core.Effects
     Yaifl.Core.Entity
-    Yaifl.Core.Store
-    Yaifl.Core.Tag
+    Yaifl.Core.HasProperty
 
     Yaifl.Core.Kinds.AnyObject
+    Yaifl.Core.Kinds.Enclosing
     Yaifl.Core.Kinds.Object
     Yaifl.Core.Kinds.Room
     Yaifl.Core.Kinds.Thing
 
+    Yaifl.Core.Metadata
+
     Yaifl.Core.ObjectLike
 
-    Yaifl.Core.Refreshable
-    Yaifl.Core.HasProperty
-
     Yaifl.Core.Query.Enclosing
-    Yaifl.Core.Query.Region
+    Yaifl.Core.Query.Object
     Yaifl.Core.Query.Property
+    Yaifl.Core.Query.Region
 
-    Yaifl.Core.Actions.GoesWith
-    Yaifl.Core.Actions.Args
+    Yaifl.Core.Refreshable
+    Yaifl.Core.Rules.Rulebook
+    Yaifl.Core.Rules.RuleEffects
+    Yaifl.Core.Rules.Run
+
+    Yaifl.Core.Store
+    Yaifl.Core.TH
+    Yaifl.Core.Tag
+    Yaifl.Core.WorldModel
+
 
     Yaifl
-    Yaifl.Game.ActionProcessing
-    Yaifl.Game.Actions.Closing
-    Yaifl.Game.Actions.Collection
-    Yaifl.Game.Actions.Examining
-    Yaifl.Game.Actions.Entering
-    Yaifl.Game.Actions.Exiting
-    Yaifl.Game.Actions.GettingOff
-    Yaifl.Game.Actions.Going
-    Yaifl.Game.Actions.Looking
-    Yaifl.Game.Actions.Looking.Locale
-    Yaifl.Game.Actions.Looking.Visibility
-    Yaifl.Game.Actions.Opening
-    Yaifl.Game.Actions.SwitchingOn
-    Yaifl.Game.Actions.Taking
-    Yaifl.Game.Actions.Waiting
-    Yaifl.Game.Actions.OutOfWorld
+    Yaifl.Std.Rulebooks.ActionProcessing
+    Yaifl.Std.Actions.Imports
+    Yaifl.Std.Actions.Closing
+    Yaifl.Std.Actions.Collection
+    Yaifl.Std.Actions.Examining
+    Yaifl.Std.Actions.Entering
+    Yaifl.Std.Actions.Exiting
+    Yaifl.Std.Actions.GettingOff
+    Yaifl.Std.Actions.Going
+    Yaifl.Std.Actions.Looking
+    Yaifl.Std.Actions.Looking.Locale
+    Yaifl.Std.Actions.Looking.Visibility
+    Yaifl.Std.Actions.Opening
+    Yaifl.Std.Actions.SwitchingOn
+    Yaifl.Std.Actions.Taking
+    Yaifl.Std.Actions.Waiting
+    Yaifl.Std.Actions.OutOfWorld
 
-    Yaifl.Game.Activities.ChoosingNotableLocaleObjects
-    Yaifl.Game.Activities.ListingContents
-    Yaifl.Game.Activities.PrintingLocaleParagraphAbout
-    Yaifl.Game.Activities.PrintingTheLocaleDescription
-    Yaifl.Game.Activities.PrintingRoomDescriptionDetails
-    Yaifl.Game.Activities.PrintingInventoryDetails
+    Yaifl.Std.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Std.Activities.ListingContents
+    Yaifl.Std.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Std.Activities.PrintingTheLocaleDescription
+    Yaifl.Std.Activities.PrintingRoomDescriptionDetails
+    Yaifl.Std.Activities.PrintingInventoryDetails
 
-    Yaifl.Game.Create.Object
-    Yaifl.Game.Create.RoomConnection
+    Yaifl.Std.Create.Object
+    Yaifl.Std.Create.RoomConnection
 
-    Yaifl.Game.EffectHandlers
-    Yaifl.Game.Move
-    Yaifl.Game.ObjectSpecifics
-    Yaifl.Game.Parser
-    Yaifl.Game.WhenPlayBegins
-    Yaifl.Game.World
-    Yaifl.Game.Create.Rule
+    Yaifl.Std.EffectHandlers
+    Yaifl.Std.Move
+    Yaifl.Std.ObjectSpecifics
+    Yaifl.Std.Parser
+    Yaifl.Std.Rulebooks.WhenPlayBegins
+    Yaifl.Std.World
+    Yaifl.Std.Create.Rule
 
-    Yaifl.Model.Action
+    Yaifl.Std.Kinds.Animal
+    Yaifl.Std.Kinds.Backdrop
+    Yaifl.Std.Kinds.Container
+    Yaifl.Std.Kinds.Device
+    Yaifl.Std.Kinds.Direction
+    Yaifl.Std.Kinds.Door
+    Yaifl.Std.Kinds.MultiLocated
+    Yaifl.Std.Kinds.ObjectKind
+    Yaifl.Std.Kinds.Openable
+    Yaifl.Std.Kinds.Person
+    Yaifl.Std.Kinds.Region
+    Yaifl.Std.Kinds.Supporter
 
-    Yaifl.Model.Activity
-
-    Yaifl.Core.Effects
-
-
-
-
-
-
-    Yaifl.Model.Kinds.Animal
-    Yaifl.Model.Kinds.Backdrop
-    Yaifl.Model.Kinds.Container
-    Yaifl.Model.Kinds.Device
-    Yaifl.Model.Kinds.Direction
-    Yaifl.Model.Kinds.Door
-    Yaifl.Core.Kinds.Enclosing
-
-    Yaifl.Model.Kinds.Openable
-    Yaifl.Model.Kinds.Person
-    Yaifl.Model.Kinds.Region
-
-    Yaifl.Model.Kinds.Supporter
-
-    Yaifl.Core.Metadata
-    Yaifl.Model.Input
-    Yaifl.Model.MultiLocated
-
-    Yaifl.Model.ObjectKind
-    Yaifl.Core.Query.Object
-    Yaifl.Model.Rules.RuleEffects
-    Yaifl.Model.Rules.Rulebook
-    Yaifl.Model.Rules.Run
-
-
-    Yaifl.Core.WorldModel
-    Yaifl.Model.TH
 
     Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
@@ -179,12 +169,11 @@ library
     Yaifl.Text.Say
     Yaifl.Text.SayQQ
     Yaifl.Text.Verb
+    Yaifl.Text.SayableValue
 
-    Yaifl.Game.Create
-
-
-    Yaifl.Game.TurnSequence
-    Yaifl.Game.Accessibility
+    Yaifl.Std.Create
+    Yaifl.Std.Rulebooks.TurnSequence
+    Yaifl.Std.Rulebooks.Accessibility
 
   build-depends:
     , effectful-th

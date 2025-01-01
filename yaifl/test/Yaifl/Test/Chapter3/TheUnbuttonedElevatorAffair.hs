@@ -3,15 +3,16 @@ module Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Game.Actions.Going
-import Yaifl.Model.Kinds.Direction
-import Yaifl.Game.Create.Object
-import Yaifl.Game.Create.RoomConnection
-import Yaifl.Game.Create.Rule
-import Yaifl.Model.Rules.Rulebook
+import Yaifl.Std.Actions.Going
+import Yaifl.Std.Kinds.Direction
+import Yaifl.Std.Create.Object
+import Yaifl.Std.Create.RoomConnection
+import Yaifl.Std.Create.Rule
+import Yaifl.Text.SayableValue
 import Yaifl.Test.Common
 import Yaifl.Text.Say
 import Yaifl.Core.ObjectLike
+import Yaifl.Core.Rules.Rulebook
 
 ex9 :: (Text, [Text], Game PlainWorldModel ())
 ex9 = ("The Unbuttoned Elevator Affair", theUnbuttonedElevatorAffairTestMeWith, theUnbuttonedElevatorAffairWorld)

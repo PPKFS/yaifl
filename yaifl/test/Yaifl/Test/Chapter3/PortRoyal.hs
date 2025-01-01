@@ -1,7 +1,7 @@
 module Yaifl.Test.Chapter3.PortRoyal where
 
 import Yaifl
-import Yaifl.Game.Create
+import Yaifl.Std.Create
 import Yaifl.Prelude
 import Yaifl.Test.Common
 

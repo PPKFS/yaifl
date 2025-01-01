@@ -7,17 +7,17 @@ module Yaifl.Gen.City.Building
 
 import Yaifl.Prelude
 import Yaifl.Core.Entity
-import Yaifl.Model.Kinds.Region
-import Yaifl.Model.WorldModel
+import Yaifl.Std.Kinds.Region
+import Yaifl.Core.WorldModel
 import Yaifl.Core.Effects
-import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.HasProperty
-import Yaifl.Game.Create
-import Yaifl.Model.MultiLocated
+import Yaifl.Std.Create
+import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Model.Kinds.Door
+import Yaifl.Std.Kinds.Door
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
-import Yaifl.Game.Activities.ListingContents (WithListingContents)
+import Yaifl.Std.Activities.ListingContents (WithListingContents)
 
 data Building wm = Building
   { name :: Text

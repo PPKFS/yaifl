@@ -2,20 +2,21 @@ module Main where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Model.Action
-import Yaifl.Model.Rules.RuleEffects
+import Yaifl.Core.Action
+import Yaifl.Core.Rules.Rulebook
 import Yaifl.Text.ResponseCollection
 import Breadcrumbs
-import Yaifl.Model.Input
+
 import Yaifl.Core.Effects
 import Yaifl.Text.Print
-import Yaifl.Model.Rules.Run
+import Yaifl.Core.Rules.Run
 import Yaifl.Text.SayQQ
-import Yaifl.Game.Create.Rule
-import Yaifl.Model.Rules.Rulebook
+import Yaifl.Std.Create.Rule
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Text.SayableValue
 import Yaifl.Gen.Plan
 import Yaifl.Gen.City.ApartmentTower
-import Yaifl.Model.Kinds.Direction
+import Yaifl.Std.Kinds.Direction
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm

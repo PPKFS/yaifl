@@ -6,18 +6,19 @@ import Yaifl
 import Yaifl.Core.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Game.Actions.Going
-import Yaifl.Game.Create
+import Yaifl.Std.Actions.Going
+import Yaifl.Std.Create
 import Yaifl.Core.Actions.Args
-import Yaifl.Model.Kinds.Direction
-import Yaifl.Model.Kinds.Openable
+import Yaifl.Std.Kinds.Direction
+import Yaifl.Std.Kinds.Openable
 import Yaifl.Core.Query.Object
-import Yaifl.Model.Rules.RuleEffects
-import Yaifl.Model.Rules.Rulebook
+import Yaifl.Core.Rules.Rulebook
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Text.SayableValue
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
-import Yaifl.Model.Kinds.Person
+import Yaifl.Std.Kinds.Person
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
