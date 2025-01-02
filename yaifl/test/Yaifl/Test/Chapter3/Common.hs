@@ -22,6 +22,7 @@ import Yaifl.Test.Chapter3.Tamed
 import Yaifl.Test.Chapter3.Replanting
 import Yaifl.Test.Chapter3.DisenchantmentBay4
 import Yaifl.Test.Chapter3.Laura
+import Yaifl.Test.Chapter3.Escape
 
 c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
@@ -47,4 +48,6 @@ spec _allTenses = M.fromList
   -- example 17 is a snippet about backdrops, which is used in example 18.
   , c3Harness ex18 -- Disenchantment Bay 4
   , c3Harness ex19 -- Laura
+  -- example 20 is a single line of disenchantment bay
+  , c3Harness ex21
   ]
