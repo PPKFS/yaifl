@@ -70,18 +70,19 @@ convertToUnderlyingStack ::
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => HasLookingProperties wm
-  => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  => (forall es b. State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+  -> (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
   -> IO (a, World wm)
-convertToUnderlyingStack i w ac =
+convertToUnderlyingStack printHandler i w ac =
   fmap (either (error . show) id)
   . runEff
   . runError
   . runBreadcrumbs Nothing
   . runStateShared w
-  . runPrintPure @(World wm)
+  . printHandler
   . zoomState #actions
   . zoomState @(World wm) #metadata
   . runReader []
@@ -178,9 +179,11 @@ updateIt newObj mbExisting = case mbExisting of
   Just _ -> Just newObj
 
 runGame ::
+  forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => HasLookingProperties wm
-  => (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  => (forall es b. State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+  -> (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a

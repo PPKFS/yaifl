@@ -78,7 +78,7 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
-  fst <$$> runGame runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <$$> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
