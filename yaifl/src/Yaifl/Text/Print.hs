@@ -8,6 +8,7 @@ module Yaifl.Text.Print
   , Print(..)
   , Has(..)
   , PartialState
+  , StyledDoc
   -- * Smart constructors
   , blankMessageBuffer
   -- * Buffer modification
