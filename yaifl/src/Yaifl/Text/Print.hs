@@ -5,6 +5,7 @@ module Yaifl.Text.Print
   ( -- * Types
     MessageBuffer (..)
   , MessageContext(..)
+  , MessageAnnotation(..)
   , Print(..)
   , Has(..)
   , PartialState
@@ -21,18 +22,56 @@ module Yaifl.Text.Print
   , printIf
   , runPrintPure
   , runPrintIO
+
+  , bold
+  , colour
   )
 where
 
 import Yaifl.Prelude
 
 import qualified Prettyprinter as PP
-import qualified Prettyprinter.Render.Terminal as PPTTY
 import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
 import qualified Data.Text as T
+import Rogue.Colour
 
-type StyledDoc = PP.Doc PPTTY.AnsiStyle
+type StyledDoc style = PP.Doc style
+
+data Bold = Bold
+  deriving stock (Eq, Ord, Show, Generic)
+
+data Italics = Italics
+  deriving stock (Eq, Ord, Show, Generic)
+
+data Underlined = Underlined
+  deriving stock (Eq, Ord, Show, Generic)
+
+data MessageAnnotation = MessageAnnotation
+    { foregroundAnnotation  :: Maybe Colour -- ^ Set the foreground color, or keep the old one.
+    , backgroundAnnotation  :: Maybe Colour -- ^ Set the background color, or keep the old one.
+    , boldAnnotation :: Maybe Bold               -- ^ Switch on boldness, or don’t do anything.
+    , italics :: Maybe Italics         -- ^ Switch on italics, or don’t do anything.
+    , underlined :: Maybe Underlined         -- ^ Switch on underlining, or don’t do anything.
+    } deriving stock (Eq, Ord, Show, Generic)
+
+instance Monoid MessageAnnotation where
+  mempty = MessageAnnotation Nothing Nothing Nothing Nothing Nothing
+
+instance Semigroup MessageAnnotation where
+  (<>) m1 m2 = MessageAnnotation
+    { foregroundAnnotation = (foregroundAnnotation m1) <|> foregroundAnnotation m2
+    , backgroundAnnotation = (backgroundAnnotation m1) <|> backgroundAnnotation m2
+    , boldAnnotation = (boldAnnotation m1) <|> boldAnnotation m2
+    , italics = (italics m1) <|> italics m2
+    , underlined = (underlined m1) <|> underlined m2
+    }
+
+colour :: Colour -> MessageAnnotation
+colour c = mempty { foregroundAnnotation = Just c }
+
+bold :: MessageAnnotation
+bold = mempty { boldAnnotation = Just Bold }
 
 data MessageContext = MessageContext
   { messageFromRule :: Text
@@ -44,15 +83,15 @@ data MessageContext = MessageContext
   } deriving stock (Show, Ord, Generic, Eq)
 
 data Print :: Effect where
-  ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m MessageBuffer
-  PrintDoc :: Maybe MessageContext -> StyledDoc -> Print m ()
-  SetStyle :: Maybe PPTTY.AnsiStyle -> Print m ()
+  ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m (MessageBuffer)
+  PrintDoc :: Maybe MessageContext -> StyledDoc MessageAnnotation-> Print m ()
+  SetStyle :: Maybe MessageAnnotation -> Print m ()
 
 data MessageBuffer = MessageBuffer
-  { buffer :: [StyledDoc] -- ^ Current messages held before flushing.
+  { buffer :: [StyledDoc MessageAnnotation] -- ^ Current messages held before flushing.
   , lastMessageContext :: MessageContext -- ^ some metadata about the last printed message, to deal with pbreaks and lines
-  , style :: Maybe PPTTY.AnsiStyle -- ^ Current formatting; 'Nothing' = plain.
-  , context :: [StyledDoc] -- ^ Possibly nested prefixes before every message.
+  , style :: Maybe MessageAnnotation -- ^ Current formatting; 'Nothing' = plain.
+  , context :: [StyledDoc MessageAnnotation] -- ^ Possibly nested prefixes before every message.
   , ruleContext :: Text -- ^ the currently executing rule
   } deriving stock (Show, Generic)
 
@@ -65,9 +104,9 @@ blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False
 
 processDoc ::
   forall s es.
-  PartialState s MessageBuffer es
-  => StyledDoc
-  -> Eff es StyledDoc
+  PartialState s (MessageBuffer) es
+  => StyledDoc MessageAnnotation
+  -> Eff es (StyledDoc MessageAnnotation)
 processDoc msg = do
   (MessageBuffer _ _ style cxt _) <- use @s buf
   -- if we have no context, we just monoid it.
@@ -86,14 +125,14 @@ instance Has s s where
 
 runPrintPure ::
   forall s es a.
-  PartialState s MessageBuffer es
+  PartialState s (MessageBuffer) es
   => Eff (Print : es) a
   -> Eff es a
 runPrintPure = interpret $ \_ -> \case
   PrintDoc mbMetadata doc -> do
     r <- processDoc doc
-    modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc])) %~ (r:))
-    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata)
+    modify (\s -> s & buf % (#buffer @(Lens' (MessageBuffer) [StyledDoc MessageAnnotation])) %~ (r:))
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ metadata)
   SetStyle mbStyle -> setStyle' mbStyle
   ModifyBuffer f -> do
     modify (\s -> s & buf %~ f)
@@ -102,13 +141,13 @@ runPrintPure = interpret $ \_ -> \case
 runPrintIO ::
   forall s es a.
   IOE :> es
-  => PartialState s MessageBuffer es
+  => PartialState s (MessageBuffer) es
   => Eff (Print : es) a
   -> Eff es a
 runPrintIO = interpret $ \_ -> \case
   PrintDoc mbMetadata doc -> do
     r <- processDoc doc
-    whenJust mbMetadata $ \metadata -> modify (\s -> s & (buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata))
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & (buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ metadata))
     print r
   SetStyle mbStyle -> setStyle' mbStyle
   ModifyBuffer f -> do
@@ -196,7 +235,8 @@ printIf False = const pass
 -- | Update the style of a message buffer. Setting to 'Just' overwrites the style,
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
 setStyle' ::
-  PartialState s MessageBuffer es
-  => Maybe PPTTY.AnsiStyle -- ^ The updated style.
+  forall s es.
+  PartialState s (MessageBuffer) es
+  => Maybe MessageAnnotation -- ^ The updated style.
   -> Eff es ()
-setStyle' s = buf % (#style @(Lens' MessageBuffer (Maybe PPTTY.AnsiStyle))) .= s
+setStyle' s = buf % (#style @(Lens' (MessageBuffer) (Maybe MessageAnnotation))) .= s

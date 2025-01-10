@@ -4,7 +4,6 @@ module Yaifl.Std.Rulebooks.WhenPlayBegins
 
 import Yaifl.Prelude
 import qualified Data.Text as T
-import qualified Prettyprinter.Render.Terminal as PPTTY
 
 import Breadcrumbs ( Breadcrumbs, addAnnotation )
 import Yaifl.Std.Move ( move )
@@ -17,10 +16,11 @@ import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Object ( getCurrentPlayer )
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Text.Print ( Print, setStyle, printText )
+import Yaifl.Text.Print
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Actions.GoesWith
+import Rogue.Colour
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -39,10 +39,10 @@ whenPlayBeginsRules = Rulebook
 
 sayIntroText ::
   State Metadata :> es
-  => Print :> es
+  => Print  :> es
   => Eff es ()
 sayIntroText = do
-  setStyle (Just (PPTTY.color PPTTY.Green <> PPTTY.bold))
+  setStyle (Just (colour (Colour 0xff00ff22) <> bold))
   t <- use #title
   printText $ introText t
   setStyle Nothing

@@ -187,6 +187,7 @@ library
     , megaparsec
     , prettyprinter
     , prettyprinter-ansi-terminal
+    , roguefunctor
     , split
 
 test-suite yaifl-test

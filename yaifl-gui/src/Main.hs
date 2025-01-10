@@ -135,7 +135,7 @@ runLoop :: Game wm ()
 runLoop = do
   ifM runOnce pass runLoop
 
-getMessageBuffer :: forall wm. Game wm [StyledDoc]
+getMessageBuffer :: forall wm. Game wm [StyledDoc MessageAnnotation]
 getMessageBuffer = gets @(World wm) (view $ #messageBuffer % #buffer)
 
 renderAll :: forall wm. Game wm ()

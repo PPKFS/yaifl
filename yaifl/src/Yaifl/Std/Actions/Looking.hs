@@ -26,8 +26,7 @@ import Yaifl.Std.Kinds.Animal
 import Yaifl.Std.Kinds.Supporter ( isSupporter )
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print ( Print, setStyle, runOnLookingParagraph )
-import qualified Prettyprinter.Render.Terminal as PPTTY
+import Yaifl.Text.Print ( Print, setStyle, runOnLookingParagraph, bold )
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 
@@ -87,7 +86,7 @@ roomDescriptionHeading ::
 roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
     (\a@Args{variables=(LookingActionVariables _ lvls _)} -> do
       -- say bold type;
-      setStyle (Just PPTTY.bold)
+      setStyle (Just bold)
       addAnnotation $ "levels " <> mconcat (map display lvls)
       let mbVisCeil = viaNonEmpty last lvls
       whenJust mbVisCeil $ addTag "visibility ceiling" . display
