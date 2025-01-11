@@ -100,6 +100,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Door
   , HasDirectionalTerms s
   , Pointed (WMObjSpecifics s)
+  , SayableValue (WMText s) s
   )
 
 -- | All the standard library activities.
@@ -194,6 +195,7 @@ blankMetadata = Metadata
   , bufferedInput = []
   , mentionedThings = S.empty
   , rng = mkStdGen 69
+  , usePostPromptPbreak = True
   }
 
 newWorld ::
@@ -332,8 +334,9 @@ runTurn = do
   let actionOpts = ActionOptions False False
   wa <- get @(WorldActions wm)
   runRulebook Nothing False (wa ^. #turnSequence) ()
-  printPrompt actionOpts
   i <- waitForInput
-  printText i
-  void $ parseAction actionOpts [NoParameter] i
+  whenJust i $ \actualInput -> do
+    printPrompt actionOpts
+    withStyle (Just bold) $ printText actualInput
+    void $ parseAction actionOpts [NoParameter] actualInput
   -- TODO: this is where every turn things happen

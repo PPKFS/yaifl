@@ -42,7 +42,7 @@ sayIntroText ::
   => Print  :> es
   => Eff es ()
 sayIntroText = do
-  setStyle (Just (colour (Colour 0xff00ff22) <> bold))
+  setStyle (Just (colour (Colour 0xff147421) <> bold))
   t <- use #title
   printText $ introText t
   setStyle Nothing

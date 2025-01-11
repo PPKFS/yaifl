@@ -22,6 +22,7 @@ module Yaifl.Core.Metadata (
   , noteError
   , noteRuntimeError
   , traceGuard
+  , setPostPromptSpacing
   -- * Construction helpers
   , whenConstructing
   , whenConstructingM
@@ -95,6 +96,7 @@ data Metadata = Metadata
   , bufferedInput :: [Text]
   , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
   , rng :: StdGen
+  , usePostPromptPbreak :: Bool
   -- more to come I guess
   } deriving stock (Generic)
 makeFieldLabelsNoPrefix ''Metadata
@@ -144,6 +146,12 @@ setTitle ::
   => Text -- ^ New title.
   -> Eff es ()
 setTitle = (#title .=)
+
+setPostPromptSpacing ::
+  State Metadata :> es
+  => Bool
+  -> Eff es ()
+setPostPromptSpacing = (#usePostPromptPbreak .=)
 
 -- | Determine if we are in the construction phase or in runtime,
 -- for the sake of things which should be errors or ignored during construction

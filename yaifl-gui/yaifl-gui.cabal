@@ -36,7 +36,6 @@ common common-options
     split >= 0.2.4 && < 2.0,
     text-display >= 0.0.5 && < 1.0,
     breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
-    solitude >= 0.0.0.0 && <= 10.0.0.0,
     random
 
   ghc-options:
@@ -77,21 +76,8 @@ executable yaifl-gui
     DisenchantmentBay4
 
   build-depends:
-    , effectful-th
-    , enummapset
-    , haskell-src-exts
-    , haskell-src-meta
-    , megaparsec
     , prettyprinter
-    , prettyprinter-ansi-terminal
     , split
     , yaifl
-    , brick
-    , vty
-    , mtl
-    , vector
-    , microlens
-    , microlens-mtl
-    , placeholder
     , roguefunctor
     , bearlibterminal

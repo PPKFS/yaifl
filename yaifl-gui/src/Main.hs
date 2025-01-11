@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import BearLibTerminal
@@ -22,6 +23,9 @@ import Yaifl.Std.EffectHandlers
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Text.Print
 import Yaifl.Text.ResponseCollection
+import Prettyprinter
+import qualified Data.Text.Lazy.Builder as TLB
+import qualified Data.Text as T
 
 screenSize :: V2
 screenSize = V2 230 80
@@ -54,20 +58,20 @@ data ConstructionOptions wm = ConstructionOptions
 defaultOptions :: ConstructionOptions PlainWorldModel
 defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 
-main :: IO ()
-main = runWorld "Test" [] defaultOptions (view _3 ex18)
+main :: HasCallStack => IO ()
+main = runWorld "Test" [] defaultOptions ex18
 
 runWorld ::
-  forall wm a b.
+  forall wm b a.
   HasStandardProperties wm
   => WMHasObjSpecifics wm
   => HasCallStack
   => Text
   -> [Text]
   -> ConstructionOptions wm
-  -> Game wm b
+  -> (a, [Text], Game wm b)
   -> IO ()
-runWorld fullTitle _ conOptions initWorld = withWindow
+runWorld fullTitle _ conOptions (_, _actionsToDo, initWorld) = withWindow
     defaultWindowOptions { size = Just screenSize }
     (do
       initialiseTerminal
@@ -76,8 +80,9 @@ runWorld fullTitle _ conOptions initWorld = withWindow
       makeWorld conOptions fullTitle initWorld
     )
     (\w -> do
-      void $ runGame runPrintPure runInputAsBuffer w blankActionCollection $ do
+      void $ runGame runPrintPure runInputFromGUI w blankActionCollection $ do
           withSpan' "run" fullTitle $ do
+            setPostPromptSpacing False
             wa <- get @(WorldActions wm)
             beginPlay wa
             --when I write a proper game loop, this is where it needs to go
@@ -85,8 +90,22 @@ runWorld fullTitle _ conOptions initWorld = withWindow
     )
     pass
 
+runInputFromGUI ::
+  IOE :> es
+  => Eff (Input : es) a
+  -> Eff es a
+runInputFromGUI = interpret $ \_ -> \case
+  WaitForInput -> let
+    go = do
+      do
+        terminalLayer 5
+        terminalReadStr 30 30 50
+    in withViewport bottomViewport $ go
+
+
 beginPlay ::
   HasStandardProperties wm
+  => WMHasObjSpecifics wm
   => HasCallStack
   => WorldActions wm
   -> Game wm ()
@@ -120,20 +139,26 @@ makeWorld conOptions fullTitle initWorld = do
       -- we do it here because we need to copy over changes to actions and we can't modify WrappedActions directly
       addStandardActions
 
-runOnce :: forall wm. Game wm Bool
+runOnce ::
+  HasStandardProperties wm
+  => WMHasObjSpecifics wm
+  => Game wm Bool
 runOnce = do
   renderAll
   terminalRefresh
-
   fmap (any id) $ handleEvents Blocking $ \case
     Keypress TkEsc -> return True
-    Keypress kp -> putStrLn ("unknown keypress: " <> show kp) >> return False
+    Keypress kp -> runTurn >> return False
     WindowEvent Resize -> pass >> return False
     WindowEvent WindowClose -> return True
 
-runLoop :: Game wm ()
+runLoop ::
+  HasStandardProperties wm
+  => WMHasObjSpecifics wm
+  => Game wm ()
 runLoop = do
-  ifM runOnce pass runLoop
+  r <- runOnce
+  if r then pass else runLoop
 
 getMessageBuffer :: forall wm. Game wm [StyledDoc MessageAnnotation]
 getMessageBuffer = gets @(World wm) (view $ #messageBuffer % #buffer)
@@ -141,19 +166,24 @@ getMessageBuffer = gets @(World wm) (view $ #messageBuffer % #buffer)
 renderAll :: forall wm. Game wm ()
 renderAll = do
   msgList <- gets @(World wm) (view $ #messageBuffer % #buffer % reversed)
-  renderBottomTerminal (show $ unwords $ map show msgList)
+  putStrLn (show msgList)
+  renderBottomTerminal msgList
   renderSideTerminal
   where
     renderSideTerminal = do
       renderViewport sideViewport $
         viewportPrint (V2 3 3) Nothing (Colour 0xFF000000) "More info..."
 
+textSpaces :: Int -> Text
+textSpaces n = T.replicate n (T.singleton ' ')
+
 renderBottomTerminal ::
   IOE :> es
   => Text
   -> Eff es ()
 renderBottomTerminal t = do
+  print t
   renderViewport bottomViewport $ do
-    putStrLn $ show t
     viewportPrint (V2 1 1) Nothing (Colour 0xFF000000) $ t
+  where
 

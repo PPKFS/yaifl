@@ -70,8 +70,8 @@ convertToUnderlyingStack ::
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => HasLookingProperties wm
-  => (forall es b. State (World wm) :> es => Eff (Print : es) b -> Eff es b)
-  -> (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
@@ -182,8 +182,8 @@ runGame ::
   forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => HasLookingProperties wm
-  => (forall es b. State (World wm) :> es => Eff (Print : es) b -> Eff es b)
-  -> (forall es b. State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm) a
@@ -203,10 +203,10 @@ runInputAsBuffer = interpret $ \_ -> \case
   WaitForInput -> do
     buf' <- use #bufferedInput
     case buf' of
-      [] -> pure "ran out of buffered input"
+      [] -> return Nothing
       (x:xs) -> do
         #bufferedInput .= xs
-        pure x
+        pure (Just x)
 
 setInputBuffer ::
   State Metadata :> es

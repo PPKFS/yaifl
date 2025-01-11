@@ -187,9 +187,11 @@ parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorrib
       either throwError pure cmdArgs >>= \c -> pure (c, matchWords)
 
 addPostPromptSpacing ::
-  Print :> es
+  (Print :> es, State Metadata :> es)
   => Eff es ()
-addPostPromptSpacing = void $ modifyBuffer (\b -> b & #lastMessageContext % #shouldPrintPbreak .~ True)
+addPostPromptSpacing = do
+  usePostPrompt <- use @Metadata #usePostPromptPbreak
+  void $ modifyBuffer (\b -> b & #lastMessageContext % (if usePostPrompt then #shouldPrintPbreak else #shouldPrintLinebreak) .~ True)
 
 printPrompt ::
   Print :> es
@@ -345,11 +347,14 @@ handleAmbiguity ls = do
         l -> maybe (error "impossible") (\(i, ls') -> T.intercalate ", " i <> ", or " <> ls') (unsnoc l)
   say $ "Which did you mean: " <> phrase <> "?"
   -- TODO: this should be an activity
-  printPrompt (ActionOptions False False)
   i <- waitForInput
-  printText i
-  addPostPromptSpacing
-  findObjectsFrom i ls False
+  case i of
+    Nothing -> return (Left "Alright then.")
+    Just x -> do
+      printPrompt (ActionOptions False False)
+      withStyle (Just bold) $ printText x
+      addPostPromptSpacing
+      findObjectsFrom x ls False
 
 scoreParserMatch ::
   RuleEffects wm es

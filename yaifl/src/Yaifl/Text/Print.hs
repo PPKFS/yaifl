@@ -24,7 +24,11 @@ module Yaifl.Text.Print
   , runPrintIO
 
   , bold
+  , Bold(..)
+  , Italics(..)
+  , Underlined(..)
   , colour
+  , withStyle
   )
 where
 
@@ -84,6 +88,7 @@ data MessageContext = MessageContext
 
 data Print :: Effect where
   ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m (MessageBuffer)
+  GetBuffer :: Print m MessageBuffer
   PrintDoc :: Maybe MessageContext -> StyledDoc MessageAnnotation-> Print m ()
   SetStyle :: Maybe MessageAnnotation -> Print m ()
 
@@ -137,6 +142,7 @@ runPrintPure = interpret $ \_ -> \case
   ModifyBuffer f -> do
     modify (\s -> s & buf %~ f)
     use buf
+  GetBuffer -> use buf
 
 runPrintIO ::
   forall s es a.
@@ -153,6 +159,7 @@ runPrintIO = interpret $ \_ -> \case
   ModifyBuffer f -> do
     modify (\s -> s & buf %~ f)
     use buf
+  GetBuffer -> use buf
 
 getLastMessageContext ::
   Print :> es
@@ -240,3 +247,16 @@ setStyle' ::
   => Maybe MessageAnnotation -- ^ The updated style.
   -> Eff es ()
 setStyle' s = buf % (#style @(Lens' (MessageBuffer) (Maybe MessageAnnotation))) .= s
+
+withStyle ::
+  forall es a.
+  Print :> es
+  => Maybe MessageAnnotation
+  -> Eff es a
+  -> Eff es a
+withStyle s f = do
+  b <- getBuffer
+  setStyle s
+  r <- f
+  setStyle (style b)
+  return r

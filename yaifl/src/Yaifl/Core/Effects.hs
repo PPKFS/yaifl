@@ -68,7 +68,7 @@ data ObjectTraverse (wm :: WorldModel) :: Effect where
   TraverseRegions :: (Region wm -> m (Maybe (Region wm))) -> ObjectTraverse wm m [Region wm]
 
 data Input :: Effect where
-  WaitForInput :: Input m Text
+  WaitForInput :: Input m (Maybe Text)
 
 makeEffect ''Input
 makeEffect ''ObjectLookup
