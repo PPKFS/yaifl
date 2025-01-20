@@ -44,6 +44,9 @@ data LookingActionVariables wm = LookingActionVariables
   }
   deriving stock (Eq, Generic)
 
+instance Display (LookingActionVariables wm) where
+  displayBuilder = const "todo"
+
 getVisibleLevels ::
   NoMissingObjects wm es
   => HasLookingProperties wm

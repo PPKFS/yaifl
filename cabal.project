@@ -25,7 +25,7 @@ packages:
   roguefunctor/roguefunctor.cabal
   bearlibterminal-hs/bearlibterminal.cabal
 
--- documentation: true
+documentation: true
 haddock-all: true
 haddock-internal: true
 haddock-hoogle: true

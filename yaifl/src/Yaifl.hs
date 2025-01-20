@@ -9,6 +9,7 @@ module Yaifl (
   , PlainWorldModel
   , ActivityCollection(..)
   , ActionCollection(..)
+  , YaiflEffects
   , blankActionCollection
   , Game
   , runGame
@@ -75,7 +76,7 @@ import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.ObjectKind
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person
-import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative)
+import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative, AdaptiveNarrative)
 import Yaifl.Text.DynamicText
 import Yaifl.Text.ListWriter
 import Yaifl.Text.Print
@@ -85,6 +86,8 @@ import qualified Data.Map as DM
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Effectful.Error.Static
+import Effectful.Provider.List
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
@@ -135,8 +138,33 @@ data ActivityCollection wm = ActivityCollection
 
 makeFieldLabelsNoPrefix ''ActivityCollection
 
+
+type YaiflEffects (wm :: WorldModel) es =
+    (ActionHandler wm :> es
+
+    , State (AdaptiveNarrative wm) :> es
+    , State (ResponseCollector wm) :> es
+    , State (ActivityCollector wm) :> es
+    , Input :> es
+    , State (ActionCollection wm) :> es
+    , ObjectTraverse wm :> es
+    , ObjectUpdate wm :> es
+    , ObjectLookup wm :> es
+    , State Metadata :> es
+    , State (WorldActions wm) :> es
+    , Print :> es
+    , State (World wm) :> es
+
+    , Breadcrumbs :> es
+    , Error MissingObject :> es
+    , IOE :> es
+    , HasStandardProperties wm
+    , WMHasObjSpecifics wm
+    )
+
 addStandardActions ::
-  Breadcrumbs :> es
+  Display (WMText wm)
+  => Breadcrumbs :> es
   => State (ActionCollection wm) :> es
   => State (WorldActions wm) :> es
   => Eff es ()
@@ -204,7 +232,7 @@ newWorld ::
   => HasDirectionalTerms wm
   => WMHasObjSpecifics wm
   => WMStdDirections wm
-  => Eff (EffStack wm) ()
+  => Eff (EffStack wm ++ '[IOE]) ()
 newWorld = failHorriblyIfMissing $ do
   addBaseObjects
   addBaseActions
@@ -284,6 +312,7 @@ addInterpretAs term interp params = actionsMapL % at term ?= Interpret (Interpre
 
 addBaseActions ::
   WMStdDirections wm
+  => Display (WMText wm)
   => Breadcrumbs :> es
   => HasDirectionalTerms wm
   => State (WorldActions wm) :> es
@@ -316,7 +345,8 @@ addOutOfWorld cs e = forM_ cs $ \c ->
   #actionsMap % at c ?= OtherAction e
 
 runTurnsFromBuffer ::
-  RuleEffects wm es
+  IOE :> es
+  => RuleEffects wm es
   => SayableValue (WMText wm) wm
   => State (WorldActions wm) :> es
   => Eff es ()
@@ -326,17 +356,20 @@ runTurnsFromBuffer = do
 
 runTurn ::
   forall wm es.
-  State (WorldActions wm) :> es
+  IOE :> es
+  => State (WorldActions wm) :> es
   => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => Eff es ()
 runTurn = do
   let actionOpts = ActionOptions False False
   wa <- get @(WorldActions wm)
-  runRulebook Nothing False (wa ^. #turnSequence) ()
+  -- runRulebook Nothing False (wa ^. #turnSequence) ()
   i <- waitForInput
+  print i
   whenJust i $ \actualInput -> do
     printPrompt actionOpts
     withStyle (Just bold) $ printText actualInput
     void $ parseAction actionOpts [NoParameter] actualInput
+    void $ runRulebook Nothing False (wa ^. #turnSequence) ()
   -- TODO: this is where every turn things happen

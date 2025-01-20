@@ -41,6 +41,9 @@ data ExaminingActionVariables wm = EAV
   , examiningTextPrinted :: Bool
   } deriving stock (Generic)
 
+instance Display (ExaminingActionVariables wm) where
+  displayBuilder = const "todo"
+
 instance Refreshable wm (ExaminingActionVariables wm) where
   refresh eav = EAV
     <$> refresh (examiningSubject eav)

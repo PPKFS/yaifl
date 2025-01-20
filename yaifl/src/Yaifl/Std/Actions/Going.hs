@@ -46,6 +46,8 @@ data GoingActionVariables wm = GoingActionVariables
   , thingGoneWith :: Maybe (Thing wm)
   } deriving stock ( Generic )
 
+instance Display (GoingActionVariables wm) where
+  displayBuilder = const "todo"
 instance Refreshable wm (GoingActionVariables wm) where
   refresh GoingActionVariables{..} = GoingActionVariables
     <$> refresh roomGoneFrom

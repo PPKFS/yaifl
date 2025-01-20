@@ -41,6 +41,7 @@ newtype ActionProcessing wm = ActionProcessing
     RuleEffects wm es
     => State (WorldActions wm) :> es
     => Refreshable wm v
+    => Display v
     => SpanID
     -> Action wm resp goesWith v
     -> Args wm v

@@ -32,6 +32,8 @@ newtype TaggedObject o tagEntity = TaggedObject { unTagObject :: (TaggedEntity t
 instance HasID (TaggedObject o tagEntity) where
   getID = getID . fst . unTagObject
 
+instance Display o => Display (TaggedObject o tag) where
+  displayBuilder = displayBuilder . snd . unTagObject
 -- | Unsafely tagEntity an object when we know it's sensible.
 unsafeTagObject ::
   HasID o

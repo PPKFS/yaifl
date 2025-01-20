@@ -74,6 +74,10 @@ executable yaifl-gui
   main-is: Main.hs
   other-modules:
     DisenchantmentBay4
+    MessageLog
+    Gui
+    EffectStack
+
 
   build-depends:
     , prettyprinter

@@ -22,6 +22,7 @@ import Yaifl.Std.Kinds.Region
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Core.Rules.RuleEffects
+import Effectful.Provider.List (type (++))
 
 
 type EffStack (wm :: WorldModel) = '[
@@ -35,7 +36,6 @@ type EffStack (wm :: WorldModel) = '[
   , ObjectTraverse wm
   , ObjectUpdate wm
   , ObjectLookup wm
-  , Reader [Text]
   , State Metadata
   , State (WorldActions wm)
   , Print
@@ -43,13 +43,11 @@ type EffStack (wm :: WorldModel) = '[
 
   , Breadcrumbs
   , Error MissingObject
-  , IOE
   ]
 
-type Game wm = Eff (EffStack wm)
+type Game wm = Eff (EffStack wm ++ '[IOE])
 
 type UnderlyingEffStack wm = '[State (World wm), IOE]
-
 
 zoomState ::
   (State whole :> es)
@@ -65,7 +63,7 @@ zoomState l = interpret $ \env -> \case
       newSub <- unlift $ f (s ^. l)
       pure $ second (\x -> s & l .~ x) newSub )
 
-convertToUnderlyingStack ::
+convertToIO ::
   forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
@@ -74,18 +72,32 @@ convertToUnderlyingStack ::
   -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
-  -> Eff (EffStack wm) a
+  -> Eff (EffStack wm ++ '[IOE]) a
   -> IO (a, World wm)
+convertToIO printHandler i w ac = runEff . convertToUnderlyingStack printHandler i w ac
+
+convertToUnderlyingStack ::
+  forall wm es' a.
+  IOE :> es'
+  => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
+  -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
+  => HasLookingProperties wm
+  => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  -> World wm
+  -> ActionCollection wm
+  -> Eff (EffStack wm ++ es') a
+  -> Eff es' (a, World wm)
 convertToUnderlyingStack printHandler i w ac =
   fmap (either (error . show) id)
-  . runEff
+  . inject
   . runError
   . runBreadcrumbs Nothing
   . runStateShared w
   . printHandler
   . zoomState #actions
   . zoomState @(World wm) #metadata
-  . runReader []
+  -- . runReader []
   . runQueryAsLookup
   . runTraverseAsLookup
   . evalStateShared ac
@@ -186,9 +198,9 @@ runGame ::
   -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
-  -> Eff (EffStack wm) a
+  -> Eff (EffStack wm ++ '[IOE]) a
   -> IO (a, World wm)
-runGame = convertToUnderlyingStack
+runGame = convertToIO
 
 runInputAsStdin ::
   Eff (Input : es) a

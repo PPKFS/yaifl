@@ -77,7 +77,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionParameterType) v where
 
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
-    (Refreshable wm v, GoesWith goesWith)
+    (Refreshable wm v, GoesWith goesWith, Display v)
     => Action wm resp goesWith v
     -> WrappedAction wm
 

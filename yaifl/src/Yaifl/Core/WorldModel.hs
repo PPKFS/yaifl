@@ -37,13 +37,14 @@ import Yaifl.Core.HasProperty
 -- on the fundamental types themselves.
 data WorldModel =
   WorldModel
-    Type
-    Type
-    Type
-    Type
-    (WorldModel -> Type)
-    (WorldModel -> Type)
-    (WorldModel -> Type)
+    { wmObjSpecifics :: Type
+    , wmDirection :: Type
+    , wmValues :: Type
+    , wmRegionData :: Type
+    , wmActivities :: (WorldModel -> Type)
+    , wmResponses :: (WorldModel -> Type)
+    , wmText :: (WorldModel -> Type)
+    }
 
 -- | Object specifics (see `Yaifl.Model.ObjectSpecifics` for the canonical instantiation).
 type family WMObjSpecifics (wm :: WorldModel) :: Type where

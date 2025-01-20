@@ -11,7 +11,7 @@ module Yaifl.Core.Rules.Run
 import Yaifl.Prelude
 
 import Breadcrumbs
-import Yaifl.Core.Actions.Args ( Refreshable(..) )
+import Yaifl.Core.Refreshable ( Refreshable(..) )
 import qualified Data.Text as T
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Text.Print (modifyBuffer)

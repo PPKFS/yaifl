@@ -56,6 +56,7 @@ addWhenPlayBegins r = #whenPlayBegins %= addRuleLast r
 addAction ::
   (State (WorldActions wm) :> es, Breadcrumbs :> es)
   => Refreshable wm v
+  => Display v
   => GoesWith goesWith
   => Action wm resp goesWith v
   -> Eff es ()

@@ -43,6 +43,7 @@ import Yaifl.Core.Rules.RuleEffects
 runAction ::
   forall wm es goesWith resps v.
   Refreshable wm v
+  => Display v
   => State (WorldActions wm) :> es
   => RuleEffects wm es
   => ActionOptions wm
@@ -403,6 +404,7 @@ tryAction ::
   => State (ResponseCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Print :> es
+  => Display v
   => ActionOptions wm
   -> Action wm resps goesWith v -- ^ text of command
   -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp

@@ -45,6 +45,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Std.Kinds.Person
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue
+import Yaifl.Core.Refreshable
 
 newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMText wm) wm => Display (WMText wm) => Eff (es : ConcreteRuleStack wm) a)
 

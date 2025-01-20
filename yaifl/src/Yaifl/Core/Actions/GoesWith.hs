@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
+
 
 module Yaifl.Core.Actions.GoesWith
   ( ActionParameterType(..)
@@ -59,7 +59,7 @@ type family ActionParameter wm (goesWith :: ActionParameterType) where
 class GoesWith (g :: ActionParameterType) where
   goesWithA :: Proxy g -> ActionParameterType
   tryParseArguments :: Eq (WMDirection wm) => Proxy g -> Set (NamedActionParameter wm) -> Maybe (ActionParameter wm g)
-  default tryParseArguments :: Eq (WMDirection wm) => Proxy g -> Set (NamedActionParameter wm) -> Maybe (ActionParameter wm g)
+  default tryParseArguments :: Proxy g -> Set (NamedActionParameter wm) -> Maybe (ActionParameter wm g)
   tryParseArguments _ _ = Nothing
 
 instance GoesWith 'TakesNoParameter where
