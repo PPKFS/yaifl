@@ -22,7 +22,7 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 import Breadcrumbs ( withSpan )
 import GHC.TypeLits
 import Effectful.Reader.Static
-import Yaifl.Core.Actions.Args ( Refreshable )
+import Yaifl.Core.Refreshable ( Refreshable )
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.WorldModel

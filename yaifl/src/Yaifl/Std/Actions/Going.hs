@@ -32,6 +32,7 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Refreshable
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").

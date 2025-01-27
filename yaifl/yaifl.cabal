@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl
-version:       0.0.16.739
+version:       0.0.17.783
 synopsis:      Yet another interactive fiction library.
 description:
   A parser-based interactive fiction library for Haskell. The library is (roughly) in 3 parts:

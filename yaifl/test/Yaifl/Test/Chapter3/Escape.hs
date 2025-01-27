@@ -38,7 +38,6 @@ escapeWorld = do
   w <- addDoor "bedroom window"
     ! #front (yb, East)
     ! #back (gs, West)
-    ! #modify (#nameProperness .= Proper)
     ! done
   --insteadOf (ActionRule #climbing) [theObject w] $ \a ->
   --  Nothing <$ parseAction silentAction [] "open door"

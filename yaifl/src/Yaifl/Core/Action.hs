@@ -41,6 +41,7 @@ import Yaifl.Core.Kinds.Thing
 import Effectful.Error.Static
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.Refreshable
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 

@@ -30,6 +30,7 @@ import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
+import Yaifl.Core.Refreshable
 
 newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
   deriving stock (Generic)

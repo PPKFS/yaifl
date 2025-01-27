@@ -21,6 +21,7 @@ import Yaifl.Core.Effects
 import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Refreshable
 
 
 data WorldActions (wm :: WorldModel) = WorldActions

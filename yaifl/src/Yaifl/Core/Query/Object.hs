@@ -111,7 +111,4 @@ isUnderstoodAs ::
   -> [Text]
   -> Eff es ()
 isUnderstoodAs o ls = do
-  modifyObject o (#understandAs %~ S.union (makeUnderstandAsSets ls))
-
-makeUnderstandAsSets :: [Text] -> Set (Set Text)
-makeUnderstandAsSets = S.fromList . map (S.fromList . words)
+  modifyObject o (#understandAs %~ S.union (S.fromList ls))

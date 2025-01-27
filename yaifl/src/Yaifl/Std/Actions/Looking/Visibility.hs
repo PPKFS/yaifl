@@ -19,8 +19,8 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Core.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Actions.Args
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Refreshable
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

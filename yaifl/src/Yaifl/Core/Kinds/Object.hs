@@ -61,7 +61,7 @@ data Object wm objData objSpecifics = Object
   , pluralName :: Maybe (WMText wm)
   , namePrivacy :: NamePrivacy
   , indefiniteArticle :: Maybe (WMText wm)
-  , understandAs :: Set (Set Text)
+  , understandAs :: Set Text
   , namePlurality :: NamePlurality
   , nameProperness :: NameProperness
   , description :: WMText wm
