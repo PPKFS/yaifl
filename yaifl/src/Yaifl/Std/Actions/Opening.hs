@@ -8,13 +8,13 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Thing
 
 data OpeningResponses =
-  UnlessOpenableResponseA
-  | CantOpenLockedResponseA
-  | IfAlreadyOpenResponseA
-  | RevealNewInteriorResponseA
-  | ReportOpeningResponseA
-  | ReportOpeningResponseB
-  | ReportOpeningResponseC
+  OpenNotOpenableResponseA
+  | OpenLockedResponseA
+  | OpenAlreadyOpenResponseA
+  | OpenRevealNewInteriorResponseA
+  | OpenReportResponseA
+  | OpenReportResponseB
+  | OpenReportResponseC
   deriving stock (Generic)
 
 type OpeningAction wm = Action wm OpeningResponses 'TakesThingParameter (Thing wm)
@@ -22,7 +22,7 @@ type OpeningAction wm = Action wm OpeningResponses 'TakesThingParameter (Thing w
 openingResponses :: WithPrintingNameOfSomething wm => OpeningResponses -> Response wm (Args wm (Thing wm))
 openingResponses = \case
   -- say "[We] [open] [the noun]." (A);
-  ReportOpeningResponseA -> Response $ \Args{variables=noun} -> [sayingTell|#{We} #{open} {the noun}.|]
+  OpenReportResponseA -> Response $ \Args{variables=noun} -> [sayingTell|#{We} #{open} {the noun}.|]
   _ -> error ""
 
 openingAction :: WithPrintingNameOfSomething wm => WMWithProperty wm Openability => OpeningAction wm
@@ -30,7 +30,7 @@ openingAction = (makeAction "opening")
   { understandAs = ["open", "opening"]
   , responses = openingResponses
   , parseArguments = actionOnOneThing
-  , checkRules = makeActionRulebook "check opening rulebook"
+  , checkRules = makeActionRulebook "check opening"
       [ cantOpenUnlessOpenable
       , cantOpenIfLocked
       , cantOpenIfOpen
@@ -56,7 +56,7 @@ standardReport = makeRule "standard report opening rule" [] $ \args -> do
   if pl && not (silently . actionOptions $ args)
   then
     -- say "[We] [open] [the noun]." (A);
-    sayResponse ReportOpeningResponseA args
+    sayResponse OpenReportResponseA args
   else
     pass
 

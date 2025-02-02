@@ -39,8 +39,8 @@ escapeWorld = do
     ! #front (yb, East)
     ! #back (gs, West)
     ! done
-  --insteadOf (ActionRule #climbing) [theObject w] $ \a ->
-  --  Nothing <$ parseAction silentAction [] "open door"
+  insteadOf #climbing [theObject w] $ doAction' #opening
+    -- Nothing <$ parseAction silentAction [] "open door"
   pass
 
 escapeTestMeWith :: [Text]

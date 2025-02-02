@@ -12,27 +12,30 @@ module Yaifl.Std.Create.Rule
   , everyTurn
   , whenPlayerIsIn
   , ActionOrActivity(..)
+  , ActionPointer
+  , doAction
+  , doAction'
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Core.Action ( Action )
-import Yaifl.Std.Actions.Collection (ActionCollection)
-import Yaifl.Core.Kinds.Object
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Actions.Args
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Std.Actions.Imports
 import Yaifl.Core.Activity
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Text.Say (WithPrintingNameOfSomething)
-import Yaifl.Core.Metadata (isKind)
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.Metadata (isKind)
+import Yaifl.Core.ObjectLike
+import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Refreshable
+import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Std.Actions.Collection (ActionCollection)
+
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Core.Refreshable
+import Breadcrumbs
 
-newtype ActionOrActivity wm resps goesWith v = ActionRule (Lens' (ActionCollection wm) (Action wm resps goesWith v))
+type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
+newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
   deriving stock (Generic)
 
 before ::
@@ -75,15 +78,43 @@ afterActivity a precs t f = do
 
 insteadOf ::
   State (ActionCollection wm) :> es
-  => ActionOrActivity wm resps goesWith v
+  => ActionPointer wm resps goesWith v
   -> [Precondition wm (Args wm v)]
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' a) -- ^ Rule function.
   -> Eff es ()
 insteadOf a precs f = do
   let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
-  case a of
-    ActionRule an -> an % #insteadRules %= addRuleLast rule
-  pass
+  a % #insteadRules %= addRuleLast rule
+
+doAction ::
+  forall wm resps goesWith v es v'.
+  State (ActionCollection wm) :> es
+  => RuleEffects wm es
+  => State (WorldActions wm) :> es
+  => Refreshable wm v
+  => Display v
+  => ActionPointer wm resps goesWith v
+  -> (Args wm v' -> Eff es (Args wm v))
+  -> Args wm v'
+  -> Eff es (Maybe Bool)
+doAction acp mapVars args = do
+  -- running an action is simply evaluating the action processing rulebook.
+  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
+  ac <- use acp
+  newArgs <- mapVars args
+  withSpan "run action" (ac ^. #name) $ \aSpan -> ap aSpan ac newArgs
+
+doAction' ::
+  forall wm resps goesWith v es.
+  State (ActionCollection wm) :> es
+  => RuleEffects wm es
+  => State (WorldActions wm) :> es
+  => Refreshable wm v
+  => Display v
+  => ActionPointer wm resps goesWith v
+  -> Args wm v
+  -> Eff es (Maybe Bool)
+doAction' acp = doAction acp return
 
 theObject ::
   ArgsMightHaveMainObject v (Thing wm)

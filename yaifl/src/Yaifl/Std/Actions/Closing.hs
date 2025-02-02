@@ -8,7 +8,12 @@ import Yaifl.Std.Kinds.Openable
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Thing
 
-data ClosingResponses = ReportClosingResponseA
+data ClosingResponses wm =
+    CloseReportA
+    | CloseReportB
+    | CloseReportC
+    | CloseUnclosableA
+    | CloseAlreadyClosedA
 {- data ClosingResponses wm = OR
   { unlessOpenableResponseA :: Response wm (Thing wm)
   , ifAlreadyClosedResponseA :: Response wm (Thing wm)
@@ -17,18 +22,23 @@ data ClosingResponses = ReportClosingResponseA
   , reportClosingResponseC :: Response wm (Thing wm)
   } -}
 
-closingResponses :: WithPrintingNameOfSomething wm => ClosingResponses -> Response wm (Args wm (Thing wm))
+closingResponses :: WithPrintingNameOfSomething wm => ClosingResponses wm -> Response wm (Args wm (Thing wm))
 closingResponses = \case
   -- say "[We] [close] [the noun]." (A);
-  ReportClosingResponseA -> Response $ \Args{variables=noun} -> [sayingTell|#{We} #{close} {the noun}.|]
+  CloseReportA -> Response $ \Args{variables=noun} -> [sayingTell|#{We} #{close} {the noun}.|]
+  _ -> error ""
 
-type ClosingAction wm = Action wm ClosingResponses 'TakesThingParameter (Thing wm)
+type ClosingAction wm = Action wm (ClosingResponses wm) 'TakesThingParameter (Thing wm)
 closingAction :: WMWithProperty wm Openability => WithPrintingNameOfSomething wm => ClosingAction wm
 closingAction = (makeAction "closing")
   { understandAs = ["close", "closing"]
   , responses = closingResponses
   , touchableNouns = oneTouchableThing
   , parseArguments = actionOnOneThing
+  , checkRules = makeActionRulebook "check closing" ([] <> map notImplementedRule
+    [ "can't close unless openable"
+    , "can't close what's already closed"
+    ])
   , carryOutRules = makeActionRulebook "carry out closing rulebook" [ standardClose ]
   , reportRules = makeActionRulebook "report closing rulebook" [ standardReport ]
   }
@@ -53,7 +63,7 @@ standardReport = makeRule "standard report closing rule" [] $ \args -> do
   if pl && not (silently . actionOptions $ args)
   then
     -- say "[We] [close] [the noun]." (A);
-    sayResponse ReportClosingResponseA args
+    sayResponse CloseReportA args
   else
     pass
   rulePass

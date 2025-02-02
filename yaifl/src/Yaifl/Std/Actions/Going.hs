@@ -57,7 +57,33 @@ instance Refreshable wm (GoingActionVariables wm) where
     <*> refresh vehicleGoneBy
     <*> refresh thingGoneWith
 
-data GoingResponses = GR ()
+data GoingResponses =
+    GoStandUpA
+    | GoInNonVehicleA
+    | GoInNonVehicleB
+    | GoUndescribedDoorsA
+    | GoClosedDoorsA
+    | GoCantGoA
+    | GoCantGoB
+    | GoReportA
+    | GoReportB
+    | GoReportC
+    | GoReportD
+    | GoReportE
+    | GoReportF
+    | GoReportG
+    | GoReportH
+    | GoReportI
+    | GoReportJ
+    | GoReportK
+    | GoReportL
+    | GoReportM
+    | GoReportN
+    | GoReportO
+    | GoReportP
+    | GoReportQ
+    | GoReportR
+    | GoReportS
 
 type GoingAction wm = Action wm GoingResponses ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter)) (GoingActionVariables wm)
 type GoingRule wm = ActionRule wm (GoingAction wm) (GoingActionVariables wm)

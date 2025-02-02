@@ -117,21 +117,71 @@ library
 
     Yaifl
     Yaifl.Std.Rulebooks.ActionProcessing
-    Yaifl.Std.Actions.Imports
+    Yaifl.Std.Actions.Answering
+    Yaifl.Std.Actions.Asking
+    Yaifl.Std.Actions.AskingFor
+    Yaifl.Std.Actions.Attacking
+    Yaifl.Std.Actions.Burning
+    Yaifl.Std.Actions.Buying
+    Yaifl.Std.Actions.Climbing
     Yaifl.Std.Actions.Closing
     Yaifl.Std.Actions.Collection
-    Yaifl.Std.Actions.Examining
+    Yaifl.Std.Actions.Consulting
+    Yaifl.Std.Actions.Cutting
+    Yaifl.Std.Actions.Drinking
+    Yaifl.Std.Actions.Dropping
+    Yaifl.Std.Actions.Eating
     Yaifl.Std.Actions.Entering
+    Yaifl.Std.Actions.Examining
     Yaifl.Std.Actions.Exiting
     Yaifl.Std.Actions.GettingOff
+    Yaifl.Std.Actions.Giving
     Yaifl.Std.Actions.Going
+    Yaifl.Std.Actions.Imports
+    Yaifl.Std.Actions.Inserting
+    Yaifl.Std.Actions.Jumping
+    Yaifl.Std.Actions.Kissing
+    Yaifl.Std.Actions.Listening
+    Yaifl.Std.Actions.Locking
     Yaifl.Std.Actions.Looking
     Yaifl.Std.Actions.Looking.Locale
     Yaifl.Std.Actions.Looking.Visibility
+    Yaifl.Std.Actions.LookingUnder
     Yaifl.Std.Actions.Opening
+    Yaifl.Std.Actions.Pulling
+    Yaifl.Std.Actions.Pushing
+    Yaifl.Std.Actions.PuttingOn
+    Yaifl.Std.Actions.Removing
+    Yaifl.Std.Actions.Rubbing
+    Yaifl.Std.Actions.SayingNo
+    Yaifl.Std.Actions.SayingSorry
+    Yaifl.Std.Actions.SayingYes
+    Yaifl.Std.Actions.Searching
+    Yaifl.Std.Actions.Setting
+    Yaifl.Std.Actions.Showing
+    Yaifl.Std.Actions.Sleeping
+    Yaifl.Std.Actions.Smelling
+    Yaifl.Std.Actions.Squeezing
+    Yaifl.Std.Actions.Swinging
+    Yaifl.Std.Actions.SwitchingOff
     Yaifl.Std.Actions.SwitchingOn
     Yaifl.Std.Actions.Taking
+    Yaifl.Std.Actions.TakingInventory
+    Yaifl.Std.Actions.TakingOff
+    Yaifl.Std.Actions.Tasting
+    Yaifl.Std.Actions.Telling
+    Yaifl.Std.Actions.Thinking
+    Yaifl.Std.Actions.Throwing
+    Yaifl.Std.Actions.Touching
+    Yaifl.Std.Actions.Turning
+    Yaifl.Std.Actions.Tying
+    Yaifl.Std.Actions.Unlocking
     Yaifl.Std.Actions.Waiting
+    Yaifl.Std.Actions.Waking
+    Yaifl.Std.Actions.WakingUp
+    Yaifl.Std.Actions.Waving
+    Yaifl.Std.Actions.WavingHands
+    Yaifl.Std.Actions.Wearing
     Yaifl.Std.Actions.OutOfWorld
 
     Yaifl.Std.Activities.ChoosingNotableLocaleObjects
@@ -145,6 +195,7 @@ library
     Yaifl.Std.Create.RoomConnection
 
     Yaifl.Std.EffectHandlers
+    Yaifl.Std.Properties
     Yaifl.Std.Move
     Yaifl.Std.ObjectSpecifics
     Yaifl.Std.Parser

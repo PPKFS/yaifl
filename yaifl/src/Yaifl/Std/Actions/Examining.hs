@@ -27,6 +27,7 @@ data ExaminingResponses =
   | ExamineSupporterA
   | ExamineDeviceA
   | ExamineUndescribedA
+  | ExamineReportA
   deriving stock (Generic)
 
 newtype ExaminingTarget wm = ET { unwrapTarget :: Either (WMDirection wm) (Thing wm) }

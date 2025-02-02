@@ -10,7 +10,6 @@ module Yaifl (
   , ActivityCollection(..)
   , ActionCollection(..)
   , YaiflEffects
-  , blankActionCollection
   , Game
   , runGame
   , addStandardActions
@@ -33,7 +32,6 @@ import Yaifl.Core.Activity
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
@@ -54,28 +52,12 @@ import Yaifl.Std.Parser
 import Yaifl.Std.Rulebooks.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
 import Yaifl.Std.Rulebooks.WhenPlayBegins
 import Yaifl.Std.World
-import Yaifl.Std.Actions.Closing
 import Yaifl.Std.Actions.Collection
-import Yaifl.Std.Actions.Entering (enteringAction)
-import Yaifl.Std.Actions.Examining
-import Yaifl.Std.Actions.Exiting (exitingAction)
-import Yaifl.Std.Actions.GettingOff (gettingOffAction)
-import Yaifl.Std.Actions.Going
-import Yaifl.Std.Actions.Looking
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Actions.Looking.Visibility
-import Yaifl.Std.Actions.Opening
 import Yaifl.Std.Actions.OutOfWorld
-import Yaifl.Std.Actions.SwitchingOn
-import Yaifl.Std.Actions.Taking
-import Yaifl.Std.Actions.Waiting
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Device
 import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.ObjectKind
-import Yaifl.Std.Kinds.Openable
-import Yaifl.Std.Kinds.Person
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative, AdaptiveNarrative)
 import Yaifl.Text.DynamicText
 import Yaifl.Text.ListWriter
@@ -88,23 +70,10 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Effectful.Error.Static
 import Effectful.Provider.List
+import Yaifl.Std.Properties
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
 
-type HasStandardProperties s = (
-  WMWithProperty s Enclosing
-  , WMWithProperty s Openability
-  , WMWithProperty s Container
-  , WMWithProperty s Enterable
-  , WMWithProperty s Device
-  , WMWithProperty s Person
-  , HasLookingProperties s
-  , WMStdDirections s
-  , WMWithProperty s Door
-  , HasDirectionalTerms s
-  , Pointed (WMObjSpecifics s)
-  , SayableValue (WMText s) s
-  )
 
 -- | All the standard library activities.
 -- printing the banner text, constructing the status line, reading a command, deciding the scope
@@ -253,23 +222,6 @@ blankActivityCollection = ActivityCollection
   , printingANumberOf = blankActivity "printing a number of"
   , printingInventoryDetails = blankActivity "printing inventory details of"
   , printingRoomDescriptionDetails = printingRoomDescriptionDetailsImpl
-  }
-
-blankActionCollection ::
-  HasStandardProperties wm
-  => ActionCollection wm
-blankActionCollection = ActionCollection
-  { going = goingAction
-  , looking = lookingAction
-  , examining = examiningAction
-  , opening = openingAction
-  , closing = closingAction
-  , switchingOn = switchingOnAction
-  , taking = takingAction
-  , entering = enteringAction
-  , exiting = exitingAction
-  , waiting = waitingAction
-  , gettingOff = gettingOffAction
   }
 
 blankWorld ::

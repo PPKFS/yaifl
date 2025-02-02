@@ -37,6 +37,7 @@ data LookingResponses wm =
   | RoomDescriptionHeadingB (AnyObject wm)
   | RoomDescriptionHeadingC (AnyObject wm)
   | RoomDescriptionBodyA
+  | LookReportA
   deriving stock (Generic)
 
 -- STATUS: all done, except report other people looking
@@ -46,6 +47,7 @@ roomDescriptionResponsesImpl = \case
   RoomDescriptionHeadingB intermediateLevel -> Response $ \_ -> [sayingTell| (on {the intermediateLevel})|]
   RoomDescriptionHeadingC intermediateLevel -> Response $ \_ -> [sayingTell| (in {the intermediateLevel})|]
   RoomDescriptionBodyA -> Response $ const [sayingTell|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
+  _ -> error ""
 
 type LookingAction wm = Action wm (LookingResponses wm) ('Optionally 'TakesConstantParameter) (LookingActionVariables wm)
 type LookingRule wm = ActionRule wm (LookingAction wm) (LookingActionVariables wm)

@@ -1,6 +1,7 @@
 module Yaifl.Std.Parser
   ( runActionHandlerAsWorldActions
   , printPrompt
+  , runAction
   ) where
 
 import Yaifl.Prelude

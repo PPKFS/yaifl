@@ -6,6 +6,10 @@ import Yaifl.Prelude
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Std.Kinds.Device
 
+data SwitchingOnResponses wm =
+  SwitchOnNotSwitchableA
+  | SwitchOnAlreadyOnA
+  | SwitchOnReportA
 type SwitchingOnAction wm = Action wm () 'TakesThingParameter (Thing wm)
 
 switchingOnAction ::

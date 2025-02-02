@@ -23,7 +23,26 @@ import Yaifl.Core.Refreshable
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Query.Enclosing
 
-data EnteringResponses wm
+data EnteringResponses wm =
+    EnterAlreadyEnteredA
+    | EnterAlreadyEnteredB
+    | EnterNotEnterableA
+    | EnterNotEnterableB
+    | EnterNotEnterableC
+    | EnterNotEnterableD
+    | EnterClosedContainerA
+    | EnterCapacityA
+    | EnterCapacityB
+    | EnterCarriedA
+    | EnterPassBarriersA
+    | EnterPassBarriersB
+    | EnterPassBarriersC
+    | EnterPassBarriersD
+    | EnterPassBarriersE
+    | EnterReportA
+    | EnterReportB
+    | EnterReportC
+    | EnterReportD
 
 type EnteringAction wm = Action wm () 'TakesThingParameter (EnclosingThing wm)
 

@@ -42,6 +42,7 @@ import Effectful.Error.Static
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Refreshable
+import Yaifl.Text.Say
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
@@ -136,7 +137,8 @@ makeAction n = Action
   , parseArguments = ParseArguments $ const $ pure $ FailedParse "not parsed"
   , beforeRules = makeActionRulebook ("before " <> n <> " rulebook") []
   , insteadRules = makeActionRulebook ("instead " <> n <> " rulebook") []
-  , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook") []
+  , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook")
+      [makeRule' "not implemented action rule" $ [saying|This action has not been implemented.|] >> rulePass]
   , afterRules = makeActionRulebook ("after " <> n <> " rulebook") []
   , checkRules = makeActionRulebook ("check " <> n <> " rulebook") []
   , reportRules = makeActionRulebook ("report " <> n <> " rulebook") []

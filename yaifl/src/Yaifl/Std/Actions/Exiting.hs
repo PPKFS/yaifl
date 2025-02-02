@@ -16,7 +16,12 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
 
-data ExitingResponses wm
+data ExitingResponses wm =
+    ExitNotInsideA
+    | ExitClosedContainersA
+    | ExitReportA
+    | ExitReportB
+    | ExitReportC
 
 type ExitingAction wm = Action wm () ('TakesOneOf 'TakesObjectParameter 'TakesNoParameter) (EnclosingThing wm)
 

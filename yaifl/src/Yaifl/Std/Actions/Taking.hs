@@ -1,4 +1,9 @@
-module Yaifl.Std.Actions.Taking where
+module Yaifl.Std.Actions.Taking
+  ( TakingResponses(..)
+  , TakingAction
+  , TakingRule
+  , takingAction
+  ) where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Core.Kinds.Thing
@@ -8,8 +13,28 @@ import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Std.Kinds.Person
 
+data TakingResponses wm =
+  TakeYourselfA
+  | TakeOthersA
+  | TakeComponentsA
+  | TakePossessionsA
+  | TakeWhenInsideA
+  | TakeAlreadyTakenA
+  | TakeSceneryA
+  | TakeFixedA
+  | TakeUseHoldallA
+  | TakeExceedCapacityA
+  | TakeStandardReportA
+  | TakeStandardReportB
+
 type TakingAction wm = Action wm () 'TakesThingParameter (Thing wm)
-takingAction :: WMWithProperty wm Person => WMWithProperty wm Enclosing => WithPrintingNameOfSomething wm => TakingAction wm
+type TakingRule wm = ActionRule wm (TakingAction wm) (Thing wm)
+
+takingAction ::
+  WMWithProperty wm Person
+  => WMWithProperty wm Enclosing
+  => WithPrintingNameOfSomething wm
+  => TakingAction wm
 takingAction = (makeAction "taking")
   { name = "taking"
   , understandAs = ["take", "get", "grab"]
@@ -20,7 +45,6 @@ takingAction = (makeAction "taking")
     , cantTakeOtherPeople
     , cantTakeComponentParts
     , cantTakePeoplesPossessions
-    , cantTakeOutOfPlay
     , cantTakeWhatYoureInside
     , cantTakeWhatsAlreadyTaken
     , cantTakeScenery
@@ -33,7 +57,7 @@ takingAction = (makeAction "taking")
   , reportRules = makeActionRulebook "report switching on rulebook" [ standardReportTakingRule ]
   }
 
-type TakingRule wm = ActionRule wm (TakingAction wm) (Thing wm)
+
 cantTakeYourself :: TakingRule wm
 cantTakeYourself = notImplementedRule "cantTakeYourself rule"
 
@@ -48,9 +72,6 @@ cantTakeComponentParts = notImplementedRule "cantTakeComponentParts rule"
 
 cantTakePeoplesPossessions :: TakingRule wm
 cantTakePeoplesPossessions = notImplementedRule "cantTakePeoplesPossessions rule"
-
-cantTakeOutOfPlay :: TakingRule wm
-cantTakeOutOfPlay = notImplementedRule "cantTakeOutOfPlay rule"
 
 cantTakeWhatYoureInside :: TakingRule wm
 cantTakeWhatYoureInside = notImplementedRule "cantTakeWhatYoureInside rule"

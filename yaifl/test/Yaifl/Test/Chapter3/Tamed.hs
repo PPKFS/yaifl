@@ -27,7 +27,7 @@ tamedWorld = do
     ! #opacity Transparent
     ! #opened Closed
     ! done
-  _l <- addThing "lion"
+  addThing "lion"
     ! #location (inThe tc)
     ! done
   ped <- addSupporter "pedestal"

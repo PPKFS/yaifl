@@ -20,12 +20,12 @@ source-repository-package
   tag: c958c36aed3c102cc6085b9126faee704fefc1b5
 packages:
   yaifl/yaifl.cabal
-  yaifl-city/yaifl-city.cabal
+  -- yaifl-city/yaifl-city.cabal
   yaifl-gui/yaifl-gui.cabal
   roguefunctor/roguefunctor.cabal
   bearlibterminal-hs/bearlibterminal.cabal
 
-documentation: true
+-- documentation: true
 haddock-all: true
 haddock-internal: true
 haddock-hoogle: true

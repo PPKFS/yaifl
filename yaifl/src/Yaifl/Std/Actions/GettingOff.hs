@@ -14,7 +14,9 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
 import Yaifl.Core.Query.Enclosing
 
-data GettingOffResponses wm
+data GettingOffResponses wm =
+  GetOffThingsA
+  | GetOffReportA
 
 type GettingOffAction wm = Action wm () ('TakesOneOf 'TakesThingParameter 'TakesNoParameter) (SupporterThing wm)
 
