@@ -1,9 +1,3 @@
-[submodule "bearlibterminal/bearlibterminal"]
-	path = bearlibterminal/bearlibterminal
-	url = https://github.com/cfyzium/bearlibterminal.git
-[submodule "bearlibterminal-hs"]
-	path = bearlibterminal-hs
-	url = https://github.com/PPKFS/bearlibterminal-hs.git
 [submodule "roguefunctor"]
 	path = roguefunctor
 	url = https://github.com/PPKFS/roguefunctor.git
