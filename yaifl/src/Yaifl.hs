@@ -71,8 +71,9 @@ import qualified Data.Text as T
 import Effectful.Error.Static
 import Effectful.Provider.List
 import Yaifl.Std.Properties
+import Yaifl.Std.Create.Object (AddObjects)
 
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () ActivityCollection ResponseCollection DynamicText
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText
 
 
 -- | All the standard library activities.
@@ -308,7 +309,8 @@ runTurnsFromBuffer = do
 
 runTurn ::
   forall wm es.
-  State (WorldActions wm) :> es
+  IOE :> es
+  => State (WorldActions wm) :> es
   => SayableValue (WMText wm) wm
   => RuleEffects wm es
   => Eff es ()
@@ -317,6 +319,7 @@ runTurn = do
   wa <- get @(WorldActions wm)
   -- runRulebook Nothing False (wa ^. #turnSequence) ()
   i <- waitForInput
+  print i
   whenJust i $ \actualInput -> do
     printPrompt actionOpts
     withStyle (Just bold) $ printText actualInput

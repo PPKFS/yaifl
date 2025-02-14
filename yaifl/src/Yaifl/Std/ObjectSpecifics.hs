@@ -59,7 +59,7 @@ instance Pointed ObjectSpecifics where
 class WMHasObjSpecifics (wm :: WorldModel) where
   inj :: Proxy wm -> ObjectSpecifics -> WMObjSpecifics wm
 
-instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c ac r se) where
+instance WMHasObjSpecifics ('WorldModel ObjectSpecifics a b c x e ac r se) where
   inj _ = id
 
 instance MayHaveProperty ObjectSpecifics Enclosing where

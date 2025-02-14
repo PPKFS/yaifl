@@ -80,16 +80,17 @@ data RoomData wm = RoomData
   , mapConnections :: MapConnections wm
   , containingRegion :: ContainingRegion
   , enclosing :: Enclosing
+  , roomData :: WMRoomData wm
   } deriving stock (Generic)
 
-deriving stock instance (Ord (WMDirection wm)) => Ord (RoomData wm)
-deriving stock instance (Read (WMDirection wm), Ord (WMDirection wm)) => Read (RoomData wm)
-deriving stock instance (Show (WMDirection wm)) => Show (RoomData wm)
-deriving stock instance (Eq (WMDirection wm)) => Eq (RoomData wm)
+deriving stock instance (Ord (WMDirection wm), Ord (WMRoomData wm)) => Ord (RoomData wm)
+deriving stock instance (Read (WMDirection wm), Ord (WMDirection wm), Read (WMRoomData wm)) => Read (RoomData wm)
+deriving stock instance (Show (WMDirection wm), Show (WMRoomData wm)) => Show (RoomData wm)
+deriving stock instance (Eq (WMDirection wm), Eq (WMRoomData wm)) => Eq (RoomData wm)
 
 -- | A default for a room.
-blankRoomData :: RoomData wm
-blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing
+blankRoomData :: Pointed (WMRoomData wm) => RoomData wm
+blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (ContainingRegion Nothing) blankEnclosing identityElement
 
 makeFieldLabelsNoPrefix ''RoomData
 makeFieldLabelsNoPrefix ''Connection

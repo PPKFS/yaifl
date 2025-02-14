@@ -1,17 +1,17 @@
 cabal-version: 3.6
-name:          yaifl-gui
+name:          yaifl-rogue
 version:       0.0.0.1
-synopsis:      Some sort of GUI frontend for yaifl.
-description:   Some sort of GUI frontend for yaifl.
+synopsis:      Some sort of roguelike frontend for yaifl.
+description:   Some sort of roguelike frontend for yaifl.
 homepage:      https://github.com/PPKFS/yaifl
 bug-reports:   https://github.com/PPKFS/yaifl/issues
 license:       MIT
 author:        Avery
-maintainer:    Avery <thecommunistduck@hotmail.co.uk>
+maintainer:    Avery <ppkfs@outlook.com>
 copyright:     2024 Avery
 category:      Game Development
 build-type:    Simple
-tested-with:   GHC == 9.4.7
+tested-with:   GHC == 9.10
 
 source-repository head
   type:     git
@@ -68,7 +68,7 @@ common common-options
     UndecidableInstances
     ViewPatterns
 
-executable yaifl-gui
+executable yaifl-rogue
   import:          common-options
   hs-source-dirs:  src
   main-is: Main.hs
@@ -77,6 +77,7 @@ executable yaifl-gui
     MessageLog
     Gui
     EffectStack
+    Rooms
 
 
   build-depends:
@@ -85,3 +86,4 @@ executable yaifl-gui
     , yaifl
     , roguefunctor
     , bearlibterminal
+    , vector

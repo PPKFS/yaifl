@@ -20,6 +20,7 @@ import Yaifl.Core.Effects
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Std.EffectHandlers
+import Yaifl.Std.Actions.Collection
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

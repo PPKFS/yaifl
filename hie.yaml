@@ -3,23 +3,11 @@ cradle:
     - path: "yaifl/src"
       component: "lib:yaifl"
 
-    - path: "yaifl-city/src"
-      component: "executable:yaifl-city"
-
     - path: "yaifl/test"
       component: "yaifl:test:yaifl-test"
 
-    - path: "yaifl-gui/src"
-      component: "executable:yaifl-gui"
-
-    - path: "solitude"
-      component: "lib:solitude"
-
-    - path: "breadcrumbs"
-      component: "lib:breadcrumbs"
-
-    - path: "bearlibterminal-hs/src"
-      component: "lib:bearlibterminal"
+    - path: "yaifl-rogue/src"
+      component: "executable:yaifl-rogue"
 
     - path: "roguefunctor/src"
       component: "lib:roguefunctor"

@@ -16,9 +16,12 @@ import Data.Text.Display hiding (Opaque)
 -- | Pointed set class; Monoid without the operation, or the dreaded default typeclass.
 class Pointed s where
   identityElement :: s
-
+{-}
 instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
   identityElement = mempty
+-}
+instance Pointed () where
+  identityElement = ()
 
 whileM :: Monad m => (a -> Bool) -> m a -> m a
 whileM pr f = do

@@ -25,7 +25,7 @@ replantingWorld = do
   addThing "gnarled oak tree"
     ! #modify makeItScenery
     ! done
-  insteadOf (ActionRule #taking) [Precondition (pure "taking scenery") $
+  insteadOf #taking [Precondition (pure "taking scenery") $
     \t -> return (thingIsScenery (variables t))] (const $ say @Text "You lack the hulk-like strength.")
   pass
 

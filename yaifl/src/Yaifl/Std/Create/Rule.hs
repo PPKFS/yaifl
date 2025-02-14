@@ -14,7 +14,7 @@ module Yaifl.Std.Create.Rule
   , ActionOrActivity(..)
   , ActionPointer
   , doAction
-  , doAction'
+  --, doAction'
   ) where
 
 import Yaifl.Prelude
@@ -87,35 +87,28 @@ insteadOf a precs f = do
   a % #insteadRules %= addRuleLast rule
 
 doAction ::
-  forall wm resps goesWith v es v'.
-  State (ActionCollection wm) :> es
+  forall wm goesWith es v'.
+  GoesWith goesWith
   => RuleEffects wm es
-  => State (WorldActions wm) :> es
-  => Refreshable wm v
-  => Display v
-  => ActionPointer wm resps goesWith v
-  -> (Args wm v' -> Eff es (Args wm v))
+  => Text
+  -> (Args wm v' -> Eff es (UnverifiedArgs wm goesWith))
   -> Args wm v'
   -> Eff es (Maybe Bool)
-doAction acp mapVars args = do
-  -- running an action is simply evaluating the action processing rulebook.
-  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-  ac <- use acp
+doAction ac mapVars args = do
   newArgs <- mapVars args
-  withSpan "run action" (ac ^. #name) $ \aSpan -> ap aSpan ac newArgs
-
+  performAction (Proxy @goesWith) (actionOptions args) ac newArgs
+{-}
 doAction' ::
-  forall wm resps goesWith v es.
-  State (ActionCollection wm) :> es
+  forall goesWith wm v es.
+  GoesWith goesWith
   => RuleEffects wm es
-  => State (WorldActions wm) :> es
   => Refreshable wm v
   => Display v
-  => ActionPointer wm resps goesWith v
+  => Text
   -> Args wm v
   -> Eff es (Maybe Bool)
-doAction' acp = doAction acp return
-
+doAction' acp args = doAction acp (\a -> return  (UnverifiedArgs a)) args
+-}
 theObject ::
   ArgsMightHaveMainObject v (Thing wm)
   => ThingLike wm o

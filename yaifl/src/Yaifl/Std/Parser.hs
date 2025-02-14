@@ -78,6 +78,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
+  PerformAction _ actionOpts actionPhrase param -> error ""
 
 handleVerbAction ::
   forall es wm.

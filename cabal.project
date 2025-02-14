@@ -18,12 +18,14 @@ source-repository-package
   type: git
   location: https://github.com/ekmett/placeholder.git
   tag: c958c36aed3c102cc6085b9126faee704fefc1b5
+source-repository-package
+  type: git
+  location: https://github.com/PPKFS/bearlibterminal-hs.git
+  tag: 684d2e90b79c6fad464a5c7dae9d63171a610828
 packages:
   yaifl/yaifl.cabal
-  -- yaifl-city/yaifl-city.cabal
-  yaifl-gui/yaifl-gui.cabal
+  yaifl-rogue/yaifl-rogue.cabal
   roguefunctor/roguefunctor.cabal
-  bearlibterminal-hs/bearlibterminal.cabal
 
 -- documentation: true
 haddock-all: true

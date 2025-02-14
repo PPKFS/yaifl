@@ -189,7 +189,7 @@ blankActionCollection = ActionCollection
   , switchingOn = switchingOnAction
   , switchingOff= switchingOffAction
   , taking = takingAction
-  , takingInventory= takingInventoryAction
+  , takingInventory = takingInventoryAction
   , takingOff= takingOffAction
   , tasting = tastingAction
   , telling = tellingAction
@@ -203,6 +203,6 @@ blankActionCollection = ActionCollection
   , waking = wakingAction
   , wakingUp= wakingUpAction
   , waving = wavingAction
-  , wavingHands= wavingHandsAction
+  , wavingHands = wavingHandsAction
   , wearing = wearingAction
   }

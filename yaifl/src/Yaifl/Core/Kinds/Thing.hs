@@ -64,20 +64,21 @@ data ThingData wm = ThingData
   , pushableBetweenRooms :: Bool
   , isScenery :: Bool
   , concealed :: ThingConcealed
+  , thingData :: WMThingData wm
   , initialAppearance :: WMText wm
 
   } deriving stock (Generic)
 
-deriving stock instance (Eq (WMText wm)) => Eq (ThingData wm)
-deriving stock instance (Show (WMText wm)) => Show (ThingData wm)
+deriving stock instance (Eq (WMText wm), Eq (WMThingData wm)) => Eq (ThingData wm)
+deriving stock instance (Show (WMText wm), Show (WMThingData wm)) => Show (ThingData wm)
 
 makeFieldLabelsNoPrefix ''ThingData
 makePrismLabels ''ThingWearability
 makePrismLabels ''ThingConcealed
 
 -- | A default thing (when given an initial appearance).
-blankThingData :: WMText wm -> ThingData wm
-blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False NotConcealed
+blankThingData :: Pointed (WMThingData wm) => WMText wm -> ThingData wm
+blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHandled Portable True False NotConcealed identityElement
 
 -- | An `Object` with `ThingData`.
 newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))

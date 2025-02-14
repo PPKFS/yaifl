@@ -22,37 +22,44 @@ import Yaifl.Text.ResponseCollection
 import qualified Data.Text as T
 import MessageLog
 import Data.Char (isPrint)
+import Yaifl.Std.Actions.Collection
+import Yaifl.Std.Kinds.Person
+import Yaifl.Core.Query.Enclosing (getLocation)
+import Rooms
+import Yaifl.Core.Kinds.Object
+import Rogue.Array2D.Boxed
+import Yaifl.Std.Actions.Imports
 
 
 screenSize :: V2
 screenSize = V2 230 80
 
-topViewportRectangle :: Rectangle
-topViewportRectangle = Rectangle (V2 0 0) (screenSize-V2 20 (view #y screenSize - 4))
+topViewportRectangle :: Int -> Rectangle
+topViewportRectangle topViewportSize = Rectangle (V2 0 0) (screenSize-V2 20 (view #y screenSize - topViewportSize))
 
-bottomViewportRectangle :: Rectangle
-bottomViewportRectangle = rectangleFromDimensions
-  (V2 0 (bottomEdge topViewportRectangle))
+bottomViewportRectangle :: Int -> Rectangle
+bottomViewportRectangle topViewportSize = rectangleFromDimensions
+  (V2 0 (bottomEdge $ topViewportRectangle topViewportSize))
   (V2 (view _1 screenSize - 20) (view #y screenSize - 4))
 
-sideViewportRectangle :: Rectangle
-sideViewportRectangle = rectangleFromDimensions
-  (V2 (view _1 (bottomRight topViewportRectangle)) 0)
+sideViewportRectangle :: Int -> Rectangle
+sideViewportRectangle topViewportSize = rectangleFromDimensions
+  (V2 (view _1 (bottomRight $ topViewportRectangle topViewportSize)) 0)
   (V2 20 (view _2 screenSize))
 
-mapViewport :: Viewport a
-mapViewport = Viewport topViewportRectangle (Just (Colour 0xFF333333)) Nothing
-bottomViewport :: Viewport MainPart
-bottomViewport = Viewport bottomViewportRectangle (Just (Colour 0xFFFCF5E5)) (Just (unicodeBorders, Colour 0xFFDDDDDD))
-sideViewport :: Viewport SidePart
-sideViewport = Viewport sideViewportRectangle (Just (Colour 0xFF22AAFF)) (Just (unicodeBorders, Colour 0xFFFFFFFF))
+mapViewport :: Int -> Viewport MapPart
+mapViewport topViewportSize = Viewport (topViewportRectangle topViewportSize) (Just (Colour 0xFF333333)) Nothing
+bottomViewport :: Int -> Viewport MainPart
+bottomViewport topViewportSize = Viewport (bottomViewportRectangle topViewportSize) (Just (Colour 0xFFFCF5E5)) (Just (unicodeBorders, Colour 0xFFDDDDDD))
+sideViewport :: Int -> Viewport SidePart
+sideViewport topViewportSize = Viewport (sideViewportRectangle topViewportSize) (Just (Colour 0xFF22AAFF)) (Just (unicodeBorders, Colour 0xFFFFFFFF))
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
   , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
   }
 
-defaultOptions :: ConstructionOptions PlainWorldModel
+defaultOptions :: (WMActivities wm ~ ActivityCollection wm, WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
 defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
 
 
@@ -68,9 +75,15 @@ data SidePart = SidePart
 instance AsLayer SidePart where
   toLayer = const 2
 
+data MapPart = MapPart
+  deriving stock (Eq, Ord, Show, Enum, Bounded, Generic)
+
+instance AsLayer MapPart where
+  toLayer = const 3
 data GuiState = GuiState
   { messageLog :: MessageLog MainPart
   , pendingQuit :: Bool
+  , topViewportSize :: Int
   } deriving stock (Show, Generic)
 
 modifyMessageLog ::
@@ -91,19 +104,21 @@ runInputFromGUI = interpret $ \_ -> \case
       do
         terminalLayer 5
         s <- terminalReadStr 30 30 50
-        --when (isNothing s) $ #pendingQuit .= True
-        return Nothing --if (s == Just "" || (T.all isPrint <$?> s)) then return Nothing else return s
-    in withViewport bottomViewport $ go
-
+        when (isNothing s) $ #pendingQuit .= True
+        if (s == Just "" || (not $ T.all isPrint <$?> s)) then return Nothing else return s
+    in do
+      s <- use @GuiState #topViewportSize
+      withViewport (bottomViewport s) $ go
 
 beginPlay ::
-  YaiflEffects wm es
+  YaiflEffects SpatialWorldModel es
   => State GuiState :> es
-  => WorldActions wm
+  => WorldActions SpatialWorldModel
   -> Eff es ()
 beginPlay wa = do
   failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
-  runOnce
+  s <- use @GuiState #topViewportSize
+  runOnce s
   pass
 
 initialiseTerminal :: IO ()
@@ -132,11 +147,12 @@ makeWorld conOptions fullTitle initWorld = do
       addStandardActions
 
 runOnce ::
-  YaiflEffects wm es
+  YaiflEffects SpatialWorldModel es
   => State GuiState :> es
-  => Eff es Bool
-runOnce = do
-  renderAll
+  => Int
+  -> Eff es Bool
+runOnce topViewportSize = do
+  renderAll topViewportSize
   terminalRefresh
   runTurn
   fmap (any id) $ handleEvents NotBlocking $ \case
@@ -146,11 +162,12 @@ runOnce = do
     x -> print x >> return False
 
 runLoop ::
-  YaiflEffects wm es
+  YaiflEffects SpatialWorldModel es
   => State GuiState :> es
   => Eff es ()
 runLoop = do
-  r <- runOnce
+  s <- use @GuiState #topViewportSize
+  r <- runOnce s
   pend <- use @GuiState #pendingQuit
   if r || pend then pass else runLoop
 
@@ -158,20 +175,22 @@ getMessageBuffer :: forall wm. Game wm [StyledDoc MessageAnnotation]
 getMessageBuffer = gets @(World wm) (view $ #messageBuffer % #buffer)
 
 renderAll ::
-  forall wm es.
-  YaiflEffects wm es
+  forall es.
+  YaiflEffects SpatialWorldModel es
   => State GuiState :> es
-  => Eff es ()
-renderAll = do
-  msgList <- gets @(World wm) (view $ #messageBuffer % #buffer % reversed)
+  => Int
+  -> Eff es ()
+renderAll topViewportSize = do
+  msgList <- gets @(World SpatialWorldModel) (view $ #messageBuffer % #buffer % reversed)
   modifyBuffer (#buffer .~ [])
   updateMessageLog msgList
   -- let msgLog = for_ msgList
   renderBottomTerminal
   renderSideTerminal
+  renderTopTerminal topViewportSize
   where
     renderSideTerminal = do
-      renderViewport sideViewport $
+      renderViewport (sideViewport topViewportSize) $
         viewportPrint (V2 3 3) Nothing (Colour 0xFF000000) "More info..."
 
 updateMessageLog ::
@@ -194,4 +213,33 @@ renderBottomTerminal ::
   => Eff es ()
 renderBottomTerminal = do
   gs <- get
-  renderMessageLog AnchorBottom (messageLog gs)
+  renderMessageLog AnchorTop (messageLog gs)
+
+
+tile :: V2 -> Lens' (Array2D TileInfo) TileInfo
+tile loc = lens (\w -> fromMaybe (error "") $ w ^? ix loc) (\w t -> w & ix loc .~ t)
+
+renderTopTerminal ::
+  IOE :> es
+  => RuleEffects SpatialWorldModel es
+  => NoMissingObjects SpatialWorldModel es
+  => State GuiState :> es
+  => Int
+  -> Eff es ()
+renderTopTerminal topViewportSize = do
+  renderViewport (mapViewport topViewportSize) $ do
+    -- get the current room the player is in and render that
+    p' <- getPlayer'
+    currRoom <- getLocation p'
+    let tilemapData = currRoom ^. #objectData % #roomData % #space
+    print tilemapData
+    traverseArrayWithCoord_ tilemapData $ \p td -> whenInViewport (mapViewport topViewportSize) p $ do
+      let r = renderable td
+      print p
+      terminalLayer' (toLayer MapPart)
+      terminalColour (r ^. #foreground)
+      terminalBkColour (r ^. #background)
+      void $ withV2 (V2 15 15 + p) terminalPrintText (one $ r ^. #glyph)
+    rName <- sayText (currRoom ^. #name)
+    withV2 (V2 15 14) $ \x y -> terminalPrintText x y rName
+  pass

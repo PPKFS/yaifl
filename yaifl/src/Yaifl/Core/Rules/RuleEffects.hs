@@ -2,6 +2,7 @@ module Yaifl.Core.Rules.RuleEffects
   ( RuleEffects
   , ActionHandler(..)
   , parseAction
+  , performAction
   , ActivityCollector(..)
   , ResponseCollector(..)
   , ConcreteRuleStack
@@ -23,6 +24,7 @@ import Yaifl.Core.Actions.GoesWith
 
 data ActionHandler wm :: Effect where
   ParseAction :: ActionOptions wm -> [NamedActionParameter wm] -> Text -> ActionHandler wm m (Either Text Bool)
+  PerformAction :: GoesWith goesWith => Proxy goesWith -> ActionOptions wm -> Text -> UnverifiedArgs wm goesWith -> ActionHandler wm m (Maybe Bool)
 
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
 newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }

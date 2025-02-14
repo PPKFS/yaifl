@@ -44,6 +44,9 @@ type AddObjects wm es = (
   , Pointed (WMObjSpecifics wm)
   , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es
   , SayableValue (WMText wm) wm
+  , Pointed (WMThingData wm)
+  , Pointed (WMRegionData wm)
+  , Pointed (WMRoomData wm)
   )
 
 makeObject ::

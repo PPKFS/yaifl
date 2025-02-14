@@ -30,6 +30,9 @@ type HasLookingProperties wm =
   , WMWithProperty wm Supporter
   , Display (WMText wm)
   , IsString (WMText wm)
+  , Pointed (WMThingData wm)
+  , Pointed (WMRegionData wm)
+  , Pointed (WMRoomData wm)
   , WithPrintingNameOfADarkRoom wm
   , WithPrintingTheLocaleDescription wm
   , WithPrintingDescriptionOfADarkRoom wm
