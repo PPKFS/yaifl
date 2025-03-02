@@ -20,7 +20,6 @@ import Yaifl.Text.Print
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Actions.GoesWith
-import Rogue.Colour
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

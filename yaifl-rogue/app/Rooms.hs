@@ -6,7 +6,7 @@ import Yaifl.Std.Create
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.DynamicText
-import Yaifl.Spatial.PositionData
+import Yaifl.Rogue.PositionData
 
 
 import Yaifl.Std.Actions.Going
@@ -20,6 +20,7 @@ import Rogue.Array2D.Boxed
 import qualified Data.Vector as V
 import Rogue.Colour
 import Rogue.Geometry.Rectangle
+import Yaifl.Rogue.RoomGenerator
 
 type SpatialWorldModel = 'WorldModel ObjectSpecifics Direction () ThingSpatialData (RoomSpatialData TileInfo) () ActivityCollection ResponseCollection DynamicText
 
@@ -32,11 +33,6 @@ data TileInfo = TileInfo
 instance Pointed TileInfo where
   identityElement = wall
 
-data Renderable = Renderable
-  { glyph :: Char
-  , foreground :: Colour
-  , background :: Colour
-  } deriving stock (Show, Read, Generic, Eq, Ord)
 
 floorTile :: TileInfo
 floorTile = TileInfo "floor" (Renderable '.' (Colour 0xFF008888) (Colour 0x00000000)) True
@@ -74,11 +70,11 @@ world = do
   setTitle "The Unbuttoned Elevator Affair"
   uh <- addRoom' "UNCLE Headquarters"
     "The steel nerve-center of the free world's battle against the Technological Hierarchy for the Removal of Undesirables and the Subjugation of Humanity. Being against technology, we have only a very simple elevator to the east."
-    (buildSpatialRoom (V2 5 5) (V2 15 15))
+    (buildHollowRoom wall floorTile (V2 5 5) (V2 5 5))
   dfts <- addRoom' "Del Floria's Tailor Shop"
     "Only trained anti-THRUSH agents recognise the booth in the east wall as a secret elevator."
-    (buildSpatialRoom (V2 5 5) (V2 30 30))
-  tse <- addRoom' "The Secret Elevator" "" (buildSpatialRoom (V2 5 5) (V2 5 5))
+    (buildHollowRoom wall floorTile (V2 5 5) (V2 30 30))
+  tse <- addRoom' "The Secret Elevator" "" (buildHollowRoom wall floorTile (V2 5 5) (V2 5 5))
   tse `isEastOf` uh
   tse `isEastOf` dfts
 
@@ -94,9 +90,3 @@ world = do
       -- otherwise now UNCLE Headquarters is mapped west of the Secret Elevator;
       isNowMapped uh West tse
     rulePass
-
-buildSpatialRoom :: V2 -> V2 -> Eff '[State (RoomData SpatialWorldModel)] ()
-buildSpatialRoom globalPos size = do
-  let rectBlock = (Array2D (V.generate (size ^. #x * size ^. #y) (const wall), size))
-      dugRoom = digRectangle (rectangleFromDimensions (V2 1 1) (V2 (size ^. #x - 3) (size ^. #y - 3))) rectBlock
-  #roomData .= RoomSpatialData globalPos dugRoom

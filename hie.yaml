@@ -6,8 +6,11 @@ cradle:
     - path: "yaifl/test"
       component: "yaifl:test:yaifl-test"
 
+    - path: "yaifl-rogue/app"
+      component: "executable:yaifl-rogue-app"
+
     - path: "yaifl-rogue/src"
-      component: "executable:yaifl-rogue"
+      component: "lib:yaifl-rogue"
 
     - path: "roguefunctor/src"
       component: "lib:roguefunctor"

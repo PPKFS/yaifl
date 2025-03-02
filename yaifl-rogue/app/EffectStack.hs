@@ -21,7 +21,6 @@ convertStack ::
   IOE :> es'
   => State GuiState :> es'
   => (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
-  -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => HasLookingProperties wm
   => World wm
   -> ActionCollection wm

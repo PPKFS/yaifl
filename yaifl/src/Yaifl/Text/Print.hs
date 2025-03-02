@@ -27,6 +27,11 @@ module Yaifl.Text.Print
   , Bold(..)
   , Italics(..)
   , Underlined(..)
+  , Colour(..)
+  , Color
+  , toHex
+  , fromARGB
+  , fromRGB
   , colour
   , withStyle
   )
@@ -38,9 +43,33 @@ import qualified Prettyprinter as PP
 import Effectful.TH ( makeEffect )
 import Effectful.Dispatch.Dynamic (interpret)
 import qualified Data.Text as T
-import Rogue.Colour
+import Data.Bits
+import Data.Ix
+import Numeric (showHex)
+import Data.Ord (clamp)
 
 type StyledDoc style = PP.Doc style
+
+newtype Colour = Colour { toWord32 :: Word32 }
+  deriving stock (Generic)
+  deriving newtype (Show, Read, Eq, Ord, Bits, FiniteBits, Num, Enum, Bounded, Ix, Real, Integral)
+
+type Color = Colour
+
+toHex :: Colour -> Text
+toHex = fromString . flip showHex "" . toWord32
+
+fromARGB :: Word8 -> Word8 -> Word8 -> Word8 -> Colour
+fromARGB a r g b = (fromIntegral a `shiftL` 24) .|. (fromIntegral r `shiftL` 16) .|. (fromIntegral g `shiftL` 8) .|. fromIntegral b
+
+fromRGB :: Word8 -> Word8 -> Word8 -> Colour
+fromRGB = fromARGB 0xFF
+
+fromARGBFloat :: RealFrac a => RealFrac r => RealFrac g => RealFrac b => a -> r -> g -> b -> Colour
+fromARGBFloat a r g b = fromARGB (clampScale a) (clampScale r) (clampScale g) (clampScale b)
+  where
+    clampScale :: RealFrac x => x -> Word8
+    clampScale = round . (/255) . clamp (0, 1)
 
 data Bold = Bold
   deriving stock (Eq, Ord, Show, Generic)

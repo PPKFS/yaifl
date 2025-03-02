@@ -236,8 +236,6 @@ library
     Yaifl.Std.Rulebooks.TurnSequence
     Yaifl.Std.Rulebooks.Accessibility
 
-    Yaifl.Spatial.PositionData
-
   build-depends:
     , effectful-th
     , enummapset
@@ -245,10 +243,7 @@ library
     , haskell-src-meta
     , megaparsec
     , prettyprinter
-    , prettyprinter-ansi-terminal
-    , roguefunctor
     , split
-    , vector
 
 test-suite yaifl-test
   import:             common-options

@@ -29,7 +29,8 @@ import Rooms
 import Yaifl.Core.Kinds.Object
 import Rogue.Array2D.Boxed
 import Yaifl.Std.Actions.Imports
-
+import qualified Rogue.Colour as R
+import Yaifl.Rogue.PositionData
 
 screenSize :: V2
 screenSize = V2 230 80
@@ -48,11 +49,11 @@ sideViewportRectangle topViewportSize = rectangleFromDimensions
   (V2 20 (view _2 screenSize))
 
 mapViewport :: Int -> Viewport MapPart
-mapViewport topViewportSize = Viewport (topViewportRectangle topViewportSize) (Just (Colour 0xFF333333)) Nothing
+mapViewport topViewportSize = Viewport (topViewportRectangle topViewportSize) (Just (R.Colour 0xFF333333)) Nothing
 bottomViewport :: Int -> Viewport MainPart
-bottomViewport topViewportSize = Viewport (bottomViewportRectangle topViewportSize) (Just (Colour 0xFFFCF5E5)) (Just (unicodeBorders, Colour 0xFFDDDDDD))
+bottomViewport topViewportSize = Viewport (bottomViewportRectangle topViewportSize) (Just (R.Colour 0xFFFCF5E5)) (Just (unicodeBorders, R.Colour 0xFFDDDDDD))
 sideViewport :: Int -> Viewport SidePart
-sideViewport topViewportSize = Viewport (sideViewportRectangle topViewportSize) (Just (Colour 0xFF22AAFF)) (Just (unicodeBorders, Colour 0xFFFFFFFF))
+sideViewport topViewportSize = Viewport (sideViewportRectangle topViewportSize) (Just (R.Colour 0xFF22AAFF)) (Just (unicodeBorders, R.Colour 0xFFFFFFFF))
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
@@ -191,7 +192,7 @@ renderAll topViewportSize = do
   where
     renderSideTerminal = do
       renderViewport (sideViewport topViewportSize) $
-        viewportPrint (V2 3 3) Nothing (Colour 0xFF000000) "More info..."
+        viewportPrint (V2 3 3) Nothing (R.Colour 0xFF000000) "More info..."
 
 updateMessageLog ::
   IOE :> es
@@ -234,7 +235,7 @@ renderTopTerminal topViewportSize = do
     let tilemapData = currRoom ^. #objectData % #roomData % #space
     print tilemapData
     traverseArrayWithCoord_ tilemapData $ \p td -> whenInViewport (mapViewport topViewportSize) p $ do
-      let r = renderable td
+      let r = view #renderable td
       print p
       terminalLayer' (toLayer MapPart)
       terminalColour (r ^. #foreground)

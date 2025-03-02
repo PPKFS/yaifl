@@ -32,7 +32,6 @@ import Yaifl.Std.Actions.Collection (ActionCollection)
 
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Breadcrumbs
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)

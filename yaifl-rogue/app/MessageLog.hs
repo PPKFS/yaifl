@@ -10,10 +10,9 @@ import qualified Data.Text as T
 import qualified Rogue.Geometry.Rectangle as R
 import BearLibTerminal
 import BearLibTerminal.Raw (Dimensions(..))
-import Rogue.Colour (toHex)
 import Effectful.Reader.Static (Reader)
 import Rogue.Geometry.V2
-import Rogue.Colour (Colour(..))
+import qualified Rogue.Colour as R
 
 data Message = Message
   { doc :: [StyledDoc MessageAnnotation]
@@ -48,7 +47,7 @@ renderMessageLog anchor ml = renderViewport (ml ^. #viewport) $ go (ml ^. #viewp
           withoutBorder = if hasBorder (ml ^. #viewport) then \y -> V2 1 (borderAnchor y) else \y -> V2 0 y
           printLocation = withoutBorder (if anchor == AnchorTop then (ml ^. #viewport % #viewport % to R.height) - remainingHeight else remainingHeight - view #height x)
       --putStrLn $ "message height is" <> show (view #height x) <> " " <> show (length xs)
-      viewportPrint @l printLocation Nothing (Colour 0xFF000000) $ (renderAnnotated . laidOut $ x)
+      viewportPrint @l printLocation Nothing (R.Colour $ toWord32 $ Colour 0xFF000000) $ (renderAnnotated . laidOut $ x)
       -- only continue if we've got at least part of one more message space
       when (remainingHeight > 0) $ go (remainingHeight - view #height x) xs
 

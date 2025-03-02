@@ -9,20 +9,18 @@ module Yaifl.Text.ListWriter.Parameters
   ) where
 
 import Yaifl.Prelude hiding (asks, Reader, runReader)
-import Yaifl.Std.Activities.PrintingInventoryDetails
-import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
-import Yaifl.Core.Actions.Args
+
 import Yaifl.Core.Activity
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.WorldModel
-
-import Yaifl.Text.Responses
-import Yaifl.Text.Say
-
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
+import Yaifl.Core.WorldModel
+import Yaifl.Std.Activities.PrintingInventoryDetails
+import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
+import Yaifl.Std.Kinds.Container
+import Yaifl.Std.Kinds.Supporter
 import Yaifl.Text.ListWriter.Responses
+import Yaifl.Text.Responses
+import Yaifl.Text.Say
 
 
 type WithListWriting wm = (
