@@ -16,9 +16,17 @@ import Yaifl.Core.Entity
 import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
+import qualified Data.Text.Lazy.Builder as TLB
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)
+
+instance Display Gender where
+  displayBuilder = TLB.fromText . \case
+    Male -> "male"
+    Female -> "female"
+    NonBinary -> "non-binary"
+    Other t -> t
 
 data Person = Person
   { gender :: Gender
