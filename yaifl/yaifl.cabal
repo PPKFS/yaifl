@@ -57,12 +57,15 @@ common common-options
     -fprint-potential-instances -fno-warn-unused-do-bind -haddock
     -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages
 
-  default-language:   GHC2024
+  default-language:   GHC2021
   default-extensions:
+    DataKinds
     DefaultSignatures
+    DerivingStrategies
     DeriveAnyClass
     DuplicateRecordFields
     FunctionalDependencies
+    LambdaCase
     MultiWayIf
     NoImplicitPrelude
     OverloadedLabels

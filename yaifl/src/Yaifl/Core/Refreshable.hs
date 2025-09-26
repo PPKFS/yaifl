@@ -28,7 +28,7 @@ instance {-# OVERLAPPING #-} (HasID o, Refreshable wm o) => Refreshable wm (Tagg
   refresh obj = tagObject obj <$> refresh (getTaggedObject obj)
 
 instance (Refreshable wm a, Refreshable wm b) => Refreshable wm (a, b) where
-  refresh (a, b) = refresh a >>= \a' -> refresh b >>= return . (a', )
+  refresh (a, b) = refresh a >>= \a' -> refresh b <&> (a', )
 
 instance Refreshable wm a => Refreshable wm (Store a) where
   refresh = mapM refresh

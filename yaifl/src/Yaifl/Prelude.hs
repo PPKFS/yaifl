@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 module Yaifl.Prelude
   ( Pointed(..)
   , module Solitude
