@@ -23,7 +23,7 @@ most of it is covered with trees. Far off to the southwest is a shimmering surfa
 cities or civilizations, only the lizard-skeletons.|]
   pots `isBelow` et
 
-  before (ActionRule #going) [toTheRoom et] "before climbing rule" $ \_ -> do
+  before #going [toTheRoom et] "before climbing rule" $ \_ -> do
     [saying|You climb... and climb... and climb... The sun sets. The moon rises. The wind begins to blow. You continue to climb...|]
     rulePass
 

@@ -15,6 +15,7 @@ waitingAction = (makeAction "waiting")
   { name = "waiting"
   , understandAs = ["wait", "z"]
   , parseArguments = actionOnNothing
+  , carryOutRules = makeActionRulebook "carry out waiting rulebook" []
   , reportRules = makeActionRulebook "report waiting rulebook" [ standardReportWaiting ]
   }
 

@@ -13,8 +13,9 @@ module Yaifl.Std.Create.Rule
   , whenPlayerIsIn
   , ActionOrActivity(..)
   , ActionPointer
-  , doAction
-  --, doAction'
+  , tryAction
+  --, doAction
+  --, doAction
   ) where
 
 import Yaifl.Prelude
@@ -32,6 +33,10 @@ import Yaifl.Std.Actions.Collection (ActionCollection)
 
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
+import Yaifl.Core.Effects
+import Yaifl.Text.Print
+import Yaifl.Text.AdaptiveNarrative
+import Breadcrumbs
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
@@ -39,28 +44,26 @@ newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resp
 
 before ::
   State (ActionCollection wm) :> es
-  => ActionOrActivity wm resps goesWith v
+  => ActionPointer wm resps goesWith v
   -> [Precondition wm (Args wm v)]
   -> Text
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
   -> Eff es ()
 before a precs t f = do
   let rule = makeRule t precs f
-  case a of
-    ActionRule an -> an % #beforeRules %= addRuleLast rule
+  a % #beforeRules %= addRuleLast rule
   pass
 
 after ::
   State (ActionCollection wm) :> es
-  => ActionOrActivity wm resps goesWith v
+  => ActionPointer wm resps goesWith v
   -> [Precondition wm (Args wm v)]
   -> Text
   -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' (Maybe Bool)) -- ^ Rule function.
   -> Eff es ()
 after a precs t f = do
   let rule = makeRule t precs f
-  case a of
-    ActionRule an -> an % #afterRules %= addRuleLast rule
+  a % #afterRules %= addRuleLast rule
   pass
 
 afterActivity ::
@@ -85,29 +88,29 @@ insteadOf a precs f = do
   let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
   a % #insteadRules %= addRuleLast rule
 
-doAction ::
-  forall wm goesWith es v'.
-  GoesWith goesWith
-  => RuleEffects wm es
-  => Text
-  -> (Args wm v' -> Eff es (UnverifiedArgs wm goesWith))
-  -> Args wm v'
-  -> Eff es (Maybe Bool)
-doAction ac mapVars args = do
-  newArgs <- mapVars args
-  performAction (Proxy @goesWith) (actionOptions args) ac newArgs
-{-}
-doAction' ::
-  forall goesWith wm v es.
-  GoesWith goesWith
-  => RuleEffects wm es
+-- | Attempt to run an action from a text command (so will handle the parsing).
+-- Note that this does require the arguments to be parsed out.
+tryAction ::
+  NoMissingObjects wm es
+  => Input :> es
   => Refreshable wm v
+  => ActionHandler wm :> es
+  => ObjectTraverse wm :> es
+  => State (WorldActions wm) :> es
+  => State (ActionCollection wm) :> es
+  => State (ActivityCollector wm) :> es
+  => State (ResponseCollector wm) :> es
+  => State (AdaptiveNarrative wm) :> es
+  => Print :> es
   => Display v
-  => Text
-  -> Args wm v
-  -> Eff es (Maybe Bool)
-doAction' acp args = doAction acp (\a -> return  (UnverifiedArgs a)) args
--}
+  => ActionPointer wm resps goesWith v -- ^ text of command
+  -> Args wm v -- ^ Arguments without a timestamp
+  -> Eff es Bool
+tryAction acp f = do
+  a <- use acp
+  addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
+  runAction (actionOptions $ f) a (UnverifiedArgs f)
+
 theObject ::
   ArgsMightHaveMainObject v (Thing wm)
   => ThingLike wm o

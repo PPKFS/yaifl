@@ -1,7 +1,6 @@
 module Yaifl.Std.Parser
   ( runActionHandlerAsWorldActions
   , printPrompt
-  , runAction
   ) where
 
 import Yaifl.Prelude
@@ -32,7 +31,7 @@ import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Text.ListWriter
 import Yaifl.Text.Print
-
+import Yaifl.Std.Create.Rule
 import qualified Data.Map as Map
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -116,7 +115,7 @@ handleVerbAction actionOpts additionalArgs = \case
               Just v' -> do
                 ts <- getGlobalTime
                 actor <- getPlayer
-                Right <$> tryAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = getTaggedObject actor, variables = (v', parsedArgs) })
+                Right <$> runAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = getTaggedObject actor, variables = (v', parsedArgs) })
       case nouns of
         Left ex -> do
           addAnnotation $ "noun parsing failed because " <> ex
@@ -133,30 +132,6 @@ handleVerbAction actionOpts additionalArgs = \case
         Right (match, parsedArgs) -> do
           addAnnotation $ "matched " <> show match <> " and parsed " <> show parsedArgs
           actuallyRunIt parsedArgs match
-
-
--- | Run an action. This assumes that all parsing has been completed.
-runAction ::
-  forall wm es goesWith resps v.
-  Refreshable wm v
-  => Display v
-  => State (WorldActions wm) :> es
-  => RuleEffects wm es
-  => ActionOptions wm
-  -> UnverifiedArgs wm goesWith
-  -> Action wm resps goesWith v
-  -> Eff es (Maybe Bool)
-runAction opts uArgs act = withSpan "run action" (act ^. #name) $ \aSpan -> do
-  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
-  case mbArgs of
-    FailedParse err -> do
-      addAnnotation $ "Failed to parse the arguments for the action " <> (act ^. #name) <> " because " <> err
-      pure (Just False)
-    ConversionTo newCommand args -> rightToMaybe <$> parseAction opts args newCommand
-    SuccessfulParse args -> do
-      -- running an action is simply evaluating the action processing rulebook.
-      (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-      ap aSpan act args
 
 filterFirstStringM :: (Monad m, Foldable t, Semigroup b, Eq b, IsString b) => b -> t (m (Either b a)) -> m (Either b a)
 filterFirstStringM def = foldlM fn (Left def)
@@ -406,25 +381,3 @@ parseDirection p cmd =
       cleanedCmd = T.toLower $ T.strip cmd
   in
     find (\x -> cleanedCmd `elem` toTextDir p x) allDirs
-
--- | Attempt to run an action from a text command (so will handle the parsing).
--- Note that this does require the arguments to be parsed out.
-tryAction ::
-  NoMissingObjects wm es
-  => Input :> es
-  => Refreshable wm v
-  => ActionHandler wm :> es
-  => ObjectTraverse wm :> es
-  => State (WorldActions wm) :> es
-  => State (ActivityCollector wm) :> es
-  => State (ResponseCollector wm) :> es
-  => State (AdaptiveNarrative wm) :> es
-  => Print :> es
-  => Display v
-  => ActionOptions wm
-  -> Action wm resps goesWith v -- ^ text of command
-  -> UnverifiedArgs wm goesWith -- ^ Arguments without a timestamp
-  -> Eff es Bool
-tryAction opts a f = do
-  addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
-  fromMaybe False <$> runAction opts f a

@@ -182,7 +182,7 @@ interpretUpdate = interpret $ \_ -> \case
   SetThing t -> #stores % #things % at (getID t) %= updateIt t
   SetRegion t -> #stores % #regions % at (unTag $ regionID t) %= updateIt t
   GenerateEntity bThing -> if bThing then
-    (#stores % #entityCounter % _1) <<%= (+1) else (#stores % #entityCounter % _2) <<%= (\x -> x-1)
+    (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unID) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unID x - 1)
 
 updateIt :: a -> Maybe a -> Maybe a
 updateIt newObj mbExisting = case mbExisting of

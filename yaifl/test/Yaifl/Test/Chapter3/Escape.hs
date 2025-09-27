@@ -23,9 +23,10 @@ import Yaifl.Core.Kinds.Room
 import qualified Data.List.NonEmpty as NE
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create
-import Yaifl.Std.Create (theObject')
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Rules.Rulebook
+import Yaifl.Std.Parser
+import Yaifl.Std.Rulebooks.ActionProcessing
 
 ex21 :: (Text, [Text], Game PlainWorldModel ())
 ex21 = ("Escape", escapeTestMeWith, escapeWorld)
@@ -39,7 +40,7 @@ escapeWorld = do
     ! #front (yb, East)
     ! #back (gs, West)
     ! done
-  insteadOf #climbing [theObject w] $ doAction' #opening
+  insteadOf #climbing [theObject w] $ tryAction #entering
     -- Nothing <$ parseAction silentAction [] "open door"
   pass
 

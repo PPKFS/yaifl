@@ -6,6 +6,7 @@ module Yaifl.Std.Rulebooks.ActionProcessing
   , actionProcessingRules
   , WorldActions(..)
   , actionsMapL
+  , runAction
   ) where
 
 import Yaifl.Prelude hiding (runReader, Reader)
@@ -22,6 +23,8 @@ import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
+import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
+import Yaifl.Text.Print (Print)
 
 
 data WorldActions (wm :: WorldModel) = WorldActions
@@ -120,3 +123,26 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
       ignoreSpanIfEmptyRulebook r = if null (rules r) then ignoreSpan else pass
 
 makeFieldLabelsNoPrefix ''WorldActions
+
+-- | Run an action. This assumes that all parsing has been completed.
+runAction ::
+  forall wm es goesWith resps v.
+  Refreshable wm v
+  => Display v
+  => State (WorldActions wm) :> es
+  => RuleEffects wm es
+  => ActionOptions wm
+  -> Action wm resps goesWith v
+  -> UnverifiedArgs wm goesWith
+  -> Eff es Bool
+runAction opts act uArgs = withSpan "run action" (act ^. #name) $ \aSpan -> do
+  mbArgs <- (\v -> fmap (const v) (unArgs uArgs)) <$$> runParseArguments (act ^. #parseArguments) uArgs
+  case mbArgs of
+    FailedParse err -> do
+      addAnnotation $ "Failed to parse the arguments for the action " <> (act ^. #name) <> " because " <> err
+      pure False
+    ConversionTo newCommand args -> fromMaybe False . rightToMaybe <$> parseAction opts args newCommand
+    SuccessfulParse args -> do
+      -- running an action is simply evaluating the action processing rulebook.
+      (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
+      fromMaybe False <$> ap aSpan act args
