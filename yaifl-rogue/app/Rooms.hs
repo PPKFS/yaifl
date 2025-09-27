@@ -15,9 +15,7 @@ import Yaifl.Text.Say
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Rules.Rulebook
 import Rogue.Geometry.V2
-import Yaifl.Core.Kinds.Room
 import Rogue.Array2D.Boxed
-import qualified Data.Vector as V
 import Rogue.Colour
 import Rogue.Geometry.Rectangle
 import Yaifl.Rogue.RoomGenerator

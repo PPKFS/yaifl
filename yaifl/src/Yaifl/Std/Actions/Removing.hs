@@ -6,7 +6,6 @@ module Yaifl.Std.Actions.Removing
   , removingResponses
   ) where
 
-import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
 import Yaifl.Core.Kinds.Thing
 

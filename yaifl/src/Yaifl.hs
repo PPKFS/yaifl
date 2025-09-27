@@ -71,7 +71,6 @@ import qualified Data.Text as T
 import Effectful.Error.Static
 import Effectful.Provider.List
 import Yaifl.Std.Properties
-import Yaifl.Std.Create.Object (AddObjects)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText
 

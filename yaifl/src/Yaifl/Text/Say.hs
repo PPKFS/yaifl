@@ -17,7 +17,6 @@ module Yaifl.Text.Say
 
 import Data.Char (toUpper)
 import Data.Text.Display
-import Effectful.Optics
 import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
 import Yaifl.Prelude
@@ -172,12 +171,12 @@ instance WMWithProperty wm Person => SayableValue (SayLiteral "they're") wm wher
         if
         -- if the prior naming context is plural:
         -- say "they";
-          | o ^. #namePlurality == PluralNamed -> withCapitalisation cap $ "they"
+          | o ^. #namePlurality == PluralNamed -> withCapitalisation cap "they"
         -- otherwise if the item is the player:
           | p -> if cap then [saying|#{We}|] else [saying|#{we}|]
-          | isMale <$?> persInfo -> withCapitalisation cap $ "he"
-          | isFemale <$?> persInfo -> withCapitalisation cap $ "she"
-          | otherwise -> withCapitalisation cap $ "that"
+          | isMale <$?> persInfo -> withCapitalisation cap "he"
+          | isFemale <$?> persInfo -> withCapitalisation cap "she"
+          | otherwise -> withCapitalisation cap "that"
     [sayingTell|#{'re}|]
 
 instance SayableValue (SayLiteral "linebreak") wm where
@@ -310,7 +309,7 @@ printingNameOfSomethingImpl = (makeActivity "Printing the name of something"
       regarding (Just o)
       t <- sayText $ o ^. #name
       pure $ Just t) ])
-    { combineResults = \mbA mbB -> (<> (fromMaybe "" mbB))  <$> mbA }
+    { combineResults = \mbA mbB -> (<> fromMaybe "" mbB)  <$> mbA }
 
 sayParameterName ::
   NoMissingObjects wm es

@@ -4,7 +4,6 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic
-import Effectful.Reader.Static
 import Yaifl.Std.Parser
 import Yaifl.Core.Metadata
 import Yaifl.Std.Kinds.Direction

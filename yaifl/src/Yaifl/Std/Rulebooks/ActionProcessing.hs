@@ -73,7 +73,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
           let accessibility = wa ^. #accessibilityRules
           ignoreSpanIfEmptyRulebook accessibility
           -- if any of the objects are not touchable then we give up
-          r <- all id . catMaybes <$> mapM
+          r <- and . catMaybes <$> mapM
             (\n -> runRulebook (Just aSpan) False accessibility (v {variables = n})) (touchableNouns v)
           if r then return (Just v, Nothing) else return (Just v, Just False)
         )

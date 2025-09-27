@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Std.Actions.TakingInventory
   ( TakingInventoryResponses(..)
   , TakingInventoryRule
@@ -7,7 +6,6 @@ module Yaifl.Std.Actions.TakingInventory
   , takingInventoryResponses
   ) where
 
-import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
 
 data TakingInventoryResponses wm =

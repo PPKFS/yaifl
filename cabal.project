@@ -1,7 +1,7 @@
 source-repository-package
   type: git
   location: https://github.com/haskell-effectful/effectful.git
-  tag: 54236f4e7b975d46bcc8108285c0c09483f8dd93
+  tag: 012af2c7535925f7431cedb3e72f6d0d4e81076c
   subdir: effectful-core
   subdir: effectful-plugin
   subdir: effectful-th
@@ -10,18 +10,6 @@ source-repository-package
   type: git
   location: https://github.com/PPKFS/breadcrumbs.git
   tag: 60093b23ad22302da6ff8e83863a1ee759b229d4
-source-repository-package
-  type: git
-  location: https://github.com/PPKFS/solitude.git
-  tag: bcfd36ec733e4b046fdf89288730b85feef27900
-source-repository-package
-  type: git
-  location: https://github.com/ekmett/placeholder.git
-  tag: c958c36aed3c102cc6085b9126faee704fefc1b5
-source-repository-package
-  type: git
-  location: https://github.com/PPKFS/bearlibterminal-hs.git
-  tag: 684d2e90b79c6fad464a5c7dae9d63171a610828
 packages:
   yaifl/yaifl.cabal
   yaifl-rogue/yaifl-rogue.cabal

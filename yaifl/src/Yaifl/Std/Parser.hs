@@ -11,7 +11,7 @@ import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static
 
 import Data.Char (isSpace)
-import Data.List (lookup, delete)
+import Data.List (lookup )
 import Data.List.Split
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
@@ -78,7 +78,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
-  PerformAction _ actionOpts actionPhrase param -> error ""
+  PerformAction _ _actionOpts _actionPhrase _param -> error "todo"
 
 handleVerbAction ::
   forall es wm.
@@ -95,7 +95,7 @@ handleVerbAction actionOpts additionalArgs = \case
   -- this is a meta action
   (matched, _, OtherAction (OutOfWorldAction name runIt)) ->  do
     addAnnotation $ "Action parse was successful; going with the out of world action " <> name <> " after matching " <> matched
-    runActionHandlerAsWorldActions $ failHorriblyIfMissing $ runIt
+    runActionHandlerAsWorldActions $ failHorriblyIfMissing runIt
     pure $ Right True
   -- the happy normal path. We have found a matching action and now can do the typed argument parsing.
   (matched, r, RegularAction (WrappedAction (a :: Action wm resps goesWith v))) -> do
@@ -126,7 +126,7 @@ handleVerbAction actionOpts additionalArgs = \case
           rs <- sequence <$> forM xs (\x -> do
             let acName = a ^. #name
             n <- failHorriblyIfMissing $ sayParameterName x
-            failHorriblyIfMissing $ [saying|({acName} {n}) |]
+            failHorriblyIfMissing [saying|({acName} {n}) |]
             runOnParagraph
             actuallyRunIt parsedArgs x)
           pure $ second and rs
@@ -312,7 +312,7 @@ tryFindingObject t = failHorriblyIfMissing $ do
               [] -> pure (obj, enc)
               x:xs -> let c = last (x :| xs) in return $ maybe (obj, enc) (c,) $ getEnclosingMaybe c
             )
-          (const $ return $ (obj, enc))
+          (const $ return (obj, enc))
           obj
 
   (playerLocObj, domainEnc) <- (\t' -> getUppermostDomain (getTaggedObject t', getEnclosing t')) =<< getEnclosingObject (thingContainedBy pl)
@@ -345,7 +345,7 @@ findObjectsFrom t allItems considerAmbiguity = do
     ([x], []) -> pure . Right . Right $ toAny (fst x)
     ([], xs) -> pure . Right . Left $ map (toAny @wm . fst) xs
     (x@(x1:x2:_), [])
-      | ((x1 ^. _2 % _1) == (x2 ^. _2 % _1)) ->
+      | (x1 ^. _2 % _1) == (x2 ^. _2 % _1) ->
           if considerAmbiguity
           then handleAmbiguity (map fst x)
           else pure $ Left "I still didn't know what you meant"
