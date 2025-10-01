@@ -22,6 +22,9 @@ module Yaifl.Core.Kinds.Object (
   , IsObject(..)
   , objectEquals
   , isRoom
+
+  , makeNameImproper
+  , makeNameProper
   ) where
 
 import Yaifl.Prelude
@@ -129,3 +132,9 @@ instance {-# OVERLAPPABLE #-} HasID o => IsObject o where
 -- | This is safe as long as we only ever generate object IDs under the right principle.
 instance IsObject Entity where
   isThing = (> 0) . unID
+
+makeNameImproper :: (WithLabel "nameProperness" NameProperness x, State x :> es) => Eff es ()
+makeNameImproper = #nameProperness .= Improper
+
+makeNameProper :: (WithLabel "nameProperness" NameProperness x, State x :> es) => Eff es ()
+makeNameProper = #nameProperness .= Proper

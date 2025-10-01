@@ -26,7 +26,6 @@ import Effectful.Provider.List (type (++))
 
 type EffStack (wm :: WorldModel) = '[
   ActionHandler wm
-
   , State (AdaptiveNarrative wm)
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)

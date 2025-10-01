@@ -24,7 +24,7 @@ ex2World = do
 
   addThing "Bic pen"
     -- because we want "You see a Bic pen" not "You see Bic pen".
-    ! #modify (#nameProperness .= Improper)
+    ! #modify makeNameImproper
     ! done
 
   addThing "orange"

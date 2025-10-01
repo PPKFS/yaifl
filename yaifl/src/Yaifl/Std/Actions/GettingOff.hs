@@ -13,6 +13,7 @@ import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Rules.RuleEffects
 
 data GettingOffResponses wm =
   GetOffThingsA

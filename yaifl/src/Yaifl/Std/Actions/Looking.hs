@@ -125,15 +125,8 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
       return Nothing)
 
 foreachVisibilityHolder ::
-  NoMissingObjects wm es
-  => ActionHandler wm :> es
-  => ObjectTraverse wm :> es
-  => Print :> es
-  => Input :> es
+  RuleEffects wm es
   => Reader (LookingAction wm) :> es
-  => State (ActivityCollector wm) :> es
-  => State (AdaptiveNarrative wm) :> es
-  => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
   => Args wm (LookingActionVariables wm)
   -> AnyObject wm

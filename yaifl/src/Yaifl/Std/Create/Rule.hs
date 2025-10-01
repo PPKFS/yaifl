@@ -91,11 +91,12 @@ insteadOf a precs f = do
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
+  forall wm resps goesWith v es.
   NoMissingObjects wm es
   => Input :> es
   => Refreshable wm v
-  => ActionHandler wm :> es
   => ObjectTraverse wm :> es
+  => ActionHandler wm :> es
   => State (WorldActions wm) :> es
   => State (ActionCollection wm) :> es
   => State (ActivityCollector wm) :> es
@@ -106,10 +107,11 @@ tryAction ::
   => ActionPointer wm resps goesWith v -- ^ text of command
   -> Args wm v -- ^ Arguments without a timestamp
   -> Eff es Bool
-tryAction acp f = do
+tryAction acp args = do
   a <- use acp
   addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
-  runAction (actionOptions $ f) a (UnverifiedArgs f)
+  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
+  fromMaybe False <$> ap Nothing a args
 
 theObject ::
   ArgsMightHaveMainObject v (Thing wm)

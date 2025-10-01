@@ -1,6 +1,7 @@
 module Yaifl.Std.Parser
-  ( runActionHandlerAsWorldActions
-  , printPrompt
+  ( printPrompt
+  , parseAction
+  , runActionHandlerAsWorldActions
   ) where
 
 import Yaifl.Prelude
@@ -77,7 +78,6 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
     return ac
-  PerformAction _ _actionOpts _actionPhrase _param -> error "todo"
 
 handleVerbAction ::
   forall es wm.

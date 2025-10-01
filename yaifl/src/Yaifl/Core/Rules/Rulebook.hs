@@ -17,7 +17,6 @@ module Yaifl.Core.Rules.Rulebook
   , forPlayer'
   , forPlayer
   , forKind
-  , parseAction
   , notImplementedRule
   , makeRule
   , makeRule'

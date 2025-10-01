@@ -35,6 +35,7 @@ module Yaifl.Prelude
   , (%%=)
   , use
   , (<<%=)
+  , WithLabel
   ) where
 
 import Relude hiding (State, get, put, modify, gets, state, modify', runState, evalState, execState)
@@ -264,3 +265,5 @@ o %%= f = State.state (passthrough o f)
   -> Eff es (ViewResult k a)
 o <<%= f = o %%= toSnd f
 {-# INLINE (<<%=) #-}
+
+type WithLabel sym ty o = LabelOptic' sym A_Lens o ty

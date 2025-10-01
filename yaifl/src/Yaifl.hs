@@ -72,7 +72,7 @@ import Effectful.Error.Static
 import Effectful.Provider.List
 import Yaifl.Std.Properties
 
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 
 
 -- | All the standard library activities.

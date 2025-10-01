@@ -22,6 +22,7 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Query.Enclosing
+import Yaifl.Core.Rules.RuleEffects
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA

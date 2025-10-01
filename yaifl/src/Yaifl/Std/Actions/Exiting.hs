@@ -15,6 +15,7 @@ import Yaifl.Core.Entity
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
+import Yaifl.Core.Rules.RuleEffects
 
 data ExitingResponses wm =
     ExitNotInsideA

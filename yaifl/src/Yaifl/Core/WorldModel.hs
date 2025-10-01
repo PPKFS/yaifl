@@ -21,6 +21,7 @@ module Yaifl.Core.WorldModel (
   , WMActivities
   , WMResponses
   , WMText
+  , WMActions
   -- ** Constraints
   , WMShow
   , WMRead
@@ -48,42 +49,46 @@ data WorldModel =
     , wmActivities :: (WorldModel -> Type)
     , wmResponses :: (WorldModel -> Type)
     , wmText :: (WorldModel -> Type)
+    , wmActions :: WorldModel -> Type
     }
 
 -- | Object specifics (see `Yaifl.Model.ObjectSpecifics` for the canonical instantiation).
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
-  WMObjSpecifics ('WorldModel objSpec dir v td rd red a r re) = objSpec
+  WMObjSpecifics ('WorldModel objSpec dir v td rd red a r re ac) = objSpec
 
 -- | Directions, which is required to be a superset of `Yaifl.Std.Kinds.Direction`.
 type family WMDirection (wm :: WorldModel) :: Type where
-  WMDirection ('WorldModel objSpec dir v td rd red a r re) = dir
+  WMDirection ('WorldModel objSpec dir v td rd red a r re ac) = dir
 
 -- | Record of values passed around as a global state.
 type family WMValues (wm :: WorldModel) :: Type where
-  WMValues ('WorldModel objSpec dir v td rd red a r re) = v
+  WMValues ('WorldModel objSpec dir v td rd red a r re ac) = v
 
 type family WMThingData (wm :: WorldModel) :: Type where
-  WMThingData ('WorldModel objSpec dir v td rd red a r re) = td
+  WMThingData ('WorldModel objSpec dir v td rd red a r re ac) = td
 
 type family WMRoomData (wm :: WorldModel) :: Type where
-  WMRoomData ('WorldModel objSpec dir v td rd red a r re) = rd
+  WMRoomData ('WorldModel objSpec dir v td rd red a r re ac) = rd
 
 -- | Unused currently.
 type family WMRegionData (wm :: WorldModel) :: Type where
-  WMRegionData ('WorldModel objSpec dir v td rd red a r re) = red
+  WMRegionData ('WorldModel objSpec dir v td rd red a r re ac) = red
 
 -- | The record of all `Yaifl.Activity`.
 type family WMActivities (wm :: WorldModel) :: Type where
-  WMActivities ('WorldModel objSpec dir v td rd red a r re) = a ('WorldModel objSpec dir v td rd red a r re)
+  WMActivities ('WorldModel objSpec dir v td rd red a r re ac) = a ('WorldModel objSpec dir v td rd red a r re ac)
 
 -- | The record of all `Yaifl.Text.Response`s.
 type family WMResponses (wm :: WorldModel) :: Type where
-  WMResponses ('WorldModel objSpec dir v td rd red a r re) = r ('WorldModel objSpec dir v td rd red a r re)
+  WMResponses ('WorldModel objSpec dir v td rd red a r re ac) = r ('WorldModel objSpec dir v td rd red a r re ac)
 
 -- | To avoid circular dependencies, the dynamic text type (a fancy forall es. Eff es Text made
 -- with quasiquoters).
 type family WMText (wm :: WorldModel) :: Type where
-  WMText ('WorldModel objSpec dir v td rd red a r re) = re ('WorldModel objSpec dir v td rd red a r re)
+  WMText ('WorldModel objSpec dir v td rd red a r re ac) = re ('WorldModel objSpec dir v td rd red a r re ac)
+
+type family WMActions (wm :: WorldModel) :: Type where
+  WMActions ('WorldModel objSpec dir v td rd red a r re ac) = ac ('WorldModel objSpec dir v td rd red a r re ac)
 
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirection wm))
 

@@ -62,7 +62,7 @@ introText w = fold
 
 initRoomDescription ::
   Breadcrumbs :> es
-  => ActionHandler wm :> es
+  => RuleEffects wm es
   => Eff es (Maybe Bool)
 initRoomDescription = do
   parseAction (ActionOptions True True) [NoParameter] "look" >>= (\case

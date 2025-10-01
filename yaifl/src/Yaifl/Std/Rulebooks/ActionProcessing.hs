@@ -23,8 +23,6 @@ import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
-import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
-import Yaifl.Text.Print (Print)
 
 
 data WorldActions (wm :: WorldModel) = WorldActions
@@ -46,7 +44,7 @@ newtype ActionProcessing wm = ActionProcessing
     => State (WorldActions wm) :> es
     => Refreshable wm v
     => Display v
-    => SpanID
+    => Maybe SpanID
     -> Action wm resp goesWith v
     -> Args wm v
     -> Eff es (Maybe Bool)
@@ -56,7 +54,7 @@ newtype ActionProcessing wm = ActionProcessing
 actionProcessingRules :: forall wm. SayableValue (WMText wm) wm => ActionProcessing wm
 actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm resp goesWith v) u -> do
   wa <- get @(WorldActions wm)
-  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) (Just aSpan) False (Rulebook @wm
+  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) aSpan False (Rulebook @wm
     "action processing"
     (Just True)
     -- I have no idea how this works
@@ -67,7 +65,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
     [ Rule "before stage rule" []
           ( \v -> do
             ignoreSpanIfEmptyRulebook beforeRules
-            r <- runRulebookAndReturnVariables (Just aSpan) False beforeRules v
+            r <- runRulebookAndReturnVariables (aSpan) False beforeRules v
             return (first Just $ fromMaybe (v, Nothing) r))
     , notImplementedRule "carrying requirements rule"
     , notImplementedRule "basic visibility rule"
@@ -77,13 +75,13 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
           ignoreSpanIfEmptyRulebook accessibility
           -- if any of the objects are not touchable then we give up
           r <- and . catMaybes <$> mapM
-            (\n -> runRulebook (Just aSpan) False accessibility (v {variables = n})) (touchableNouns v)
+            (\n -> runRulebook (aSpan) False accessibility (v {variables = n})) (touchableNouns v)
           if r then return (Just v, Nothing) else return (Just v, Just False)
         )
     , Rule "instead stage rule" []
           ( \v -> do
             ignoreSpanIfEmptyRulebook insteadRules
-            r <- runRulebookAndReturnVariables (Just aSpan) False insteadRules v
+            r <- runRulebookAndReturnVariables (aSpan) False insteadRules v
             return (first Just $ fromMaybe (v, Nothing) r))
     , notImplementedRule "requested actions require persuasion rule"
     , notImplementedRule "carry out requested actions rule"
@@ -92,19 +90,19 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
         []
           ( \v -> do
             ignoreSpanIfEmptyRulebook checkRules
-            r <- runRulebookAndReturnVariables (Just aSpan) False checkRules v
+            r <- runRulebookAndReturnVariables (aSpan) False checkRules v
             return (first Just $ fromMaybe (v, Nothing) r))
     , Rule "carry out stage rule"
         []
           ( \v -> do
             ignoreSpanIfEmptyRulebook carryOutRules
-            r <- runRulebookAndReturnVariables (Just aSpan) False carryOutRules v
+            r <- runRulebookAndReturnVariables (aSpan) False carryOutRules v
             return (first Just $ fromMaybe (v, Nothing) r))
     , Rule "after stage rule"
         []
           ( \v -> do
             ignoreSpanIfEmptyRulebook afterRules
-            r <- runRulebookAndReturnVariables (Just aSpan) False afterRules v
+            r <- runRulebookAndReturnVariables (aSpan) False afterRules v
             return (first Just $ fromMaybe (v, Nothing) r))
     , notImplementedRule "investigate player awareness after rule"
     , Rule "report stage rule"
@@ -115,7 +113,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
             then return (Just v, Nothing)
             else do
               ignoreSpanIfEmptyRulebook reportRules
-              r <- runRulebookAndReturnVariables (Just aSpan) False reportRules v
+              r <- runRulebookAndReturnVariables (aSpan) False reportRules v
               return (first Just $ fromMaybe (v, Nothing) r))
     , notImplementedRule "clean actions rule"
     ]) u)
@@ -145,4 +143,4 @@ runAction opts act uArgs = withSpan "run action" (act ^. #name) $ \aSpan -> do
     SuccessfulParse args -> do
       -- running an action is simply evaluating the action processing rulebook.
       (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-      fromMaybe False <$> ap aSpan act args
+      fromMaybe False <$> ap (Just aSpan) act args

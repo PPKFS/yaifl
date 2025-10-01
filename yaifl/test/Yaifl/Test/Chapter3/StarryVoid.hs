@@ -18,6 +18,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
 import Yaifl.Std.Kinds.Person
+import Yaifl.Core.Rules.RuleEffects
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
