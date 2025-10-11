@@ -46,9 +46,9 @@ data WorldModel =
     , wmThingData :: Type
     , wmRoomData :: Type
     , wmRegionData :: Type
-    , wmActivities :: (WorldModel -> Type)
-    , wmResponses :: (WorldModel -> Type)
-    , wmText :: (WorldModel -> Type)
+    , wmActivities :: WorldModel -> Type
+    , wmResponses :: WorldModel -> Type
+    , wmText :: WorldModel -> Type
     , wmActions :: WorldModel -> Type
     }
 
@@ -64,9 +64,11 @@ type family WMDirection (wm :: WorldModel) :: Type where
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir v td rd red a r re ac) = v
 
+-- | Additional fields carried by `Yaifl.Core.ThingData`; i.e. data extensionality for all `Yaifl.Core.Thing`s.
 type family WMThingData (wm :: WorldModel) :: Type where
   WMThingData ('WorldModel objSpec dir v td rd red a r re ac) = td
 
+-- | Additional fields carried by `Yaifl.Core.RoomData`; i.e. data extensionality for all `Yaifl.Core.Room`s.
 type family WMRoomData (wm :: WorldModel) :: Type where
   WMRoomData ('WorldModel objSpec dir v td rd red a r re ac) = rd
 
@@ -87,6 +89,7 @@ type family WMResponses (wm :: WorldModel) :: Type where
 type family WMText (wm :: WorldModel) :: Type where
   WMText ('WorldModel objSpec dir v td rd red a r re ac) = re ('WorldModel objSpec dir v td rd red a r re ac)
 
+-- | Currently unused.
 type family WMActions (wm :: WorldModel) :: Type where
   WMActions ('WorldModel objSpec dir v td rd red a r re ac) = ac ('WorldModel objSpec dir v td rd red a r re ac)
 

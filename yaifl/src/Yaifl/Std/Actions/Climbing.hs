@@ -17,11 +17,14 @@ climbingResponses :: ClimbingResponses wm -> Response wm (Args wm (Thing wm))
 climbingResponses = \case
   _ -> notImplementedResponse "response"
 
-type ClimbingAction wm = Action wm (ClimbingResponses wm) 'TakesNoParameter (Thing wm)
+type ClimbingAction wm = Action wm (ClimbingResponses wm) 'TakesThingParameter (Thing wm)
 type ClimbingRule wm = ActionRule wm (ClimbingAction wm) (Thing wm)
 climbingAction :: ClimbingAction wm
 climbingAction = (makeAction "climbing")
-  { responses = climbingResponses
+  { name = "climbing"
+  , understandAs = ["climb", "clamber"]
+  , responses = climbingResponses
+  , parseArguments = actionOnOneThing
   , checkRules = makeActionRulebook "check climbing" ([] <> map notImplementedRule
     [ "can't do climbing"
     ])

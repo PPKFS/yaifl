@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Core.Store
-Copyright   : (c) Avery 2023-2024
+Copyright   : (c) Avery 2023-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 

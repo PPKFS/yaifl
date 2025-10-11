@@ -82,6 +82,7 @@ instance GoesWith 'TakesObjectParameter where
   tryParseArguments _ s = if S.size s == 1
     then (case S.findMin s of
       ObjectParameter d -> Just d
+      ThingParameter t -> Just (toAny t)
       _ -> Nothing) else Nothing
 
 instance GoesWith 'TakesThingParameter where

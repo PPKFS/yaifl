@@ -27,6 +27,7 @@ import Yaifl.Core.Actions.Args
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Std.Parser
 import Yaifl.Std.Rulebooks.ActionProcessing
+import Yaifl.Text.SayableValue
 
 ex21 :: (Text, [Text], Game PlainWorldModel ())
 ex21 = ("Escape", escapeTestMeWith, escapeWorld)
@@ -40,9 +41,35 @@ escapeWorld = do
     ! #front (yb, East)
     ! #back (gs, West)
     ! done
-  insteadOf #climbing [theObject w] $ tryAction #entering
+  insteadOf #climbing [theObject w] $ \args -> do
+    say ("got here" :: Text)
+    tryAction "enter" [TheThing $ coerceTag w] args
     -- Nothing <$ parseAction silentAction [] "open door"
   pass
 
+{-
+Your Bedroom
+You can see a bedroom window here.
+>[1] look through window
+Through the window, you make out the Grassy Slope.
+>[2] climb through window
+The window is shut: you'd break the glass.
+>[3] open window
+You open the bedroom window.
+>[4] climb through window
+Grassy Slope
+You can see a bedroom window here.
+>[5] look through window
+Through the window, you make out Your Bedroom.
+>[6] close window
+You close the bedroom window.
+>[7] e
+The window is shut: you'd break the glass.
+>[8] open window
+You open the bedroom window.
+>[9] e
+Your Bedroom
+You can see a bedroom window here.
+-}
 escapeTestMeWith :: [Text]
-escapeTestMeWith = fromI7TestMe "look through window / climb through window / open window / climb through window / look through window / close window / e / open window / e"
+escapeTestMeWith = fromI7TestMe [wrappedText|look through window / climb window / open window / climb through window / look through window / close window / e / open window / e|]

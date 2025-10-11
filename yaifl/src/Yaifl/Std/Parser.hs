@@ -32,7 +32,6 @@ import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Text.ListWriter
 import Yaifl.Text.Print
-import Yaifl.Std.Create.Rule
 import qualified Data.Map as Map
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -307,7 +306,7 @@ findObjectsFrom ::
 findObjectsFrom t allItems considerAmbiguity = do
   -- first we drop articles because we don't want to be overly lenient
   -- then for how inform likes to treat understanding as, we also need every substring of the above
-  let phraseTails = filter (\x -> (not . null $ x) && x /= ["the"] ) . concat . map inits . tails . words $ t
+  let phraseTails = (concatMap (filter (\x -> (not . null $ x) && x /= ["the"] ) . inits) . tails . words) $ t
       phraseSet = S.fromList . map (T.intercalate " ") $ phraseTails
   -- the scores here are likelihood that it's matching as a singular or part of a plural
   scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems

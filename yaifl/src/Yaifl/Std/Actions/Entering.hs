@@ -23,6 +23,7 @@ import Yaifl.Core.Refreshable
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Std.Kinds.Door
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA
@@ -51,20 +52,24 @@ type EnteringAction wm = Action wm () 'TakesThingParameter (EnclosingThing wm)
 
 enteringAction ::
   WithPrintingTheLocaleDescription wm
+  => WMWithProperty wm Door
   => EnteringAction wm
 enteringAction = (makeAction "entering")
   { name = "entering"
   , understandAs = ["enter", "go in", "go into", "enter into", "get into", "get in", "get on", "sit in", "sit on"]
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
       let mbCont = getEnclosingMaybe (toAny $ fst variables)
+      let mbDoor = getDoorMaybe (fst variables)
       case mbCont of
-        Nothing -> return $ FailedParse "that's not enterable"
+        Nothing ->
+          case mbDoor of
+            Just door -> return $ ConversionTo "go" [ThingParameter (fst variables)]
+            Nothing -> return $ FailedParse "That's not enterable."
         Just x -> return $ SuccessfulParse (tagObject x (fst variables))
   , beforeRules = makeActionRulebook "before entering rulebook" []
   , insteadRules = makeActionRulebook "instead of entering rulebook" []
   , checkRules = makeActionRulebook "check entering rulebook"
-    [ convertEnterDoor
-    , convertEnterDirection -- this one won't work - it needs to be an interpret as, and it needs to be before we parse..
+    [ convertEnterDirection -- this one won't work - it needs to be an interpret as, and it needs to be before we parse..
     , cantEnterWhenEntered
     , cantEnterUnenterable -- this one possibly needs to be moved to parse arguments too
     , cantEnterClosedContainers
@@ -80,9 +85,6 @@ enteringAction = (makeAction "entering")
   }
 
 type EnteringRule wm = ActionRule wm (EnteringAction wm) (EnclosingThing wm)
-
-convertEnterDoor :: EnteringRule wm
-convertEnterDoor = notImplementedRule "convert enter door"
 
 convertEnterDirection :: EnteringRule wm
 convertEnterDirection = notImplementedRule "convert enter direction"

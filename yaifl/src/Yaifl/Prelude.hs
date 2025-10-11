@@ -1,4 +1,12 @@
-{-# LANGUAGE DataKinds #-}
+{-|
+Module      : Yaifl.Prelude
+Copyright   : (c) Avery 2024-2025
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Custom prelude that wraps @relude@ and adds some additional useful functions I've picked up.
+Also includes stateful operators for compatibility between @optics@ and @effectful@.
+-}
 
 module Yaifl.Prelude
   ( Pointed(..)
@@ -41,19 +49,20 @@ module Yaifl.Prelude
 import Relude hiding (State, get, put, modify, gets, state, modify', runState, evalState, execState)
 import Optics hiding
   (uncons, zoom, gviews, zoomMaybe, use, gview, preuse, modifying', modifying, assign', assign)
+import Data.List ((\\))
+import Data.Text.Display hiding ( Opaque )
 import Effectful
-import qualified Data.Text as T
+import Effectful.State.Dynamic
+import Named hiding ( Name )
+import Optics.State.Operators ( PermeableOptic(..) )
 import Relude.Extra.Bifunctor
 import Relude.Extra.Tuple
-import Data.List ((\\))
-import Effectful.State.Dynamic
-import qualified Data.List.NonEmpty as NonEmpty
-import qualified Effectful.State.Dynamic as State
-import Optics.State.Operators ( PermeableOptic(..) )
-import Named hiding ( Name )
-import Data.Text.Display hiding ( Opaque )
 
-  -- | Obtain a list of all members of a type universe, sans a finite list
+import qualified Data.Text as T
+import qualified Effectful.State.Dynamic as State
+import qualified Data.List.NonEmpty as NonEmpty
+
+-- | Obtain a list of all members of a type universe, sans a finite list
 universeSans
   :: Bounded x
   => Enum x
@@ -91,6 +100,7 @@ isPrefixOf' _ [] _ = True
 isPrefixOf' _ (_:_) [] = False
 isPrefixOf' eq (l:ls) (x:xs) = eq l x && isPrefixOf' eq ls xs
 
+-- | `case` equivalent over a list of monadic `Maybe`s.
 caseM
   :: Monad m
   => [MaybeT m a]
@@ -98,6 +108,7 @@ caseM
   -> m a
 caseM cases fallback = runMaybeT (asum cases) >>= maybe fallback pure
 
+-- | surround a semigroup with a start and an end.
 wrap
   :: Semigroup a
   => a
@@ -105,6 +116,7 @@ wrap
   -> a
 wrap a b = a <> b <> a
 
+-- | fold a list of endomorphisms.
 composel
   :: Foldable f
   => f (a -> a)
@@ -118,6 +130,8 @@ isSuffixOf'
   -> Bool
 isSuffixOf' a b = T.toLower a `T.isSuffixOf` T.toLower b
 
+-- | a version of `bracket` that just keeps the surrounding behaviour and not the finality behaviour
+-- i.e. it doesn't need IO.
 surroundM
   :: Monad m
   => m a -- ^ how to set it up
@@ -130,6 +144,7 @@ surroundM pre' doIt post = do
   _ <- post p'
   return r
 
+-- | Double up a functor.
 (<$$>) ::
   Functor f
   => Functor g
@@ -138,6 +153,7 @@ surroundM pre' doIt post = do
 
 infixl 4 <$?>
 
+-- | `fmap` to `Bool` where a `Nothing` is considered `False`.
 (<$?>)
   :: (a -> Bool)
   -> Maybe a
@@ -149,7 +165,6 @@ prettyPrintList [] = ""
 prettyPrintList [x] = x
 prettyPrintList [x, y] = x <> ", and " <> y
 prettyPrintList (x:xs) = x <> ", " <> prettyPrintList xs
-
 
 infixr 4 <<+~, <<-~
 

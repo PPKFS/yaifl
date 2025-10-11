@@ -25,12 +25,11 @@ module Yaifl.Core.Action
   , withActionInterrupt'
 
   , oneTouchableThing
-  , ActionLens
   ) where
 
 import Yaifl.Prelude hiding (Reader)
 
-import Yaifl.Core.WorldModel ( WorldModel, WMActions )
+import Yaifl.Core.WorldModel ( WorldModel )
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Metadata
@@ -46,7 +45,6 @@ import Yaifl.Core.Refreshable
 import Yaifl.Text.Say
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
-type ActionLens wm goesWith resps v = Lens' (WMActions wm) (Action wm resps goesWith v)
 
 data ParseArgumentResult wm v =
   FailedParse Text

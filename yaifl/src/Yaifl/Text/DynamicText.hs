@@ -27,7 +27,7 @@ instance SayableValue (WMText wm) wm => SayableValue (DynamicText wm) wm where
   sayTell (DynamicText (Right (_, RuleLimitedEffect e))) = inject e
 
 instance Semigroup (DynamicText wm) where
-  (<>) (DynamicText (Left t)) (DynamicText (Left t2)) = (DynamicText (Left (t <> t2)))
+  (<>) (DynamicText (Left t)) (DynamicText (Left t2)) = DynamicText (Left (t <> t2))
   (<>) (DynamicText (Left t)) (DynamicText (Right (n, RuleLimitedEffect r))) = (DynamicText (Right (n, (RuleLimitedEffect $ tell t >> r))))
   (<>) (DynamicText (Right (n, RuleLimitedEffect r))) (DynamicText (Left t2)) = (DynamicText (Right (n, RuleLimitedEffect $ r >> tell t2 )))
   (<>) (DynamicText (Right (n, RuleLimitedEffect r))) (DynamicText (Right (n2, RuleLimitedEffect r2))) = (DynamicText (Right (n <> n2, RuleLimitedEffect $ r >> r2 )))

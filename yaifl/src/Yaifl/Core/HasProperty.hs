@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.Core.HasProperty
-Copyright   : (c) Avery 2023-2024
+Copyright   : (c) Avery 2023-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -18,6 +18,8 @@ import Yaifl.Prelude
 -- the condition that you can build it back up again..which works great for the possibility
 -- that our world model instantiation of object specifics may contain many possible pathways
 -- for any individual property but there's no way to do the Prism review.
+--
+-- This typeclass corresponds to a loose optic/cast.
 class MayHaveProperty o v where
   default propertyAT :: AffineTraversal' o v
   propertyAT = atraversal Left const

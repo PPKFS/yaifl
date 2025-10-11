@@ -4,7 +4,10 @@ Copyright   : (c) Avery 2022-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-An `Entity` is an object ID. DOCTODO.
+An `Entity` is an object ID. Entities should only be generated using `Yaifl.Core.ObjectQuery.generateEntity`, which ensures IDs are both unique and
+follow the positive (Thing) and negative (Room) patterns.
+
+`Entity` keys can also be used for general `Yaifl.Core.Store`s.
 -}
 
 module Yaifl.Core.Entity
@@ -38,8 +41,7 @@ module Yaifl.Core.Entity
 import Yaifl.Prelude
 
 -- | An object ID. Positive IDs are for `Yaifl.Core.Kinds.Thing`s and
--- negative IDs are for `Yaifl.Core.Kinds.Rooms`. This means we can write `Yaifl.Core.Kinds.Object` for free.
--- If you
+-- negative IDs are for `Yaifl.Core.Kinds.Rooms`. This means we can write `Yaifl.Core.Kinds.Object.isThing` for free.
 newtype Entity = Entity
   { unID :: Int
   } deriving stock (Show, Generic)
@@ -97,5 +99,5 @@ type RoomEntity = TaggedEntity RoomTag
 type ThingEntity = TaggedEntity ThingTag
 -- | Shorthand for door entities.
 type DoorEntity = TaggedEntity DoorTag
-
+-- | Shorthand for person entities.
 type PersonEntity = TaggedEntity PersonTag

@@ -14,6 +14,7 @@ module Yaifl.Std.Create.Rule
   , ActionOrActivity(..)
   , ActionPointer
   , tryAction
+  , ParameterReference(..)
   --, doAction
   --, doAction
   ) where
@@ -34,9 +35,7 @@ import Yaifl.Std.Actions.Collection (ActionCollection)
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Core.Effects
-import Yaifl.Text.Print
-import Yaifl.Text.AdaptiveNarrative
-import Breadcrumbs
+import Yaifl.Core.Entity
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
@@ -88,31 +87,37 @@ insteadOf a precs f = do
   let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
   a % #insteadRules %= addRuleLast rule
 
+data ParameterReference wm =
+  TheDirection (WMDirection wm)
+  | TheObject Entity
+  | TheThing ThingEntity
+  | TheConstant Text
+  | TheList [ParameterReference wm]
+  deriving stock ( Generic )
+
+toNamedActionParameter ::
+  NoMissingObjects wm es
+  => ParameterReference wm
+  -> Eff es (NamedActionParameter wm)
+toNamedActionParameter = \case
+  TheDirection dir -> return $ DirectionParameter dir
+  TheObject e -> ObjectParameter <$> getObject e
+  TheThing t -> ThingParameter <$> getThing t
+  TheConstant t -> return $ ConstantParameter t
+  TheList l -> PluralParameter <$> mapM toNamedActionParameter l
+
 -- | Attempt to run an action from a text command (so will handle the parsing).
 -- Note that this does require the arguments to be parsed out.
 tryAction ::
-  forall wm resps goesWith v es.
-  NoMissingObjects wm es
-  => Input :> es
-  => Refreshable wm v
-  => ObjectTraverse wm :> es
-  => ActionHandler wm :> es
-  => State (WorldActions wm) :> es
-  => State (ActionCollection wm) :> es
-  => State (ActivityCollector wm) :> es
-  => State (ResponseCollector wm) :> es
-  => State (AdaptiveNarrative wm) :> es
-  => Print :> es
-  => Display v
-  => ActionPointer wm resps goesWith v -- ^ text of command
-  -> Args wm v -- ^ Arguments without a timestamp
+  forall wm v es.
+  RuleEffects wm es
+  => Text
+  -> [ParameterReference wm]
+  -> Args wm v
   -> Eff es Bool
-tryAction acp args = do
-  a <- use acp
-  addAnnotation $ "Trying to do the action '"<> view actionName a <> "'"
-  (ActionProcessing ap) <- use @(WorldActions wm) #actionProcessing
-  fromMaybe False <$> ap Nothing a args
-
+tryAction ac params args = do
+  nap <- mapM toNamedActionParameter params
+  either error (error . show) <$> parseAction ((actionOptions args) { silently = False }) nap ac
 theObject ::
   ArgsMightHaveMainObject v (Thing wm)
   => ThingLike wm o

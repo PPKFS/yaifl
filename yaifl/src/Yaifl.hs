@@ -150,6 +150,7 @@ addStandardActions = do
   addAction waiting
   addAction exiting
   addAction gettingOff
+  addAction climbing
   pass
 
 blankActions ::
