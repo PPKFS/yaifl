@@ -25,7 +25,7 @@ ex18 = ("Disenchantment Bay 4", disenchantmentBayTestMeWith, disenchantmentBayWo
 disenchantmentBayWorld :: Game PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
-  addRoom "The Cabin" ! #description
+  addRoom' "The Cabin" ! #description
     [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
 a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
 vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the

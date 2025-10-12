@@ -163,30 +163,41 @@ addRoomInternal ::
   -> ObjectKind -- ^ Type.
   -> Maybe (WMObjSpecifics wm)
   -> Maybe (RoomData wm) -- ^
+  -> Maybe (Eff '[State (Room wm)] ())
   -> Eff es RoomEntity
-addRoomInternal name desc objtype specifics details = do
+addRoomInternal name desc objtype specifics details stateUpdate = do
   e <- Room <$> addObject (setRoom . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
   md <- get
   when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoomEntity e)
+  whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyRoom e (`runLocalState` su)
   return (tagRoomEntity e)
 
-addRoom' ::
+addRoomInternal1 ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMText wm -- ^ Name.
   -> WMText wm -- ^ Description.
-  -> Eff '[State (RoomData wm)] v
+  -> Maybe (Eff '[State (Room wm)] v)
   -> Eff es RoomEntity
-addRoom' n d rd = addRoomInternal n d (ObjectKind "room")
-  Nothing (Just $ snd $ runPureEff $ runStateLocal blankRoomData rd)
+addRoomInternal1 n d rd = addRoomInternal n d (ObjectKind "room")
+  Nothing Nothing (void <$> rd)
 
 addRoom ::
   WMWithProperty wm Enclosing
   => AddObjects wm es
   => WMText wm -- ^ Name.
   -> "description" :? WMText wm -- ^ Description.
+  -> "modify" :? Eff '[State (Room wm)] ()
   -> Eff es RoomEntity
-addRoom n (argDef #description "" -> d) = addRoom' n d pass
+addRoom n (argDef #description "" -> d) (argF #modify -> rd) = addRoomInternal1 n d rd
+
+addRoom' ::
+  WMWithProperty wm Enclosing
+  => AddObjects wm es
+  => WMText wm -- ^ Name.
+  -> "description" :? WMText wm -- ^ Description.
+  -> Eff es RoomEntity
+addRoom' n (argDef #description "" -> d) = addRoomInternal1 n d Nothing
 
 addRegion ::
   Pointed (WMRegionData wm)

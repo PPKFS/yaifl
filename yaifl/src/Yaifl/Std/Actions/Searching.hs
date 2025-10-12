@@ -29,6 +29,8 @@ type SearchingRule wm = ActionRule wm (SearchingAction wm) (Thing wm)
 searchingAction :: SearchingAction wm
 searchingAction = (makeAction "searching")
   { responses = searchingResponses
+  , parseArguments = actionOnOneThing
+  , understandAs = ["search", "rummage", "dig through"]
   , checkRules = makeActionRulebook "check searching" ([] <> map notImplementedRule
     [ "can't search unless container or supporter"
     , "can't search closed opaque containers"

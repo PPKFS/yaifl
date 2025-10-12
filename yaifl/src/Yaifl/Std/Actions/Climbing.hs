@@ -25,9 +25,7 @@ climbingAction = (makeAction "climbing")
   , understandAs = ["climb", "clamber"]
   , responses = climbingResponses
   , parseArguments = actionOnOneThing
-  , checkRules = makeActionRulebook "check climbing" ([] <> map notImplementedRule
-    [ "can't do climbing"
-    ])
+  , checkRules = makeActionRulebook "check climbing" [notImplementedRule "can't do climbing"]
   , carryOutRules = makeActionRulebook "carry out climbing" [ notImplementedRule "standard climbing"  ]
   , reportRules = makeActionRulebook "report climbing"  [ notImplementedRule "standard report climbing"  ]
   }

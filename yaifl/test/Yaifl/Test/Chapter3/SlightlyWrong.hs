@@ -34,8 +34,8 @@ swcDesc = text "description of slightly wrong chamber" $ do
 ex4World :: Game PlainWorldModel ()
 ex4World = do
     setTitle "Slightly Wrong"
-    swc <- addRoom' swcN swcDesc pass
-    awn <- addRoom' awnN awnDesc pass
+    swc <- addRoom' swcN ! #description swcDesc
+    awn <- addRoom' awnN ! #description awnDesc
 
     swc `isSouthOf` awn
     pass

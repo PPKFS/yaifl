@@ -19,8 +19,9 @@ ex16 = ("Replanting", replantingTestMeWith, replantingWorld)
 replantingWorld :: Game PlainWorldModel ()
 replantingWorld = do
   setTitle "Replanting"
-  addRoom "The Orchard" ! #description
-    "Within this quadrille of pear trees, a single gnarled old oak remains as a memory of centuries past."
+  addRoom "The Orchard"
+    ! #description "Within this quadrille of pear trees, a single gnarled old oak remains as a memory of centuries past."
+    ! done
 
   addThing "gnarled oak tree"
     ! #modify makeItScenery

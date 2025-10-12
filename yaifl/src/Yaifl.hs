@@ -151,6 +151,7 @@ addStandardActions = do
   addAction exiting
   addAction gettingOff
   addAction climbing
+  addAction searching
   pass
 
 blankActions ::

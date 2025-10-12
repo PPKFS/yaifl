@@ -23,6 +23,7 @@ import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
+import Yaifl.Text.Say
 
 
 data WorldActions (wm :: WorldModel) = WorldActions
@@ -138,6 +139,7 @@ runAction opts act uArgs = withSpan "run action" (act ^. #name) $ \aSpan -> do
   case mbArgs of
     FailedParse err -> do
       addAnnotation $ "Failed to parse the arguments for the action " <> (act ^. #name) <> " because " <> err
+      when (err == "not parsed") $ let aName = act ^. #name in [saying|The parse arguments for {aName} weren't implemented.|]
       pure False
     ConversionTo newCommand args -> fromMaybe False . rightToMaybe <$> parseAction opts args newCommand
     SuccessfulParse args -> do

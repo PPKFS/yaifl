@@ -12,7 +12,6 @@ import Yaifl.Core.Entity
 import Yaifl.Core.TH
 
 import qualified Data.Set as S
-import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Property
 
 newtype MultiLocated = MultiLocated

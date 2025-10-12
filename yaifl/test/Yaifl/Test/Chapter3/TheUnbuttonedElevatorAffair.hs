@@ -20,9 +20,9 @@ ex9 = ("The Unbuttoned Elevator Affair", theUnbuttonedElevatorAffairTestMeWith, 
 theUnbuttonedElevatorAffairWorld :: Game PlainWorldModel ()
 theUnbuttonedElevatorAffairWorld = do
   setTitle "The Unbuttoned Elevator Affair"
-  uh <- addRoom "UNCLE Headquarters" ! #description [wrappedText|The steel nerve-center of the free world's battle against the Technological Hierarchy for
+  uh <- addRoom' "UNCLE Headquarters" ! #description [wrappedText|The steel nerve-center of the free world's battle against the Technological Hierarchy for
 the Removal of Undesirables and the Subjugation of Humanity. Being against technology, we have only a very simple elevator to the east.|]
-  dfts <- addRoom "Del Floria's Tailor Shop" ! #description [wrappedText|Only trained anti-THRUSH agents recognise the booth in the east wall as a secret elevator.|]
+  dfts <- addRoom' "Del Floria's Tailor Shop" ! #description [wrappedText|Only trained anti-THRUSH agents recognise the booth in the east wall as a secret elevator.|]
   tse <- addRoom "The Secret Elevator" ! done
   tse `isEastOf` uh
   tse `isEastOf` dfts

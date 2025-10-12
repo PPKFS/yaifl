@@ -155,7 +155,7 @@ whenIn e = Precondition
       e' <- getObject e
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = \args -> do
-      hierarchy <- getContainingHierarchy (args ^. #source)
+      hierarchy <- getContainingHierarchies (args ^. #source)
       pure $ elem (getEnclosingEntity e) hierarchy
   }
 

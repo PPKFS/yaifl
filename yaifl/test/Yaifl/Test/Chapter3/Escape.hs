@@ -7,6 +7,7 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
+import Yaifl.Core.Kinds.Object
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
@@ -17,6 +18,7 @@ import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Imports
+import Yaifl.Std.Actions.Going
 
 
 ex21 :: (Text, [Text], Game PlainWorldModel ())
@@ -26,16 +28,22 @@ escapeWorld :: Game PlainWorldModel ()
 escapeWorld = do
   setTitle "Escape"
   yb <- addRoom "Your Bedroom" ! done
-  gs <- addRoom "Grassy Slope" ! done
+  gs <- addRoom "Grassy Slope" ! #modify makeNameImproper ! done
   w <- addDoor "bedroom window"
     ! #front (yb, East)
     ! #back (gs, West)
     ! done
   insteadOf #searching [theObject w] $ \_ -> do
     bs <- getOtherSideOfDoor w
-    [saying|Through the window, you make out {bs}.|]
+    [saying|Through the window, you make out {the bs}.|]
   insteadOf #climbing [theObject w] $ tryAction "enter" [TheThing $ coerceTag w]
-    -- Nothing <$ parseAction silentAction [] "open door"
+
+  -- the original requires you to define "climb through [something]" as an alias, whereas
+  -- my parser will just assume you want to climb something called the "through window" and considers
+  -- one word enough of a match.
+
+  -- I don't know if this needs fixing but if I leave this here for when I inevitably rewrite the parser it'll help.
+  insteadOf #going [throughTheClosedDoor w] $ const [saying|The window is shut: you'd break the glass.|]
   pass
 
 {-

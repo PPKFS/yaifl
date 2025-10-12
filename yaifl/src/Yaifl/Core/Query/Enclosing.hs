@@ -1,7 +1,7 @@
 module Yaifl.Core.Query.Enclosing
   ( getAllObjectsInRoom
   , getAllObjectsInEnclosing
-  , getContainingHierarchy
+  , getContainingHierarchies
   , IncludeDoors(..)
   , IncludeScenery(..)
   , RecurseAllObjects(..)
@@ -33,6 +33,7 @@ import Yaifl.Core.Tag
 import Yaifl.Core.Query.Object
 import qualified Data.EnumSet as ES
 import Yaifl.Core.HasProperty
+import Yaifl.Std.Kinds.MultiLocated (getMultiLocatedMaybe, MultiLocated (..))
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors
@@ -83,20 +84,31 @@ getAllObjectsInEnclosing incScenery incDoors recurse r = do
   enclosingItself <- getThingMaybe r
   return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)
 
-getContainingHierarchy ::
+getContainingHierarchies ::
   NoMissingObjects wm es
   => Thing wm
-  -> Eff es (NonEmpty EnclosingEntity)
-getContainingHierarchy tLike = do
-  let getHierarchy obj = do
+  -> Eff es (NonEmpty (NonEmpty EnclosingEntity))
+getContainingHierarchies tLike = do
+  let getHierarchy :: Thing wm -> Eff es (NonEmpty (NonEmpty EnclosingEntity))
+      getHierarchy obj = do
         let enc = obj ^. #objectData % #containedBy
-        o' <- getObject enc
-        asThingOrRoom
-          (\v -> do
-            rs <- getHierarchy v
-            pure (enc `NE.cons` rs)
-          )
-          (\r -> pure $ coerceTag (tagRoomEntity r) :| []) o'
+            mbMultiLoc = getMultiLocatedMaybe obj
+            fromContainingObject :: EnclosingEntity -> Eff es (NonEmpty (NonEmpty EnclosingEntity))
+            fromContainingObject o = do
+              o' <- getObject o
+              asThingOrRoom
+                (\v -> do
+                  {-rs <- toList <$> getHierarchy v
+                  pure $ ([o `NE.cons` r | r <- rs]) -}
+                  error ""
+                )
+                (\r -> error "") o' -- pure $ (coerceTag (tagRoomEntity r) :| []) o') :| []
+        case mbMultiLoc of
+          -- nice path
+          Nothing -> fromContainingObject enc
+          Just multiLoc -> do
+            -- hierarchies <- flip mapM (toList $ locations multiLoc) fromContainingObject
+            error ""
   getHierarchy tLike
 
 
@@ -164,7 +176,8 @@ enclosingContains e o = do
   return $ e `elem` hier
 
 getCommonAncestor ::
-  NoMissingObjects wm es
+  HasCallStack
+  => NoMissingObjects wm es
   => ThingLike wm o1
   => ThingLike wm o2
   => o1
@@ -185,6 +198,6 @@ getCommonAncestor t1' t2' = do
       -- (which one is irrelevant), and find the earliest possible match in the other list
       let commAncestor (l1h :| l1s) l2 = if l1h `elem` l2 then l1h else commAncestor
             (case l1s of
-              [] -> error "no common ancestor"
+              [] -> error $ unwords ["no common ancestor", display (t1 ^. #name), display (t2 ^. #name), show actorHolder, show nounHolder]
               x:xs -> x :| xs) l2
       return $ commAncestor acHier nounHier
