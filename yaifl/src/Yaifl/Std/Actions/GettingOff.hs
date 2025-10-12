@@ -14,6 +14,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Core.HasProperty
 
 data GettingOffResponses wm =
   GetOffThingsA

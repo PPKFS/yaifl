@@ -6,6 +6,7 @@ import Yaifl.Prelude
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Thing
+import Yaifl.Core.HasProperty
 
 data OpeningResponses =
   OpenNotOpenableResponseA

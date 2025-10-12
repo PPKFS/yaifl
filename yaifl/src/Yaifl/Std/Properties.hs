@@ -14,6 +14,7 @@ import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person
 import Yaifl.Text.Say
+import Yaifl.Core.HasProperty
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing

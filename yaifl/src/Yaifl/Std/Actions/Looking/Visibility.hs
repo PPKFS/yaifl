@@ -21,6 +21,7 @@ import qualified Data.EnumSet as DES
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
+import Yaifl.Core.HasProperty
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

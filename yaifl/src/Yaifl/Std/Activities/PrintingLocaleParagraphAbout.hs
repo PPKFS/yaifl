@@ -26,6 +26,7 @@ import Yaifl.Core.Query.Object
 import Yaifl.Core.Tag
 import Yaifl.Core.WorldModel
 import Yaifl.Std.Kinds.Person
+import Yaifl.Core.HasProperty
 
 setLocalePriority ::
   Thing s

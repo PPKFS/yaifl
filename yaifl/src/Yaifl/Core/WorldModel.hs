@@ -28,11 +28,9 @@ module Yaifl.Core.WorldModel (
   , WMOrd
   , WMEq
 
-  , WMWithProperty
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Core.HasProperty
 
 -- | All the various type parameters wrapped into a single type.
 -- This allows us to tie the knot in some weird way - we need some way to refer
@@ -103,6 +101,3 @@ type WMRead wm = WMConstr Read wm
 type WMOrd wm = WMConstr Ord wm
 -- | Constraint that object specifics, values, and directions are Eqable.
 type WMEq wm = WMConstr Eq wm
-
--- | A helper to define that a world model @wm@ has a Property.
-type WMWithProperty wm v = MayHaveProperty (WMObjSpecifics wm) v

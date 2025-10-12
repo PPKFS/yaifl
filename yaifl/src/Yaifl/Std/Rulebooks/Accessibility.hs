@@ -7,7 +7,7 @@ module Yaifl.Std.Rulebooks.Accessibility
 import Yaifl.Prelude
 
 import Yaifl.Core.Actions.Args
-import Yaifl.Core.WorldModel ( WMWithProperty )
+import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Core.Query.Object ( getThingMaybe )
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue

@@ -2,7 +2,7 @@
 module Yaifl.Std.Kinds.Person where
 
 import Yaifl.Prelude
-import Yaifl.Core.TH (makeSpecificsWithout)
+import Yaifl.Core.TH (makeSpecificsWithout, WMWithProperty)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Effects
 import Yaifl.Core.Query.Property
@@ -17,6 +17,7 @@ import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
 import qualified Data.Text.Lazy.Builder as TLB
+import Yaifl.Core.Kinds.Room
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)
@@ -98,3 +99,10 @@ getPlayer' ::
   NoMissingObjects wm es
   => Eff es (Thing wm)
 getPlayer' = use #currentPlayer >>= getThing
+
+getPlayerLocation ::
+  NoMissingObjects wm es
+  => Eff es (Room wm)
+getPlayerLocation = do
+  pl <- getPlayer
+  getLocation pl

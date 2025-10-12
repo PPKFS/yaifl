@@ -4,6 +4,7 @@ module Yaifl.Std.Kinds.Door
   , blankDoor
   , getDoorMaybe
   , tagDoorObject
+  , getDoor
   ) where
 
 import Yaifl.Prelude
@@ -20,6 +21,8 @@ import Yaifl.Core.Tag
 
 import qualified Data.Set as S
 import Yaifl.Core.WorldModel
+import Yaifl.Core.HasProperty
+import Yaifl.Core.ObjectLike
 
 data Door = Door
   { isOneWay :: Bool
@@ -47,3 +50,12 @@ tagDoorObject ::
   -> Thing wm
   -> TaggedObject (Thing wm) DoorTag
 tagDoorObject _ds = unsafeTagObject
+
+getDoor ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Door
+  => DoorEntity
+  -> Eff es Door
+getDoor de = do
+  t <- getThing (coerceTag @ThingTag de)
+  return $ fromMaybe (error "property witness violated") $ getDoorMaybe t

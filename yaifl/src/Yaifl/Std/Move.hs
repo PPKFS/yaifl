@@ -20,6 +20,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
+import Yaifl.Core.HasProperty
 
 move ::
   forall l wm es.

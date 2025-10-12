@@ -43,10 +43,10 @@ class HasID o => RoomLike wm o where
 instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tagEntity) where
   getObject = getObject . unTagObject
 
-instance (RoomLike wm o) => RoomLike wm (TaggedObject o tagEntity) where
+instance {-# OVERLAPPABLE #-} (RoomLike wm o) => RoomLike wm (TaggedObject o tagEntity) where
   getRoom = getRoom . snd . unTagObject
 
-instance (ThingLike wm o) => ThingLike wm (TaggedObject o tagEntity) where
+instance {-# OVERLAPPABLE #-} (ThingLike wm o) => ThingLike wm (TaggedObject o tagEntity) where
   getThing = getThing . snd . unTagObject
 
 instance ObjectLike wm (Thing wm) where
@@ -74,10 +74,10 @@ instance ObjectLike wm (TaggedEntity anyTag) where
   getObject e = getObject (unTag e)
 
 instance ThingLike wm DoorEntity where
-  getThing = getThing . coerceTag @_ @ThingTag
+  getThing = getThing . coerceTag @ThingTag
 
 instance ThingLike wm PersonEntity where
-  getThing = getThing . coerceTag @_ @ThingTag
+  getThing = getThing . coerceTag @ThingTag
 
 instance ObjectLike wm Entity where
   getObject e = if isThing (getID e)
@@ -86,6 +86,12 @@ instance ObjectLike wm Entity where
 
 instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
   getObject = getObject . snd
+
+instance ThingLike wm (TaggedObject (Thing wm) o) where
+  getThing = pure . snd . unTagObject
+
+instance RoomLike wm (TaggedObject (Room wm) o) where
+  getRoom = pure . snd . unTagObject
 
 objectIsKind ::
   NoMissingObjects wm es

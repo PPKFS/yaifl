@@ -20,6 +20,7 @@ module Yaifl.Std.Create.RoomConnection
   , getAllConnections
   , addDoorToConnection
   , getConnectionViaDoor
+  , getOtherSideOfDoor
   , isNowMapped
   , isNowOn
   , addDirectionFrom
@@ -39,8 +40,8 @@ import Yaifl.Core.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room
-import Yaifl.Core.TH ( makeDirections )
-import Yaifl.Core.WorldModel ( WMDirection, WMWithProperty, WMText )
+import Yaifl.Core.TH ( makeDirections, WMWithProperty )
+import Yaifl.Core.WorldModel ( WMDirection, WMText )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say
@@ -50,6 +51,8 @@ import Yaifl.Std.Move (move)
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Std.Kinds.Person
+import Yaifl.Std.Kinds.Door
 
 getAllConnections ::
   Room wm
@@ -86,6 +89,16 @@ getConnectionViaDoor ::
   -> Room wm
   -> Maybe (RoomEntity, Connection wm)
 getConnectionViaDoor door = ((view #otherSide &&& id) <$$> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
+
+getOtherSideOfDoor ::
+  NoMissingObjects wm es
+  => WMWithProperty wm Door
+  => DoorEntity
+  -> Eff es RoomEntity
+getOtherSideOfDoor door = do
+  p <- getPlayerLocation
+  d <- getDoor door
+  return $ if p `objectEquals` (d ^. #frontSide) then d ^. #backSide else d ^. #frontSide
 
 connectionLens ::
   forall wm.

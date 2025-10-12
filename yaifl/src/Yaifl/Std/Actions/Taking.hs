@@ -12,6 +12,7 @@ import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Std.Kinds.Person
+import Yaifl.Core.HasProperty
 
 data TakingResponses wm =
   TakeYourselfA

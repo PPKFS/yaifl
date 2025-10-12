@@ -25,6 +25,9 @@ module Yaifl.Core.Action
   , withActionInterrupt'
 
   , oneTouchableThing
+
+  , getMatchingThing
+  , getMatching
   ) where
 
 import Yaifl.Prelude hiding (Reader)
@@ -43,6 +46,8 @@ import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Refreshable
 import Yaifl.Text.Say
+
+import Yaifl.Core.Query.Object
 
 type ParseArgumentEffects wm es = (WithMetadata es, NoMissingObjects wm es, RuleEffects wm es)
 
@@ -172,3 +177,16 @@ oneTouchableThing ::
   => Args wm v
   -> [Thing wm]
 oneTouchableThing a = one $ view argsMainObject a
+
+getMatchingThing :: RuleEffects wm es => Text -> UnverifiedArgs wm params -> Eff es (Maybe (Thing wm))
+getMatchingThing matchElement args = do
+  e <- getMatching matchElement args
+  case e of
+    Just (ObjectParameter o) -> getThingMaybe o
+    Just (ThingParameter t) -> return (Just t)
+    _ -> return Nothing
+
+getMatching :: Text -> UnverifiedArgs wm params -> Eff es (Maybe (NamedActionParameter wm))
+getMatching matchElement (UnverifiedArgs args) = do
+  let mbMatch = args ^? #variables % _2 % to (find ((== matchElement) . fst) ) % _Just % _2
+  return mbMatch

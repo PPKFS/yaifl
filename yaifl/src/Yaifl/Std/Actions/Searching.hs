@@ -24,7 +24,7 @@ searchingResponses :: SearchingResponses wm -> Response wm (Args wm (Thing wm))
 searchingResponses = \case
   _ -> notImplementedResponse "response"
 
-type SearchingAction wm = Action wm (SearchingResponses wm) 'TakesNoParameter (Thing wm)
+type SearchingAction wm = Action wm (SearchingResponses wm) 'TakesThingParameter (Thing wm)
 type SearchingRule wm = ActionRule wm (SearchingAction wm) (Thing wm)
 searchingAction :: SearchingAction wm
 searchingAction = (makeAction "searching")

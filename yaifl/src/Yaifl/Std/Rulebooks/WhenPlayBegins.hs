@@ -5,11 +5,11 @@ module Yaifl.Std.Rulebooks.WhenPlayBegins
 import Yaifl.Prelude
 import qualified Data.Text as T
 
-import Breadcrumbs ( Breadcrumbs, addAnnotation )
+import Breadcrumbs ( addAnnotation )
 import Yaifl.Std.Move ( move )
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
-import Yaifl.Core.WorldModel ( WMWithProperty )
+import Yaifl.Core.HasProperty ( WMWithProperty )
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.ObjectLike
@@ -19,7 +19,6 @@ import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.Print
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Actions.GoesWith
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
@@ -29,12 +28,14 @@ whenPlayBeginsRules ::
   WMWithProperty wm Enclosing
   => Rulebook wm Unconstrained () Bool
 whenPlayBeginsRules = Rulebook
-    whenPlayBeginsName
-    Nothing
-    [ makeRule' "Display banner" $ sayIntroText >> rulePass
-    , makeRule' "Position player in world" positionPlayer
-    , makeRule' "Initial room description" initRoomDescription
-    ]
+  { name = whenPlayBeginsName
+  , defaultOutcome = Nothing
+  , rules =
+      [ makeRule' "Display banner" $ sayIntroText >> rulePass
+      , makeRule' "Position player in world" positionPlayer
+      , makeRule' "Initial room description" initRoomDescription
+      ]
+  }
 
 sayIntroText ::
   State Metadata :> es
@@ -61,11 +62,10 @@ introText w = fold
       (2 * T.length shortBorder + T.length w + 2) "-"
 
 initRoomDescription ::
-  Breadcrumbs :> es
-  => RuleEffects wm es
+  RuleEffects wm es
   => Eff es (Maybe Bool)
 initRoomDescription = do
-  parseAction (ActionOptions True True) [NoParameter] "look" >>= (\case
+  parseAction (ActionOptions { silently = True, hidePrompt = True }) [] "look" >>= (\case
     Left txt -> addAnnotation txt
     Right True -> pass
     Right False -> error "Could not find the looking action.")

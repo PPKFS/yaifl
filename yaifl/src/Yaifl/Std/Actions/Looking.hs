@@ -17,7 +17,6 @@ import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Core.Activity
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object( Object(..), objectEquals )
-import Yaifl.Core.Effects
 import Yaifl.Core.Entity ( HasID(..) )
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room ( IsVisited(..) )
@@ -26,7 +25,7 @@ import Yaifl.Std.Kinds.Animal
 import Yaifl.Std.Kinds.Supporter ( isSupporter )
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print ( Print, setStyle, runOnLookingParagraph, bold )
+import Yaifl.Text.Print ( setStyle, runOnLookingParagraph, bold )
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 
@@ -57,9 +56,9 @@ lookingAction ::
   => LookingAction wm
 lookingAction = (makeAction "looking")
   { understandAs = ["look", "looking"]
-  , matches = [] --todo: add "at => examine"
+  , matches = map (,TakesObjectParameter) ["at", "through"]
   , responses = roomDescriptionResponsesImpl
-  , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
+  , parseArguments = ParseArguments $ \ua@(UnverifiedArgs Args{..}) -> do
     -- if we have no source, then we have no idea where we are looking 'from'; return nothing
     -- lightLevels (recalc light) is how many levels we can actually see because of light
     -- vl is how many levels we could see in perfect light.
@@ -70,10 +69,14 @@ lookingAction = (makeAction "looking")
       addAnnotation $ "actor is located at " <> display loc
       vl <- getVisibilityLevels loc
       lightLevels <- recalculateLightOfParent source
+      mbThrough <- getMatchingThing "through" ua
+
       acName <- case fst variables of
         Nothing -> pure "looking"
         Just acName -> pure acName
-      return $ SuccessfulParse $ LookingActionVariables loc (take lightLevels vl) acName
+      case mbThrough of
+        Just through -> return $ ConversionTo "search" [ThingParameter through]
+        Nothing -> return $ SuccessfulParse $ LookingActionVariables loc (take lightLevels vl) acName
   , carryOutRules = makeActionRulebook "carry out looking"
         [ roomDescriptionHeading
         , roomDescriptionBody

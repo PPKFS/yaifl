@@ -39,6 +39,8 @@ import Yaifl.Text.SayQQ
 import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Actions.GoesWith
+import Yaifl.Core.HasProperty (WMWithProperty)
+import Yaifl.Core.Entity
 
 sayText ::
   SayableValue s wm
@@ -66,6 +68,20 @@ instance WithPrintingNameOfSomething wm => SayableValue (Thing wm) wm where
 instance WithPrintingNameOfSomething wm => SayableValue (AnyObject wm) wm where
   say = printName
   sayTell o = do
+    t <- doActivity #printingNameOfSomething (toAny o)
+    tell (fromMaybe "" t)
+
+instance WithPrintingNameOfSomething wm => SayableValue Entity wm where
+  say = printName
+  sayTell e = do
+    o <- getObject e
+    t <- doActivity #printingNameOfSomething (toAny o)
+    tell (fromMaybe "" t)
+
+instance WithPrintingNameOfSomething wm => SayableValue (TaggedEntity o) wm where
+  say = printName
+  sayTell e = do
+    o <- getObject e
     t <- doActivity #printingNameOfSomething (toAny o)
     tell (fromMaybe "" t)
 

@@ -82,6 +82,7 @@ instance Taggable (TaggedEntity PersonTag) ThingTag
 -- | If we can tagEntity a `TaggedEntity a` as a @b@, we can just coerce the entity
 -- rather than passing it twice.
 coerceTag ::
+  forall b a.
   Taggable (TaggedEntity a) b
   => TaggedEntity a
   -> TaggedEntity b

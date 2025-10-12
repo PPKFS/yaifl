@@ -43,9 +43,8 @@ import Yaifl.Core.Metadata
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Property( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
-import Yaifl.Core.TH ( makeSpecificsWithout )
+import Yaifl.Core.TH ( makeSpecificsWithout, WMWithProperty )
 import Yaifl.Core.Tag
-import Yaifl.Core.WorldModel
 import Yaifl.Std.Kinds.Openable
 import qualified Data.EnumSet as ES
 

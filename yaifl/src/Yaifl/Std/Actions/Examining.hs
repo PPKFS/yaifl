@@ -19,6 +19,7 @@ import Yaifl.Core.ObjectLike
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.Object
 import Yaifl.Std.Kinds.Person
+import Yaifl.Core.HasProperty
 
 data ExaminingResponses =
   ExamineDirectionA

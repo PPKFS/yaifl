@@ -11,6 +11,7 @@ import Yaifl.Text.Responses
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
+import Yaifl.Core.HasProperty
 
 type WithPrintingRoomDescriptionDetails wm =
   ( WithActivity "printingRoomDescriptionDetails" wm () (Thing wm) ()

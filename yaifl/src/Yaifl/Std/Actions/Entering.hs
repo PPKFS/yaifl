@@ -24,6 +24,7 @@ import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Std.Kinds.Door
+import Yaifl.Core.HasProperty
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA
@@ -63,7 +64,7 @@ enteringAction = (makeAction "entering")
       case mbCont of
         Nothing ->
           case mbDoor of
-            Just door -> return $ ConversionTo "go" [ThingParameter (fst variables)]
+            Just _door -> return $ ConversionTo "go" [ThingParameter (fst variables)]
             Nothing -> return $ FailedParse "That's not enterable."
         Just x -> return $ SuccessfulParse (tagObject x (fst variables))
   , beforeRules = makeActionRulebook "before entering rulebook" []

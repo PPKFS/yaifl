@@ -158,7 +158,7 @@ parseNouns ::
   -> Eff es (Either Text (NamedActionParameter wm, [(Text, NamedActionParameter wm)]))
 parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorriblyIfMissing $ do
   let isMatchWord = flip elem (map fst wordsToMatch)
-      parts = (split . whenElt) isMatchWord (words command)
+      parts = (\(x, y) -> x ++ [y]) $ foldl' (\(chunks, currentChunk) w -> if isMatchWord w then (chunks ++ [currentChunk], [w]) else (chunks, currentChunk++[w])) ([], []) (words command)
   case parts of
     -- no matches at all
     [] -> pure (fromMaybe NoParameter mbParameter, [])
@@ -167,12 +167,14 @@ parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorrib
     cmdArgWords:matchedWords -> do
       addAnnotation $ "split is " <> show cmdArgWords <> " and " <> show matchedWords <> " from " <> show parts
       cmdArgs <- parseArgumentType @wm (goesWithA (Proxy @goesWith)) (unwords cmdArgWords)
+      addAnnotation (show cmdArgs)
       -- then for each run of matching words we want to try and parse the rest of the list
       matchWords <- mapM (\case
         [] -> error "impossible"
         (matchWord:args) -> do
           let v = fromMaybe (error "impossible") $ lookup matchWord wordsToMatch
           arg' <- parseArgumentType @wm v (unwords args)
+          addAnnotation ("the matched arg was " <> show arg' <> " for " <> matchWord)
           either throwError (pure . (matchWord,)) arg') matchedWords
       either throwError pure cmdArgs >>= \c -> pure (c, matchWords)
 

@@ -32,6 +32,7 @@ import qualified Data.Text as T
 import Yaifl.Core.Tag (tagObject)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Say
+import Yaifl.Core.HasProperty
 
 done = defaults
 

@@ -33,6 +33,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
+import Yaifl.Core.HasProperty
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").
@@ -147,9 +148,9 @@ goingActionSet ::
   => WithPrintingNameOfSomething wm
   => UnverifiedArgs wm ('Optionally ('TakesOneOf 'TakesDirectionParameter 'TakesObjectParameter))
   -> Eff es (ParseArgumentResult wm (GoingActionVariables wm))
-goingActionSet (UnverifiedArgs Args{..}) = do
+goingActionSet ua@(UnverifiedArgs Args{..}) = do
   --now the thing gone with is the item-pushed-between-rooms;
-  thingGoneWith <- getMatchingThing "with"
+  thingGoneWith <- getMatchingThing "with" ua
   -- now the room gone from is the location of the actor;
   roomGoneFrom <- getLocation source
   --if the actor is in an enterable vehicle (called the carriage), now the vehicle gone by is the carriage;
@@ -174,17 +175,17 @@ goingActionSet (UnverifiedArgs Args{..}) = do
     -- now the target is the other side of the target from the room gone from;
     Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom) =<< getDoorMaybe door
     Nothing -> do
-      mbThrough <- getMatchingThing "through"
+      mbThrough <- getMatchingThing "through" ua
       pure $ do
             door <- mbThrough
             ds <- getDoorMaybe door
             getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom
   case mbTargetAndConn of
-    Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
+    Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through" ua
     Just (target, conn) -> do
       mbRoomGoneTo <- getRoomMaybe target
       case mbRoomGoneTo of
-        Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through"
+        Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through" ua
         Just roomGoneTo -> do
           addAnnotation $ "target was " <> show target
           pure $ SuccessfulParse $ GoingActionVariables
@@ -214,21 +215,12 @@ cantGoThatWay source mbDoorThrough fromRoom = do
       Just door -> [saying|#{We} #{can't}, since {the door} #{lead} nowhere.|]
   pure $ FailedParse "Can't go that way"
 
-getMatchingThing :: RuleEffects wm es => Text -> Eff es (Maybe (Thing wm))
-getMatchingThing matchElement = do
-  e <- getMatching matchElement
-  case e of
-    Nothing -> pure Nothing
-    Just e' -> getThingMaybe e'
-
 setDoorGoneThrough :: AnyObject wm -> Eff es (Maybe RoomEntity)
 setDoorGoneThrough _ = pure Nothing
 
 actorInEnterableVehicle :: Thing wm4 -> Eff es (Maybe (Thing wm))
 actorInEnterableVehicle _ = pure Nothing
 
-getMatching :: Text -> Eff es (Maybe Entity)
-getMatching = const $ return Nothing
 
 cantGoThroughClosedDoors :: GoingRule wm
 cantGoThroughClosedDoors = notImplementedRule "stand up before going"

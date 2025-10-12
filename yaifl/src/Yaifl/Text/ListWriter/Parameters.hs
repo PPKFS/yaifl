@@ -21,6 +21,7 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Text.ListWriter.Responses
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
+import Yaifl.Core.HasProperty
 
 
 type WithListWriting wm = (

@@ -15,10 +15,10 @@ import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Store
-import Yaifl.Core.WorldModel
 import Yaifl.Std.Actions.Looking.Locale
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
+import Yaifl.Core.HasProperty
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))
 

@@ -30,9 +30,9 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Property
 import Yaifl.Core.Tag
-import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Object
 import qualified Data.EnumSet as ES
+import Yaifl.Core.HasProperty
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors
