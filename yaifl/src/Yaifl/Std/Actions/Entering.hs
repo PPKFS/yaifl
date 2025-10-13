@@ -25,6 +25,7 @@ import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.HasProperty
+import Yaifl.Std.Kinds.MultiLocated
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA
@@ -53,6 +54,7 @@ type EnteringAction wm = Action wm () 'TakesThingParameter (EnclosingThing wm)
 
 enteringAction ::
   WithPrintingTheLocaleDescription wm
+  => WMWithProperty wm MultiLocated
   => WMWithProperty wm Door
   => EnteringAction wm
 enteringAction = (makeAction "entering")
@@ -96,7 +98,7 @@ cantEnterWhenEntered = notImplementedRule "cant enter what's already entered"
 cantEnterUnenterable :: EnteringRule wm
 cantEnterUnenterable = notImplementedRule "can't enter what's not enterable rule"
 
-implicitlyPassThrough :: forall wm. WithPrintingNameOfSomething wm => EnteringRule wm
+implicitlyPassThrough :: forall wm. (WMWithProperty wm MultiLocated, WithPrintingNameOfSomething wm) => EnteringRule wm
 implicitlyPassThrough = makeRule "can't enter closed containers rule" [] $ \a@Args{source=s, variables=v} -> withActionInterrupt' $ do
   let actorHolder = thingContainedBy s
       nounHolder = thingContainedBy $ getTaggedObject v
@@ -104,17 +106,8 @@ implicitlyPassThrough = makeRule "can't enter closed containers rule" [] $ \a@Ar
   localCeiling <-
         if actorHolder == nounHolder
         then return actorHolder
-        else
-          do
-            acHier <- getContainingHierarchy s
-            nounHier <- getContainingHierarchy (getTaggedObject v)
-            -- we can cheat doing a proper lowest common ancestor. we can take one of the hierarchies
-            -- (which one is irrelevant), and find the earliest possible match in the other list
-            let commAncestor (l1h :| l1s) l2 = if l1h `elem` l2 then l1h else commAncestor
-                  (case l1s of
-                    [] -> error "no common ancestor"
-                    x:xs -> x :| xs) l2
-            return $ commAncestor acHier nounHier
+        else getCommonAncestor s v
+
   -- if the holder of the actor is the holder of the noun, continue the action;
   when (actorHolder == nounHolder) $ throwError ContinueAction
 
@@ -186,8 +179,7 @@ cantEnterClosedContainers = makeRule "can't enter closed containers rule" [] $ \
   --if the noun is a closed container:
   ruleWhen (isClosedContainer <$?> asC) $ do
     -- if the player is the actor:
-    whenPlayer s $
-      [saying|#{We} #{can't get} into the closed {t}.|]
+    whenPlayer s [saying|#{We} #{can't get} into the closed {t}.|]
     return (Just False)
 
 

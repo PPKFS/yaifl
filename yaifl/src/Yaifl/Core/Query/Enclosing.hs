@@ -17,7 +17,7 @@ module Yaifl.Core.Query.Enclosing
 
 import Yaifl.Prelude
 
-import Data.List.NonEmpty as NE (cons)
+import Data.List.NonEmpty as NE (cons, map, append)
 
 
 import Yaifl.Core.Effects
@@ -85,7 +85,9 @@ getAllObjectsInEnclosing incScenery incDoors recurse r = do
   return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)
 
 getContainingHierarchies ::
+  forall wm es.
   NoMissingObjects wm es
+  => WMWithProperty wm MultiLocated
   => Thing wm
   -> Eff es (NonEmpty (NonEmpty EnclosingEntity))
 getContainingHierarchies tLike = do
@@ -98,19 +100,28 @@ getContainingHierarchies tLike = do
               o' <- getObject o
               asThingOrRoom
                 (\v -> do
-                  {-rs <- toList <$> getHierarchy v
-                  pure $ ([o `NE.cons` r | r <- rs]) -}
-                  error ""
+                  rs <- getHierarchy v
+                  return $ NE.map (o `NE.cons`) rs
                 )
-                (\r -> error "") o' -- pure $ (coerceTag (tagRoomEntity r) :| []) o') :| []
+                (\r -> pure $ (coerceTag (tagRoomEntity r) :| []) :| []) o' --
         case mbMultiLoc of
           -- nice path
           Nothing -> fromContainingObject enc
           Just multiLoc -> do
-            -- hierarchies <- flip mapM (toList $ locations multiLoc) fromContainingObject
-            error ""
+            hierarchies <- forM (toList $ locations multiLoc) fromContainingObject
+            case hierarchies of
+              [] -> error "multilocated object had no locations"
+              l@(a:_) -> return $ foldl' NE.append a l
   getHierarchy tLike
 
+-- | get the first (and unless you're messing with doors or backdrops or other multi-located objects, you probably
+-- want this one).
+getContainingHierarchy ::
+  NoMissingObjects wm es
+  => WMWithProperty wm MultiLocated
+  => Thing wm
+  -> Eff es (NonEmpty EnclosingEntity)
+getContainingHierarchy = head <$$> getContainingHierarchies
 
 getEnclosingMaybe ::
   forall wm.
@@ -163,21 +174,23 @@ getEnclosingObject theObj = do
     let e = getEnclosingEntity theObj
     o <- getObject e
     let taggedObj = tagObject e o
-    pure $ taggedObj
+    pure taggedObj
 
 enclosingContains ::
   NoMissingObjects wm es
+  => WMWithProperty wm MultiLocated
   => ThingLike wm o
   => EnclosingEntity
   -> o
   -> Eff es Bool
 enclosingContains e o = do
-  hier <- getContainingHierarchy =<< getThing o
-  return $ e `elem` hier
+  hiers <- getContainingHierarchies =<< getThing o
+  return $ any (elem e) hiers
 
 getCommonAncestor ::
   HasCallStack
   => NoMissingObjects wm es
+  => WMWithProperty wm MultiLocated
   => ThingLike wm o1
   => ThingLike wm o2
   => o1
@@ -192,12 +205,18 @@ getCommonAncestor t1' t2' = do
   then return actorHolder
   else
     do
-      acHier <- getContainingHierarchy t1
-      nounHier <- getContainingHierarchy t2
+      acHier <- getContainingHierarchies t1
+      nounHier <- getContainingHierarchies t2
       -- we can cheat doing a proper lowest common ancestor. we can take one of the hierarchies
       -- (which one is irrelevant), and find the earliest possible match in the other list
-      let commAncestor (l1h :| l1s) l2 = if l1h `elem` l2 then l1h else commAncestor
+      let commAncestor :: Eq a => Maybe (NonEmpty a) -> NonEmpty a -> Maybe a
+          commAncestor Nothing _ = Nothing
+          commAncestor (Just (l1h :| l1s)) l2 = if l1h `elem` l2 then Just l1h
+          else commAncestor
             (case l1s of
-              [] -> error $ unwords ["no common ancestor", display (t1 ^. #name), display (t2 ^. #name), show actorHolder, show nounHolder]
-              x:xs -> x :| xs) l2
-      return $ commAncestor acHier nounHier
+              [] -> Nothing
+              x:xs -> Just (x :| xs)
+            ) l2
+      return $ case catMaybes $ [commAncestor (Just a) b |  a <- toList acHier, b <- toList nounHier] of
+        [] -> error $ unwords ["no common ancestor", display (t1 ^. #name), display (t2 ^. #name), show actorHolder, show nounHolder]
+        (x:_) -> x

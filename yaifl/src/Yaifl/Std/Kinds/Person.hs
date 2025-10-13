@@ -13,7 +13,6 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Std.Move
 import Yaifl.Core.Entity
-import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
 import qualified Data.Text.Lazy.Builder as TLB
@@ -93,7 +92,7 @@ getPlayer ::
 getPlayer = do
   pr <- use #currentPlayer
   per <- getThing pr
-  return $ (tagObject pr per)
+  return (tagObject pr per)
 
 getPlayer' ::
   NoMissingObjects wm es

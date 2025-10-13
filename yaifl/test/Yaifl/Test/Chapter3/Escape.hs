@@ -30,8 +30,8 @@ escapeWorld = do
   yb <- addRoom "Your Bedroom" ! done
   gs <- addRoom "Grassy Slope" ! #modify makeNameImproper ! done
   w <- addDoor "bedroom window"
-    ! #front (yb, East)
-    ! #back (gs, West)
+    ! #front (yb, West)
+    ! #back (gs, East)
     ! done
   insteadOf #searching [theObject w] $ \_ -> do
     bs <- getOtherSideOfDoor w

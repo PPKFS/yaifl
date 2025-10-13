@@ -15,7 +15,6 @@ import Yaifl.Core.Entity
 import Yaifl.Core.HasProperty
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Object
-import Yaifl.Core.WorldModel
 import Yaifl.Core.Query.Object
 
 getPropertyOrThrow ::

@@ -32,7 +32,6 @@ import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Thing ( Thing )
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
-import Yaifl.Core.WorldModel
 
 data Supporter = Supporter
   { enclosing :: Enclosing

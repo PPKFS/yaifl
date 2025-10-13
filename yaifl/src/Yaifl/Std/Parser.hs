@@ -12,7 +12,6 @@ import Effectful.Error.Static
 
 import Data.Char (isSpace)
 import Data.List (lookup )
-import Data.List.Split
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
@@ -21,7 +20,6 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Refreshable
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Tag
 import Yaifl.Std.Actions.Imports
@@ -308,7 +306,7 @@ findObjectsFrom ::
 findObjectsFrom t allItems considerAmbiguity = do
   -- first we drop articles because we don't want to be overly lenient
   -- then for how inform likes to treat understanding as, we also need every substring of the above
-  let phraseTails = (concatMap (filter (\x -> (not . null $ x) && x /= ["the"] ) . inits) . tails . words) $ t
+  let phraseTails = (concatMap (filter (\x -> (not . null $ x) && x /= ["the"] ) . inits) . tails . words) t
       phraseSet = S.fromList . map (T.intercalate " ") $ phraseTails
   -- the scores here are likelihood that it's matching as a singular or part of a plural
   scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems

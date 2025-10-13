@@ -36,6 +36,8 @@ import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
+import Yaifl.Core.HasProperty
+import Yaifl.Std.Kinds.MultiLocated
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
@@ -147,6 +149,7 @@ theObject' o = Precondition
 
 whenIn ::
   ObjectLike wm e
+  => WMWithProperty wm MultiLocated
   => IsEnclosing e
   => e
   -> Precondition wm (Args wm v)
@@ -156,11 +159,12 @@ whenIn e = Precondition
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = \args -> do
       hierarchy <- getContainingHierarchies (args ^. #source)
-      pure $ elem (getEnclosingEntity e) hierarchy
+      pure $ any (elem (getEnclosingEntity e)) hierarchy
   }
 
 whenPlayerIsIn ::
   ObjectLike wm e
+  => WMWithProperty wm MultiLocated
   => IsEnclosing e
   => e
   -> Precondition wm a
@@ -169,8 +173,8 @@ whenPlayerIsIn e = Precondition
       e' <- getObject e
       pure $ "when in the location " <> display (e' ^. #name)
   , checkPrecondition = const $ do
-      hierarchy <- getPlayer' >>= getContainingHierarchy
-      pure $ elem (getEnclosingEntity e) hierarchy
+      hierarchy <- getPlayer' >>= getContainingHierarchies
+      pure $ any (elem (getEnclosingEntity e)) hierarchy
   }
 
 aKindOf ::

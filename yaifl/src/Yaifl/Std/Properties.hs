@@ -15,6 +15,7 @@ import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person
 import Yaifl.Text.Say
 import Yaifl.Core.HasProperty
+import Yaifl.Std.Kinds.MultiLocated
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
@@ -23,6 +24,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Enterable
   , WMWithProperty s Device
   , WMWithProperty s Person
+  , WMWithProperty s MultiLocated
   , HasLookingProperties s
   , WMStdDirections s
   , WMWithProperty s Door

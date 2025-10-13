@@ -20,8 +20,6 @@ import Yaifl.Core.TH
 import Yaifl.Core.Tag
 
 import qualified Data.Set as S
-import Yaifl.Core.WorldModel
-import Yaifl.Core.HasProperty
 import Yaifl.Core.ObjectLike
 
 data Door = Door

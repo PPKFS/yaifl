@@ -1,0 +1,44 @@
+------------------
+----- Escape -----
+------------------
+
+Your Bedroom
+You can see a bedroom window here.
+
+>look through window
+
+Through the window, you make out the Grassy Slope.
+
+>climb window
+
+The window is shut: you'd break the glass.
+
+>open window
+
+You open the bedroom window.
+
+>climb through window
+
+Grassy Slope
+You can see a bedroom window here.
+
+>look through window
+
+Through the window, you make out Your Bedroom.
+
+>close window
+
+You close the bedroom window.
+
+>e
+
+The window is shut: you'd break the glass.
+
+>open window
+
+You open the bedroom window.
+
+>e
+
+Your Bedroom
+You can see a bedroom window here.
