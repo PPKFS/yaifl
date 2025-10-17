@@ -49,5 +49,5 @@ spec _allTenses = M.fromList
   , c3Harness ex18 -- Disenchantment Bay 4
   , c3Harness ex19 -- Laura
   -- example 20 is a single line of disenchantment bay
-  , c3Harness ex21
+  , c3Harness ex21 -- Escape
   ]
