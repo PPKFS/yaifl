@@ -33,6 +33,7 @@ import Yaifl.Core.Tag (tagObject)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Say
 import Yaifl.Core.HasProperty
+import Effectful.Error.Static
 
 done = defaults
 
@@ -48,6 +49,7 @@ type AddObjects wm es = (
   , Pointed (WMThingData wm)
   , Pointed (WMRegionData wm)
   , Pointed (WMRoomData wm)
+  , Error MissingObject :> es
   )
 
 makeObject ::
@@ -91,7 +93,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
     addAnnotation "object added to world"
     lastRoomE <- use #previousRoom
     tickGlobalTime
-    failHorriblyIfMissing $ do
+    do
       obj' <- getObject e
       lastRoom <- getRoom lastRoomE
       asThingOrRoom

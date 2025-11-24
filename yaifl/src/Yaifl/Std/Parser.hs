@@ -73,7 +73,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
         filterFirstStringM "." $ map (inject . handleVerbAction actionOpts additionalArgs) possVerbs
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
-      runActionHandlerAsWorldActions $ failHorriblyIfMissing $ say t')
+      runActionHandlerAsWorldActions $ say t')
     return ac
 
 handleVerbAction ::
@@ -121,8 +121,9 @@ handleVerbAction actionOpts additionalArgs = \case
           addAnnotation $ "Running a set of plural actions..." <> matched
           rs <- sequence <$> forM xs (\x -> do
             let acName = a ^. #name
-            n <- failHorriblyIfMissing $ sayParameterName x
-            failHorriblyIfMissing [saying|({acName} {n}) |]
+            failHorriblyIfMissing $ do
+              n <- sayParameterName x
+              [saying|({acName} {n}) |]
             runOnParagraph
             actuallyRunIt parsedArgs x)
           pure $ second and rs

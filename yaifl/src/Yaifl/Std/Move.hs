@@ -6,15 +6,12 @@ module Yaifl.Std.Move
 import Yaifl.Prelude
 import Breadcrumbs
 
-
-import Yaifl.Core.Metadata ( Metadata(..) )
 import Yaifl.Core.Kinds.Object
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Effects
 import Yaifl.Core.Entity
 import Yaifl.Core.Tag
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.WorldModel
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike
@@ -24,17 +21,14 @@ import Yaifl.Core.HasProperty
 
 move ::
   forall l wm es.
-  Breadcrumbs :> es
-  => State Metadata :> es
-  => ObjectQuery wm es
-  => Display (WMText wm)
+  NoMissingObjects wm es
   => WMWithProperty wm Enclosing
   => IsEnclosingObject l
   => ObjectLike wm l
   => Thing wm
   -> l
   -> Eff es Bool
-move objectToMove oLoc = failHorriblyIfMissing moveBlock
+move objectToMove oLoc = moveBlock
   where
     moveBlock = withSpan' "move" "" $ do
       objectToMove' <- refreshThing objectToMove

@@ -12,6 +12,7 @@ cabal-dev
 *.aux
 *.hp
 *.eventlog
+*.secret
 .virtualenv
 .hsenv
 .hpc

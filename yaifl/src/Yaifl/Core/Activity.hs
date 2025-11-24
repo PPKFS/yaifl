@@ -87,7 +87,6 @@ beginActivity ::
 beginActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
-    failHorriblyIfMissing
       (do
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
         -- run the before rules only.
@@ -122,7 +121,7 @@ whenHandling acL f = do
     case currentVariables ac of
       Nothing -> pure (Right Nothing)
       Just c -> do
-        r <- failHorriblyIfMissing $ runReader ac $ runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) c
+        r <- runReader ac $ runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) c
         modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ maybe c fst r)
         let runBlock = do
               a <- f c
@@ -149,7 +148,6 @@ endActivity ::
 endActivity acF = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acF)
   withSpan "end activity" (ac ^. #name) $ \aSpan ->
-    failHorriblyIfMissing
       (do
         case currentVariables ac of
           Nothing -> pure Nothing
@@ -168,10 +166,10 @@ doActivity ::
   -> Eff es (Maybe r)
 doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
-  withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac $ failHorriblyIfMissing (do
+  withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac (do
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ c)
     x <- runRulebookAndReturnVariables (Just aSpan) True (beforeRules ac) c
     mr <- runRulebookAndReturnVariables (Just aSpan) True (carryOutRules ac) (maybe c fst x)
     er <- runRulebookAndReturnVariables (Just aSpan) True (afterRules ac) (maybe c fst mr)
     modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables .~ Nothing)
-    return $ (combineResults ac) (snd =<< mr) (snd =<< er))
+    return $ combineResults ac (snd =<< mr) (snd =<< er))

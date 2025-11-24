@@ -1,0 +1,74 @@
+cabal-version: 3.6
+name:          yaifl-discord
+version:       0.0.0.1
+synopsis:      Some sort of discord frontend for yaifl.
+description:   Some sort of discord frontend for yaifl.
+homepage:      https://github.com/PPKFS/yaifl
+bug-reports:   https://github.com/PPKFS/yaifl/issues
+license:       MIT
+author:        Avery
+maintainer:    Avery <ppkfs@outlook.com>
+copyright:     2024 Avery
+category:      Game Development
+build-type:    Simple
+tested-with:   GHC == 9.10
+
+source-repository head
+  type:     git
+  location: https://github.com/PPKFS/yaifl.git
+
+common common-options
+  build-depends:
+    base >= 4.17.2 && < 5,
+    containers >= 0.6.7 && < 1.7,
+    effectful-core >= 2.3.0 && < 3.4,
+    effectful-plugin >= 1.1.0 && < 2.2,
+    effectful-th >= 1.0.0 && < 2.1,
+    text,
+    breadcrumbs,
+    yaifl
+
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wredundant-constraints
+    -Wno-unused-packages -Wno-deprecations -fhide-source-paths
+    -Wno-unused-top-binds -Wmissing-deriving-strategies -O2
+    -flate-specialise -fspecialise-aggressively
+    -fprint-potential-instances -fno-warn-unused-do-bind -haddock
+    -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages -threaded
+
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DefaultSignatures
+    DeriveAnyClass
+    DerivingStrategies
+    DuplicateRecordFields
+    FunctionalDependencies
+    InstanceSigs
+    LambdaCase
+    MultiWayIf
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    PatternSynonyms
+    QuasiQuotes
+    StrictData
+    TemplateHaskell
+    TypeFamilies
+    UndecidableInstances
+    ViewPatterns
+
+executable yaifl-discord-app
+  import: common-options
+  hs-source-dirs:  app
+  main-is: Main.hs
+  other-modules:
+    ExampleUtils
+  build-depends:
+    , prettyprinter
+    , split
+    , yaifl
+    , template-haskell
+    , discord-haskell
+    , vector
+    , unliftio

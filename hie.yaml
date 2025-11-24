@@ -14,3 +14,6 @@ cradle:
 
     - path: "roguefunctor/src"
       component: "lib:roguefunctor"
+
+    - path: "yaifl-discord/app"
+      component: "executable:yaifl-discord-app"

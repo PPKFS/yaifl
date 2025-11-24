@@ -14,6 +14,8 @@ module Yaifl.Std.Kinds.Openable
   , Lockability(..)
   , isOpen
   , isClosed
+  , isLocked
+  , isUnlocked
   , openIt
   , closeIt
   ) where

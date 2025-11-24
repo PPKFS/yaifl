@@ -14,6 +14,7 @@ packages:
   yaifl/yaifl.cabal
   yaifl-rogue/yaifl-rogue.cabal
   roguefunctor/roguefunctor.cabal
+  yaifl-discord/yaifl-discord.cabal
 
 -- documentation: true
 haddock-all: true

@@ -20,6 +20,11 @@ module Yaifl.Std.Kinds.Direction (
   , WMStdDirections
   -- * Parsing/Printing
   , HasDirectionalTerms(..)
+
+  , northOf
+  , westOf
+  , southOf
+  , eastOf
   ) where
 
 import Yaifl.Prelude hiding (Down)
@@ -102,3 +107,15 @@ instance HasDirectionalTerms ('WorldModel s Direction a x b c ac r sa act) where
     Out -> ["out", "outside"]
     Up -> ["up", "upwards", "above", "u"]
     Down -> ["down", "downwards", "below", "d"]
+
+northOf :: Direction
+northOf = South
+
+southOf :: Direction
+southOf = North
+
+eastOf :: Direction
+eastOf = West
+
+westOf :: Direction
+westOf = East

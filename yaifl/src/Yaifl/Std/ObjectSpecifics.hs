@@ -164,7 +164,7 @@ addBackdrop ::
   -> "description" :? WMText wm -- ^ Description.
   -> "described" :? ThingDescribed
   -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
-  -> "locations" :! (NonEmpty EnclosingEntity)
+  -> "locations" :! NonEmpty EnclosingEntity
   -> Eff es ThingEntity
 addBackdrop n ia des (argDef #described Described -> desc) (argDef #modify pass -> upD) (argF #locations -> Identity (l:|ls)) = do
   d <- addThing @wm n ia des

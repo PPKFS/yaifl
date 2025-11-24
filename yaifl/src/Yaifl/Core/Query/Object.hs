@@ -15,7 +15,6 @@ module Yaifl.Core.Query.Object
   ) where
 
 import Yaifl.Prelude
-import Breadcrumbs
 
 import Yaifl.Core.Metadata
 import Yaifl.Core.Kinds.Object
@@ -98,11 +97,9 @@ anyModifyToRoom ::
 anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
 
 getCurrentPlayer ::
-  Breadcrumbs :> es
-  => ObjectLookup wm :> es
-  => State Metadata :> es
+  NoMissingRead wm es
   => Eff es (Thing wm)
-getCurrentPlayer = failHorriblyIfMissing $ use #currentPlayer >>= getThing
+getCurrentPlayer = use #currentPlayer >>= getThing
 
 isUnderstoodAs ::
   NoMissingObjects wm es

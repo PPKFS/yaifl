@@ -204,7 +204,7 @@ newWorld ::
   => WMHasObjSpecifics wm
   => WMStdDirections wm
   => Eff (EffStack wm ++ '[IOE]) ()
-newWorld = failHorriblyIfMissing $ do
+newWorld = do
   addBaseObjects
   addBaseActions
 

@@ -18,7 +18,6 @@ import Yaifl.Core.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
 import Yaifl.Core.Actions.Args
-import Yaifl.Core.Effects
 import Yaifl.Core.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
@@ -55,7 +54,7 @@ newtype ActionProcessing wm = ActionProcessing
 actionProcessingRules :: forall wm. SayableValue (WMText wm) wm => ActionProcessing wm
 actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm resp goesWith v) u -> do
   wa <- get @(WorldActions wm)
-  runReader a $ failHorriblyIfMissing (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) aSpan False (Rulebook @wm
+  runReader a (runRulebook @wm @_ @_ @_ @((:>) (Reader (Action wm resp goesWith v))) aSpan False (Rulebook @wm
     "action processing"
     (Just True)
     -- I have no idea how this works

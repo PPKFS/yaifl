@@ -22,7 +22,8 @@ import Yaifl.Std.Actions.Examining
 import Yaifl.Core.Entity
 import Yaifl.Core.Effects
 import Yaifl.Std.Kinds.Door
-
+import Yaifl.Std.Kinds.Openable
+import Yaifl.Std.Kinds.Person
 
 ex22 :: (Text, [Text], Game PlainWorldModel ())
 ex22 = ("Garibaldi", escapeTestMeWith, garibaldiWorld)
@@ -40,18 +41,23 @@ garibaldiWorld = do
       whenJust (getDoorMaybe thing) $ \door -> do
         let frontSide = door ^. #frontSide
             backSide = door ^. #backSide
-            locked = door ^. #opened % #lockability % #locked
-        [saying|#{linebreak} {door} ({frontSide}/{backSide}): {?if locked} {?else} {?end if} |]
+            locked = isLocked door
+        [saying|#{linebreak} {door} ({frontSide}/{backSide}): {?if locked}LOCKED{?else}UNLOCKED{?end if} |]
         error ""
       rulePass
-  insteadOf #climbing [theObject w] $ tryAction "enter" [TheThing $ coerceTag w]
+    [saying|#{paragraphBreak}|]
+  p <- getPlayer
+  sr `isNowCarriedBy` p
 
-  -- the original requires you to define "climb through [something]" as an alias, whereas
-  -- my parser will just assume you want to climb something called the "through window" and considers
-  -- one word enough of a match.
-
-  -- I don't know if this needs fixing but if I leave this here for when I inevitably rewrite the parser it'll help.
-  insteadOf #going [throughTheClosedDoor w] $ const [saying|The window is shut: you'd break the glass.|]
+  tdb <- addRoom "Docking Bay" ! #modify makeNameImproper ! done
+  tz <- addRoom "Zocalo" ! #modify makeNameImproper ! done
+  s <- addRoom' "Space" ! done
+  ml <- addRoom "Medlab" ! done
+  tia <- addDoor "inner airlock"
+          ! #frontSide northOf tdb
+          ! #backSide southOf tz
+          ! #modify makeUnlocked
+          ! done
   pass
 
 whenSwitchedOn :: ThingEntity -> Precondition PlainWorldModel (Args PlainWorldModel (ExaminingActionVariables PlainWorldModel))
