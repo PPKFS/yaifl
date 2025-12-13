@@ -48,8 +48,8 @@ import Yaifl.Prelude
 
 import Breadcrumbs
 
-import Yaifl.Core.Entity
-import Yaifl.Core.Kinds.Object
+import Yaifl.Entity
+import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.ObjectKind
 import qualified Data.Set as S
 import System.Random ( StdGen, UniformRange, uniformR, Uniform, uniform )

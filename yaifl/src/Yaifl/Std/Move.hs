@@ -6,18 +6,18 @@ module Yaifl.Std.Move
 import Yaifl.Prelude
 import Breadcrumbs
 
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
-import Yaifl.Core.Tag
+import Yaifl.Entity
+import Yaifl.Tag
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.EnumSet as ES
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 move ::
   forall l wm es.

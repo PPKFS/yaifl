@@ -7,18 +7,18 @@ import Yaifl.Prelude
 
 import Breadcrumbs
 import Yaifl.Core.Activity hiding (name)
-import Yaifl.Core.Entity ( HasID(..) )
+import Yaifl.Entity ( HasID(..) )
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing ( Enclosing(..) )
-import Yaifl.Core.Kinds.Object( Object(..) )
+import Yaifl.Object.Kind( Object(..) )
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.Store
+import Yaifl.Store
 import Yaifl.Std.Actions.Looking.Locale
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))
 

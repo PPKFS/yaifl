@@ -15,7 +15,7 @@ import Yaifl.Core.Refreshable ( Refreshable(..) )
 import qualified Data.Text as T
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Text.Print (modifyBuffer)
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue
 

@@ -8,11 +8,11 @@ import Yaifl.Core.Effects
 import Yaifl.Core.Query.Property
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.EnumSet as ES
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Std.Move
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
 import qualified Data.Text.Lazy.Builder as TLB

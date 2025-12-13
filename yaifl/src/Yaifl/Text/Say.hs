@@ -22,9 +22,9 @@ import GHC.TypeLits
 import Yaifl.Prelude
 import Yaifl.Core.Activity
 import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Core.Rules.Rulebook
@@ -39,8 +39,8 @@ import Yaifl.Text.SayQQ
 import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Actions.GoesWith
-import Yaifl.Core.HasProperty (WMWithProperty)
-import Yaifl.Core.Entity
+import Yaifl.HasProperty (WMWithProperty)
+import Yaifl.Entity
 
 sayText ::
   SayableValue s wm

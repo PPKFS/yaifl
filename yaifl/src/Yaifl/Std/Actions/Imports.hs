@@ -5,7 +5,7 @@ module Yaifl.Std.Actions.Imports
   , module Yaifl.Text.SayableValue
   , module Yaifl.Core.Rules.Rulebook
   , module Yaifl.Text.Responses
-  , module Yaifl.Core.WorldModel
+  , module Yaifl.WorldModel
   , module Yaifl.Core.Actions.GoesWith
   ) where
 
@@ -15,5 +15,5 @@ import Yaifl.Text.Say
 import Yaifl.Text.SayableValue
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Text.Responses
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Actions.GoesWith

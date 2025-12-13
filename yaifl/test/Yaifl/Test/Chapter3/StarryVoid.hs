@@ -3,7 +3,7 @@ module Yaifl.Test.Chapter3.StarryVoid where
 import Yaifl.Prelude
 
 import Yaifl
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Std.Actions.Going
@@ -37,7 +37,7 @@ starryVoidWorld = do
         withThing $ \t ->
         do
           p <- getPlayer
-          picr <- (== unTag tcr) . getID <$> getLocation p
+          picr <- (== unTagEntity tcr) . getID <$> getLocation p
           let cl = isClosed t
           [sayingTell|{?if picr}A magician's booth stands in the corner, painted dark blue with glittering gold stars.¬
       {?else if cl}A crack of light indicates the way back out to the center ring.¬

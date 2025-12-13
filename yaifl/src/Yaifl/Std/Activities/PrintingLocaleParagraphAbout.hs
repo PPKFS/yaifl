@@ -7,10 +7,10 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Activity
 import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Looking.Locale
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Text.SayQQ
@@ -23,10 +23,10 @@ import Yaifl.Text.ListWriter
 import Yaifl.Std.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Tag
-import Yaifl.Core.WorldModel
+import Yaifl.Tag
+import Yaifl.WorldModel
 import Yaifl.Std.Kinds.Person
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 setLocalePriority ::
   Thing s

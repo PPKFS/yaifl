@@ -25,7 +25,7 @@ import Effectful.Reader.Static
 import Yaifl.Core.Refreshable ( Refreshable )
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Rules.Run
 import Yaifl.Text.Responses
@@ -73,7 +73,7 @@ makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "
   (blankRulebook ("Before " <> n))
   ((blankRulebook ("Carry Out " <> n)) { rules = rs })
   (blankRulebook ("After " <> n))
-  (const)
+  const
 
 beginActivity ::
   forall wm resps v r es.

@@ -25,8 +25,8 @@ instance IsOption AllTenses where
   optionHelp = return "Run the examples in all tenses and viewpoints"
   {- optionCLParser = AllTenses <$>
     switch
-      (  long (untag (optionName :: Tagged AllTenses String))
-      <> help (untag (optionHelp :: Tagged AllTenses String))
+      (  long (unTagEntity (optionName :: Tagged AllTenses String))
+      <> help (unTagEntity (optionHelp :: Tagged AllTenses String))
       )-}
 -- this is a rip of tasty's main, but hooking my own global `TraceID` through it for
 -- better Zipkin traces.

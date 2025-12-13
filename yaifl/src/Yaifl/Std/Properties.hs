@@ -5,7 +5,7 @@ module Yaifl.Std.Properties
 import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Device
@@ -14,7 +14,7 @@ import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person
 import Yaifl.Text.Say
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated
 
 type HasStandardProperties s = (

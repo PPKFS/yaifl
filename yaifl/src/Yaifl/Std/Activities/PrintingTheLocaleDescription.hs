@@ -11,8 +11,8 @@ import Breadcrumbs
 
 import Yaifl.Core.Activity
 import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
-import Yaifl.Core.Store ( Store(unStore) )
-import Yaifl.Core.Kinds.Object
+import Yaifl.Store ( Store(unStore) )
+import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
 import Yaifl.Text.Responses
 import Yaifl.Core.Rules.Rulebook

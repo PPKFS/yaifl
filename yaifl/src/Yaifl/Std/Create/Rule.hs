@@ -23,7 +23,7 @@ import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
 import Yaifl.Core.Activity
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata (isKind)
 import Yaifl.Core.ObjectLike
@@ -35,8 +35,8 @@ import Yaifl.Std.Actions.Collection (ActionCollection)
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
-import Yaifl.Core.HasProperty
+import Yaifl.Entity
+import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))

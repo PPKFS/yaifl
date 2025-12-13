@@ -16,8 +16,8 @@ module Yaifl.Core.Kinds.Enclosing (
 import Yaifl.Prelude
 
 import Data.EnumSet ( EnumSet, empty )
-import Yaifl.Core.Entity
-import Yaifl.Core.Tag
+import Yaifl.Entity
+import Yaifl.Tag
 
 -- | A component that contains other objects.
 data Enclosing = Enclosing

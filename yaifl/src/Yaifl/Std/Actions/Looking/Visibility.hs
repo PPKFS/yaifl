@@ -7,7 +7,7 @@ import Yaifl.Prelude
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Core.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
 import Yaifl.Std.Activities.PrintingTheLocaleDescription
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Kinds.Room
@@ -16,12 +16,12 @@ import Yaifl.Std.Kinds.Container
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.Query.Object
 import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

@@ -34,17 +34,17 @@ module Yaifl.Std.Kinds.Container
 import Yaifl.Prelude
 
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Property( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.Core.TH ( makeSpecificsWithout, WMWithProperty )
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Std.Kinds.Openable
 import qualified Data.EnumSet as ES
 

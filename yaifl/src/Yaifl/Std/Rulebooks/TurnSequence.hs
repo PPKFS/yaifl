@@ -10,7 +10,7 @@ import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Core.Rules.Run ( runRulebook )
 import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Std.Rulebooks.ActionProcessing
 
 

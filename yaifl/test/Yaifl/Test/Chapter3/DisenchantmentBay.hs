@@ -12,7 +12,7 @@ import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Core.Metadata
 import Yaifl.Test.Common
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 
 ex14 :: (Text, [Text], Game PlainWorldModel ())
 ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)

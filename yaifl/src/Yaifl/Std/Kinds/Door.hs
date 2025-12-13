@@ -10,14 +10,14 @@ module Yaifl.Std.Kinds.Door
 import Yaifl.Prelude
 
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Std.Kinds.Openable as O
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Core.Query.Property
 import Yaifl.Core.TH
-import Yaifl.Core.Tag
+import Yaifl.Tag
 
 import qualified Data.Set as S
 import Yaifl.Core.ObjectLike
@@ -47,7 +47,7 @@ tagDoorObject ::
   Door
   -> Thing wm
   -> TaggedObject (Thing wm) DoorTag
-tagDoorObject _ds = unsafeTagObject
+tagDoorObject = tagObject
 
 getDoor ::
   NoMissingObjects wm es

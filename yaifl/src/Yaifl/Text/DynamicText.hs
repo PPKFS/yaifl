@@ -4,7 +4,7 @@ module Yaifl.Text.DynamicText
   , text
   ) where
 
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Prelude
 
 import Yaifl.Core.Rules.RuleEffects

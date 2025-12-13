@@ -7,18 +7,19 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
 import Yaifl.Core.Metadata
 import Yaifl.Test.Common
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Going
+import Yaifl.Object.Create
 
 
 ex21 :: (Text, [Text], Game PlainWorldModel ())

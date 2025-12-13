@@ -9,7 +9,7 @@ module Yaifl.Core.Actions.GoesWith
 
 import Yaifl.Prelude hiding (show)
 
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import GHC.Show
 import qualified Data.Set as S
 import Yaifl.Core.Kinds.Thing

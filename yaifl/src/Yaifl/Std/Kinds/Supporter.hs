@@ -21,14 +21,14 @@ module Yaifl.Std.Kinds.Supporter
 import Yaifl.Prelude
 
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Std.Kinds.Container
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Metadata
 import Yaifl.Core.Query.Property
 import Yaifl.Core.TH
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.Kinds.Thing ( Thing )
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike

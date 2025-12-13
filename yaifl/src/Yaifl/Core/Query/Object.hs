@@ -17,9 +17,9 @@ module Yaifl.Core.Query.Object
 import Yaifl.Prelude
 
 import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Room

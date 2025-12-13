@@ -41,11 +41,11 @@ import Breadcrumbs
 import Effectful.Error.Static
 import Effectful.TH
 
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Std.Kinds.Region
 
 -- | Effect for reading objects from the world.

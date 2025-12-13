@@ -8,7 +8,7 @@ module Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Prelude
 
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.TH
 
 import qualified Data.Set as S

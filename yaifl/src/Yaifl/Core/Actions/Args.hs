@@ -37,14 +37,14 @@ module Yaifl.Core.Actions.Args
 
 import Yaifl.Prelude hiding (show)
 
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 
 -- | Configuration for carrying out a 'Yaifl.Core.Action.Action'.
 data ActionOptions wm = ActionOptions

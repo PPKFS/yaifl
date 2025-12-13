@@ -16,11 +16,11 @@ import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Core.Activity
 import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object( Object(..), objectEquals )
-import Yaifl.Core.Entity ( HasID(..) )
+import Yaifl.Object.Kind( Object(..), objectEquals )
+import Yaifl.Entity ( HasID(..) )
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room ( IsVisited(..) )
-import Yaifl.Core.Store
+import Yaifl.Store
 import Yaifl.Std.Kinds.Animal
 import Yaifl.Std.Kinds.Supporter ( isSupporter )
 import Yaifl.Core.Rules.RuleEffects

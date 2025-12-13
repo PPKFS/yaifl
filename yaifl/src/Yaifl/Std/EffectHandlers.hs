@@ -7,15 +7,15 @@ import Effectful.Dispatch.Dynamic
 import Yaifl.Std.Parser
 import Yaifl.Core.Metadata
 import Yaifl.Std.Kinds.Direction
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Effects
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Print
 import Yaifl.Std.World
 import Yaifl.Std.Actions.Collection
 import Effectful.Error.Static (Error, runError)
-import Yaifl.Core.Store
+import Yaifl.Store
 import Yaifl.Std.Kinds.Region
 
 import Yaifl.Std.Actions.Looking.Visibility
@@ -167,7 +167,7 @@ interpretLookup = do
     LookupThing e -> lookupHelper (getID e) #things #rooms "thing" "room"
     LookupRoom e -> lookupHelper (getID e) #rooms #things "room" "thing"
     LookupRegion e -> do
-      mbReg <- use $ #stores % #regions % at (unTag e)
+      mbReg <- use $ #stores % #regions % at (unTagEntity e)
       case mbReg of
         Nothing -> pure $ Left $ "could not find region with id " <> show e
         Just r -> pure $ Right r
@@ -179,7 +179,7 @@ interpretUpdate ::
 interpretUpdate = interpret $ \_ -> \case
   SetRoom r -> #stores % #rooms % at (getID r) %= updateIt r
   SetThing t -> #stores % #things % at (getID t) %= updateIt t
-  SetRegion t -> #stores % #regions % at (unTag $ regionID t) %= updateIt t
+  SetRegion t -> #stores % #regions % at (unTagEntity $ regionID t) %= updateIt t
   GenerateEntity bThing -> if bThing then
     (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unID) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unID x - 1)
 

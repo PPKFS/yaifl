@@ -5,7 +5,7 @@ import Yaifl.Prelude
 import Breadcrumbs
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata

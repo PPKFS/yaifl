@@ -34,14 +34,14 @@ import Data.Text.Display
 
 import Yaifl.Core.Metadata ( whenConstructing, noteError )
 import Yaifl.Std.Kinds.Direction
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.TH ( makeDirections, WMWithProperty )
-import Yaifl.Core.WorldModel ( WMDirection, WMText )
+import Yaifl.WorldModel ( WMDirection, WMText )
 
 import qualified Data.Map as M
 import Yaifl.Text.Say

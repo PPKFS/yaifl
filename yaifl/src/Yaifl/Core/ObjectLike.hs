@@ -19,10 +19,10 @@ import Yaifl.Prelude
 
 import Effectful.Error.Static
 
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
-import Yaifl.Core.Tag
+import Yaifl.Entity
+import Yaifl.Tag
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
@@ -62,16 +62,16 @@ instance RoomLike wm (Room wm) where
   getRoom = pure
 
 instance ThingLike wm (TaggedEntity ThingTag) where
-  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTag o)
+  getThing o = fromMaybe (error $ "tagged (thing) entity could not resolve " <> show o) . preview _Thing <$> getObject (unTagEntity o)
 
 instance RoomLike wm (TaggedEntity RoomTag) where
-  getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTag o)
+  getRoom o = fromMaybe (error $ "tagged (room) entity could not resolve " <> show o) . preview _Room <$> getObject (unTagEntity o)
 
 instance ObjectLike wm (AnyObject wm) where
   getObject = pure
 
 instance ObjectLike wm (TaggedEntity anyTag) where
-  getObject e = getObject (unTag e)
+  getObject e = getObject (unTagEntity e)
 
 instance ThingLike wm DoorEntity where
   getThing = getThing . coerceTag @ThingTag

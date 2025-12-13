@@ -5,7 +5,7 @@
 module Yaifl.Std.Actions.Looking.Locale where
 
 import Yaifl.Prelude
-import Yaifl.Core.Store
+import Yaifl.Store
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Refreshable
 import Yaifl.Core.Kinds.Thing

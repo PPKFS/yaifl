@@ -18,7 +18,7 @@ import Yaifl.Core.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
 import Yaifl.Core.Actions.Args
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable

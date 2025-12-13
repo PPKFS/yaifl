@@ -8,7 +8,7 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Say
 import Yaifl.Text.DynamicText
 import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 
 ex4 :: (Text, [Text], Game PlainWorldModel ())
 ex4 = ("Slightly Wrong", ex4TestMeWith, ex4World)

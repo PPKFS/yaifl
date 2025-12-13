@@ -83,20 +83,15 @@ library
   import: common-options
   hs-source-dirs:  src
   exposed-modules:
-    Yaifl.Prelude
-
     Yaifl.Core.Action
     Yaifl.Core.Actions.Args
     Yaifl.Core.Actions.GoesWith
     Yaifl.Core.Activity
 
     Yaifl.Core.Effects
-    Yaifl.Core.Entity
-    Yaifl.Core.HasProperty
 
     Yaifl.Core.Kinds.AnyObject
     Yaifl.Core.Kinds.Enclosing
-    Yaifl.Core.Kinds.Object
     Yaifl.Core.Kinds.Room
     Yaifl.Core.Kinds.Thing
 
@@ -114,11 +109,7 @@ library
     Yaifl.Core.Rules.RuleEffects
     Yaifl.Core.Rules.Run
 
-    Yaifl.Core.Store
     Yaifl.Core.TH
-    Yaifl.Core.Tag
-    Yaifl.Core.WorldModel
-
 
     Yaifl
     Yaifl.Std.Rulebooks.ActionProcessing
@@ -246,6 +237,8 @@ library
     , enummapset
     , haskell-src-exts
     , haskell-src-meta
+    , yaifl-core
+    , yaifl-objects
     , megaparsec
     , prettyprinter
     , split
@@ -262,6 +255,8 @@ test-suite yaifl-test
     , tasty
     , tasty-silver
     , yaifl
+    , yaifl-core
+    , yaifl-objects
     , random
 
   ghc-options:

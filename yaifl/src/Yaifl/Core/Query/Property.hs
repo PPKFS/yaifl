@@ -11,10 +11,10 @@ import Yaifl.Prelude
 
 import Effectful.Error.Static (Error, throwError)
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
-import Yaifl.Core.HasProperty
+import Yaifl.Entity
+import Yaifl.HasProperty
 import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
 
 getPropertyOrThrow ::

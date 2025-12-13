@@ -27,7 +27,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Property
 import Yaifl.Core.TH
-import Yaifl.Core.Entity
+import Yaifl.Entity
 
 -- | Whether the thing is open or not.
 data Opened = Open | Closed

@@ -38,8 +38,8 @@ import Yaifl.Core.ObjectLike
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
 import Yaifl.Core.Query.Object
-import Yaifl.Core.WorldModel
-import Yaifl.Core.Kinds.Object
+import Yaifl.WorldModel
+import Yaifl.Object.Kind
 import Yaifl.Core.Metadata
 import Yaifl.Std.Kinds.Person
 import Yaifl.Core.Rules.RuleEffects

@@ -13,7 +13,7 @@ import Yaifl.Prelude hiding (asks, Reader, runReader)
 import Yaifl.Core.Activity
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Std.Activities.PrintingInventoryDetails
 import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
 import Yaifl.Std.Kinds.Container
@@ -21,7 +21,7 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Text.ListWriter.Responses
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 
 type WithListWriting wm = (

@@ -6,7 +6,7 @@ import Yaifl.Prelude
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Std.Move
 import Yaifl.Std.Kinds.Container
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Metadata
@@ -14,17 +14,17 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Kinds.Animal
 import Effectful.Error.Static
 import Yaifl.Core.Activity
-import Yaifl.Core.Store
+import Yaifl.Store
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Activities.PrintingTheLocaleDescription (WithPrintingTheLocaleDescription)
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Std.Kinds.Door
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated
 
 data EnteringResponses wm =

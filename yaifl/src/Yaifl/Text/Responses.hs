@@ -12,7 +12,7 @@ module Yaifl.Text.Responses
 
 import Yaifl.Prelude hiding (Reader, ask)
 import Effectful.Writer.Static.Local (Writer, execWriter)
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import GHC.TypeLits
 import Yaifl.Text.SayQQ
 import Effectful.Reader.Static

@@ -1,10 +1,10 @@
 module Yaifl.Std.Kinds.Region where
 
 import Yaifl.Prelude
-import Yaifl.Core.Entity (TaggedEntity, RoomEntity)
+import Yaifl.Entity (TaggedEntity, RoomEntity)
 import qualified Data.Set as S
-import Yaifl.Core.WorldModel
-import Yaifl.Core.Kinds.Object
+import Yaifl.WorldModel
+import Yaifl.Object.Kind
 
 data RegionTag
 type RegionEntity = TaggedEntity RegionTag

@@ -8,7 +8,7 @@ import Yaifl.Std.Kinds.Container
 
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.ListWriter
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Refreshable
@@ -17,9 +17,9 @@ import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Core.ObjectLike
 import qualified Data.EnumSet as ES
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.Person
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated
 
 data ExaminingResponses =

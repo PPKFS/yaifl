@@ -9,7 +9,7 @@ import Breadcrumbs ( addAnnotation )
 import Yaifl.Std.Move ( move )
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
-import Yaifl.Core.HasProperty ( WMWithProperty )
+import Yaifl.HasProperty ( WMWithProperty )
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.ObjectLike

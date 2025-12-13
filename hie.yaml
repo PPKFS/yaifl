@@ -6,14 +6,8 @@ cradle:
     - path: "yaifl/test"
       component: "yaifl:test:yaifl-test"
 
-    - path: "yaifl-rogue/app"
-      component: "executable:yaifl-rogue-app"
+    - path: "yaifl-core/src"
+      component: "lib:yaifl-core"
 
-    - path: "yaifl-rogue/src"
-      component: "lib:yaifl-rogue"
-
-    - path: "roguefunctor/src"
-      component: "lib:roguefunctor"
-
-    - path: "yaifl-discord/app"
-      component: "executable:yaifl-discord-app"
+    - path: "yaifl-objects/src"
+      component: "lib:yaifl-objects"

@@ -15,8 +15,8 @@ import Yaifl.Prelude
 
 import Yaifl.Core.Metadata ( noteError )
 import Yaifl.Std.Kinds.Direction (WMStdDirections)
-import Yaifl.Core.Entity
-import Yaifl.Core.Kinds.Object
+import Yaifl.Entity
+import Yaifl.Object.Kind
 import Yaifl.Std.Create.Object
 import Yaifl.Core.Effects
 import Yaifl.Std.Move
@@ -26,16 +26,16 @@ import Yaifl.Core.Kinds.Thing
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
-import Yaifl.Core.HasProperty ( MayHaveProperty(..), WMWithProperty )
+import Yaifl.HasProperty ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Std.Kinds.Openable
 import qualified Data.Set as S
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Std.Kinds.Device
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Kinds.Backdrop
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Rules.RuleEffects
 

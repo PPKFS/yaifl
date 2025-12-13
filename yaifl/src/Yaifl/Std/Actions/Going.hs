@@ -11,9 +11,9 @@ module Yaifl.Std.Actions.Going
 import Yaifl.Prelude
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Std.Kinds.Direction
@@ -23,7 +23,7 @@ import Breadcrumbs
 import Yaifl.Std.Move
 import Yaifl.Core.Kinds.Enclosing
 import qualified Data.Map as Map
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.ObjectLike
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Text.Print (runOnLookingParagraph)
@@ -33,7 +33,7 @@ import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Refreshable
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").

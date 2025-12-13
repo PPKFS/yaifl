@@ -15,13 +15,13 @@ import Data.List (lookup )
 import Yaifl.Core.Effects
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Kinds.Direction ( HasDirectionalTerms(..) )

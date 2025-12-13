@@ -5,18 +5,18 @@ import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Core.Kinds.Enclosing
 import Yaifl.Std.Kinds.Container
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Metadata
 import Yaifl.Std.Kinds.Supporter
 import Breadcrumbs
 import Yaifl.Std.Move
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 
 data ExitingResponses wm =
     ExitNotInsideA

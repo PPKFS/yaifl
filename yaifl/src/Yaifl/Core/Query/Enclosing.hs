@@ -21,18 +21,18 @@ import Data.List.NonEmpty as NE (cons, map, append)
 
 
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Property
-import Yaifl.Core.Tag
+import Yaifl.Tag
 import Yaifl.Core.Query.Object
 import qualified Data.EnumSet as ES
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated (getMultiLocatedMaybe, MultiLocated (..))
 
 data IncludeScenery = IncludeScenery | ExcludeScenery

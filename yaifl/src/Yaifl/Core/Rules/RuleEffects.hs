@@ -13,7 +13,7 @@ import Breadcrumbs
 
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Effects
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 import Yaifl.Core.Metadata
 import Effectful.Error.Static ( Error )
 import Effectful.TH ( makeEffect )

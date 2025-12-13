@@ -18,7 +18,7 @@ module Yaifl (
 
   , module Yaifl.Core.Metadata
   , module Yaifl.Std.World
-  , module Yaifl.Core.WorldModel
+  , module Yaifl.WorldModel
   ) where
 
 import Yaifl.Prelude hiding ( Reader, runReader )
@@ -30,15 +30,15 @@ import Yaifl.Core.Actions.Args
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Activity
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Core.Kinds.Room
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Metadata
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Core.Rules.Run
-import Yaifl.Core.Store
-import Yaifl.Core.WorldModel
+import Yaifl.Store
+import Yaifl.WorldModel
 import Yaifl.Std.Rulebooks.Accessibility
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Std.Activities.ChoosingNotableLocaleObjects

@@ -32,7 +32,7 @@ module Yaifl.Core.Action
 
 import Yaifl.Prelude hiding (Reader)
 
-import Yaifl.Core.WorldModel ( WorldModel )
+import Yaifl.WorldModel ( WorldModel )
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Metadata

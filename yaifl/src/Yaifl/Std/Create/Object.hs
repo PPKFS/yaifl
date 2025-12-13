@@ -14,25 +14,25 @@ import Yaifl.Prelude
 import Breadcrumbs
 
 import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Object
+import Yaifl.Object.Kind
 import Yaifl.Core.Effects
-import Yaifl.Core.Entity
+import Yaifl.Entity
 import Yaifl.Std.Move ( move )
 import Yaifl.Core.ObjectLike
 import Yaifl.Core.Query.Object
 import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
 import Yaifl.Core.Kinds.Thing
 import Yaifl.Core.Kinds.Enclosing ( Enclosing )
-import Yaifl.Core.WorldModel
+import Yaifl.WorldModel
 
 import qualified Data.Set as S
 import Yaifl.Std.Kinds.Region (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
-import Yaifl.Core.Tag (tagObject)
+import Yaifl.Tag (tagObject)
 import Yaifl.Core.Kinds.AnyObject
 import Yaifl.Text.Say
-import Yaifl.Core.HasProperty
+import Yaifl.HasProperty
 import Effectful.Error.Static
 
 done = defaults

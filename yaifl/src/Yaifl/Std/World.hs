@@ -7,12 +7,12 @@ module Yaifl.Std.World
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Entity ( Entity )
-import Yaifl.Core.Store
+import Yaifl.Entity ( Entity )
+import Yaifl.Store
 import Yaifl.Core.Metadata ( Metadata )
 import Yaifl.Core.Rules.RuleEffects
 import Yaifl.Text.Print ( Has(..), MessageBuffer )
-import Yaifl.Core.WorldModel ( WMValues, WorldModel )
+import Yaifl.WorldModel ( WMValues, WorldModel )
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Core.Rules.Rulebook
 import Yaifl.Std.Kinds.Region
