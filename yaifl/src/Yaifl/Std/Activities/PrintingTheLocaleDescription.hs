@@ -15,7 +15,7 @@ import Yaifl.Store ( Store(unStore) )
 import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
 import Yaifl.Text.Responses
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Text.SayableValue
 import Yaifl.Text.SayQQ
 import Yaifl.Std.Activities.ChoosingNotableLocaleObjects
@@ -24,11 +24,11 @@ import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Text.Say
 import qualified Data.EnumMap.Strict as DEM
 import Yaifl.Text.ListWriter
-import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Thing (thingContainedBy)
+import Yaifl.Metadata
+import Yaifl.AnyObject
+import Yaifl.Thing.Kind (thingContainedBy)
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 
 data YouCanAlsoSeeResponses =
   YouCanAlsoSeeA

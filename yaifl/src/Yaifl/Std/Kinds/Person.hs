@@ -2,21 +2,21 @@
 module Yaifl.Std.Kinds.Person where
 
 import Yaifl.Prelude
-import Yaifl.Core.TH (makeSpecificsWithout, WMWithProperty)
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Effects
+import Yaifl.TH (makeSpecificsWithout, WMWithProperty)
+import Yaifl.AnyObject
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Core.Query.Property
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
 import Yaifl.Tag
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.ObjectLike
+import Yaifl.Thing.Kind
+import Yaifl.ObjectLike
 import Yaifl.Std.Move
 import Yaifl.Entity
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Refreshable
+import Yaifl.Refreshable
 import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Core.Kinds.Room
+import Yaifl.Room.Kind
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)
@@ -74,7 +74,7 @@ instance WMWithProperty wm Person => IsEnclosingObject (TaggedPerson wm) where
   getEnclosing = view #carrying . getPerson
 
 isNowCarriedBy ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Person
   => WMWithProperty wm Enclosing
   => ThingLike wm t
@@ -87,7 +87,7 @@ isNowCarriedBy t p = do
   void $ move t' p'
 
 getPlayer ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Eff es (TaggedPerson wm)
 getPlayer = do
   pr <- use #currentPlayer
@@ -95,12 +95,12 @@ getPlayer = do
   return (tagObject pr per)
 
 getPlayer' ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Eff es (Thing wm)
 getPlayer' = use #currentPlayer >>= getThing
 
 getPlayerLocation ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Eff es (Room wm)
 getPlayerLocation = do
   pl <- getPlayer

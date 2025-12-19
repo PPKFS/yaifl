@@ -3,19 +3,19 @@ module Yaifl.Std.Actions.Exiting where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Std.Kinds.Container
 import Yaifl.Tag
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Metadata
+import Yaifl.AnyObject
+import Yaifl.Metadata
 import Yaifl.Std.Kinds.Supporter
 import Breadcrumbs
 import Yaifl.Std.Move
 import Yaifl.Entity
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.ObjectLike
+import Yaifl.Effects.RuleEffects
 import Yaifl.HasProperty
 
 data ExitingResponses wm =

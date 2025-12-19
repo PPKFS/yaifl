@@ -20,18 +20,18 @@ module Yaifl.Std.Kinds.Supporter
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Std.Kinds.Container
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Core.Query.Property
-import Yaifl.Core.TH
+import Yaifl.TH
 import Yaifl.Tag
-import Yaifl.Core.Kinds.Thing ( Thing )
+import Yaifl.Thing.Kind ( Thing )
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 
 data Supporter = Supporter
   { enclosing :: Enclosing
@@ -40,7 +40,7 @@ data Supporter = Supporter
 
 -- | Check if @o@ is of the @supporter@ type.
 isSupporter ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool

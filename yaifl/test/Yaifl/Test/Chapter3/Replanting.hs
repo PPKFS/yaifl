@@ -6,12 +6,12 @@ import Yaifl (PlainWorldModel)
 
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Core.Query.Object
 import Yaifl.Std.Create
-import Yaifl.Core.Kinds.Thing ( thingIsScenery )
+import Yaifl.Thing.Kind ( thingIsScenery )
 import Yaifl.Text.SayableValue
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 
 ex16 :: (Text, [Text], Game PlainWorldModel ())
 ex16 = ("Replanting", replantingTestMeWith, replantingWorld)

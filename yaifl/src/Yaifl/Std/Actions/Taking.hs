@@ -6,10 +6,10 @@ module Yaifl.Std.Actions.Taking
   ) where
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Prelude
-import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.Metadata
+import Yaifl.Enclosing.Kind
+import Yaifl.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Std.Kinds.Person
 import Yaifl.HasProperty

@@ -8,7 +8,7 @@ import Yaifl.Std.Create.RoomConnection
 import Yaifl.Text.Say
 import Yaifl.Std.Create.Rule
 import Yaifl.Std.Actions.Going
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 
 ex6 :: (Text, [Text], Game PlainWorldModel ())
 ex6 = ("Up and Up", upAndUpTestMeWith, upAndUp)

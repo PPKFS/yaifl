@@ -21,7 +21,7 @@ import Yaifl.Prelude
 
 import GHC.Records
 import Yaifl.Entity
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel

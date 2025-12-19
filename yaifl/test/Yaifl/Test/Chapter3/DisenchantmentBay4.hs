@@ -10,13 +10,13 @@ import Yaifl.Std.ObjectSpecifics
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Effects (traverseRooms)
+import Yaifl.Effects.ObjectQuery (traverseRooms)
 import Yaifl.Tag
-import Yaifl.Core.Kinds.Room
+import Yaifl.Room.Kind
 import qualified Data.List.NonEmpty as NE
 
 ex18 :: (Text, [Text], Game PlainWorldModel ())

@@ -8,19 +8,19 @@ import Breadcrumbs ( addAnnotation )
 import Yaifl.Core.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
 import Yaifl.Std.Activities.PrintingTheLocaleDescription
 import Yaifl.Object.Kind
-import Yaifl.Core.Effects
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Effects.ObjectQuery
+import Yaifl.ObjectLike
+import Yaifl.Room.Kind
+import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Container
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Core.Query.Object
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.WorldModel
 import qualified Data.EnumSet as DES
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.AnyObject
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Refreshable
+import Yaifl.Refreshable
 import Yaifl.HasProperty
 
 -- | An easier way to describe the requirements to look.
@@ -52,7 +52,7 @@ instance Display (LookingActionVariables wm) where
   displayBuilder = const "todo"
 
 getVisibleLevels ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => Thing wm -> Eff es [AnyObject wm]
 getVisibleLevels source = do
@@ -73,7 +73,7 @@ instance Refreshable wm (LookingActionVariables wm) where
     return $ av { lookingFrom = lf, visibilityLevels = vls }
 
 getVisibilityLevels ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm
   -> Eff es [AnyObject wm]
@@ -85,7 +85,7 @@ getVisibilityLevels e = do
 
 -- | the visibility holder of a room or an opaque, closed container is itself; otherwise, the enclosing entity
 findVisibilityHolder ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm
   -> Eff es (AnyObject wm)
@@ -109,7 +109,7 @@ findVisibilityHolder obj = do
 -- offers light means it lights INTO itself
 -- has light means it lights OUT AWAY from itself
 recalculateLightOfParent ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => CanBeAny wm o
   => o
@@ -133,7 +133,7 @@ recalculateLightOfParent = asThingOrRoom
 -- - it is see-through (an object) and its parent offers light
 -- this goes DOWN the object tree; the light goes to its contents
 offersLight ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm
   -> Eff es Bool
@@ -148,7 +148,7 @@ offersLight obj = do
 
 -- | an object is see through if...
 isSeeThrough ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => Thing wm
   -> Eff es Bool
@@ -166,7 +166,7 @@ isSeeThrough e = do
       || isOpenContainer <$?> c-- it's an open container
 
 containsLitObj ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm -- ^ the object
   -> Eff es Bool
@@ -194,7 +194,7 @@ objectItselfHasLight = asThingOrRoom
   this goes UP the object tree; it provides light TO its surroundings.
 -}
 hasLight ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => HasLookingProperties wm
   => AnyObject wm
   -> Eff es Bool

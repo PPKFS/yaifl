@@ -7,9 +7,9 @@ module Yaifl.Std.Kinds.MultiLocated
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Core.TH
+import Yaifl.TH
 
 import qualified Data.Set as S
 import Yaifl.Core.Query.Property

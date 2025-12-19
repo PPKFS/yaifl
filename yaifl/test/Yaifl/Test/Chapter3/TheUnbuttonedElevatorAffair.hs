@@ -11,8 +11,8 @@ import Yaifl.Std.Create.Rule
 import Yaifl.Text.SayableValue
 import Yaifl.Test.Common
 import Yaifl.Text.Say
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.ObjectLike
+import Yaifl.Rulebook
 
 ex9 :: (Text, [Text], Game PlainWorldModel ())
 ex9 = ("The Unbuttoned Elevator Affair", theUnbuttonedElevatorAffairTestMeWith, theUnbuttonedElevatorAffairWorld)

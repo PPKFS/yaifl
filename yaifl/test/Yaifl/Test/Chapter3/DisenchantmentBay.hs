@@ -10,7 +10,7 @@ import Yaifl.Std.ObjectSpecifics
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Object.Kind
 

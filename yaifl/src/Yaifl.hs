@@ -16,7 +16,7 @@ module Yaifl (
   , runTurnsFromBuffer
   , runTurn
 
-  , module Yaifl.Core.Metadata
+  , module Yaifl.Metadata
   , module Yaifl.Std.World
   , module Yaifl.WorldModel
   ) where
@@ -29,13 +29,13 @@ import Yaifl.Core.Action
 import Yaifl.Core.Actions.Args
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Core.Activity
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Metadata
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.AnyObject
+import Yaifl.Room.Kind
+import Yaifl.Thing.Kind
+import Yaifl.Metadata
+import Yaifl.Effects.RuleEffects
 import Yaifl.Core.Rules.Run
 import Yaifl.Store
 import Yaifl.WorldModel
@@ -57,11 +57,11 @@ import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Actions.OutOfWorld
 import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Kinds.ObjectKind
+import Yaifl.KindGraph
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative, AdaptiveNarrative)
 import Yaifl.Text.DynamicText
 import Yaifl.Text.ListWriter
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.Say
 import qualified Data.Map as DM
@@ -118,7 +118,7 @@ type YaiflEffects (wm :: WorldModel) es =
     , State (ActionCollection wm) :> es
     , ObjectTraverse wm :> es
     , ObjectUpdate wm :> es
-    , ObjectLookup wm :> es
+    , ObjectQuery wm :> es
     , State Metadata :> es
     , State (WorldActions wm) :> es
     , Print :> es
@@ -260,7 +260,7 @@ addInterpretAs ::
   State (WorldActions wm) :> es
   => Text
   -> Text
-  -> [NamedActionParameter wm]
+  -> [ActionParameter wm]
   -> Eff es ()
 addInterpretAs term interp params = actionsMapL % at term ?= Interpret (InterpretAs interp params)
 

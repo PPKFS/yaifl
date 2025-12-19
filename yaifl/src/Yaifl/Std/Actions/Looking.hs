@@ -15,21 +15,21 @@ import Effectful.Reader.Static
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Core.Activity
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Object.Kind( Object(..), objectEquals )
 import Yaifl.Entity ( HasID(..) )
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Kinds.Room ( IsVisited(..) )
+import Yaifl.Room.Kind ( IsVisited(..) )
 import Yaifl.Store
 import Yaifl.Std.Kinds.Animal
 import Yaifl.Std.Kinds.Supporter ( isSupporter )
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print ( setStyle, runOnLookingParagraph, bold )
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Effects.Print ( setStyle, runOnLookingParagraph, bold )
+import Yaifl.AnyObject
+import Yaifl.Thing.Kind
 
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 
 data LookingResponses wm =
   RoomDescriptionHeadingA

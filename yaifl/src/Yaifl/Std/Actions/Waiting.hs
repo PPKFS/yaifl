@@ -3,7 +3,7 @@ module Yaifl.Std.Actions.Waiting where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 
 data WaitingResponses wm
 

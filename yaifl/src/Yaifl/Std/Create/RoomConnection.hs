@@ -32,15 +32,15 @@ import Breadcrumbs
 
 import Data.Text.Display
 
-import Yaifl.Core.Metadata ( whenConstructing, noteError )
+import Yaifl.Metadata ( whenConstructing, noteError )
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Object.Kind
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.TH ( makeDirections, WMWithProperty )
+import Yaifl.Room.Kind
+import Yaifl.TH ( makeDirections, WMWithProperty )
 import Yaifl.WorldModel ( WMDirection, WMText )
 
 import qualified Data.Map as M
@@ -48,9 +48,9 @@ import Yaifl.Text.Say
 import Yaifl.Prelude hiding (Down)
 import Yaifl.Std.Kinds.Supporter (SupporterEntity)
 import Yaifl.Std.Move (move)
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Kinds.Door
 
@@ -91,7 +91,7 @@ getConnectionViaDoor ::
 getConnectionViaDoor door = ((view #otherSide &&& id) <$$> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
 
 getOtherSideOfDoor ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Door
   => DoorEntity
   -> Eff es RoomEntity
@@ -118,7 +118,7 @@ makeConnection expl dir r = connectionLens dir ?~ Connection expl (tagRoomEntity
 addDirectionFrom ::
   HasCallStack
   => WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => WMDirection wm
   -> RoomEntity
   -> RoomEntity
@@ -127,7 +127,7 @@ addDirectionFrom = isDirectionFromInternal True
 
 addDirectionFromOneWay ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => WMDirection wm
   -> RoomEntity
   -> RoomEntity
@@ -136,7 +136,7 @@ addDirectionFromOneWay = isDirectionFromInternal False
 
 isNowMapped ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> WMDirection wm
   -> RoomEntity
@@ -145,7 +145,7 @@ isNowMapped roomTo dir = isDirectionFromInternal False dir roomTo
 
 inDirection ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => "thisRoom" :! RoomEntity
   -> "leads" :! WMDirection wm
   -> "here" :! RoomEntity
@@ -159,7 +159,7 @@ inDirection (arg #thisRoom -> tr) (arg #leads -> l) (arg #here -> t) (argDef #is
 isDirectionFromInternal ::
   HasCallStack
   => WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => Bool
   -> WMDirection wm
   -> RoomEntity
@@ -198,7 +198,7 @@ makeDirections True ["West", "South", "North", "East", "In", "Out", "Up", "Down"
 
 isInsideFrom ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> RoomEntity
   -> Eff es ()
@@ -206,7 +206,7 @@ isInsideFrom = isInOf
 
 isOutsideFrom ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> RoomEntity
   -> Eff es ()
@@ -215,7 +215,7 @@ isOutsideFrom = isOutOf
 isAbove ::
   HasCallStack
   => WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> RoomEntity
   -> Eff es ()
@@ -223,7 +223,7 @@ isAbove = isUpOf
 
 isBelow ::
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> RoomEntity
   -> Eff es ()
@@ -273,7 +273,7 @@ modifyAndVerifyConnection fromRoomE' fromDir destE f = do
 isNowhere ::
   forall wm es.
   WMStdDirections wm
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => RoomEntity
   -> WMDirection wm
   -> Eff es ()

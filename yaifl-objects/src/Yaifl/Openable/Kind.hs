@@ -7,6 +7,12 @@ module Yaifl.Openable.Kind
   , Opened(..)
   , Locked(..)
   , Lockability(..)
+
+  , getOpenabilityMaybe
+  , isOpen
+  , isClosed
+  , isLocked
+  , isUnlocked
   ) where
 
 import Yaifl.Prelude
@@ -40,8 +46,8 @@ data Openability = Openability
 makeFieldLabelsNoPrefix ''Openability
 makeFieldLabelsNoPrefix ''Lockability
 
-makeSpecificsWithout [] ''Openability
-makeSpecificsWithout [] ''Lockability
+makeGetMaybe ''Openability
+makeGetMaybe ''Lockability
 
 defaultContainerOpenability :: Openability
 defaultContainerOpenability = Openability { opened = Open, openable = NotOpenable, lockability = Nothing }

@@ -10,12 +10,12 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.ListWriter
 import Yaifl.Tag
 import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Refreshable
+import Yaifl.Thing.Kind
+import Yaifl.Refreshable
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Effects
-import Yaifl.Core.Kinds.Enclosing
-import Yaifl.Core.ObjectLike
+import Yaifl.Effects.ObjectQuery
+import Yaifl.Enclosing.Kind
+import Yaifl.ObjectLike
 import qualified Data.EnumSet as ES
 import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.Person
@@ -196,7 +196,7 @@ reportOtherPeopleExamining :: ExamineRule wm
 reportOtherPeopleExamining = notImplementedRule "report others examining rule"
 
 getDescribableContents ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Enclosing
   -> Eff es [Thing wm]
 getDescribableContents e = do

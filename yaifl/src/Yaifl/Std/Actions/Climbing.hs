@@ -8,7 +8,7 @@ module Yaifl.Std.Actions.Climbing
 
 -- import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data ClimbingResponses wm =
   FooA

@@ -7,7 +7,7 @@ module Yaifl.Std.Actions.Removing
   ) where
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data RemovingResponses wm =
   RemoveNotInsideA

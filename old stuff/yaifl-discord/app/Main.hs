@@ -13,21 +13,21 @@ import Yaifl
 import Breadcrumbs
 import Yaifl.Std.Parser
 import Yaifl.Std.Kinds.Direction
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Std.Actions.Collection
 import Effectful.Error.Static (runError)
 
 import Yaifl.Std.Actions.Looking.Visibility
 import Effectful.Provider.List (type (++))
 import Yaifl.Std.EffectHandlers
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Create
 import Yaifl.Std.Actions.Going
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Core.Rules.Run
 import Yaifl.Text.ResponseCollection
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Discord.Internal.Rest
 import qualified Data.List as L
 import qualified Discord.Requests as R

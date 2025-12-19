@@ -13,24 +13,24 @@ module Yaifl.Std.Create.Object
 import Yaifl.Prelude
 import Breadcrumbs
 
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Object.Kind
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Std.Move ( move )
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Kinds.Room ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Enclosing ( Enclosing )
+import Yaifl.Room.Kind ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
+import Yaifl.Thing.Kind
+import Yaifl.Enclosing.Kind ( Enclosing )
 import Yaifl.WorldModel
 
 import qualified Data.Set as S
-import Yaifl.Std.Kinds.Region (RegionEntity, Region (..))
+import Yaifl.Region.Kind (RegionEntity, Region (..))
 import Data.Char (isUpper)
 import qualified Data.Text as T
 import Yaifl.Tag (tagObject)
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.AnyObject
 import Yaifl.Text.Say
 import Yaifl.HasProperty
 import Effectful.Error.Static
@@ -44,7 +44,7 @@ type AddObjects wm es = (
   , IsString (WMText wm)
   , State Metadata :> es
   , Pointed (WMObjSpecifics wm)
-  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectLookup wm :> es
+  , Breadcrumbs :> es, ObjectUpdate wm :> es, ObjectQuery wm :> es
   , SayableValue (WMText wm) wm
   , Pointed (WMThingData wm)
   , Pointed (WMRegionData wm)

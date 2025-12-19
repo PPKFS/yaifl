@@ -6,7 +6,7 @@ import Breadcrumbs
 import Yaifl.Std.Parser
 import Yaifl.Std.Kinds.Direction
 import Yaifl.WorldModel
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Std.World
 import Yaifl.Std.Actions.Collection
 import Effectful.Error.Static (runError)

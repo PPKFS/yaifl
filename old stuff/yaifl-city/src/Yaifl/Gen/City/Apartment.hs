@@ -8,10 +8,10 @@ import Yaifl.Prelude
 import Yaifl.Gen.Plan
 import Control.Placeholder
 import Yaifl.WorldModel
-import Yaifl.Std.Kinds.Region
+import Yaifl.Region.Kind
 import Yaifl.Std.Create
 import Yaifl.Entity
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Gen.City.Building
 
 data RoomType = LivingRoom | Kitchen | Bathroom | Bedroom | Study

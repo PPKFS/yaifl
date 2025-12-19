@@ -40,7 +40,7 @@ data NameProperness = Improper | Proper
 data NamePrivacy = PrivatelyNamed | PubliclyNamed
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
--- | See also `Yaifl.Core.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
+-- | See also `Yaifl.Metadata.typeDAG`. An object type is just a string that has some relations to other types.
 -- there is no data or polymorphism connected to a type, so it's very possible to call something a supporter without
 -- having some supporter properties.
 newtype ObjectKind = ObjectKind

@@ -12,27 +12,27 @@ import Yaifl.Prelude
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Entity
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Object.Kind
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create.RoomConnection
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Breadcrumbs
 import Yaifl.Std.Move
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import qualified Data.Map as Map
 import Yaifl.Tag
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Std.Kinds.Openable
-import Yaifl.Text.Print (runOnLookingParagraph)
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.Effects.Print (runOnLookingParagraph)
+import Yaifl.Room.Kind
+import Yaifl.Thing.Kind
+import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Door
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Refreshable
+import Yaifl.Refreshable
 import Yaifl.HasProperty
 
 data GoingActionVariables wm = GoingActionVariables
@@ -253,7 +253,7 @@ standUpBeforeGoing = notImplementedRule "stand up before going"
   if any isLeft res then return $ Just False else rulePass-}
 
 getContainingThingHierarchy ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Thing wm
   -> Eff es [Thing wm]
 getContainingThingHierarchy o = do
@@ -264,7 +264,7 @@ getContainingThingHierarchy o = do
     Just ob -> (ob:) <$> getContainingThingHierarchy ob
 
 getSupportersOf ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => Thing wm
   -> Eff es [Thing wm]
 getSupportersOf o = getContainingThingHierarchy o >>= filterM (`isKind` "supporter")

@@ -3,7 +3,7 @@ module Yaifl.Text.ResponseCollection where
 
 import Yaifl.Prelude
 import Yaifl.Text.Responses
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Text.ListWriter.Responses
 
 data ResponseCollection wm = ResponseCollection

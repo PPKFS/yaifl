@@ -9,13 +9,13 @@ import Yaifl.Prelude
 import Yaifl.Core.Actions.Args
 import Yaifl.HasProperty ( WMWithProperty )
 import Yaifl.Core.Query.Object ( getThingMaybe )
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import qualified Data.List.NonEmpty as NE
 import Yaifl.Std.Kinds.Container
 import Yaifl.Text.Say
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.MultiLocated (MultiLocated)

@@ -13,7 +13,7 @@ import Yaifl.Std.Create.RoomConnection
 import Yaifl.Gen.City.Building
 import Yaifl.Text.DynamicText
 import Yaifl.Entity
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import System.Random.Stateful
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Core.Query.Object

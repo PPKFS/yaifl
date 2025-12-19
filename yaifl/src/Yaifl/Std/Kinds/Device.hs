@@ -8,11 +8,11 @@ module Yaifl.Std.Kinds.Device
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Effects.ObjectQuery
+import Yaifl.AnyObject
+import Yaifl.Thing.Kind
 import Yaifl.Core.Query.Property
-import Yaifl.Core.TH
+import Yaifl.TH
 
 newtype Device = Device
   { switchedOn :: Bool
@@ -26,21 +26,21 @@ makeFieldLabelsNoPrefix ''Device
 makeSpecificsWithout [] ''Device
 
 switchItOn ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Device
   => Thing wm
   -> Eff es ()
 switchItOn = flip modifyDevice (#switchedOn .~ True)
 
 switchItOff ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Device
   => Thing wm
   -> Eff es ()
 switchItOff = flip modifyDevice (#switchedOn .~ False)
 
 toggleDevice ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Device
   => Thing wm
   -> Eff es ()

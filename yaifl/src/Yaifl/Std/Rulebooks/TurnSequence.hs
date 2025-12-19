@@ -6,10 +6,10 @@ module Yaifl.Std.Rulebooks.TurnSequence
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Core.Rules.Run ( runRulebook )
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.WorldModel
 import Yaifl.Std.Rulebooks.ActionProcessing
 

@@ -8,16 +8,16 @@ import qualified Data.Text as T
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Std.Move ( move )
 import Yaifl.Core.Actions.Args
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.HasProperty ( WMWithProperty )
-import Yaifl.Core.Kinds.Enclosing ( Enclosing )
-import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.ObjectLike
+import Yaifl.Enclosing.Kind ( Enclosing )
+import Yaifl.Metadata ( Metadata )
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Object ( getCurrentPlayer )
-import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Text.Print
-import Yaifl.Core.Kinds.Room
+import Yaifl.Rulebook
+import Yaifl.Effects.RuleEffects
+import Yaifl.Effects.Print
+import Yaifl.Room.Kind
 import Yaifl.Core.Query.Enclosing
 
 whenPlayBeginsName :: Text
@@ -72,7 +72,7 @@ initRoomDescription = do
   rulePass
 
 positionPlayer ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Enclosing
   => Eff es (Maybe Bool)
 positionPlayer = do

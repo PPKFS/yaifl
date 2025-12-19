@@ -6,7 +6,7 @@ import Rogue.Array2D.Boxed
 import qualified Data.Vector as V
 import Rogue.Colour
 import Rogue.Geometry.Rectangle
-import Yaifl.Core.Kinds.Room
+import Yaifl.Room.Kind
 import Yaifl.Rogue.PositionData (RoomSpatialData(..))
 import Yaifl.WorldModel
 

@@ -8,9 +8,9 @@ import Yaifl.Prelude
 import Breadcrumbs (addAnnotation)
 import Effectful.Writer.Static.Local (execWriter)
 import Yaifl.Core.Activity
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Text.ListWriter
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Text.SayableValue
 
 type WithListingContents wm = (

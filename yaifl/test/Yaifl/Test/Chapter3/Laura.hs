@@ -6,7 +6,7 @@ import Yaifl (PlainWorldModel)
 
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Std.Kinds.Person
 import Yaifl.Core.Query.Object (isUnderstoodAs)

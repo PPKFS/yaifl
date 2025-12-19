@@ -4,7 +4,7 @@ module Yaifl.Std.Properties
 
 import Yaifl.Prelude hiding ( Reader, runReader )
 
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.WorldModel
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Kinds.Container

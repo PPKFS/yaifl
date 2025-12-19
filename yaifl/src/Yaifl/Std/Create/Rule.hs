@@ -22,19 +22,19 @@ module Yaifl.Std.Create.Rule
 import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
 import Yaifl.Core.Activity
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.AnyObject
 import Yaifl.Object.Kind
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Metadata (isKind)
-import Yaifl.Core.ObjectLike
+import Yaifl.Thing.Kind
+import Yaifl.Metadata (isKind)
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Refreshable
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Refreshable
+import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Actions.Collection (ActionCollection)
 
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.HasProperty
 import Yaifl.Std.Kinds.MultiLocated
@@ -98,9 +98,9 @@ data ParameterReference wm =
   deriving stock ( Generic )
 
 toNamedActionParameter ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ParameterReference wm
-  -> Eff es (NamedActionParameter wm)
+  -> Eff es (ActionParameter wm)
 toNamedActionParameter = \case
   TheDirection dir -> return $ DirectionParameter dir
   TheObject e -> ObjectParameter <$> getObject e

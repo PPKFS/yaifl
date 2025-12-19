@@ -6,10 +6,10 @@ module Yaifl.Std.Activities.PrintingRoomDescriptionDetails
 
 import Yaifl.Prelude
 import Yaifl.Core.Activity
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Text.Responses
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Thing.Kind
+import Yaifl.Rulebook
 import Yaifl.HasProperty
 
 type WithPrintingRoomDescriptionDetails wm =

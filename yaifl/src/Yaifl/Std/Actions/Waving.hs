@@ -8,7 +8,7 @@ module Yaifl.Std.Actions.Waving
 
 import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data WavingResponses wm =
   FooA

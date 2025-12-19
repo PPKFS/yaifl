@@ -7,7 +7,7 @@ module Yaifl.Std.Actions.LookingUnder
   ) where
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data LookingUnderResponses wm =
   LookUnderReportA

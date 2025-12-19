@@ -8,7 +8,7 @@ module Yaifl.Std.Actions.Eating
 
 import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data EatingResponses wm =
   EatInedibleA

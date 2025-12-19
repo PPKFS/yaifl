@@ -7,14 +7,14 @@ module Yaifl.Gen.City.Building
 
 import Yaifl.Prelude
 import Yaifl.Entity
-import Yaifl.Std.Kinds.Region
+import Yaifl.Region.Kind
 import Yaifl.WorldModel
-import Yaifl.Core.Effects
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Effects.ObjectQuery
+import Yaifl.Rulebook
 import Yaifl.HasProperty
 import Yaifl.Std.Create
 import Yaifl.Std.Kinds.MultiLocated
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Std.Kinds.Door
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
 import Yaifl.Std.Activities.ListingContents (WithListingContents)
@@ -55,7 +55,7 @@ type BuildingGeneration wm es =
   , RuleEffects wm es
   , WithPrintingNameOfSomething wm
   , WithListingContents wm
-  , NoMissingObjects wm es
+  , WithoutMissingObjects wm es
   , WMStdDirections wm
   , WMWithProperty wm MultiLocated
   , WMWithProperty wm Enclosing

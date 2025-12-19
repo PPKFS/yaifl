@@ -18,7 +18,8 @@ module Yaifl.TH
   , SpecificsFunctions(..)
   , makeDirections
   , module Yaifl.HasProperty
-  , module Yaifl.Core.Kinds.AnyObject
+  , module Yaifl.AnyObject
+  , module Yaifl.WorldModel
   ) where
 
 import Data.Text (replace)
@@ -27,10 +28,11 @@ import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase )
 import Yaifl.HasProperty
+import Yaifl.WorldModel
 import Yaifl.AnyObject
 import Yaifl.Prelude
 -- | The functions we *don't* want to autogenerate for a given property
--- because we want to do something special with them (e.g. see `Yaifl.Core.Kinds.Enclosing`
+-- because we want to do something special with them (e.g. see `Yaifl.Enclosing.Kind`
 -- in `Yaifl.Core.Query.Object` where @getEnclosingMaybe@ does something special with
 -- rooms).
 data SpecificsFunctions =
@@ -68,11 +70,6 @@ makeModify n = do
   m <- makePropertyFunction ModifyX n
   return $ s <> m
 
-makeGetMaybe ::
-  Name
-  -> Q [Dec]
-makeGetMaybe = makePropertyFunction GetX
-
 -- | Generate one of @getPropMaybe@, @setProp@, and @modifyProp@.
 makePropertyFunction :: SpecificsFunctions -> Name -> Q [Dec]
 makePropertyFunction sf n = do
@@ -80,9 +77,9 @@ makePropertyFunction sf n = do
     GetX -> replaceTH
       "getXSUBHEREMaybe :: (CanBeAny wm o, WMWithProperty wm XSUBHERE) => o -> Maybe XSUBHERE\ngetXSUBHEREMaybe = defaultPropertyGetter"
     SetX -> replaceTH
-      "setXSUBHERE :: (CanBeAny wm o, NoMissingObjects wm es, WMWithProperty wm XSUBHERE) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
+      "setXSUBHERE :: (CanBeAny wm o, WithoutMissingObjects wm es, WMWithProperty wm XSUBHERE) => o -> XSUBHERE-> Eff es ()\nsetXSUBHERE = defaultPropertySetter"
     ModifyX -> replaceTH
-      "modifyXSUBHERE :: (CanBeAny wm o, NoMissingObjects wm es, WMWithProperty wm XSUBHERE) => o -> (XSUBHERE -> XSUBHERE) -> Eff es ()\nmodifyXSUBHERE = modifyProperty getXSUBHEREMaybe setXSUBHERE"
+      "modifyXSUBHERE :: (CanBeAny wm o, WithoutMissingObjects wm es, WMWithProperty wm XSUBHERE) => o -> (XSUBHERE -> XSUBHERE) -> Eff es ()\nmodifyXSUBHERE = modifyProperty getXSUBHEREMaybe setXSUBHERE"
     ) (toText $ nameBase n)
 
 replaceTH :: Text -> Text -> [Dec]
@@ -96,8 +93,8 @@ makeDirections ::
 makeDirections std dirs = do
   v <- mapM (\n -> do
     let replaceTH' y x = if std then replaceTH (replace "XSUBHERE2" "(injectDirection XSUBHERE)" y) x else replaceTH (replace "XSUBHERE2" "XSUBHERE" y) x
-        r1 = replaceTH' "isXSUBHEREOf :: HasCallStack => NoMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
-        r2 = replaceTH' "isXSUBHEREOfOneWay :: NoMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
+        r1 = replaceTH' "isXSUBHEREOf :: HasCallStack => WithoutMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOf = addDirectionFrom XSUBHERE2" n
+        r2 = replaceTH' "isXSUBHEREOfOneWay :: WithoutMissingObjects wm es => WMStdDirections wm => RoomEntity -> RoomEntity -> Eff es ()\nisXSUBHEREOfOneWay = addDirectionFromOneWay XSUBHERE2" n
     return $ r1 <> r2
     ) dirs
   return $ join v

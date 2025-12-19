@@ -21,26 +21,27 @@ import Effectful.Writer.Static.Local (Writer, tell, execWriter)
 import GHC.TypeLits
 import Yaifl.Prelude
 import Yaifl.Core.Activity
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Object.Kind
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.WorldModel
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Text.Verb
 import qualified Data.Text as T
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Thing
+import Yaifl.AnyObject
+import Yaifl.Room.Kind
+import Yaifl.Thing.Kind
 import Yaifl.Text.SayQQ
 import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.HasProperty (WMWithProperty)
 import Yaifl.Entity
+import Yaifl.Effects.Input
 
 sayText ::
   SayableValue s wm
@@ -301,9 +302,8 @@ type WithPrintingNameOfSomething wm = (Display (WMText wm), SayableValue (WMText
 
 -- TODO: https://ganelson.github.io/inform/BasicInformKit/S-prn.html#SP2
 printName ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ActionHandler wm :> es
-  => ObjectTraverse wm :> es
   => Print :> es
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
@@ -328,16 +328,15 @@ printingNameOfSomethingImpl = (makeActivity "Printing the name of something"
     { combineResults = \mbA mbB -> (<> fromMaybe "" mbB)  <$> mbA }
 
 sayParameterName ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ActionHandler wm :> es
-  => ObjectTraverse wm :> es
   => Print :> es
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Input :> es
   => State (ResponseCollector wm) :> es
   => WithPrintingNameOfSomething wm
-  => NamedActionParameter wm
+  => ActionParameter wm
   -> Eff es Text
 sayParameterName (ObjectParameter o) = sayText (o ^. #name)
 sayParameterName (ThingParameter o) = sayText (o ^. #name)

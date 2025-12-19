@@ -3,17 +3,17 @@ module Yaifl.Std.Actions.GettingOff where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
-import Yaifl.Core.Kinds.Thing ( thingContainedBy )
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Thing.Kind ( thingContainedBy )
+import Yaifl.Enclosing.Kind
 import Yaifl.Tag ( getTaggedObject, tagObject )
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Move (move)
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.HasProperty
 
 data GettingOffResponses wm =

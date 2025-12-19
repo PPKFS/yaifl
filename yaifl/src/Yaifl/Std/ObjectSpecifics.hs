@@ -13,19 +13,19 @@ module Yaifl.Std.ObjectSpecifics
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Metadata ( noteError )
+import Yaifl.Metadata ( noteError )
 import Yaifl.Std.Kinds.Direction (WMStdDirections)
 import Yaifl.Entity
 import Yaifl.Object.Kind
 import Yaifl.Std.Create.Object
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Std.Move
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Std.Create.RoomConnection
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Door
-import Yaifl.Core.Kinds.Enclosing ( Enclosing (..), blankEnclosing )
+import Yaifl.Enclosing.Kind ( Enclosing (..), blankEnclosing )
 import Yaifl.HasProperty ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Std.Kinds.Openable
@@ -37,7 +37,7 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Kinds.Backdrop
 import Yaifl.WorldModel
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 
 data ObjectSpecifics =
   NoSpecifics
@@ -185,7 +185,7 @@ addBackdrop n ia des (argDef #described Described -> desc) (argDef #modify pass 
 updateMultiLocatedObject ::
   WMWithProperty wm MultiLocated
   => WMWithProperty wm Enclosing
-  => NoMissingObjects wm es
+  => WithoutMissingObjects wm es
   => ThingLike wm tl
   => tl
   -> Eff es ()

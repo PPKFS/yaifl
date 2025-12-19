@@ -7,7 +7,7 @@ import Yaifl.Test.Common
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Say
 import Yaifl.Text.DynamicText
-import Yaifl.Core.Kinds.Room
+import Yaifl.Room.Kind
 import Yaifl.Object.Kind
 
 ex4 :: (Text, [Text], Game PlainWorldModel ())

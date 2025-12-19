@@ -5,22 +5,22 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 import Breadcrumbs
 import Effectful.Dispatch.Dynamic
 import Yaifl.Std.Parser
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Entity
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.WorldModel
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Std.World
 import Yaifl.Std.Actions.Collection
 import Effectful.Error.Static (Error, runError)
 import Yaifl.Store
-import Yaifl.Std.Kinds.Region
+import Yaifl.Region.Kind
 
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Effectful.Provider.List (type (++))
 
 
@@ -33,7 +33,7 @@ type EffStack (wm :: WorldModel) = '[
   , State (ActionCollection wm)
   , ObjectTraverse wm
   , ObjectUpdate wm
-  , ObjectLookup wm
+  , ObjectQuery wm
   , State Metadata
   , State (WorldActions wm)
   , Print
@@ -134,7 +134,7 @@ runTraverseAsLookup = interpret $ \env -> \case
 runQueryAsLookup ::
   HasCallStack
   => State (World wm) :> es
-  => Eff (ObjectUpdate wm : ObjectLookup wm : es) a
+  => Eff (ObjectUpdate wm : ObjectQuery wm : es) a
   -> Eff es a
 runQueryAsLookup = interpretLookup  . interpretUpdate
 
@@ -142,7 +142,7 @@ interpretLookup ::
   forall wm es a.
   HasCallStack
   => State (World wm) :> es
-  => Eff (ObjectLookup wm : es) a
+  => Eff (ObjectQuery wm : es) a
   -> Eff es a
 interpretLookup = do
   let lookupHelper ::

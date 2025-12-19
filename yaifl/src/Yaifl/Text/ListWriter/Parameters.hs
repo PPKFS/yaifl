@@ -11,8 +11,8 @@ module Yaifl.Text.ListWriter.Parameters
 import Yaifl.Prelude hiding (asks, Reader, runReader)
 
 import Yaifl.Core.Activity
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Refreshable
+import Yaifl.Thing.Kind
+import Yaifl.Refreshable
 import Yaifl.WorldModel
 import Yaifl.Std.Activities.PrintingInventoryDetails
 import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)

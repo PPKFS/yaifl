@@ -1,0 +1,55 @@
+
+forPlayer :: Precondition wm (Args wm v)
+forPlayer = Precondition (pure "actor is the player") $ \v -> do
+  p <- getPlayer
+  pure $ p `objectEquals` (v ^. #source)
+
+forPlayer' :: [Precondition wm (Args wm v)]
+forPlayer' = [forPlayer]
+
+forKind :: ObjectKind -> Precondition wm (Args wm (Thing wm))
+forKind k = Precondition (pure $ "of kind " <> show k) $ \v -> variables v `isKind` k
+
+forThing ::
+  WithoutMissingObjects wm es
+  => ObjectLike wm a
+  => a
+  -> (Thing wm -> Eff es (Maybe b, Maybe r))
+  -> Eff es (Maybe b, Maybe r)
+forThing e = ruleWhenJustM (getThingMaybe e)
+
+
+getActorLocation ::
+  WithoutMissingObjects wm es
+  => Args wm v
+  -> Eff es (Room wm)
+getActorLocation args = getLocation $ source args
+
+actionOnOneThing ::
+  ParseArguments wm (UnverifiedArgs wm 'TakesThingParameter) (Thing wm)
+actionOnOneThing = ParseArguments $ \(UnverifiedArgs Args{..}) ->
+    return $ SuccessfulParse $ fst variables
+
+actionOnNothing ::
+  ParseArguments wm (UnverifiedArgs wm 'TakesNoParameter) ()
+actionOnNothing = ParseArguments $ \_ ->
+    return $ SuccessfulParse ()
+
+oneTouchableThing ::
+  ArgsHaveMainObject (Args wm v) (Thing wm)
+  => Args wm v
+  -> [Thing wm]
+oneTouchableThing a = one $ view argsMainObject a
+
+getMatchingThing :: RuleEffects wm es => Text -> UnverifiedArgs wm params -> Eff es (Maybe (Thing wm))
+getMatchingThing matchElement args = do
+  e <- getMatching matchElement args
+  case e of
+    Just (ObjectParameter o) -> getThingMaybe o
+    Just (ThingParameter t) -> return (Just t)
+    _ -> return Nothing
+
+getMatching :: Text -> UnverifiedArgs wm params -> Eff es (Maybe (ActionParameter wm))
+getMatching matchElement (UnverifiedArgs args) = do
+  let mbMatch = args ^? #variables % _2 % to (find ((== matchElement) . fst) ) % _Just % _2
+  return mbMatch

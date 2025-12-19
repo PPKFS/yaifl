@@ -9,19 +9,19 @@ import Yaifl.Prelude
 
 import Yaifl.Entity ( Entity )
 import Yaifl.Store
-import Yaifl.Core.Metadata ( Metadata )
-import Yaifl.Core.Rules.RuleEffects
-import Yaifl.Text.Print ( Has(..), MessageBuffer )
+import Yaifl.Metadata ( Metadata )
+import Yaifl.Effects.RuleEffects
+import Yaifl.Effects.Print ( Has(..), MessageBuffer )
 import Yaifl.WorldModel ( WMValues, WorldModel )
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Core.Rules.Rulebook
-import Yaifl.Std.Kinds.Region
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
+import Yaifl.Rulebook
+import Yaifl.Region.Kind
+import Yaifl.Thing.Kind
+import Yaifl.Room.Kind
 import Yaifl.Core.Action
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Breadcrumbs
-import Yaifl.Core.Refreshable
+import Yaifl.Refreshable
 import Yaifl.Core.Actions.GoesWith
 
 data World (wm :: WorldModel) = World

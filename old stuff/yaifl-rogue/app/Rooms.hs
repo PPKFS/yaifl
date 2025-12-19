@@ -12,8 +12,8 @@ import Yaifl.Rogue.PositionData
 import Yaifl.Std.Actions.Going
 import Yaifl.Text.SayableValue
 import Yaifl.Text.Say
-import Yaifl.Core.ObjectLike
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.ObjectLike
+import Yaifl.Rulebook
 import Rogue.Geometry.V2
 import Rogue.Array2D.Boxed
 import Rogue.Colour

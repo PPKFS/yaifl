@@ -12,7 +12,7 @@ module Yaifl.Std.Actions.$1
 
 import Yaifl.Prelude
 import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 
 data $1Responses wm =
   $3FooA

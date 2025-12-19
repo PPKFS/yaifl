@@ -22,11 +22,11 @@ module Yaifl.Std.Kinds.Openable
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Effects.ObjectQuery
+import Yaifl.AnyObject
+import Yaifl.Thing.Kind
 import Yaifl.Core.Query.Property
-import Yaifl.Core.TH
+import Yaifl.TH
 import Yaifl.Entity
 
 -- | Whether the thing is open or not.
@@ -53,20 +53,22 @@ data Openability = Openability
   , lockability :: Maybe Lockability -- ^ Nothing = not lockable
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
-makeSpecificsWithout [] ''Openability
+makeGetMaybe ''Openability
 makeFieldLabelsNoPrefix ''Openability
-makeSpecificsWithout [] ''Lockability
+makeGetMaybe ''Lockability
+makeModify ''Lockability
+makeModify ''Openability
 makeFieldLabelsNoPrefix ''Lockability
 
 openIt ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Openability
   => Thing wm
   -> Eff es ()
 openIt = flip modifyOpenability (#opened .~ Open)
 
 closeIt ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Openability
   => Thing wm
   -> Eff es ()

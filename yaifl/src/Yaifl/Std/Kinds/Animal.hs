@@ -4,11 +4,11 @@ module Yaifl.Std.Kinds.Animal
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
-import Yaifl.Core.ObjectLike
+import Yaifl.Effects.ObjectQuery
+import Yaifl.ObjectLike
 
 isAnimal ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool

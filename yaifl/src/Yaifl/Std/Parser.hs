@@ -12,15 +12,15 @@ import Effectful.Error.Static
 
 import Data.Char (isSpace)
 import Data.List (lookup )
-import Yaifl.Core.Effects
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Effects.ObjectQuery
+import Yaifl.AnyObject
+import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Metadata
+import Yaifl.Thing.Kind
+import Yaifl.Metadata
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Object
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Tag
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Looking.Visibility
@@ -29,7 +29,7 @@ import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Text.ListWriter
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import qualified Data.Map as Map
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -43,7 +43,7 @@ type ActionHandlerConstraints es wm =
   , HasLookingProperties wm
   , IOE :> es
   , Input :> es
-  , ObjectLookup wm :> es
+  , ObjectQuery wm :> es
   , ObjectTraverse wm :> es
   , ObjectUpdate wm :> es
   , Print :> es
@@ -80,7 +80,7 @@ handleVerbAction ::
   forall es wm.
   ActionHandlerConstraints es wm
   => ActionOptions wm
-  -> [NamedActionParameter wm]
+  -> [ActionParameter wm]
   -> (Text, Text, ActionPhrase wm)
   -> Eff es (Either Text Bool)
 handleVerbAction actionOpts additionalArgs = \case
@@ -150,11 +150,11 @@ parseNouns ::
   ActionHandler wm :> es
   => GoesWith goesWith
   => ActionHandlerConstraints es wm
-  => Proxy (goesWith :: ActionParameterType)
-  -> [(Text, ActionParameterType)]
-  -> Maybe (NamedActionParameter wm)
+  => Proxy (goesWith :: ActionSignature)
+  -> [(Text, ActionSignature)]
+  -> Maybe (ActionParameter wm)
   -> Text
-  -> Eff es (Either Text (NamedActionParameter wm, [(Text, NamedActionParameter wm)]))
+  -> Eff es (Either Text (ActionParameter wm, [(Text, ActionParameter wm)]))
 parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorriblyIfMissing $ do
   let isMatchWord = flip elem (map fst wordsToMatch)
       parts = (\(x, y) -> x ++ [y]) $ foldl' (\(chunks, currentChunk) w -> if isMatchWord w then (chunks ++ [currentChunk], [w]) else (chunks, currentChunk++[w])) ([], []) (words command)
@@ -229,9 +229,9 @@ parseArgumentType ::
   (Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => HasLookingProperties wm
   => RuleEffects wm es
-  => ActionParameterType
+  => ActionSignature
   -> Text
-  -> Eff es (Either Text (NamedActionParameter wm))
+  -> Eff es (Either Text (ActionParameter wm))
 parseArgumentType TakesDirectionParameter t = pure $ maybe
   (Left $ "expected a direction but instead found " <> t) (Right . DirectionParameter) $ parseDirection (Proxy @wm) t
 parseArgumentType TakesNoParameter str = if T.null str then pure $ Right NoParameter else pure $ Left $ "expected nothing but got " <> str
@@ -262,7 +262,7 @@ tryFindingAnyObject ::
   HasLookingProperties wm
   => RuleEffects wm es
   => Text
-  -> Eff es (Either Text (NamedActionParameter wm))
+  -> Eff es (Either Text (ActionParameter wm))
 tryFindingAnyObject t = do
   o <- tryFindingObject t
   case o of

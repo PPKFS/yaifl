@@ -5,14 +5,14 @@ module Yaifl.Std.Kinds.Backdrop
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
-import Yaifl.Core.ObjectLike
+import Yaifl.Effects.ObjectQuery
+import Yaifl.ObjectLike
 import Yaifl.Std.Kinds.MultiLocated (MultiLocated)
 
 newtype Backdrop = Backdrop MultiLocated
   deriving newtype (Show, Eq, Ord, Generic, Read)
 isBackdrop ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool

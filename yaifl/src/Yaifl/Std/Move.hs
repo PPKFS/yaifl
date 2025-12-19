@@ -7,21 +7,21 @@ import Yaifl.Prelude
 import Breadcrumbs
 
 import Yaifl.Object.Kind
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Effects
+import Yaifl.Thing.Kind
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Tag
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.ObjectLike
+import Yaifl.AnyObject
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Refreshable
+import Yaifl.Refreshable
 import Yaifl.HasProperty
 
 move ::
   forall l wm es.
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Enclosing
   => IsEnclosingObject l
   => ObjectLike wm l
@@ -57,7 +57,7 @@ nowContains :: EnclosingEntity -> Enclosing -> Thing wm -> (Enclosing, Thing wm)
 nowContains contId cont obj = (cont & (#contents %~ ES.insert (tagThingEntity obj)), obj & (#objectData % #containedBy .~ contId))
 
 updateToContain ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Enclosing
   => AnyObject wm
   -> Enclosing

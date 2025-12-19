@@ -3,14 +3,14 @@ module Yaifl.Test.Chapter3.Bic where
 import Yaifl.Prelude
 import Yaifl
 import Yaifl.Std.Create.Object
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 
 import Yaifl.Text.Say
 import qualified Data.Text as T
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Object.Create
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 
 ex2 :: (Text, [a], Game PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)

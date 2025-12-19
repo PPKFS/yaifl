@@ -4,8 +4,8 @@ module Yaifl.Test.Chapter3.Tamed where
 import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Metadata
+import Yaifl.Thing.Kind
+import Yaifl.Metadata
 import Yaifl.Std.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.Kinds.Container

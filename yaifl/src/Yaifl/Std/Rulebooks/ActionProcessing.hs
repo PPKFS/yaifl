@@ -12,16 +12,16 @@ module Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Prelude hiding (runReader, Reader)
 
 import Yaifl.Core.Action
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Core.Rules.Run
 import Effectful.Reader.Static
 import Breadcrumbs
 import Yaifl.Core.Actions.Args
 import Yaifl.WorldModel
-import Yaifl.Core.Rules.Rulebook
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Refreshable
+import Yaifl.Rulebook
+import Yaifl.Thing.Kind
+import Yaifl.Refreshable
 import Yaifl.Text.Say
 
 

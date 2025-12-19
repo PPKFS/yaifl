@@ -18,13 +18,13 @@ import Yaifl.Text.ResponseCollection
 
 import qualified Data.Text as T
 
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Text.Verb
 
 import Yaifl.Std.ObjectSpecifics
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Std.EffectHandlers
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter

@@ -3,7 +3,7 @@ module Yaifl.Std.Actions.SwitchingOn where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Device
 import Yaifl.HasProperty
 

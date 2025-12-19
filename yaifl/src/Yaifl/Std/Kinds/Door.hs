@@ -9,18 +9,18 @@ module Yaifl.Std.Kinds.Door
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Openable as O
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Core.Query.Property
-import Yaifl.Core.TH
+import Yaifl.TH
 import Yaifl.Tag
 
 import qualified Data.Set as S
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 
 data Door = Door
   { isOneWay :: Bool
@@ -50,7 +50,7 @@ tagDoorObject ::
 tagDoorObject = tagObject
 
 getDoor ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => WMWithProperty wm Door
   => DoorEntity
   -> Eff es Door

@@ -7,13 +7,13 @@ module Yaifl.Text.ListWriter.Responses
 
 import Yaifl.Prelude hiding (asks, Reader, runReader)
 
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
 
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.ObjectLike
+import Yaifl.Thing.Kind
+import Yaifl.ObjectLike
 
 
 

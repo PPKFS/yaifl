@@ -8,12 +8,12 @@ import Yaifl.Prelude
 import Breadcrumbs
 import Yaifl.Core.Activity hiding (name)
 import Yaifl.Entity ( HasID(..) )
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Enclosing ( Enclosing(..) )
+import Yaifl.AnyObject
+import Yaifl.Enclosing.Kind ( Enclosing(..) )
 import Yaifl.Object.Kind( Object(..) )
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Store
 import Yaifl.Std.Actions.Looking.Locale
 import qualified Data.EnumMap as DEM

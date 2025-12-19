@@ -5,8 +5,8 @@ import Yaifl.Prelude
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Kinds.Openable
-import Yaifl.Core.Metadata
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Metadata
+import Yaifl.Thing.Kind
 import Yaifl.HasProperty
 
 data ClosingResponses wm =

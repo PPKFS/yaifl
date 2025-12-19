@@ -16,8 +16,8 @@ import Yaifl.Prelude
 import GHC.Records
 import Yaifl.Entity
 import Yaifl.Object.Kind
-import Yaifl.Core.Kinds.Room
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Room.Kind
+import Yaifl.Thing.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel
 

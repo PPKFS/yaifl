@@ -3,16 +3,16 @@ module Main where
 import Yaifl.Prelude
 import Yaifl
 import Yaifl.Core.Action
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Text.ResponseCollection
 import Breadcrumbs
 
-import Yaifl.Core.Effects
-import Yaifl.Text.Print
+import Yaifl.Effects.ObjectQuery
+import Yaifl.Effects.Print
 import Yaifl.Core.Rules.Run
 import Yaifl.Text.SayQQ
 import Yaifl.Std.Create.Rule
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Gen.Plan
 import Yaifl.Gen.City.ApartmentTower

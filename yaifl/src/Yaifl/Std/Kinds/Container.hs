@@ -33,17 +33,17 @@ module Yaifl.Std.Kinds.Container
 
 import Yaifl.Prelude
 
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Core.Kinds.AnyObject
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.AnyObject
+import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Metadata
-import Yaifl.Core.ObjectLike
+import Yaifl.Thing.Kind
+import Yaifl.Metadata
+import Yaifl.ObjectLike
 import Yaifl.Core.Query.Enclosing
 import Yaifl.Core.Query.Property( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
-import Yaifl.Core.TH ( makeSpecificsWithout, WMWithProperty )
+import Yaifl.TH ( makeSpecificsWithout, WMWithProperty )
 import Yaifl.Tag
 import Yaifl.Std.Kinds.Openable
 import qualified Data.EnumSet as ES
@@ -70,7 +70,7 @@ makeSpecificsWithout [] ''Enterable
 
 -- | Check if @o@ is of the @container@ type.
 isContainer ::
-  NoMissingObjects wm es
+  WithoutMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool

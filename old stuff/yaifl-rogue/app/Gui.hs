@@ -10,14 +10,14 @@ import Rogue.Geometry.Rectangle
 import Rogue.Geometry.V2
 import Rogue.Rendering.Viewport
 import Yaifl
-import Yaifl.Core.Effects
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.ObjectQuery
+import Yaifl.Effects.RuleEffects
 import Yaifl.Core.Rules.Run
 import Yaifl.Prelude
 import Yaifl.Std.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Yaifl.Text.ResponseCollection
 import qualified Data.Text as T
 import MessageLog
@@ -223,7 +223,7 @@ tile loc = lens (\w -> fromMaybe (error "") $ w ^? ix loc) (\w t -> w & ix loc .
 renderTopTerminal ::
   IOE :> es
   => RuleEffects SpatialWorldModel es
-  => NoMissingObjects SpatialWorldModel es
+  => WithoutMissingObjects SpatialWorldModel es
   => State GuiState :> es
   => Int
   -> Eff es ()

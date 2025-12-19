@@ -11,15 +11,15 @@ import Yaifl.Prelude hiding (asks, Reader, runReader)
 import Effectful.Reader.Static
 import Effectful.Writer.Static.Local
 import Yaifl.Core.Activity
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
 import Yaifl.Text.Say
 
 import qualified Data.Text as T
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Thing.Kind
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.ListWriter.Parameters
 import Yaifl.Text.ListWriter.Responses
 import Yaifl.Text.ListWriter.AfterEntry

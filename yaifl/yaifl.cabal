@@ -83,34 +83,15 @@ library
   import: common-options
   hs-source-dirs:  src
   exposed-modules:
-    Yaifl.Core.Action
-    Yaifl.Core.Actions.Args
-    Yaifl.Core.Actions.GoesWith
     Yaifl.Core.Activity
 
-    Yaifl.Core.Effects
-
-    Yaifl.Core.Kinds.AnyObject
-    Yaifl.Core.Kinds.Enclosing
-    Yaifl.Core.Kinds.Room
-    Yaifl.Core.Kinds.Thing
-
-    Yaifl.Core.Metadata
-
-    Yaifl.Core.ObjectLike
 
     Yaifl.Core.Query.Enclosing
     Yaifl.Core.Query.Object
     Yaifl.Core.Query.Property
     Yaifl.Core.Query.Region
 
-    Yaifl.Core.Refreshable
-    Yaifl.Core.Rules.Rulebook
-    Yaifl.Core.Rules.RuleEffects
     Yaifl.Core.Rules.Run
-
-    Yaifl.Core.TH
-
     Yaifl
     Yaifl.Std.Rulebooks.ActionProcessing
     Yaifl.Std.Actions.Answering
@@ -206,27 +187,18 @@ library
     Yaifl.Std.Kinds.Direction
     Yaifl.Std.Kinds.Door
     Yaifl.Std.Kinds.MultiLocated
-    Yaifl.Std.Kinds.ObjectKind
     Yaifl.Std.Kinds.Openable
     Yaifl.Std.Kinds.Person
-    Yaifl.Std.Kinds.Region
     Yaifl.Std.Kinds.Supporter
 
-
-    Yaifl.Text.AdaptiveNarrative
     Yaifl.Text.DynamicText
     Yaifl.Text.ListWriter
     Yaifl.Text.ListWriter.AfterEntry
     Yaifl.Text.ListWriter.Parameters
     Yaifl.Text.ListWriter.Responses
     Yaifl.Text.ListWriter.WriteListR
-    Yaifl.Text.Print
     Yaifl.Text.ResponseCollection
-    Yaifl.Text.Responses
     Yaifl.Text.Say
-    Yaifl.Text.SayQQ
-    Yaifl.Text.Verb
-    Yaifl.Text.SayableValue
 
     Yaifl.Std.Create
     Yaifl.Std.Rulebooks.TurnSequence

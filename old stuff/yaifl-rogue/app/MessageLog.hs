@@ -2,7 +2,7 @@
 module MessageLog where
 
 import Yaifl.Prelude hiding (Reader)
-import Yaifl.Text.Print
+import Yaifl.Effects.Print
 import Prettyprinter
 import Rogue.Rendering.Viewport
 import qualified Data.Text.Lazy.Builder as TLB

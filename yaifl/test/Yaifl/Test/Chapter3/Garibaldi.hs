@@ -10,7 +10,7 @@ import Yaifl.Object.Kind
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create
@@ -18,7 +18,7 @@ import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Examining
 import Yaifl.Entity
-import Yaifl.Core.Effects
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person

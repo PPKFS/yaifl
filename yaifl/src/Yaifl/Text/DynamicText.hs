@@ -7,11 +7,13 @@ module Yaifl.Text.DynamicText
 import Yaifl.WorldModel
 import Yaifl.Prelude
 
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Effectful.Writer.Static.Local (Writer, tell)
 import Data.Text.Lazy.Builder (fromText)
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
+
+newtype RuleLimitedEffect wm es a = RuleLimitedEffect (SayableValue (WMText wm) wm => Display (WMText wm) => Eff (es : ConcreteRuleStack wm) a)
 
 newtype DynamicText (wm :: WorldModel) = DynamicText (Either Text (Text, RuleLimitedEffect wm (Writer Text) ()))
 

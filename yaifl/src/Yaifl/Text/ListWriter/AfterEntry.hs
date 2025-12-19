@@ -10,10 +10,10 @@ import Yaifl.Prelude hiding (asks, Reader, runReader)
 import Effectful.Reader.Static
 import Effectful.Writer.Static.Local
 import Yaifl.Core.Activity
-import Yaifl.Core.Kinds.AnyObject
+import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Supporter
-import Yaifl.Core.Metadata
+import Yaifl.Metadata
 import Yaifl.Core.Query.Object
 
 import Yaifl.Text.AdaptiveNarrative
@@ -21,12 +21,12 @@ import Yaifl.Text.Responses
 import Yaifl.Text.Say
 
 import qualified Data.EnumSet as ES
-import Yaifl.Core.Kinds.Thing
-import Yaifl.Core.Kinds.Room
+import Yaifl.Thing.Kind
+import Yaifl.Room.Kind
 import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.ObjectLike
+import Yaifl.ObjectLike
 import Yaifl.Std.Kinds.Person
-import Yaifl.Core.Rules.RuleEffects
+import Yaifl.Effects.RuleEffects
 import Yaifl.Text.ListWriter.Parameters
 import Yaifl.Text.ListWriter.Responses
 

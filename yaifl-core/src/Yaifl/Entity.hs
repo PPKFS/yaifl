@@ -22,9 +22,9 @@ module Yaifl.Entity
   -- | These phantom types are defined here because these ones are foundational enough that they need to be
   -- forward-declared. That is, we need to be able to refer to type-safe `Entity`s at this level of the library
   -- that are also:
-  -- `Yaifl.Core.Kinds.Room`s and `Yaifl.Core.Kinds.Thing`s (as these are two of the key types that everything else is based around);
-  -- `Yaifl.Core.Kinds.Door`s and `Yaifl.Core.Kinds.Enclosing` (as these are part of the definition of `Yaifl.Core.Kinds.Room`)
-  -- `Yaifl.Core.Kinds.Person` to store a reference to the current player in `Yaifl.Core.Metadata`.
+  -- `Yaifl.Room.Kind`s and `Yaifl.Thing.Kind`s (as these are two of the key types that everything else is based around);
+  -- `Yaifl.Core.Kinds.Door`s and `Yaifl.Enclosing.Kind` (as these are part of the definition of `Yaifl.Room.Kind`)
+  -- `Yaifl.Core.Kinds.Person` to store a reference to the current player in `Yaifl.Metadata`.
   , ThingTag
   , ThingEntity
   , RoomTag
@@ -39,7 +39,7 @@ module Yaifl.Entity
 
 import Yaifl.Prelude
 
--- | An object ID. Positive IDs are for `Yaifl.Core.Kinds.Thing`s and
+-- | An object ID. Positive IDs are for `Yaifl.Thing.Kind`s and
 -- negative IDs are for `Yaifl.Core.Kinds.Rooms`. This means we can write `Yaifl.Object.Kind.isThing` for free.
 newtype Entity = Entity
   { unID :: Int
@@ -78,11 +78,11 @@ instance HasID (TaggedEntity t) where
 
 instance HasID (TaggedEntity e, o) where
   getID = unTagEntity . fst
--- | Phantom type for tagging `Yaifl.Core.Kinds.Thing`s.
+-- | Phantom type for tagging `Yaifl.Thing.Kind`s.
 data ThingTag
--- | Phantom type for tagging `Yaifl.Core.Kinds.Room`s.
+-- | Phantom type for tagging `Yaifl.Room.Kind`s.
 data RoomTag
--- | Phantom type for tagging objects that enclose something (that have a `Yaifl.Core.Kinds.Enclosing` somewhere).
+-- | Phantom type for tagging objects that enclose something (that have a `Yaifl.Enclosing.Kind` somewhere).
 data EnclosingTag
 -- | Phantom type for tagging doors (that have a `Yaifl.Std.Kinds.Door` somewhere).
 data DoorTag

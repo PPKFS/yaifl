@@ -6,15 +6,15 @@ module Yaifl.Std.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Prelude
 
 import Yaifl.Core.Activity
-import Yaifl.Core.Kinds.Thing
+import Yaifl.Thing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Entity
-import Yaifl.Core.Kinds.Enclosing
+import Yaifl.Enclosing.Kind
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Text.SayQQ
-import Yaifl.Core.Rules.Rulebook
+import Yaifl.Rulebook
 import Yaifl.Text.Say
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
