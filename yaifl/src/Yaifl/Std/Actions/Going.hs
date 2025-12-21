@@ -14,7 +14,7 @@ import Yaifl.Std.Actions.Imports
 import Yaifl.Entity
 import Yaifl.Metadata
 import Yaifl.Object.Kind
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Create.RoomConnection
@@ -31,9 +31,9 @@ import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Door
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 data GoingActionVariables wm = GoingActionVariables
   { --The going action has a room called the room gone from (matched as "from").

@@ -8,13 +8,13 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Tag ( getTaggedObject, tagObject )
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Move (move)
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Metadata
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Verb (Tense(..))
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Effects.RuleEffects
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 data GettingOffResponses wm =
   GetOffThingsA

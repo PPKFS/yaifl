@@ -9,7 +9,7 @@ import Yaifl.Std.EffectHandlers
 import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Std.Kinds.Person
-import Yaifl.Core.Query.Object (isUnderstoodAs)
+import Yaifl.Object.Query (isUnderstoodAs)
 
 ex19 :: (Text, [Text], Game PlainWorldModel ())
 ex19 = ("Laura", lauraTestMeWith, lauraWorld)

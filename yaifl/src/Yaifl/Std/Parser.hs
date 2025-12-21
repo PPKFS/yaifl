@@ -18,8 +18,8 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
-import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Query.Object
+import Yaifl.Enclosing.Query
+import Yaifl.Object.Query
 import Yaifl.Effects.RuleEffects
 import Yaifl.Tag
 import Yaifl.Std.Actions.Imports

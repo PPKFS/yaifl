@@ -1,4 +1,4 @@
-module Yaifl.Std.Move
+module Yaifl.Move
   ( move
   , updateToContain
   ) where
@@ -15,9 +15,9 @@ import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
 import Yaifl.AnyObject
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 move ::
   forall l wm es.

@@ -26,11 +26,11 @@ import Yaifl.Std.Kinds.Container
 import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Metadata
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.TH
 import Yaifl.Tag
 import Yaifl.Thing.Kind ( Thing )
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.ObjectLike
 
 data Supporter = Supporter

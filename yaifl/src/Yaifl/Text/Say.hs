@@ -39,7 +39,7 @@ import Yaifl.Text.SayQQ
 import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.ObjectLike
 import Yaifl.Core.Actions.GoesWith
-import Yaifl.HasProperty (WMWithProperty)
+import Yaifl.Property.Has (WMWithProperty)
 import Yaifl.Entity
 import Yaifl.Effects.Input
 

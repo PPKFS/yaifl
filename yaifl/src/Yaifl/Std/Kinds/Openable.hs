@@ -25,7 +25,7 @@ import Yaifl.Prelude
 import Yaifl.Effects.ObjectQuery
 import Yaifl.AnyObject
 import Yaifl.Thing.Kind
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.TH
 import Yaifl.Entity
 
@@ -56,23 +56,9 @@ data Openability = Openability
 makeGetMaybe ''Openability
 makeFieldLabelsNoPrefix ''Openability
 makeGetMaybe ''Lockability
-makeModify ''Lockability
-makeModify ''Openability
+
 makeFieldLabelsNoPrefix ''Lockability
 
-openIt ::
-  WithoutMissingObjects wm es
-  => WMWithProperty wm Openability
-  => Thing wm
-  -> Eff es ()
-openIt = flip modifyOpenability (#opened .~ Open)
-
-closeIt ::
-  WithoutMissingObjects wm es
-  => WMWithProperty wm Openability
-  => Thing wm
-  -> Eff es ()
-closeIt = flip modifyOpenability (#opened .~ Closed)
 
 defaultContainerOpenability :: Openability
 defaultContainerOpenability = Openability { opened = Open, openable = NotOpenable, lockability = Nothing }

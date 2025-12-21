@@ -7,8 +7,8 @@ module Yaifl.Std.Rulebooks.Accessibility
 import Yaifl.Prelude
 
 import Yaifl.Core.Actions.Args
-import Yaifl.HasProperty ( WMWithProperty )
-import Yaifl.Core.Query.Object ( getThingMaybe )
+import Yaifl.Property.Has ( WMWithProperty )
+import Yaifl.Object.Query ( getThingMaybe )
 import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Thing.Kind
@@ -16,7 +16,7 @@ import qualified Data.List.NonEmpty as NE
 import Yaifl.Std.Kinds.Container
 import Yaifl.Text.Say
 import Yaifl.Rulebook
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.MultiLocated (MultiLocated)
 

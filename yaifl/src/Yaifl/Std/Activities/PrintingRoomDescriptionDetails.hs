@@ -10,7 +10,7 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Text.Responses
 import Yaifl.Thing.Kind
 import Yaifl.Rulebook
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 type WithPrintingRoomDescriptionDetails wm =
   ( WithActivity "printingRoomDescriptionDetails" wm () (Thing wm) ()

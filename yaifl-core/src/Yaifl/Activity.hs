@@ -23,7 +23,6 @@ import Breadcrumbs ( withSpan )
 import GHC.TypeLits
 import Effectful.Reader.Static
 import Yaifl.Refreshable ( Refreshable )
-import Yaifl.Effects.ObjectQuery
 import Yaifl.AnyObject
 import Yaifl.WorldModel
 import Yaifl.Rulebook

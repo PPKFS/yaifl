@@ -5,13 +5,13 @@ import Yaifl.Prelude
 import Yaifl
 import Yaifl.Entity
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Std.Actions.Going
 import Yaifl.Std.Create
 import Yaifl.Core.Actions.Args
 import Yaifl.Std.Kinds.Direction
 import Yaifl.Std.Kinds.Openable
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Rulebook
 import Yaifl.Text.SayableValue
 import Yaifl.Text.AdaptiveNarrative

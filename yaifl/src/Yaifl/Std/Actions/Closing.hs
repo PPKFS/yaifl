@@ -7,7 +7,7 @@ import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Metadata
 import Yaifl.Thing.Kind
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 data ClosingResponses wm =
     CloseReportA

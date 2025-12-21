@@ -1,4 +1,4 @@
-module Yaifl.Core.Query.Property
+module Yaifl.Property.Query
   ( getPropertyOrThrow
   , defaultPropertyGetter
   , defaultPropertySetter
@@ -8,16 +8,13 @@ module Yaifl.Core.Query.Property
 
 import Yaifl.Prelude
 
-
 import Effectful.Error.Static (Error, throwError)
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.AnyObject
 import Yaifl.Object.Kind
-import Yaifl.Core.Query.Object
-import Yaifl.WorldModel
-import Yaifl.Metadata
+import Yaifl.Object.Query
 
 getPropertyOrThrow ::
   HasID i
@@ -29,9 +26,7 @@ getPropertyOrThrow ::
 getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <> t) (getID o)) pure
 
 defaultPropertySetter ::
-  WithMetadata es
-  => WithoutMissingObjects wm es
-  => Display (WMText wm)
+  WithoutMissingObjects wm es
   => WMWithProperty wm v
   => CanBeAny wm o
   => o

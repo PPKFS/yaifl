@@ -14,14 +14,14 @@ import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Container
 import Yaifl.Enclosing.Kind
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.AnyObject
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =

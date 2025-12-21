@@ -17,7 +17,8 @@ module Yaifl.TH
   , makeModify
   , SpecificsFunctions(..)
   , makeDirections
-  , module Yaifl.HasProperty
+  , module Yaifl.Property.Has
+  , module Yaifl.Property.Query
   , module Yaifl.AnyObject
   , module Yaifl.WorldModel
   ) where
@@ -27,13 +28,14 @@ import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Lang
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
 import Language.Haskell.TH (Name, Q, Dec, nameBase )
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.WorldModel
 import Yaifl.AnyObject
 import Yaifl.Prelude
+import Yaifl.Property.Query
 -- | The functions we *don't* want to autogenerate for a given property
 -- because we want to do something special with them (e.g. see `Yaifl.Enclosing.Kind`
--- in `Yaifl.Core.Query.Object` where @getEnclosingMaybe@ does something special with
+-- in `Yaifl.Object.Query` where @getEnclosingMaybe@ does something special with
 -- rooms).
 data SpecificsFunctions =
   GetX

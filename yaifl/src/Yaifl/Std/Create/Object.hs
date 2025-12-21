@@ -19,7 +19,7 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Std.Move ( move )
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Room.Kind ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
 import Yaifl.Thing.Kind
 import Yaifl.Enclosing.Kind ( Enclosing )
@@ -32,7 +32,7 @@ import qualified Data.Text as T
 import Yaifl.Tag (tagObject)
 import Yaifl.AnyObject
 import Yaifl.Text.Say
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Effectful.Error.Static
 
 done = defaults

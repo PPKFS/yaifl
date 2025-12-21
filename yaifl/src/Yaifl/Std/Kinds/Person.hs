@@ -5,7 +5,7 @@ import Yaifl.Prelude
 import Yaifl.TH (makeSpecificsWithout, WMWithProperty)
 import Yaifl.AnyObject
 import Yaifl.Effects.ObjectQuery
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
 import Yaifl.Tag
@@ -13,7 +13,7 @@ import Yaifl.Thing.Kind
 import Yaifl.ObjectLike
 import Yaifl.Std.Move
 import Yaifl.Entity
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
 import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Room.Kind

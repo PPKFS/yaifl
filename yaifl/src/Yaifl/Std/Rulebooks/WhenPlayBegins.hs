@@ -9,16 +9,16 @@ import Breadcrumbs ( addAnnotation )
 import Yaifl.Std.Move ( move )
 import Yaifl.Core.Actions.Args
 import Yaifl.Effects.ObjectQuery
-import Yaifl.HasProperty ( WMWithProperty )
+import Yaifl.Property.Has ( WMWithProperty )
 import Yaifl.Enclosing.Kind ( Enclosing )
 import Yaifl.Metadata ( Metadata )
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Object ( getCurrentPlayer )
+import Yaifl.Object.Query ( getCurrentPlayer )
 import Yaifl.Rulebook
 import Yaifl.Effects.RuleEffects
 import Yaifl.Effects.Print
 import Yaifl.Room.Kind
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"

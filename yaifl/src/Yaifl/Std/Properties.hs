@@ -14,7 +14,7 @@ import Yaifl.Std.Kinds.Door
 import Yaifl.Std.Kinds.Openable
 import Yaifl.Std.Kinds.Person
 import Yaifl.Text.Say
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.Std.Kinds.MultiLocated
 
 type HasStandardProperties s = (

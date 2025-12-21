@@ -1,8 +1,6 @@
-module Yaifl.Std.Kinds.MultiLocated
+module Yaifl.MultiLocated.Kind
   ( MultiLocated(..)
   , getMultiLocatedMaybe
-  , setMultiLocated
-  , modifyMultiLocated
   ) where
 
 import Yaifl.Prelude
@@ -12,7 +10,7 @@ import Yaifl.Entity
 import Yaifl.TH
 
 import qualified Data.Set as S
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 
 newtype MultiLocated = MultiLocated
   { locations :: S.Set EnclosingEntity
@@ -20,4 +18,4 @@ newtype MultiLocated = MultiLocated
     deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''MultiLocated
-makeSpecificsWithout [] ''MultiLocated
+makeGetMaybe ''MultiLocated

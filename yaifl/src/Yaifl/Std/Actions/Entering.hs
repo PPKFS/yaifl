@@ -7,7 +7,7 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Std.Move
 import Yaifl.Std.Kinds.Container
 import Yaifl.Tag
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.AnyObject
 import Yaifl.Metadata
 import Yaifl.Std.Kinds.Supporter
@@ -21,10 +21,10 @@ import Yaifl.ObjectLike
 import Yaifl.Thing.Kind
 import Yaifl.Refreshable
 import Yaifl.Object.Kind
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Kinds.Door
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.Std.Kinds.MultiLocated
 
 data EnteringResponses wm =

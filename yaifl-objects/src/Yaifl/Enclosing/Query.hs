@@ -1,6 +1,5 @@
-module Yaifl.Core.Query.Enclosing
-  ( getAllObjectsInRoom
-  , getAllObjectsInEnclosing
+module Yaifl.Enclosing.Query
+  ( getAllObjectsInEnclosing
   , getContainingHierarchies
   , IncludeDoors(..)
   , IncludeScenery(..)
@@ -12,7 +11,6 @@ module Yaifl.Core.Query.Enclosing
   , getEnclosingObject
   , enclosingContains
   , getCommonAncestor
-  , getLocation
   ) where
 
 import Yaifl.Prelude
@@ -28,39 +26,16 @@ import Yaifl.Object.Kind
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.Tag
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import qualified Data.EnumSet as ES
-import Yaifl.HasProperty
-import Yaifl.Std.Kinds.MultiLocated (getMultiLocatedMaybe, MultiLocated (..))
+import Yaifl.Property.Has
+import Yaifl.MultiLocated.Kind
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
 data IncludeDoors = IncludeDoors | ExcludeDoors
 data RecurseAllObjects = Recurse | DontRecurse
-
-getLocation ::
-  WithoutMissingObjects wm es
-  => ThingLike wm o
-  => o
-  -> Eff es (Room wm)
-getLocation t = do
-  t' <- getThing t
-  o <- getObject (t' ^. #objectData % #containedBy)
-  asThingOrRoom getLocation return o
-
-getAllObjectsInRoom ::
-  RoomLike wm o
-  => WMWithProperty wm Enclosing
-  => WithoutMissingObjects wm es
-  => IncludeScenery
-  -> IncludeDoors
-  -> RecurseAllObjects
-  -> o
-  -> Eff es [Thing wm]
-getAllObjectsInRoom incScenery incDoors recurse r = do
-  r' <- getRoom r
-  getAllObjectsInEnclosing incScenery incDoors recurse (coerceTag $ tagRoomEntity r')
 
 getAllObjectsInEnclosing ::
   WithoutMissingObjects wm es

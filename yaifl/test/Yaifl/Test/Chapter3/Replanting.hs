@@ -7,7 +7,7 @@ import Yaifl (PlainWorldModel)
 import Yaifl.Std.Create.Object
 import Yaifl.Std.EffectHandlers
 import Yaifl.Metadata
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Std.Create
 import Yaifl.Thing.Kind ( thingIsScenery )
 import Yaifl.Text.SayableValue

@@ -9,6 +9,7 @@ module Yaifl.Openable.Kind
   , Lockability(..)
 
   , getOpenabilityMaybe
+  , getLockabilityMaybe
   , isOpen
   , isClosed
   , isLocked

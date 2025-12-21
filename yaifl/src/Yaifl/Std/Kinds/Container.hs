@@ -41,8 +41,8 @@ import Yaifl.Object.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Enclosing
-import Yaifl.Core.Query.Property( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
+import Yaifl.Enclosing.Query
+import Yaifl.Property.Query( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
 import Yaifl.TH ( makeSpecificsWithout, WMWithProperty )
 import Yaifl.Tag
 import Yaifl.Std.Kinds.Openable

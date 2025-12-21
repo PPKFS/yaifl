@@ -1,14 +1,11 @@
-module Yaifl.Core.Query.Object
-  ( -- * Types
-
-  -- * Get
+module Yaifl.Object.Query
+  (-- * Get
   getThingMaybe
   , getRoomMaybe
   -- * Modify
   , modifyObject
   , modifyThing
   , modifyRoom
-  , getCurrentPlayer
   , isUnderstoodAs
   ) where
 
@@ -96,11 +93,6 @@ anyModifyToRoom ::
   (AnyObject s -> AnyObject s)
   -> (Room s -> Room s)
 anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
-
-getCurrentPlayer ::
-  WithoutMissingObjects wm es
-  => Eff es (Thing wm)
-getCurrentPlayer = use #currentPlayer >>= getThing
 
 isUnderstoodAs ::
   WithoutMissingObjects wm es

@@ -11,7 +11,7 @@ import Yaifl.Region.Kind
 import Yaifl.WorldModel
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Rulebook
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.Std.Create
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Enclosing.Kind

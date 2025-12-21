@@ -15,7 +15,7 @@ import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Openable as O
 import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.MultiLocated
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.TH
 import Yaifl.Tag
 

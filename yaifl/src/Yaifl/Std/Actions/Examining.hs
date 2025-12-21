@@ -12,14 +12,14 @@ import Yaifl.Tag
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Thing.Kind
 import Yaifl.Refreshable
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Enclosing.Kind
 import Yaifl.ObjectLike
 import qualified Data.EnumSet as ES
 import Yaifl.Object.Kind
 import Yaifl.Std.Kinds.Person
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 import Yaifl.Std.Kinds.MultiLocated
 
 data ExaminingResponses =

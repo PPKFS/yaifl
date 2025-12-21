@@ -11,7 +11,7 @@ source-repository-package
   location: https://github.com/PPKFS/breadcrumbs.git
   tag: 60093b23ad22302da6ff8e83863a1ee759b229d4
 packages:
-  yaifl/yaifl.cabal
+  -- yaifl/yaifl.cabal
   yaifl-core/yaifl-core.cabal
   yaifl-objects/yaifl-objects.cabal
   -- yaifl-rogue/yaifl-rogue.cabal

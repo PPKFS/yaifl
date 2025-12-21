@@ -1,6 +1,6 @@
 cabal-version: 3.6
 name:          yaifl-core
-version:       0.0.18.830
+version:       0.1.0.0
 synopsis:      Yet another interactive fiction library.
 description:
   A parser-based interactive fiction library for Haskell.
@@ -86,11 +86,13 @@ library
     Yaifl.Effects.RuleEffects
     Yaifl.Enclosing.Kind
     Yaifl.Entity
-    Yaifl.HasProperty
+    Yaifl.Property.Has
     Yaifl.KindGraph
     Yaifl.Metadata
     Yaifl.Object.Kind
+    Yaifl.Object.Query
     Yaifl.ObjectLike
+    Yaifl.Property.Query
     Yaifl.Refreshable
     Yaifl.Region.Kind
     Yaifl.Room.Kind

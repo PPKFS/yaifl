@@ -16,7 +16,7 @@ import Yaifl.Entity
 import Yaifl.Rulebook
 import System.Random.Stateful
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Std.Kinds.Door
 import Yaifl.Tag
 import Data.Text (toLower)

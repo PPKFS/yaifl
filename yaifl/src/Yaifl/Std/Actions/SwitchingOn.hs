@@ -5,7 +5,7 @@ import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Device
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 data SwitchingOnResponses wm =
   SwitchOnNotSwitchableA

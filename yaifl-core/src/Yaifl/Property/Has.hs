@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.HasProperty
+Module      : Yaifl.Property.Has
 Copyright   : (c) Avery 2023-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
@@ -7,7 +7,7 @@ Maintainer  : ppkfs@outlook.com
 Optics for accessing a property from the sum type of object specifics.
 -}
 
-module Yaifl.HasProperty (
+module Yaifl.Property.Has (
   -- * Has
     MayHaveProperty(..)
   , HasProperty(..)

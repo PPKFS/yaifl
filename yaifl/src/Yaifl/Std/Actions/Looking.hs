@@ -18,7 +18,7 @@ import Yaifl.Core.Activity
 import Yaifl.Metadata
 import Yaifl.Object.Kind( Object(..), objectEquals )
 import Yaifl.Entity ( HasID(..) )
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Room.Kind ( IsVisited(..) )
 import Yaifl.Store
 import Yaifl.Std.Kinds.Animal

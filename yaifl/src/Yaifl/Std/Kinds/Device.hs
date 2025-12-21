@@ -11,7 +11,7 @@ import Yaifl.Prelude
 import Yaifl.Effects.ObjectQuery
 import Yaifl.AnyObject
 import Yaifl.Thing.Kind
-import Yaifl.Core.Query.Property
+import Yaifl.Property.Query
 import Yaifl.TH
 
 newtype Device = Device

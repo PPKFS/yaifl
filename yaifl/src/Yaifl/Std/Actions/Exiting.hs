@@ -13,10 +13,10 @@ import Breadcrumbs
 import Yaifl.Std.Move
 import Yaifl.Entity
 import Yaifl.Thing.Kind
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.ObjectLike
 import Yaifl.Effects.RuleEffects
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 data ExitingResponses wm =
     ExitNotInsideA

@@ -22,7 +22,7 @@ import Effectful.Error.Static
 import Yaifl.AnyObject
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Metadata ( isKind, Metadata, WithMetadata )
+import Yaifl.Metadata ( isKind )
 import Yaifl.Object.Kind
 import Yaifl.Room.Kind
 import Yaifl.Tag
@@ -95,7 +95,6 @@ instance RoomLike wm (TaggedObject (Room wm) o) where
 
 objectIsKind ::
   WithoutMissingObjects wm es
-  => WithMetadata es
   => ObjectLike wm o
   => ObjectKind
   -> o

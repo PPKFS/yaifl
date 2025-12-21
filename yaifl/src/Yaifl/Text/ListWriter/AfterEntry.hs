@@ -14,7 +14,7 @@ import Yaifl.AnyObject
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Metadata
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Responses
@@ -23,7 +23,7 @@ import Yaifl.Text.Say
 import qualified Data.EnumSet as ES
 import Yaifl.Thing.Kind
 import Yaifl.Room.Kind
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.ObjectLike
 import Yaifl.Std.Kinds.Person
 import Yaifl.Effects.RuleEffects

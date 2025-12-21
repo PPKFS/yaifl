@@ -1,5 +1,5 @@
 {-|
-Module      : Yaifl.Std.Kinds.Direction
+Module      : Yaifl.Direction.Kind
 Description : Both an extendable direction framework and the standard compass directions.
 Copyright   : (c) Avery 2022-2023
 License     : MIT
@@ -12,7 +12,7 @@ This module has 3 parts:
 - Typeclasses for combining the above and also parsing text into directions.
 -}
 
-module Yaifl.Std.Kinds.Direction (
+module Yaifl.Direction.Kind (
   -- * Compass directions
   Direction(..)
   , HasOpposite(..)

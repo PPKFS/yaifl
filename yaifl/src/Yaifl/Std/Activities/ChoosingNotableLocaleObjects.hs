@@ -12,13 +12,13 @@ import Yaifl.AnyObject
 import Yaifl.Enclosing.Kind ( Enclosing(..) )
 import Yaifl.Object.Kind( Object(..) )
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Rulebook
 import Yaifl.Store
 import Yaifl.Std.Actions.Looking.Locale
 import qualified Data.EnumMap as DEM
 import qualified Data.EnumSet as DES
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 type WithChoosingNotableLocaleObjects wm = (WithActivity "choosingNotableLocaleObjects" wm () (AnyObject wm) (LocalePriorities wm))
 

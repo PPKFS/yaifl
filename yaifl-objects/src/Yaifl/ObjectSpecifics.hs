@@ -1,4 +1,4 @@
-module Yaifl.Std.ObjectSpecifics
+module Yaifl.ObjectSpecifics
   ( -- * Specifics
   ObjectSpecifics(..)
   , WMHasObjSpecifics(..)
@@ -26,7 +26,7 @@ import Yaifl.Thing.Kind
 import Yaifl.Std.Kinds.Container
 import Yaifl.Std.Kinds.Door
 import Yaifl.Enclosing.Kind ( Enclosing (..), blankEnclosing )
-import Yaifl.HasProperty ( MayHaveProperty(..), WMWithProperty )
+import Yaifl.Property.Has ( MayHaveProperty(..), WMWithProperty )
 import Yaifl.Std.Kinds.MultiLocated
 import Yaifl.Std.Kinds.Openable
 import qualified Data.Set as S
@@ -36,7 +36,7 @@ import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Kinds.Supporter
 import Yaifl.Std.Kinds.Backdrop
 import Yaifl.WorldModel
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Effects.RuleEffects
 
 data ObjectSpecifics =

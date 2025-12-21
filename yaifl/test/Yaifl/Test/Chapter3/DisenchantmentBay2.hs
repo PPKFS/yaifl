@@ -13,7 +13,7 @@ import Yaifl.Std.Kinds.Supporter
 import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Object.Kind
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 
 ex15 :: (Text, [Text], Game PlainWorldModel ())
 ex15 = ("Disenchantment Bay 2", disenchantmentBayTestMeWith, disenchantmentBayWorld)

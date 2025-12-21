@@ -24,7 +24,7 @@ import MessageLog
 import Data.Char (isPrint)
 import Yaifl.Std.Actions.Collection
 import Yaifl.Std.Kinds.Person
-import Yaifl.Core.Query.Enclosing (getLocation)
+import Yaifl.Enclosing.Query (getLocation)
 import Rooms
 import Yaifl.Object.Kind
 import Rogue.Array2D.Boxed

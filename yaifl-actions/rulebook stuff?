@@ -53,3 +53,9 @@ getMatching :: Text -> UnverifiedArgs wm params -> Eff es (Maybe (ActionParamete
 getMatching matchElement (UnverifiedArgs args) = do
   let mbMatch = args ^? #variables % _2 % to (find ((== matchElement) . fst) ) % _Just % _2
   return mbMatch
+
+
+getCurrentPlayer ::
+  WithoutMissingObjects wm es
+  => Eff es (Thing wm)
+getCurrentPlayer = use #currentPlayer >>= getThing

@@ -38,7 +38,7 @@ import Yaifl.Object.Kind
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.ObjectLike
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Room.Kind
 import Yaifl.TH ( makeDirections, WMWithProperty )
 import Yaifl.WorldModel ( WMDirection, WMText )
@@ -49,7 +49,7 @@ import Yaifl.Prelude hiding (Down)
 import Yaifl.Std.Kinds.Supporter (SupporterEntity)
 import Yaifl.Std.Move (move)
 import Yaifl.Enclosing.Kind
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Kinds.Person
 import Yaifl.Std.Kinds.Door

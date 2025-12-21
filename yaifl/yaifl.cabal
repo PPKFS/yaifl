@@ -86,9 +86,9 @@ library
     Yaifl.Core.Activity
 
 
-    Yaifl.Core.Query.Enclosing
-    Yaifl.Core.Query.Object
-    Yaifl.Core.Query.Property
+    Yaifl.Enclosing.Query
+    Yaifl.Object.Query
+    Yaifl.Property.Query
     Yaifl.Core.Query.Region
 
     Yaifl.Core.Rules.Run

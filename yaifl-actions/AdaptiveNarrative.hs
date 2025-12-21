@@ -9,7 +9,7 @@ import Yaifl.Object.Kind
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Std.Kinds.Person
 import Yaifl.WorldModel
 

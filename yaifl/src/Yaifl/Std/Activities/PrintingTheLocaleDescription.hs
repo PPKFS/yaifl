@@ -13,7 +13,7 @@ import Yaifl.Core.Activity
 import Yaifl.Text.AdaptiveNarrative (regardingThePlayer)
 import Yaifl.Store ( Store(unStore) )
 import Yaifl.Object.Kind
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Text.Responses
 import Yaifl.Rulebook
 import Yaifl.Text.SayableValue
@@ -27,7 +27,7 @@ import Yaifl.Text.ListWriter
 import Yaifl.Metadata
 import Yaifl.AnyObject
 import Yaifl.Thing.Kind (thingContainedBy)
-import Yaifl.Core.Query.Enclosing
+import Yaifl.Enclosing.Query
 import Yaifl.ObjectLike
 
 data YouCanAlsoSeeResponses =

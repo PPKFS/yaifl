@@ -1,4 +1,4 @@
-module Yaifl.Core.Query.Region
+module Yaifl.Region.Query
   ( areInRegion
   , isInRegion
   , isSubregionOf

@@ -22,11 +22,11 @@ import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
 import Yaifl.Std.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
-import Yaifl.Core.Query.Object
+import Yaifl.Object.Query
 import Yaifl.Tag
 import Yaifl.WorldModel
 import Yaifl.Std.Kinds.Person
-import Yaifl.HasProperty
+import Yaifl.Property.Has
 
 setLocalePriority ::
   Thing s
