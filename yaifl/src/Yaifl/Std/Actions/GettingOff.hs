@@ -6,8 +6,8 @@ import Yaifl.Prelude
 import Yaifl.Thing.Kind ( thingContainedBy )
 import Yaifl.Enclosing.Kind
 import Yaifl.Tag ( getTaggedObject, tagObject )
-import Yaifl.Std.Kinds.Supporter
-import Yaifl.Std.Move (move)
+import Yaifl.Supporter.Kind
+import Yaifl.Move (move)
 import Yaifl.Object.Query
 import Yaifl.Metadata
 import Yaifl.Text.AdaptiveNarrative

@@ -4,9 +4,9 @@ module Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair where
 import Yaifl.Prelude
 import Yaifl
 import Yaifl.Std.Actions.Going
-import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Create.Object
-import Yaifl.Std.Create.RoomConnection
+import Yaifl.Direction.Kind
+import Yaifl.Object.Create
+import Yaifl.Room.Connection
 import Yaifl.Std.Create.Rule
 import Yaifl.Text.SayableValue
 import Yaifl.Test.Common

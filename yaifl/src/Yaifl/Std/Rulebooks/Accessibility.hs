@@ -13,12 +13,12 @@ import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Thing.Kind
 import qualified Data.List.NonEmpty as NE
-import Yaifl.Std.Kinds.Container
+import Yaifl.Container.Kind
 import Yaifl.Text.Say
 import Yaifl.Rulebook
 import Yaifl.Enclosing.Query
 import Yaifl.Object.Kind
-import Yaifl.Std.Kinds.MultiLocated (MultiLocated)
+import Yaifl.MultiLocated.Kind (MultiLocated)
 
 accessibility ::
   WithPrintingNameOfSomething wm

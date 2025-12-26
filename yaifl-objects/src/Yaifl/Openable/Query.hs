@@ -16,7 +16,6 @@ import Yaifl.AnyObject
 import Yaifl.Thing.Kind
 import Yaifl.Property.Query
 import Yaifl.TH
-import Yaifl.Entity
 
 makeModify ''Lockability
 makeModify ''Openability

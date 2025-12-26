@@ -12,7 +12,7 @@ import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl
 import Breadcrumbs
 import Yaifl.Std.Parser
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Effects.Print
 import Yaifl.Std.Actions.Collection
 import Effectful.Error.Static (runError)
@@ -41,8 +41,8 @@ import Yaifl.Core.Query.Region
 import Data.Maybe (fromJust)
 import Yaifl.Object.Kind
 import Yaifl.Tag
-import Yaifl.Std.Kinds.Supporter
-import Yaifl.Std.Kinds.Container
+import Yaifl.Supporter.Kind
+import Yaifl.Container.Kind
 
 portRoyal3World :: Game PlainWorldModel ()
 portRoyal3World = do

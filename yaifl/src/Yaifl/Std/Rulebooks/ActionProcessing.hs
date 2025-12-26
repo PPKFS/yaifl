@@ -24,7 +24,6 @@ import Yaifl.Thing.Kind
 import Yaifl.Refreshable
 import Yaifl.Text.Say
 
-
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
   , whenPlayBegins :: Rulebook wm Unconstrained () Bool

@@ -32,12 +32,12 @@ import Yaifl.Refreshable
 import Yaifl.Effects.RuleEffects
 import Yaifl.Std.Actions.Collection (ActionCollection)
 
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Property.Has
-import Yaifl.Std.Kinds.MultiLocated
+import Yaifl.MultiLocated.Kind
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)

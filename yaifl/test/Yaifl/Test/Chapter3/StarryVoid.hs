@@ -9,15 +9,15 @@ import Yaifl.Enclosing.Query
 import Yaifl.Std.Actions.Going
 import Yaifl.Std.Create
 import Yaifl.Core.Actions.Args
-import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Kinds.Openable
+import Yaifl.Direction.Kind
+import Yaifl.Openable.Kind
 import Yaifl.Object.Query
 import Yaifl.Rulebook
 import Yaifl.Text.SayableValue
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Effects.RuleEffects
 
 ex7 :: (Text, [Text], Game PlainWorldModel ())

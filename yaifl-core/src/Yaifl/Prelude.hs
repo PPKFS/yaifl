@@ -43,9 +43,11 @@ module Yaifl.Prelude
   , use
   , (<<%=)
   , WithLabel
+
+  , runLocalState
   ) where
 
-import Relude hiding (State, get, put, modify, gets, state, modify', runState, evalState, execState)
+import Relude hiding (Down, State, get, put, modify, gets, state, modify', runState, evalState, execState)
 import Optics hiding
   (uncons, zoom, gviews, zoomMaybe, use, gview, preuse, modifying', modifying, assign', assign)
 import Data.List ((\\))
@@ -273,3 +275,6 @@ o <<%= f = o %%= toSnd f
 {-# INLINE (<<%=) #-}
 
 type WithLabel sym ty o = LabelOptic' sym A_Lens o ty
+
+runLocalState :: a1 -> Eff '[State a1] a2 -> a1
+runLocalState bl upd = snd $ runPureEff $ runStateLocal bl upd

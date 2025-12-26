@@ -2,7 +2,7 @@ module Yaifl.Test.Chapter3.Bic where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Effects.ObjectQuery
 
 import Yaifl.Text.Say

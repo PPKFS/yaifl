@@ -8,8 +8,8 @@ import Yaifl.Object.Query
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.DynamicText
 import Yaifl.Text.Say
-import Yaifl.Std.Kinds.Device
-import Yaifl.Std.Kinds.Person
+import Yaifl.Device.Kind
+import Yaifl.Person.Kind
 
 ex11 :: (Text, [Text], Game PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)

@@ -12,7 +12,7 @@ import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Entity
 import Yaifl.Enclosing.Kind
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Supporter.Kind
 import Yaifl.Text.SayQQ
 import Yaifl.Rulebook
 import Yaifl.Text.Say
@@ -25,7 +25,7 @@ import Breadcrumbs (addAnnotation)
 import Yaifl.Object.Query
 import Yaifl.Tag
 import Yaifl.WorldModel
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Property.Has
 
 setLocalePriority ::

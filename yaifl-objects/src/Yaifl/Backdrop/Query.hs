@@ -1,5 +1,5 @@
-module Yaifl.Std.Kinds.Animal
-  ( isAnimal
+module Yaifl.Backdrop.Query
+  ( isBackdrop
   ) where
 
 import Yaifl.Prelude
@@ -7,9 +7,9 @@ import Yaifl.Prelude
 import Yaifl.Effects.ObjectQuery
 import Yaifl.ObjectLike
 
-isAnimal ::
+isBackdrop ::
   WithoutMissingObjects wm es
   => ObjectLike wm o
   => o
   -> Eff es Bool
-isAnimal = objectIsKind "animal"
+isBackdrop = objectIsKind "backdrop"

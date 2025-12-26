@@ -1,4 +1,4 @@
-module Yaifl.Std.Kinds.Container
+module Yaifl.Container.Kind
   ( -- * Types
     Opacity(..)
   , Enterable(..)
@@ -7,18 +7,11 @@ module Yaifl.Std.Kinds.Container
   , ContainerTag
 
   , getContainerMaybe
-  , setContainer
-  , modifyContainer
+  , getEnterableMaybe
   , isOpaqueClosedContainer
-  , isContainer
   , makeContainer
   , inThe
 
-  , getEnterableMaybe
-  , setEnterable
-  , modifyEnterable
-  , thingIsOpenContainer
-  , thingIsClosedContainer
   , isOpenContainer
   , isEmptyContainer
   , isClosedContainer
@@ -31,21 +24,18 @@ module Yaifl.Std.Kinds.Container
   , TaggedContainer
   ) where
 
+
 import Yaifl.Prelude
 
-import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.AnyObject
 import Yaifl.Enclosing.Kind
-import Yaifl.Object.Kind
 import Yaifl.Thing.Kind
-import Yaifl.Metadata
-import Yaifl.ObjectLike
 import Yaifl.Enclosing.Query
-import Yaifl.Property.Query( defaultPropertySetter, defaultPropertyGetter, modifyProperty )
-import Yaifl.TH ( makeSpecificsWithout, WMWithProperty )
+import Yaifl.Property.Query( defaultPropertyGetter )
+import Yaifl.TH ( WMWithProperty, makeGetMaybe )
 import Yaifl.Tag
-import Yaifl.Std.Kinds.Openable
+import Yaifl.Openable.Kind
 import qualified Data.EnumSet as ES
 
 -- | If the container is see-through.
@@ -64,34 +54,27 @@ data Container = Container
   , enterable :: Enterable
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
+data ContainerTag
+type ContainerEntity = TaggedEntity ContainerTag
+
+type TaggedContainer wm = TaggedObject (Thing wm) ContainerTag
+
+inThe ::
+  ContainerEntity
+  -> EnclosingEntity
+inThe = coerceTag
+
+instance Taggable ContainerEntity EnclosingTag
+instance Taggable Container EnclosingTag
+instance Taggable Container ContainerTag
+
+instance IsEnclosing ContainerEntity
+
 makeFieldLabelsNoPrefix ''Container
-makeSpecificsWithout [] ''Container
-makeSpecificsWithout [] ''Enterable
+makeFieldLabelsNoPrefix ''Enterable
 
--- | Check if @o@ is of the @container@ type.
-isContainer ::
-  WithoutMissingObjects wm es
-  => ObjectLike wm o
-  => o
-  -> Eff es Bool
-isContainer o = getObject o >>= (`isKind` "container")
-
-isOpaqueClosedContainer ::
-  Container
-  -> Bool
-isOpaqueClosedContainer c = isClosedContainer c && isOpaqueContainer c
-
-thingIsOpenContainer ::
-  WMWithProperty wm Container
-  => Thing wm
-  -> Bool
-thingIsOpenContainer = (== Just Open) . fmap (view (#openable % #opened)) . getContainerMaybe
-
-thingIsClosedContainer ::
-  WMWithProperty wm Container
-  => Thing wm
-  -> Bool
-thingIsClosedContainer = (== Just Closed) . fmap (view (#openable % #opened)) . getContainerMaybe
+makeGetMaybe ''Container
+makeGetMaybe ''Enterable
 
 isOpenContainer ::
   Container
@@ -138,6 +121,11 @@ isOpenTransparentContainer ::
   -> Bool
 isOpenTransparentContainer c = isOpenContainer c && isTransparentContainer c
 
+isOpaqueClosedContainer ::
+  Container
+  -> Bool
+isOpaqueClosedContainer c = isClosedContainer c && isOpaqueContainer c
+
 makeContainer ::
   Maybe Int
   -> Maybe Opacity
@@ -153,19 +141,3 @@ makeContainer cc op e oa opd = (Container
   })
   & maybe id (set (#openable % #opened)) opd
   & maybe id (set (#openable % #openable)) oa
-
-data ContainerTag
-type ContainerEntity = TaggedEntity ContainerTag
-
-type TaggedContainer wm = TaggedObject (Thing wm) ContainerTag
-
-inThe ::
-  ContainerEntity
-  -> EnclosingEntity
-inThe = coerceTag
-
-instance Taggable ContainerEntity EnclosingTag
-instance Taggable Container EnclosingTag
-instance Taggable Container ContainerTag
-
-instance IsEnclosing ContainerEntity

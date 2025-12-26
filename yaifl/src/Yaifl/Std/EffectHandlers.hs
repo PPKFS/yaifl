@@ -6,7 +6,7 @@ import Breadcrumbs
 import Effectful.Dispatch.Dynamic
 import Yaifl.Std.Parser
 import Yaifl.Metadata
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Entity
 import Yaifl.Effects.ObjectQuery
 import Yaifl.WorldModel

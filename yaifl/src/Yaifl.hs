@@ -56,7 +56,7 @@ import Yaifl.Std.Actions.Collection
 import Yaifl.Std.Actions.Looking.Locale
 import Yaifl.Std.Actions.Looking.Visibility
 import Yaifl.Std.Actions.OutOfWorld
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.KindGraph
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative, AdaptiveNarrative)
 import Yaifl.Text.DynamicText

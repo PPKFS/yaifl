@@ -4,13 +4,13 @@ module Yaifl.Std.Actions.Entering where
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Enclosing.Kind
-import Yaifl.Std.Move
-import Yaifl.Std.Kinds.Container
+import Yaifl.Move
+import Yaifl.Container.Kind
 import Yaifl.Tag
 import Yaifl.Object.Query
 import Yaifl.AnyObject
 import Yaifl.Metadata
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Supporter.Kind
 import Yaifl.Std.Kinds.Animal
 import Effectful.Error.Static
 import Yaifl.Core.Activity
@@ -23,9 +23,9 @@ import Yaifl.Refreshable
 import Yaifl.Object.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Effects.RuleEffects
-import Yaifl.Std.Kinds.Door
+import Yaifl.Door.Kind
 import Yaifl.Property.Has
-import Yaifl.Std.Kinds.MultiLocated
+import Yaifl.MultiLocated.Kind
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA

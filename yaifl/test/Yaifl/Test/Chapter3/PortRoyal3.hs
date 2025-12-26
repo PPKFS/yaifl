@@ -4,7 +4,7 @@ import Yaifl.Prelude
 import Yaifl
 import Yaifl.Std.Create
 import Yaifl.Core.Query.Region
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Test.Common
 
 ex10 :: (Text, [Text], Game PlainWorldModel ())

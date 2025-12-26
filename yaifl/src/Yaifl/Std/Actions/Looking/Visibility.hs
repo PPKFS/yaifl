@@ -12,10 +12,10 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.ObjectLike
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
-import Yaifl.Std.Kinds.Container
+import Yaifl.Container.Kind
 import Yaifl.Enclosing.Kind
 import Yaifl.Object.Query
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Supporter.Kind
 import Yaifl.WorldModel
 import qualified Data.EnumSet as DES
 import Yaifl.AnyObject

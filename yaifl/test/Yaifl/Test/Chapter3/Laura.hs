@@ -4,11 +4,11 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Metadata
 import Yaifl.Test.Common
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Object.Query (isUnderstoodAs)
 
 ex19 :: (Text, [Text], Game PlainWorldModel ())

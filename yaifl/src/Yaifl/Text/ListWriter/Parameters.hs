@@ -16,8 +16,8 @@ import Yaifl.Refreshable
 import Yaifl.WorldModel
 import Yaifl.Std.Activities.PrintingInventoryDetails
 import Yaifl.Std.Activities.PrintingRoomDescriptionDetails (WithPrintingRoomDescriptionDetails)
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Container.Kind
+import Yaifl.Supporter.Kind
 import Yaifl.Text.ListWriter.Responses
 import Yaifl.Text.Responses
 import Yaifl.Text.Say

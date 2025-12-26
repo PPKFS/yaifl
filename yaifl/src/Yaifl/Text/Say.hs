@@ -36,7 +36,7 @@ import Yaifl.AnyObject
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Text.SayQQ
-import Yaifl.Std.Kinds.Person ( getPersonMaybe, isMale, isFemale, Person )
+import Yaifl.Person.Kind ( getPersonMaybe, isMale, isFemale, Person )
 import Yaifl.ObjectLike
 import Yaifl.Core.Actions.GoesWith
 import Yaifl.Property.Has (WMWithProperty)

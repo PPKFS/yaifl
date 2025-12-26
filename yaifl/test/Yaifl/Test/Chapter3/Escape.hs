@@ -8,13 +8,13 @@ import Yaifl.Prelude
 import Yaifl (PlainWorldModel)
 
 import Yaifl.Object.Kind
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
 import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Tag
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Imports

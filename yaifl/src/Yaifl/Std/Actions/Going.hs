@@ -16,21 +16,21 @@ import Yaifl.Metadata
 import Yaifl.Object.Kind
 import Yaifl.Object.Query
 import Yaifl.Effects.RuleEffects
-import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Create.RoomConnection
+import Yaifl.Direction.Kind
+import Yaifl.Room.Connection
 import Yaifl.Effects.ObjectQuery
 import Breadcrumbs
-import Yaifl.Std.Move
+import Yaifl.Move
 import Yaifl.Enclosing.Kind
 import qualified Data.Map as Map
 import Yaifl.Tag
 import Yaifl.ObjectLike
-import Yaifl.Std.Kinds.Openable
+import Yaifl.Openable.Kind
 import Yaifl.Effects.Print (runOnLookingParagraph)
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.AnyObject
-import Yaifl.Std.Kinds.Door
+import Yaifl.Door.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
 import Yaifl.Property.Has

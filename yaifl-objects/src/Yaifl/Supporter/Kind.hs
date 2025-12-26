@@ -1,16 +1,5 @@
-{-|
-Module      : Yaifl.Model.Properties.Supporter
-Copyright   : (c) Avery 2022-2024
-License     : MIT
-Maintainer  : ppkfs@outlook.com
-
-A property for things which can act as a supporter for other things (a container without the physical
-enclosing).
--}
-
-module Yaifl.Std.Kinds.Supporter
-  ( isSupporter
-  , SupporterEntity
+module Yaifl.Supporter.Kind
+  ( SupporterEntity
   , onThe
   , SupporterTag
   , Supporter(..)
@@ -20,31 +9,22 @@ module Yaifl.Std.Kinds.Supporter
 
 import Yaifl.Prelude
 
-import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
-import Yaifl.Std.Kinds.Container
+import Yaifl.Container.Kind
 import Yaifl.Enclosing.Kind
-import Yaifl.Object.Kind
-import Yaifl.Metadata
 import Yaifl.Property.Query
 import Yaifl.TH
 import Yaifl.Tag
 import Yaifl.Thing.Kind ( Thing )
 import Yaifl.Enclosing.Query
-import Yaifl.ObjectLike
 
 data Supporter = Supporter
   { enclosing :: Enclosing
   , enterable :: Enterable
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
--- | Check if @o@ is of the @supporter@ type.
-isSupporter ::
-  WithoutMissingObjects wm es
-  => ObjectLike wm o
-  => o
-  -> Eff es Bool
-isSupporter o = getObject o >>= (`isKind` "supporter")
+makeFieldLabelsNoPrefix ''Supporter
+makeGetMaybe ''Supporter
 
 data SupporterTag
 type SupporterEntity = TaggedEntity SupporterTag
@@ -59,6 +39,3 @@ instance Taggable Supporter SupporterTag
 instance Taggable (TaggedEntity SupporterTag) EnclosingTag
 
 instance IsEnclosing SupporterEntity
-
-makeFieldLabelsNoPrefix ''Supporter
-makeSpecificsWithout [] ''Supporter

@@ -4,12 +4,12 @@ module Yaifl.Std.Actions.Examining where
 import Yaifl.Prelude
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Std.Kinds.Container
+import Yaifl.Container.Kind
 
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.ListWriter
 import Yaifl.Tag
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Supporter.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Refreshable
 import Yaifl.Enclosing.Query
@@ -18,9 +18,9 @@ import Yaifl.Enclosing.Kind
 import Yaifl.ObjectLike
 import qualified Data.EnumSet as ES
 import Yaifl.Object.Kind
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Property.Has
-import Yaifl.Std.Kinds.MultiLocated
+import Yaifl.MultiLocated.Kind
 
 data ExaminingResponses =
   ExamineDirectionA

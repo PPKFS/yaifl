@@ -13,9 +13,9 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.Rulebook
 import Yaifl.Property.Has
 import Yaifl.Std.Create
-import Yaifl.Std.Kinds.MultiLocated
+import Yaifl.MultiLocated.Kind
 import Yaifl.Enclosing.Kind
-import Yaifl.Std.Kinds.Door
+import Yaifl.Door.Kind
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
 import Yaifl.Std.Activities.ListingContents (WithListingContents)
 

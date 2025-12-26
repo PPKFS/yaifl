@@ -22,10 +22,9 @@ import Yaifl.Enclosing.Query
 import Yaifl.Object.Query
 import Yaifl.Effects.RuleEffects
 import Yaifl.Tag
-import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Looking.Visibility
-import Yaifl.Std.Kinds.Direction ( HasDirectionalTerms(..) )
-import Yaifl.Std.Kinds.Person
+import Yaifl.Direction.Kind ( HasDirectionalTerms(..) )
+import Yaifl.Person.Kind
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Text.ListWriter

@@ -11,8 +11,8 @@ import Effectful.Reader.Static
 import Effectful.Writer.Static.Local
 import Yaifl.Core.Activity
 import Yaifl.AnyObject
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Container.Kind
+import Yaifl.Supporter.Kind
 import Yaifl.Metadata
 import Yaifl.Object.Query
 
@@ -25,7 +25,7 @@ import Yaifl.Thing.Kind
 import Yaifl.Room.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.ObjectLike
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Effects.RuleEffects
 import Yaifl.Text.ListWriter.Parameters
 import Yaifl.Text.ListWriter.Responses

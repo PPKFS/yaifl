@@ -89,7 +89,7 @@ replaceTH y x = either (\x' -> [error $ toText x']) id (parseDecsWithMode myDefa
 
 -- | Generate @isDirOf@ and @isDirOfOneWay@ for the base directions if @std@ is True, and for `Yaifl.WorldModel.WMDirection` if False.
 makeDirections ::
-  Bool -- ^ Whether the directions should have an `Yaifl.Std.Kinds.Direction.injectDirection` wrapper if dealing with a supertype.
+  Bool -- ^ Whether the directions should have an `Yaifl.Direction.Kind.injectDirection` wrapper if dealing with a supertype.
   -> [Text]
   -> Q [Dec]
 makeDirections std dirs = do

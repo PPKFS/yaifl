@@ -4,12 +4,12 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Openable
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Container.Kind
+import Yaifl.Openable.Kind
+import Yaifl.Supporter.Kind
 import Yaifl.Metadata
 import Yaifl.Test.Common
 import Yaifl.Object.Kind

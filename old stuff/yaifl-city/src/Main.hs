@@ -16,7 +16,7 @@ import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 import Yaifl.Gen.Plan
 import Yaifl.Gen.City.ApartmentTower
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm

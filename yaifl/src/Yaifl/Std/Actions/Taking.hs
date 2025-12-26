@@ -11,7 +11,7 @@ import Yaifl.Prelude
 import Yaifl.Enclosing.Kind
 import Yaifl.Metadata
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Property.Has
 
 data TakingResponses wm =

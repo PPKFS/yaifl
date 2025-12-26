@@ -22,7 +22,7 @@ import Yaifl.Object.Query
 import Yaifl.Room.Kind ( IsVisited(..) )
 import Yaifl.Store
 import Yaifl.Std.Kinds.Animal
-import Yaifl.Std.Kinds.Supporter ( isSupporter )
+import Yaifl.Supporter.Kind ( isSupporter )
 import Yaifl.Effects.RuleEffects
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Effects.Print ( setStyle, runOnLookingParagraph, bold )

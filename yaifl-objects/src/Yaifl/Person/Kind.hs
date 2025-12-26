@@ -1,22 +1,24 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-module Yaifl.Std.Kinds.Person where
+
+module Yaifl.Person.Kind
+  ( Gender(..)
+  , Person(..)
+  , TaggedPerson
+  , getPersonMaybe
+  , defaultPersonEnclosing
+  ) where
 
 import Yaifl.Prelude
-import Yaifl.TH (makeSpecificsWithout, WMWithProperty)
+import Yaifl.TH (WMWithProperty, makeGetMaybe)
 import Yaifl.AnyObject
-import Yaifl.Effects.ObjectQuery
 import Yaifl.Property.Query
 import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
+import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Tag
 import Yaifl.Thing.Kind
-import Yaifl.ObjectLike
-import Yaifl.Std.Move
 import Yaifl.Entity
 import Yaifl.Enclosing.Query
-import Yaifl.Refreshable
-import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Room.Kind
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)
@@ -33,7 +35,6 @@ data Person = Person
   , carrying :: Enclosing
   } deriving stock (Eq, Ord, Show, Generic, Read)
 
-
 defaultPersonEnclosing :: Enclosing
 defaultPersonEnclosing = Enclosing
   { contents = ES.empty
@@ -41,7 +42,7 @@ defaultPersonEnclosing = Enclosing
   }
 
 makeFieldLabelsNoPrefix ''Person
-makeSpecificsWithout [] ''Person
+makeGetMaybe ''Person
 
 isMale ::
   Person
@@ -56,11 +57,6 @@ isFemale = (== Female) . gender
 instance Taggable Person PersonTag
 instance Taggable Person EnclosingTag
 
-tagPersonObject ::
-  Person
-  -> Thing wm
-  -> TaggedObject (Thing wm) PersonTag
-tagPersonObject _ds = unsafeTagObject
 
 getPerson ::
   WMWithProperty wm Person
@@ -72,36 +68,3 @@ type TaggedPerson wm = TaggedObject (Thing wm) PersonTag
 
 instance WMWithProperty wm Person => IsEnclosingObject (TaggedPerson wm) where
   getEnclosing = view #carrying . getPerson
-
-isNowCarriedBy ::
-  WithoutMissingObjects wm es
-  => WMWithProperty wm Person
-  => WMWithProperty wm Enclosing
-  => ThingLike wm t
-  => t
-  -> TaggedPerson wm
-  -> Eff es ()
-isNowCarriedBy t p = do
-  t' <- getThing t
-  p' <- refresh p
-  void $ move t' p'
-
-getPlayer ::
-  WithoutMissingObjects wm es
-  => Eff es (TaggedPerson wm)
-getPlayer = do
-  pr <- use #currentPlayer
-  per <- getThing pr
-  return (tagObject pr per)
-
-getPlayer' ::
-  WithoutMissingObjects wm es
-  => Eff es (Thing wm)
-getPlayer' = use #currentPlayer >>= getThing
-
-getPlayerLocation ::
-  WithoutMissingObjects wm es
-  => Eff es (Room wm)
-getPlayerLocation = do
-  pl <- getPlayer
-  getLocation pl

@@ -3,7 +3,7 @@ module Yaifl.Std.Actions.Opening where
 
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
-import Yaifl.Std.Kinds.Openable
+import Yaifl.Openable.Kind
 import Yaifl.Metadata
 import Yaifl.Thing.Kind
 import Yaifl.Property.Has

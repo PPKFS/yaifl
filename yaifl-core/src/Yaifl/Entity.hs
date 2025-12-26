@@ -84,9 +84,9 @@ data ThingTag
 data RoomTag
 -- | Phantom type for tagging objects that enclose something (that have a `Yaifl.Enclosing.Kind` somewhere).
 data EnclosingTag
--- | Phantom type for tagging doors (that have a `Yaifl.Std.Kinds.Door` somewhere).
+-- | Phantom type for tagging doors (that have a `Yaifl.Door.Kind` somewhere).
 data DoorTag
--- | Phantom type for tagging people (that have a `Yaifl.Std.Kinds.Person` somewhere).
+-- | Phantom type for tagging people (that have a `Yaifl.Person.Kind` somewhere).
 data PersonTag
 
 -- | Shorthand for enclosing entities.

@@ -4,7 +4,7 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Metadata
 import Yaifl.Object.Query

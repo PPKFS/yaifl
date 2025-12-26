@@ -3,7 +3,7 @@ module Rooms where
 import Yaifl.Prelude
 import Yaifl
 import Yaifl.Std.Create
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Text.ResponseCollection
 import Yaifl.Text.DynamicText
 import Yaifl.Rogue.PositionData

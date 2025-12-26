@@ -4,13 +4,13 @@ module Yaifl.Std.Actions.Exiting where
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Enclosing.Kind
-import Yaifl.Std.Kinds.Container
+import Yaifl.Container.Kind
 import Yaifl.Tag
 import Yaifl.AnyObject
 import Yaifl.Metadata
-import Yaifl.Std.Kinds.Supporter
+import Yaifl.Supporter.Kind
 import Breadcrumbs
-import Yaifl.Std.Move
+import Yaifl.Move
 import Yaifl.Entity
 import Yaifl.Thing.Kind
 import Yaifl.Enclosing.Query

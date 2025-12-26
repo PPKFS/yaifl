@@ -27,7 +27,7 @@ module Yaifl.Direction.Kind (
   , eastOf
   ) where
 
-import Yaifl.Prelude hiding (Down)
+import Yaifl.Prelude
 import Yaifl.WorldModel ( WMDirection, WorldModel(..) )
 import qualified Data.Text as T
 import Data.Text.Lazy.Builder (fromText)

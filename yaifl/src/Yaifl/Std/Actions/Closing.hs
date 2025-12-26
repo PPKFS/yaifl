@@ -4,7 +4,7 @@ module Yaifl.Std.Actions.Closing where
 import Yaifl.Prelude
 
 import Yaifl.Std.Actions.Imports
-import Yaifl.Std.Kinds.Openable
+import Yaifl.Openable.Kind
 import Yaifl.Metadata
 import Yaifl.Thing.Kind
 import Yaifl.Property.Has

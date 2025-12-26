@@ -7,21 +7,21 @@ import Yaifl.Prelude
 import Yaifl (PlainWorldModel)
 
 import Yaifl.Object.Kind
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
 import Yaifl.Metadata
 import Yaifl.Test.Common
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
 import Yaifl.Std.Actions.Imports
 import Yaifl.Std.Actions.Examining
 import Yaifl.Entity
 import Yaifl.Effects.ObjectQuery
-import Yaifl.Std.Kinds.Door
-import Yaifl.Std.Kinds.Openable
-import Yaifl.Std.Kinds.Person
+import Yaifl.Door.Kind
+import Yaifl.Openable.Kind
+import Yaifl.Person.Kind
 import Yaifl.Object.Create
 
 ex22 :: (Text, [Text], Game PlainWorldModel ())

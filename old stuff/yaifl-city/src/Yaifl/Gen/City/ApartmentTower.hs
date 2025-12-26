@@ -6,10 +6,10 @@ module Yaifl.Gen.City.ApartmentTower
   ) where
 
 import Yaifl.Prelude hiding (State, Down)
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.WorldModel
-import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Create.RoomConnection
+import Yaifl.Direction.Kind
+import Yaifl.Room.Connection
 import Yaifl.Gen.City.Building
 import Yaifl.Text.DynamicText
 import Yaifl.Entity
@@ -17,7 +17,7 @@ import Yaifl.Rulebook
 import System.Random.Stateful
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Object.Query
-import Yaifl.Std.Kinds.Door
+import Yaifl.Door.Kind
 import Yaifl.Tag
 import Data.Text (toLower)
 import Yaifl.Std.Create

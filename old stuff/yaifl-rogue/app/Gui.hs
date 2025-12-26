@@ -23,7 +23,7 @@ import qualified Data.Text as T
 import MessageLog
 import Data.Char (isPrint)
 import Yaifl.Std.Actions.Collection
-import Yaifl.Std.Kinds.Person
+import Yaifl.Person.Kind
 import Yaifl.Enclosing.Query (getLocation)
 import Rooms
 import Yaifl.Object.Kind

@@ -4,7 +4,7 @@ module Yaifl.Std.Actions.SwitchingOn where
 import Yaifl.Std.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Thing.Kind
-import Yaifl.Std.Kinds.Device
+import Yaifl.Device.Kind
 import Yaifl.Property.Has
 
 data SwitchingOnResponses wm =

@@ -168,12 +168,12 @@ library
     Yaifl.Std.Activities.PrintingRoomDescriptionDetails
     Yaifl.Std.Activities.PrintingInventoryDetails
 
-    Yaifl.Std.Create.Object
-    Yaifl.Std.Create.RoomConnection
+    Yaifl.Object.Create
+    Yaifl.Room.Connection
 
     Yaifl.Std.EffectHandlers
     Yaifl.Std.Properties
-    Yaifl.Std.Move
+    Yaifl.Move
     Yaifl.Std.ObjectSpecifics
     Yaifl.Std.Parser
     Yaifl.Std.Rulebooks.WhenPlayBegins
@@ -181,15 +181,15 @@ library
     Yaifl.Std.Create.Rule
 
     Yaifl.Std.Kinds.Animal
-    Yaifl.Std.Kinds.Backdrop
-    Yaifl.Std.Kinds.Container
-    Yaifl.Std.Kinds.Device
-    Yaifl.Std.Kinds.Direction
-    Yaifl.Std.Kinds.Door
-    Yaifl.Std.Kinds.MultiLocated
-    Yaifl.Std.Kinds.Openable
-    Yaifl.Std.Kinds.Person
-    Yaifl.Std.Kinds.Supporter
+    Yaifl.Backdrop.Kind
+    Yaifl.Container.Kind
+    Yaifl.Device.Kind
+    Yaifl.Direction.Kind
+    Yaifl.Door.Kind
+    Yaifl.MultiLocated.Kind
+    Yaifl.Openable.Kind
+    Yaifl.Person.Kind
+    Yaifl.Supporter.Kind
 
     Yaifl.Text.DynamicText
     Yaifl.Text.ListWriter

@@ -1,10 +1,10 @@
 module Yaifl.Test.Chapter3.UpAndUp where
 
 import Yaifl
-import Yaifl.Std.Create.Object
+import Yaifl.Object.Create
 import Yaifl.Prelude
 import Yaifl.Test.Common
-import Yaifl.Std.Create.RoomConnection
+import Yaifl.Room.Connection
 import Yaifl.Text.Say
 import Yaifl.Std.Create.Rule
 import Yaifl.Std.Actions.Going

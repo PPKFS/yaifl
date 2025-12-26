@@ -6,7 +6,7 @@ import Yaifl.Prelude
 import qualified Data.Text as T
 
 import Breadcrumbs ( addAnnotation )
-import Yaifl.Std.Move ( move )
+import Yaifl.Move ( move )
 import Yaifl.Core.Actions.Args
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Property.Has ( WMWithProperty )

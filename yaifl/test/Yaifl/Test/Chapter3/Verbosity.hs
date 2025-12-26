@@ -1,8 +1,8 @@
 module Yaifl.Test.Chapter3.Verbosity where
 
 import Yaifl
-import Yaifl.Std.Create.Object
-import Yaifl.Std.Create.RoomConnection
+import Yaifl.Object.Create
+import Yaifl.Room.Connection
 import Yaifl.Test.Common
 import Yaifl.Prelude
 import Yaifl.Text.DynamicText

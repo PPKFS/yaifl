@@ -7,15 +7,15 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 import Yaifl.Enclosing.Kind
 import Yaifl.WorldModel
 import Yaifl.Std.Actions.Looking.Visibility
-import Yaifl.Std.Kinds.Container
-import Yaifl.Std.Kinds.Device
-import Yaifl.Std.Kinds.Direction
-import Yaifl.Std.Kinds.Door
-import Yaifl.Std.Kinds.Openable
-import Yaifl.Std.Kinds.Person
+import Yaifl.Container.Kind
+import Yaifl.Device.Kind
+import Yaifl.Direction.Kind
+import Yaifl.Door.Kind
+import Yaifl.Openable.Kind
+import Yaifl.Person.Kind
 import Yaifl.Text.Say
 import Yaifl.Property.Has
-import Yaifl.Std.Kinds.MultiLocated
+import Yaifl.MultiLocated.Kind
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing

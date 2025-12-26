@@ -4,7 +4,7 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import Yaifl.Std.Parser
-import Yaifl.Std.Kinds.Direction
+import Yaifl.Direction.Kind
 import Yaifl.WorldModel
 import Yaifl.Effects.Print
 import Yaifl.Std.World
