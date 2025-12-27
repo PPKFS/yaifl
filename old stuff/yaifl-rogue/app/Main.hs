@@ -13,7 +13,7 @@ import Yaifl.Std.Rulebooks.ActionProcessing
 import MessageLog
 import Gui
 import EffectStack
-import Yaifl.Std.Actions.Collection
+import Yaifl.Actions.Collection
 import Yaifl ()
 import Rooms
 

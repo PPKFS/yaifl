@@ -15,8 +15,8 @@ import Yaifl.Test.Common
 import Yaifl.Direction.Kind
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
-import Yaifl.Std.Actions.Imports
-import Yaifl.Std.Actions.Examining
+import Yaifl.Actions.Imports
+import Yaifl.Actions.Examining
 import Yaifl.Entity
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Door.Kind

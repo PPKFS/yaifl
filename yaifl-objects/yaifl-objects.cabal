@@ -71,6 +71,7 @@ library
     Yaifl.Container.Query
     Yaifl.Device.Create
     Yaifl.Device.Kind
+    Yaifl.Device.Query
     Yaifl.Direction.Kind
     Yaifl.Door.Create
     Yaifl.Door.Kind

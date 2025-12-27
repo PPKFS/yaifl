@@ -2,14 +2,14 @@ module Main where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Core.Action
+import Yaifl.Action
 import Yaifl.Rulebook
 import Yaifl.Text.ResponseCollection
 import Breadcrumbs
 
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Effects.Print
-import Yaifl.Core.Rules.Run
+import Yaifl.Rule
 import Yaifl.Text.SayQQ
 import Yaifl.Std.Create.Rule
 import Yaifl.Effects.RuleEffects

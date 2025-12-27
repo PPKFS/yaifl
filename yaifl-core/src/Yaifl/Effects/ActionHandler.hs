@@ -9,7 +9,7 @@ import Yaifl.Prelude
 import Yaifl.Actions.GoesWith
 import Effectful.TH ( makeEffect )
 
--- | Configuration for carrying out a 'Yaifl.Core.Action.Action'.
+-- | Configuration for carrying out a 'Yaifl.Action.Action'.
 data ActionOptions wm = ActionOptions
   { silently :: Bool -- ^ Whether routine messages should be printed (e.g. silently taking will not produce output). This does not affect failure messages.
   , hidePrompt :: Bool -- ^ Whether the prompt should be shown for this action.

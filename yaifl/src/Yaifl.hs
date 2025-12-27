@@ -25,10 +25,10 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import System.Random.Stateful
-import Yaifl.Core.Action
-import Yaifl.Core.Actions.Args
-import Yaifl.Core.Actions.GoesWith
-import Yaifl.Core.Activity
+import Yaifl.Action
+import Yaifl.Actions.Args
+import Yaifl.Actions.GoesWith
+import Yaifl.Activity
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.AnyObject
@@ -36,26 +36,26 @@ import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
 import Yaifl.Effects.RuleEffects
-import Yaifl.Core.Rules.Run
+import Yaifl.Rule
 import Yaifl.Store
 import Yaifl.WorldModel
 import Yaifl.Std.Rulebooks.Accessibility
 import Yaifl.Std.Rulebooks.ActionProcessing
-import Yaifl.Std.Activities.ChoosingNotableLocaleObjects
-import Yaifl.Std.Activities.ListingContents
-import Yaifl.Std.Activities.PrintingLocaleParagraphAbout
-import Yaifl.Std.Activities.PrintingRoomDescriptionDetails
-import Yaifl.Std.Activities.PrintingTheLocaleDescription
+import Yaifl.Activities.ChoosingNotableLocaleObjects
+import Yaifl.Activities.ListingContents
+import Yaifl.Activities.PrintingLocaleParagraphAbout
+import Yaifl.Activities.PrintingRoomDescriptionDetails
+import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Std.EffectHandlers
 import Yaifl.Std.ObjectSpecifics
 import Yaifl.Std.Parser
 import Yaifl.Std.Rulebooks.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
 import Yaifl.Std.Rulebooks.WhenPlayBegins
 import Yaifl.Std.World
-import Yaifl.Std.Actions.Collection
-import Yaifl.Std.Actions.Looking.Locale
-import Yaifl.Std.Actions.Looking.Visibility
-import Yaifl.Std.Actions.OutOfWorld
+import Yaifl.Actions.Collection
+import Yaifl.Locale
+import Yaifl.Visibility
+import Yaifl.Actions.OutOfWorld
 import Yaifl.Direction.Kind
 import Yaifl.KindGraph
 import Yaifl.Text.AdaptiveNarrative (blankAdaptiveNarrative, AdaptiveNarrative)
@@ -70,7 +70,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Effectful.Error.Static
 import Effectful.Provider.List
-import Yaifl.Std.Properties
+import Yaifl.Properties
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 

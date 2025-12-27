@@ -17,7 +17,7 @@ import Yaifl.MultiLocated.Kind
 import Yaifl.Enclosing.Kind
 import Yaifl.Door.Kind
 import Yaifl.Text.Say (WithPrintingNameOfSomething)
-import Yaifl.Std.Activities.ListingContents (WithListingContents)
+import Yaifl.Activities.ListingContents (WithListingContents)
 
 data Building wm = Building
   { name :: Text

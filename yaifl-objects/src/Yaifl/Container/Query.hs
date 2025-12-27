@@ -5,6 +5,7 @@ module Yaifl.Container.Query
   , modifyEnterable
   , thingIsOpenContainer
   , thingIsClosedContainer
+  , isContainer
   ) where
 
 import Yaifl.Prelude

@@ -1,0 +1,88 @@
+cabal-version: 3.6
+name:          yaifl-rules
+version:       0.0.18.830
+synopsis:      Yet another interactive fiction library.
+description:
+  A parser-based interactive fiction library for Haskell.
+
+  For a more in-depth birds-eye view of the library and its design, see the readme.
+
+homepage:      https://github.com/PPKFS/yaifl
+bug-reports:   https://github.com/PPKFS/yaifl/issues
+license:       MIT
+author:        Avery
+maintainer:    Avery <ppkfs@outlook.com>
+copyright:     2022-2025 Avery
+category:      Game Development
+build-type:    Simple
+tested-with:   GHC == 9.10.1
+
+source-repository head
+  type:     git
+  location: https://github.com/PPKFS/yaifl.git
+
+library
+  build-depends:
+    base >= 4.17.2 && < 5,
+    breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
+    effectful-core >= 2.3.0 && < 3.4,
+    effectful-plugin >= 1.1.0 && < 2.2,
+    enummapset >= 0.7.2 && < 1.8,
+    yaifl-core,
+    yaifl-objects,
+    text >= 2.0.2 && < 3.1,
+    text-display
+
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wredundant-constraints
+    -Wno-unused-packages -Wno-deprecations -fhide-source-paths
+    -Wno-unused-top-binds -Wmissing-deriving-strategies -O2
+    -flate-specialise -fspecialise-aggressively
+    -fprint-potential-instances -fno-warn-unused-do-bind -haddock
+    -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages
+
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DefaultSignatures
+    DerivingStrategies
+    DeriveAnyClass
+    DuplicateRecordFields
+    FunctionalDependencies
+    LambdaCase
+    MultiWayIf
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    QuasiQuotes
+    StrictData
+    TemplateHaskell
+    TypeFamilies
+    UndecidableInstances
+    ViewPatterns
+
+  hs-source-dirs:  src
+  exposed-modules:
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.ListingContents
+    Yaifl.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Activities.PrintingTheLocaleDescription
+    Yaifl.Activities.PrintingRoomDescriptionDetails
+    Yaifl.Activities.PrintingInventoryDetails
+
+    Yaifl.Locale
+    Yaifl.Rulebooks.ActionProcessing
+
+    Yaifl.Text.DynamicText
+    Yaifl.Text.ListWriter
+    Yaifl.Text.ListWriter.AfterEntry
+    Yaifl.Text.ListWriter.Parameters
+    Yaifl.Text.ListWriter.Responses
+    Yaifl.Text.ListWriter.WriteListR
+    Yaifl.Text.ResponseCollection
+    Yaifl.Text.Regarding
+    Yaifl.Text.Say
+
+    Yaifl.Rulebooks.WhenPlayBegins
+    Yaifl.Rulebooks.TurnSequence
+    Yaifl.Rulebooks.Accessibility

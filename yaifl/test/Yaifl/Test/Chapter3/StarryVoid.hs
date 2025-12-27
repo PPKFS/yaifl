@@ -6,9 +6,9 @@ import Yaifl
 import Yaifl.Entity
 import Yaifl.ObjectLike
 import Yaifl.Enclosing.Query
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Going
 import Yaifl.Std.Create
-import Yaifl.Core.Actions.Args
+import Yaifl.Actions.Args
 import Yaifl.Direction.Kind
 import Yaifl.Openable.Kind
 import Yaifl.Object.Query

@@ -13,7 +13,7 @@ import Data.Char (isSpace)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
-import Yaifl.Core.Rules.Run
+import Yaifl.Rule
 import Yaifl.Text.ResponseCollection
 
 import qualified Data.Text as T

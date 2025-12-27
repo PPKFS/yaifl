@@ -1,8 +1,9 @@
 module Yaifl.Person.Query
   ( isNowCarriedBy
   , getPlayer
+  , getPlayer'
   , getPlayerLocation
-
+  , getActorLocation
   ) where
 
 import Yaifl.Prelude
@@ -17,6 +18,7 @@ import Yaifl.Refreshable
 import Yaifl.Room.Kind
 import Yaifl.Person.Kind
 import Yaifl.Thing.Query
+import Yaifl.Actions.Args
 
 isNowCarriedBy ::
   WithoutMissingObjects wm es
@@ -50,3 +52,9 @@ getPlayerLocation ::
 getPlayerLocation = do
   pl <- getPlayer
   getLocation pl
+
+getActorLocation ::
+  WithoutMissingObjects wm es
+  => Args wm v
+  -> Eff es (Room wm)
+getActorLocation args = getLocation $ source args

@@ -6,6 +6,9 @@ module Yaifl.Person.Kind
   , TaggedPerson
   , getPersonMaybe
   , defaultPersonEnclosing
+
+  , isMale
+  , isFemale
   ) where
 
 import Yaifl.Prelude

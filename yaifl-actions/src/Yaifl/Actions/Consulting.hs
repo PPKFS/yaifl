@@ -1,0 +1,26 @@
+module Yaifl.Actions.Consulting
+  ( ConsultingResponses(..)
+  , ConsultingAction
+  , ConsultingRule
+  , consultingAction
+  , consultingResponses
+  ) where
+
+import Yaifl.Actions.Imports
+import Yaifl.Thing.Kind
+
+data ConsultingResponses wm =
+  ConsultBlockA
+  | ConsultBlockB
+
+consultingResponses :: ConsultingResponses wm -> Response wm (Args wm (Thing wm))
+consultingResponses = \case
+  _ -> notImplementedResponse "response"
+
+type ConsultingAction wm = Action wm (ConsultingResponses wm) 'TakesNoParameter (Thing wm)
+type ConsultingRule wm = ActionRule wm (ConsultingAction wm) (Thing wm)
+consultingAction :: ConsultingAction wm
+consultingAction = (makeAction "consulting")
+  { responses = consultingResponses
+  , reportRules = makeActionRulebook "report consulting"  [ notImplementedRule "block consulting"  ]
+  }

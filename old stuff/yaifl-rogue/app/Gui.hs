@@ -12,7 +12,7 @@ import Rogue.Rendering.Viewport
 import Yaifl
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Effects.RuleEffects
-import Yaifl.Core.Rules.Run
+import Yaifl.Rule
 import Yaifl.Prelude
 import Yaifl.Std.Create
 import Yaifl.Std.EffectHandlers
@@ -22,13 +22,13 @@ import Yaifl.Text.ResponseCollection
 import qualified Data.Text as T
 import MessageLog
 import Data.Char (isPrint)
-import Yaifl.Std.Actions.Collection
+import Yaifl.Actions.Collection
 import Yaifl.Person.Kind
 import Yaifl.Enclosing.Query (getLocation)
 import Rooms
 import Yaifl.Object.Kind
 import Rogue.Array2D.Boxed
-import Yaifl.Std.Actions.Imports
+import Yaifl.Actions.Imports
 import qualified Rogue.Colour as R
 import Yaifl.Rogue.PositionData
 

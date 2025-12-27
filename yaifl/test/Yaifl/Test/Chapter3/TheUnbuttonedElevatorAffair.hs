@@ -3,7 +3,7 @@ module Yaifl.Test.Chapter3.TheUnbuttonedElevatorAffair where
 
 import Yaifl.Prelude
 import Yaifl
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Going
 import Yaifl.Direction.Kind
 import Yaifl.Object.Create
 import Yaifl.Room.Connection

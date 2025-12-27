@@ -7,7 +7,7 @@ import Yaifl.Test.Common
 import Yaifl.Room.Connection
 import Yaifl.Text.Say
 import Yaifl.Std.Create.Rule
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Going
 import Yaifl.Rulebook
 
 ex6 :: (Text, [Text], Game PlainWorldModel ())

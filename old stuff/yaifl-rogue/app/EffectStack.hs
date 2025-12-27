@@ -8,10 +8,10 @@ import Yaifl.Direction.Kind
 import Yaifl.WorldModel
 import Yaifl.Effects.Print
 import Yaifl.Std.World
-import Yaifl.Std.Actions.Collection
+import Yaifl.Actions.Collection
 import Effectful.Error.Static (runError)
 
-import Yaifl.Std.Actions.Looking.Visibility
+import Yaifl.Visibility
 import Effectful.Provider.List (type (++))
 import Yaifl.Std.EffectHandlers
 import Gui

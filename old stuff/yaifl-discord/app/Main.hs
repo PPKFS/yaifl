@@ -14,18 +14,18 @@ import Breadcrumbs
 import Yaifl.Std.Parser
 import Yaifl.Direction.Kind
 import Yaifl.Effects.Print
-import Yaifl.Std.Actions.Collection
+import Yaifl.Actions.Collection
 import Effectful.Error.Static (runError)
 
-import Yaifl.Std.Actions.Looking.Visibility
+import Yaifl.Visibility
 import Effectful.Provider.List (type (++))
 import Yaifl.Std.EffectHandlers
 import Yaifl.Effects.ObjectQuery
-import Yaifl.Std.Actions.Imports
+import Yaifl.Actions.Imports
 import Yaifl.Std.Create
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Going
 import Yaifl.ObjectLike
-import Yaifl.Core.Rules.Run
+import Yaifl.Rule
 import Yaifl.Text.ResponseCollection
 import Yaifl.Effects.RuleEffects
 import Discord.Internal.Rest

@@ -20,8 +20,8 @@ module Yaifl.Std.Create.Rule
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Std.Actions.Imports
-import Yaifl.Core.Activity
+import Yaifl.Actions.Imports
+import Yaifl.Activity
 import Yaifl.AnyObject
 import Yaifl.Object.Kind
 import Yaifl.Thing.Kind
@@ -30,7 +30,7 @@ import Yaifl.ObjectLike
 import Yaifl.Enclosing.Query
 import Yaifl.Refreshable
 import Yaifl.Effects.RuleEffects
-import Yaifl.Std.Actions.Collection (ActionCollection)
+import Yaifl.Actions.Collection (ActionCollection)
 
 import Yaifl.Person.Kind
 import Yaifl.Std.Rulebooks.ActionProcessing

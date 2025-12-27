@@ -9,7 +9,7 @@ This module implements a payload type for arguments to game actions that include
 the object (usually the player, but can be an NPC or other AI) that attempted to performm the action as well as a timestamp
 and additional options such as whether the prompt icon (usually ">") should be printed.
 
-All 'Yaifl.Core.Action's implicitly use 'Args' as the rulebook variables, whereas plain rulebooks and activities may use any @v@.
+All 'Yaifl.Action's implicitly use 'Args' as the rulebook variables, whereas plain rulebooks and activities may use any @v@.
 -}
 
 {-# LANGUAGE RecordWildCards #-}
@@ -42,7 +42,7 @@ import Yaifl.Refreshable
 import Yaifl.WorldModel
 import Yaifl.Effects.ActionHandler
 
--- | Arguments for a 'Yaifl.Core.Action.Action' with variables of type @v@.
+-- | Arguments for a 'Yaifl.Action.Action' with variables of type @v@.
 data Args (wm :: WorldModel) v = Args
   { source :: Thing wm -- ^ the originating entity that is performing the action.
   , variables :: v -- ^ the variables for the action.
@@ -72,7 +72,7 @@ instance {-# OVERLAPPING #-} Refreshable wm v => Refreshable wm (Args wm v) wher
 -- This is after typechecking has occured (meaning "GO KEY" will not get this far) but before the arguments are parsed into a nice form -
 -- for the example of a use action, this would be something like @data UsingVariables wm = Using { mainObject :: Thing wm, usingWith :: Maybe (Thing wm)}@.
 --
--- for converting 'UnverifiedArgs to 'v', look at 'Yaifl.Core.Action.Action.parseArguments'.
+-- for converting 'UnverifiedArgs to 'v', look at 'Yaifl.Action.Action.parseArguments'.
 newtype UnverifiedArgs wm (goesWith :: ActionSignature) = UnverifiedArgs
   { unArgs :: Args wm (ActionExpects wm goesWith, [(Text, ActionParameter wm)])
   } deriving newtype (Generic)

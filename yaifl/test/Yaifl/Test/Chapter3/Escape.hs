@@ -17,8 +17,8 @@ import Yaifl.Tag
 import Yaifl.Direction.Kind
 import Yaifl.Std.Create
 import Yaifl.Text.SayableValue
-import Yaifl.Std.Actions.Imports
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Imports
+import Yaifl.Actions.Going
 import Yaifl.Object.Create
 
 

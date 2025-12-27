@@ -9,7 +9,7 @@ import Yaifl.Text.DynamicText
 import Yaifl.Rogue.PositionData
 
 
-import Yaifl.Std.Actions.Going
+import Yaifl.Actions.Going
 import Yaifl.Text.SayableValue
 import Yaifl.Text.Say
 import Yaifl.ObjectLike
