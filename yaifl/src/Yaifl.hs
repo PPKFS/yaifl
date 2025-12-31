@@ -324,4 +324,3 @@ runTurn = do
     withStyle (Just bold) $ printText actualInput
     void $ parseAction actionOpts [NoParameter] actualInput
     void $ runRulebook Nothing False (wa ^. #turnSequence) ()
-  -- TODO: this is where every turn things happen
