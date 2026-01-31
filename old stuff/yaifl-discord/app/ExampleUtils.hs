@@ -21,11 +21,11 @@ import qualified Data.Text as T
 import Yaifl.Effects.Print
 import Yaifl.Text.Verb
 
-import Yaifl.Std.ObjectSpecifics
+import Yaifl.ObjectSpecifics
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Effects.RuleEffects
-import Yaifl.Std.EffectHandlers
+import Yaifl.Effects.Interpreters
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where

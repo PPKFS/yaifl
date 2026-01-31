@@ -14,6 +14,7 @@ module Yaifl.Room.Kind
   , isNotVisited
   , roomIsLighted
   , isVoid
+  , updateFirstRoom
 
   ) where
 
@@ -26,6 +27,7 @@ import Yaifl.Object.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel
 import qualified Data.Map.Strict as Map
+import Yaifl.Metadata
 
 -- | Whether a connection was made by the user or simply assumed (we can override assumed connections but
 -- error on overriding explicitly made connections).
@@ -139,3 +141,9 @@ isVoid ::
   => a
   -> Bool
 isVoid = (unTagEntity voidID ==) . getID
+
+updateFirstRoom ::
+  State Metadata :> es
+  => Room wm
+  -> Eff es ()
+updateFirstRoom e = #firstRoom .= tagRoomEntity e

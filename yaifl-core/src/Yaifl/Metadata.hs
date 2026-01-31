@@ -99,6 +99,7 @@ data Metadata = Metadata
   , usePostPromptPbreak :: Bool
   -- more to come I guess
   } deriving stock (Generic)
+
 makeFieldLabelsNoPrefix ''Metadata
 
 -- | As basically everywhere where we need the `Metadata` probably uses logging, this type synonym

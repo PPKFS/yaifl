@@ -15,7 +15,7 @@ import Yaifl.Effects.RuleEffects
 import Yaifl.Rule
 import Yaifl.Prelude
 import Yaifl.Std.Create
-import Yaifl.Std.EffectHandlers
+import Yaifl.Effects.Interpreters
 import Yaifl.Std.Rulebooks.ActionProcessing
 import Yaifl.Effects.Print
 import Yaifl.Text.ResponseCollection

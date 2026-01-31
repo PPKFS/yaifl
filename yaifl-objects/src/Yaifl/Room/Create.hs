@@ -1,5 +1,7 @@
 module Yaifl.Room.Create
-  (
+  ( addRoom
+  , addRoom'
+  , addRoomInternal
 
   ) where
 
@@ -9,12 +11,13 @@ import Yaifl.Object.Kind
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Object.Query
-import Yaifl.Room.Kind ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid )
+import Yaifl.Room.Kind ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid, updateFirstRoom )
 import Yaifl.Enclosing.Kind ( Enclosing )
 import Yaifl.WorldModel
 
 import Yaifl.Property.Has
 import Yaifl.Object.Create
+import Yaifl.Metadata (Metadata(..))
 
 addRoomInternal ::
   WMWithProperty wm Enclosing
@@ -28,8 +31,8 @@ addRoomInternal ::
   -> Eff es RoomEntity
 addRoomInternal name desc objtype specifics details stateUpdate = do
   e <- Room <$> addObject (setRoom . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
-  md <- get
-  when (isVoid $ md ^. #firstRoom) (#firstRoom .= tagRoomEntity e)
+  md <- get @Metadata
+  when (isVoid $ md ^. #firstRoom) (updateFirstRoom e)
   whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyRoom e (`runLocalState` su)
   return (tagRoomEntity e)
 

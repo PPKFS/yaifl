@@ -1,5 +1,6 @@
 module Yaifl.Door.Query
   ( getDoor
+  , getOtherSideOfDoor
   ) where
 
 import Yaifl.Prelude

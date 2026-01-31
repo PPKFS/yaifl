@@ -19,7 +19,7 @@ import Effectful.Error.Static (runError)
 
 import Yaifl.Visibility
 import Effectful.Provider.List (type (++))
-import Yaifl.Std.EffectHandlers
+import Yaifl.Effects.Interpreters
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Actions.Imports
 import Yaifl.Std.Create

@@ -41,6 +41,7 @@ import Yaifl.Thing.Kind
 import Yaifl.Refreshable
 import Yaifl.WorldModel
 import Yaifl.Effects.ActionHandler
+import Yaifl.Room.Kind
 
 -- | Arguments for a 'Yaifl.Action.Action' with variables of type @v@.
 data Args (wm :: WorldModel) v = Args
@@ -111,7 +112,10 @@ class ArgsHaveMainObject argVars obj | argVars -> obj where
 class ArgsMightHaveMainObject argVars obj | argVars -> obj where
   argsMainObjectMaybe :: AffineTraversal' argVars obj
 
-instance ArgsHaveMainObject a a where
+instance ArgsHaveMainObject (Thing wm) (Thing wm) where
+  argsMainObject = castOptic $ iso id id
+
+instance ArgsHaveMainObject (Room wm) (Room wm) where
   argsMainObject = castOptic $ iso id id
 
 instance (ArgsHaveMainObject vars o) => ArgsHaveMainObject (Args wm vars) o where

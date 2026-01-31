@@ -28,9 +28,11 @@ import qualified Data.Text as T
 import Yaifl.Tag (tagObject)
 import Yaifl.AnyObject
 import Yaifl.Property.Has
-import Effectful.Error.Static
-
 import Yaifl.Text.SayableValue
+import Yaifl.Effects.RuleEffects
+import Yaifl.ObjectSpecifics
+import Yaifl.Direction.Kind
+import Yaifl.MultiLocated.Kind
 
 done = defaults
 
@@ -39,15 +41,16 @@ done = defaults
 type AddObjects wm es = (
   Display (WMText wm)
   , IsString (WMText wm)
-  , State Metadata :> es
   , Pointed (WMObjSpecifics wm)
-  , Breadcrumbs :> es
-  , ObjectQuery wm :> es
-  , SayableValue (WMText wm) wm
-  , Pointed (WMThingData wm)
   , Pointed (WMRegionData wm)
   , Pointed (WMRoomData wm)
-  , Error MissingObject :> es
+  , Pointed (WMThingData wm)
+  , RuleEffects wm es
+  , SayableValue (WMText wm) wm
+  , WMHasObjSpecifics wm
+  , WMStdDirections wm
+  , WMWithProperty wm Enclosing
+  , WMWithProperty wm MultiLocated
   )
 
 makeObject ::
@@ -69,8 +72,7 @@ makeObject n d ty isT specifics details = do
 
 addObject ::
   forall wm s d es.
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => Pointed s
   => (Object wm d s -> Eff es ())
   -> WMText wm -- ^ Name.

@@ -2,6 +2,7 @@
 module Yaifl.Text.DynamicText
   ( DynamicText(..)
   , text
+  , RuleLimitedEffect(..)
   ) where
 
 import Yaifl.WorldModel

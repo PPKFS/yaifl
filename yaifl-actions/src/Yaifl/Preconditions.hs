@@ -2,7 +2,10 @@ module Yaifl.Preconditions
   ( forPlayer
   , forPlayer'
   , forKind
-
+  , theObject
+  , theObject'
+  , whenIn
+  , whenPlayerIsIn
   ) where
 import Yaifl.Prelude
 import Yaifl.Rulebook
@@ -12,6 +15,10 @@ import Yaifl.Thing.Kind (Thing)
 import Yaifl.Person.Query
 import Yaifl.Metadata
 import Yaifl.AnyObject
+import Yaifl.ObjectLike
+import Yaifl.TH
+import Yaifl.MultiLocated.Kind
+import Yaifl.Enclosing.Query
 
 forPlayer :: Precondition wm (Args wm v)
 forPlayer = Precondition (pure "actor is the player") $ \v -> do

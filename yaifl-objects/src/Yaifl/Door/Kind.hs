@@ -9,7 +9,7 @@ import Yaifl.Prelude
 
 import Yaifl.Entity
 import Yaifl.AnyObject
-import Yaifl.Openable.Kind as O
+import Yaifl.Openable.Kind as O hiding (opened)
 import Yaifl.Thing.Kind
 import Yaifl.MultiLocated.Kind
 import Yaifl.Property.Query
@@ -38,3 +38,6 @@ makeGetMaybe ''Door
 instance Taggable Door DoorTag
 
 type TaggedDoor wm = TaggedObject (Thing wm) DoorTag
+
+instance CouldBeOpened Door where
+  hasOpenability = Just . opened

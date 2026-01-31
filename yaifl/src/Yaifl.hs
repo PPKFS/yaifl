@@ -17,7 +17,7 @@ module Yaifl (
   , runTurn
 
   , module Yaifl.Metadata
-  , module Yaifl.Std.World
+  , module Yaifl.World
   , module Yaifl.WorldModel
   ) where
 
@@ -36,23 +36,23 @@ import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
 import Yaifl.Effects.RuleEffects
-import Yaifl.Rule
+import Yaifl.Rulebook
 import Yaifl.Store
 import Yaifl.WorldModel
-import Yaifl.Std.Rulebooks.Accessibility
-import Yaifl.Std.Rulebooks.ActionProcessing
+import Yaifl.Rulebooks.Accessibility
+import Yaifl.Rulebooks.ActionProcessing
 import Yaifl.Activities.ChoosingNotableLocaleObjects
 import Yaifl.Activities.ListingContents
 import Yaifl.Activities.PrintingLocaleParagraphAbout
 import Yaifl.Activities.PrintingRoomDescriptionDetails
 import Yaifl.Activities.PrintingTheLocaleDescription
-import Yaifl.Std.EffectHandlers
-import Yaifl.Std.ObjectSpecifics
-import Yaifl.Std.Parser
-import Yaifl.Std.Rulebooks.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
-import Yaifl.Std.Rulebooks.WhenPlayBegins
-import Yaifl.Std.World
-import Yaifl.Actions.Collection
+import Yaifl.Effects.Interpreters
+import Yaifl.ObjectSpecifics
+import Yaifl.Parser
+import Yaifl.Rulebooks.TurnSequence (turnSequenceRules, everyTurnRulesImpl)
+import Yaifl.Rulebooks.WhenPlayBegins
+import Yaifl.World
+import Yaifl.ActionCollection
 import Yaifl.Locale
 import Yaifl.Visibility
 import Yaifl.Actions.OutOfWorld
@@ -71,6 +71,16 @@ import qualified Data.Text as T
 import Effectful.Error.Static
 import Effectful.Provider.List
 import Yaifl.Properties
+import Yaifl.Effects.Input
+import Yaifl.Property.Has
+import Yaifl.Enclosing.Kind
+import Yaifl.Object.Create
+import Yaifl.Person.Create
+import Yaifl.Room.Create
+import Yaifl.Person.Kind
+import Yaifl.Rulebooks.Run
+import Yaifl.Object.Kind
+import Yaifl.MultiLocated.Kind
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 
@@ -116,8 +126,6 @@ type YaiflEffects (wm :: WorldModel) es =
     , State (ActivityCollector wm) :> es
     , Input :> es
     , State (ActionCollection wm) :> es
-    , ObjectTraverse wm :> es
-    , ObjectUpdate wm :> es
     , ObjectQuery wm :> es
     , State Metadata :> es
     , State (WorldActions wm) :> es
@@ -198,7 +206,8 @@ blankMetadata = Metadata
   }
 
 newWorld ::
-  Pointed (WMObjSpecifics wm)
+  MayHaveProperty (WMObjSpecifics wm) MultiLocated
+  => Pointed (WMObjSpecifics wm)
   => HasLookingProperties wm
   => HasDirectionalTerms wm
   => WMHasObjSpecifics wm
@@ -207,6 +216,18 @@ newWorld ::
 newWorld = do
   addBaseObjects
   addBaseActions
+
+addBaseObjects ::
+  AddObjects wm es
+  => Eff es ()
+addBaseObjects = do
+  v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
+  addPerson "yourself" ! #description "It's you, looking handsome as always" !
+    #gender NonBinary !
+    #modify (do
+      #objectData % #described .= Undescribed
+      #nameProperness .= Proper) ! done
+  pass
 
 blankActivityCollection ::
   HasStandardProperties wm
@@ -317,7 +338,6 @@ runTurn ::
 runTurn = do
   let actionOpts = ActionOptions False False
   wa <- get @(WorldActions wm)
-  -- runRulebook Nothing False (wa ^. #turnSequence) ()
   i <- waitForInput
   whenJust i $ \actualInput -> do
     printPrompt actionOpts

@@ -1,63 +1,89 @@
+{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Door.Create
   ( addDoor
+  , newDoor
+  , DoorConfig(..)
   ) where
 
 import Yaifl.Prelude
 
 import Yaifl.ObjectSpecifics
-import Yaifl.Direction.Kind (WMStdDirections)
 import Yaifl.Entity
 import Yaifl.Object.Kind
 import Yaifl.Object.Create
 import Yaifl.Thing.Kind
 import Yaifl.Door.Kind
-import Yaifl.Enclosing.Kind ( Enclosing (..) )
-import Yaifl.Property.Has ( WMWithProperty )
-import Yaifl.MultiLocated.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel
-import Yaifl.Effects.RuleEffects
 import Yaifl.Thing.Create
 import Yaifl.MultiLocated.Query
 import Yaifl.Room.Query
+import GHC.TypeLits
+import Yaifl.Openable.Kind
 
 --TODO: I am only going to enforce implications as a quickcheck or hedgehog
 -- invariant, namely that the door type will have a smart ctr (addDoor) that makes sure
 -- it isn't portable on creation, and then the check will be whenever we modify an object
 -- make sure that it isn't breaking an invariant.
+
+data Purpose
+  = Defaults
+  | Complete
+  deriving stock (Show)
+
+newtype RequiredParameter (a :: Symbol) = RP ()
+
+type family Required (fieldDesc :: Symbol)  (p :: Purpose) a where
+  Required f 'Defaults a = RequiredParameter f
+  Required f 'Complete a = a
+
+type RequiredName p wm = Required "name" p (WMText wm)
+
+data DoorConfig wm p = DoorConfig
+  { name :: RequiredName p wm
+  , description :: WMText wm
+  , front :: Required "door front side" p (RoomEntity, WMDirection wm)
+  , back :: Required "door back side" p (RoomEntity, WMDirection wm)
+  , initialAppearance :: WMText wm
+  , thingModify :: Eff '[State (Thing wm)] ()
+  , doorModify :: Eff '[State Door] ()
+  , isOpened :: Opened
+  , locked :: Locked
+  }
+
+newDoor :: IsString (WMText wm) => DoorConfig wm 'Defaults
+newDoor = DoorConfig
+  { name = RP ()
+  , description = ""
+  , front = RP ()
+  , back = RP ()
+  , initialAppearance = ""
+  , thingModify = pass
+  , doorModify = pass
+  , isOpened = Closed
+  , locked = Unlocked
+  }
+
 addDoor ::
   forall wm es.
   AddObjects wm es
-  => WMHasObjSpecifics wm
-  => WMWithProperty wm Enclosing
-  => WMStdDirections wm
-  => WMWithProperty wm MultiLocated
-  => RuleEffects wm es
-  => WMText wm -- ^ name
-  -> "front" :! (RoomEntity, WMDirection wm)
-  -> "back" :! (RoomEntity, WMDirection wm)
-  -> "initialAppearance" :? WMText wm
-  -> "description" :? WMText wm -- ^ Description.
-  -> "described" :? ThingDescribed
-  -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
-  -> "thingData" :? ThingData wm -- ^ Optional details; if 'Nothing' then the default is used.
+  => DoorConfig wm 'Complete
   -> Eff es DoorEntity
-addDoor n (arg #front -> f) (arg #back -> b) ia des (argDef #described Described -> desc) (argDef #modify pass -> upD) (argF #thingData -> mbD) = do
-  let ds = blankDoor (fst f) (fst b)
-  d <- addThing @wm n ia des
+addDoor DoorConfig{..} = do
+  let ds = blankDoor (fst front) (fst back) & (`runLocalState` doorModify)
+  d <- addThing @wm name ! #initialAppearance initialAppearance ! #description description
     ! #specifics (inj (Proxy @wm) $ DoorSpecifics ds)
     ! #modify (do
-      upD
+      thingModify
       #objectData % #portable .= FixedInPlace
       #objectData % #pushableBetweenRooms .= False
-      #objectData % #described .= desc)
+      )
     ! #type (ObjectKind "door")
-    ! paramF #thingData mbD
-    ! #location (coerceTag $ fst f)
+    ! #location (coerceTag $ fst front)
     ! done
       -- A door is always fixed in place.
       -- A door is never pushable between rooms.
   updateMultiLocatedObject d
   let tagged = tagEntity @Door @DoorTag ds d
-  addDoorToConnection tagged f b
+  addDoorToConnection tagged front back
   pure (tagEntity ds d)
