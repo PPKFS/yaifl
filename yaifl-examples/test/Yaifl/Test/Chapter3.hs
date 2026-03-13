@@ -23,6 +23,7 @@ import Yaifl.Chapter3.Replanting
 import Yaifl.Chapter3.DisenchantmentBay4
 import Yaifl.Chapter3.Laura
 import Yaifl.Chapter3.Escape
+import Yaifl.Chapter3.Garibaldi (ex22)
 
 c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
@@ -50,4 +51,5 @@ spec _allTenses = M.fromList
   , c3Harness ex19 -- Laura
   -- example 20 is a single line of disenchantment bay
   , c3Harness ex21 -- Escape
+  , c3Harness ex22 -- Garibaldi
   ]

@@ -58,7 +58,7 @@ garibaldiWorld = do
     { name = "inner airlock"
     , front = (tdb, northOf)
     , back = (tz, southOf)
-    , locked = Locked
+    , locked = Just Unlocked
     }
   pass
 
@@ -69,4 +69,4 @@ theObjectWhenSwitchedOn th = Precondition (pure "the object when switched on") $
   return $ Just (getID th) == (getID <$> mbT) && Just True == (switchedOn <$> d)
 
 escapeTestMeWith :: [Text]
-escapeTestMeWith = fromI7TestMe [wrappedText|look through window / climb window / open window / climb through window / look through window / close window / e / open window / e|]
+escapeTestMeWith = fromI7TestMe [wrappedText|x readout / turn on readout / x readout / lock inner airlock with security pass / x readout|]

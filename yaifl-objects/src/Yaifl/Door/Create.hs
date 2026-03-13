@@ -39,6 +39,11 @@ type family Required (fieldDesc :: Symbol)  (p :: Purpose) a where
 
 type RequiredName p wm = Required "name" p (WMText wm)
 
+data DoorLockStatus = NotLockable | Lockable Lockability
+
+lockStatusFromMaybe :: Maybe Lockability -> DoorLockStatus
+lockStatusFromMaybe = maybe NotLockable Lockable
+
 data DoorConfig wm p = DoorConfig
   { name :: RequiredName p wm
   , description :: WMText wm
@@ -47,8 +52,8 @@ data DoorConfig wm p = DoorConfig
   , initialAppearance :: WMText wm
   , thingModify :: Eff '[State (Thing wm)] ()
   , doorModify :: Eff '[State Door] ()
-  , isOpened :: Opened
-  , locked :: Locked
+  , openStatus :: (Opened, Openable)
+  , lockStatus :: DoorLockStatus
   }
 
 newDoor :: IsString (WMText wm) => DoorConfig wm 'Defaults
@@ -60,8 +65,8 @@ newDoor = DoorConfig
   , initialAppearance = ""
   , thingModify = pass
   , doorModify = pass
-  , isOpened = Closed
-  , locked = Unlocked
+  , lockStatus = lockStatusFromMaybe $ defaultDoorOpenability ^. #lockability
+  , openStatus = let Openability {opened, openable} = defaultDoorOpenability in (opened, openable)
   }
 
 addDoor ::
