@@ -31,7 +31,7 @@ getThingMaybe ::
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Thing wm))
-getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getID e)) (const $ pure Nothing)
+getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getEntity e)) (const $ pure Nothing)
 
 getRoomMaybe ::
   ObjectQuery wm :> es
@@ -40,7 +40,7 @@ getRoomMaybe ::
   => ObjectLike wm o
   => o
   -> Eff es (Maybe (Room wm))
-getRoomMaybe e = withoutMissingObjects (preview _Room <$> getObject (getID e)) (const $ pure Nothing)
+getRoomMaybe e = withoutMissingObjects (preview _Room <$> getObject (getEntity e)) (const $ pure Nothing)
 
 modifyObjectFrom ::
   WithMetadata es

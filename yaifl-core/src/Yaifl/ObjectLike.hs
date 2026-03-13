@@ -29,19 +29,19 @@ import Yaifl.Tag
 import Yaifl.Thing.Kind
 
 -- | Something which can be resolved into an `AnyObject`.
-class HasID o => ObjectLike wm o where
+class HasEntity o => ObjectLike wm o where
   getObject :: (HasCallStack, WithoutMissingObjects wm es) => o -> Eff es (AnyObject wm)
 
 -- | Something which can be resolved into a `Thing`.
-class HasID o => ThingLike wm o where
+class HasEntity o => ThingLike wm o where
   getThing :: (HasCallStack, WithoutMissingObjects wm es) => o -> Eff es (Thing wm)
 
 -- | Something which can be resolved into a `Room`.
-class HasID o => RoomLike wm o where
+class HasEntity o => RoomLike wm o where
   getRoom :: (HasCallStack, WithoutMissingObjects wm es) => o -> Eff es (Room wm)
 
 instance (ObjectLike wm o) => ObjectLike wm (TaggedObject o tagEntity) where
-  getObject = getObject . unTagObject
+  getObject = getObject . snd . unTagObject
 
 instance {-# OVERLAPPABLE #-} (RoomLike wm o) => RoomLike wm (TaggedObject o tagEntity) where
   getRoom = getRoom . snd . unTagObject
@@ -80,12 +80,9 @@ instance ThingLike wm PersonEntity where
   getThing = getThing . coerceTag @ThingTag
 
 instance ObjectLike wm Entity where
-  getObject e = if isThing (getID e)
+  getObject e = if isThing (getEntity e)
     then lookupThing e >>= either (throwError . flip MissingObject e) (return . review _Thing)
     else lookupRoom e >>= either (throwError . flip MissingObject e) (return . review _Room)
-
-instance ObjectLike wm o => ObjectLike wm (TaggedEntity e, o) where
-  getObject = getObject . snd
 
 instance ThingLike wm (TaggedObject (Thing wm) o) where
   getThing = pure . snd . unTagObject

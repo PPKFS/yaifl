@@ -33,8 +33,8 @@ instance HasField x (RawAnyObject wm) a => HasField x (AnyObject wm) a where
 instance Display (WMText wm) => Display (AnyObject wm) where
   displayBuilder o = displayBuilder (o ^. #name)
 
-instance HasID (AnyObject wm) where
-  getID (AnyObject a) = objectId a
+instance HasEntity (AnyObject wm) where
+  getEntity (AnyObject a) = objectId a
 
 -- | A prism for getting a `Room` out of an `AnyObject`.
 _Room :: Prism' (AnyObject wm) (Room wm)

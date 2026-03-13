@@ -4,16 +4,18 @@ Copyright   : (c) Avery 2022-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-An `Entity` is an object ID. They are used to uniquely identify game objects. Entities should only be generated using `Yaifl.Core.ObjectQuery.generateEntity`,
+An `Entity` is an object ID. They are used to uniquely identify game objects. Entities should only be generated using `Yaifl.Effects.ObjectQuery.generateEntity`,
 which ensures IDs are globally unique. Positive IDs should be used for `Yaifl.Thing.Kind.Thing`s and negative IDs should be used for `Yaifl.Room.Kind.Room`s.
 
 `Entity` keys can also be used for general `Yaifl.Store`s.
+
+For type-safe tagging of entities, see `Yaifl.Tag`.
 -}
 
 module Yaifl.Entity
   ( -- * Entities
     Entity(..)
-  , HasID(..)
+  , HasEntity(..)
   -- ** TaggedEntity
   -- | Entities tagged with a phantom type that allows for additional type-safety when making indirect references.
   , TaggedEntity(unTagEntity)
@@ -40,19 +42,19 @@ module Yaifl.Entity
 import Yaifl.Prelude
 
 -- | An object ID. Positive IDs are for `Yaifl.Thing.Kind`s and
--- negative IDs are for `Yaifl.Core.Kinds.Rooms`. This means we can write `Yaifl.Object.Kind.isThing` for free.
+-- negative IDs are for `Yaifl.Room.Kind.Room`s. This means we can write `Yaifl.Object.Kind.isThing` for free.
 newtype Entity = Entity
-  { unID :: Int
+  { unEntity :: Int
   } deriving stock (Show, Generic)
     deriving newtype (Eq, Read, Bounded, Hashable, Enum, Ord)
 
 -- | Typeclass for extracting an entity from something (to store references).
-class HasID n where
-  getID :: n -> Entity
+class HasEntity n where
+  getEntity :: n -> Entity
 
 -- | Trivial instance.
-instance HasID Entity where
-  getID = id
+instance HasEntity Entity where
+  getEntity = id
 
 -- | This should only be exposed in logs and tracing; i.e. the end user should never need to know there
 -- is an ID system under it all.
@@ -60,24 +62,20 @@ instance Display Entity where
   displayBuilder i = "(ID: " <> show i <> ")"
 
 -- | An entity tagged with a phantom @tagEntity@ for keeping some semblance of type safety
--- when indirectly storing references to other objects. The tagging mechanisms are in
--- `Yaifl.Tag`.
+-- when indirectly storing references to other objects. For tagging mechanisms, see `Yaifl.Tag`.
 newtype TaggedEntity tagEntity = TaggedEntity { unTagEntity :: Entity }
   deriving stock (Show, Generic)
   deriving newtype (Eq, Read, Bounded, Hashable, Enum, Ord)
 
--- | Tag an entity without a witness. This is, obviously, unsafe and probably should be avoided unless
--- you enjoy crashes.
+-- | Tag an entity without a witness. This is unsafe and should be avoided unless absolutely necessary,
+-- as it bypasses type safety checks. Prefer using `Yaifl.Tag.tagEntity` with a proper witness.
 unsafeTagEntity ::
   Entity
   -> TaggedEntity tagEntity
 unsafeTagEntity = TaggedEntity
 
-instance HasID (TaggedEntity t) where
-  getID = unTagEntity
-
-instance HasID (TaggedEntity e, o) where
-  getID = unTagEntity . fst
+instance HasEntity (TaggedEntity t) where
+  getEntity = unTagEntity
 -- | Phantom type for tagging `Yaifl.Thing.Kind`s.
 data ThingTag
 -- | Phantom type for tagging `Yaifl.Room.Kind`s.

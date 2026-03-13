@@ -89,8 +89,8 @@ instance HasField x (Object wm (ThingData wm) (WMObjSpecifics wm)) a  => HasFiel
 instance Display (WMText wm) => Display (Thing wm) where
   displayBuilder = displayBuilder . coerce @_ @(Object wm (ThingData wm) (WMObjSpecifics wm))
 
-instance HasID (Thing wm) where
-  getID (Thing a) = objectId a
+instance HasEntity (Thing wm) where
+  getEntity (Thing a) = objectId a
 
 -- | The player who is created at the start of the game. This can change (whereas e.g. the Void changing makes no
 -- sense) which is why this is named slightly differently.

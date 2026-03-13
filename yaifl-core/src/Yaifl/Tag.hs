@@ -29,25 +29,25 @@ import Yaifl.Entity
 newtype TaggedObject o tagEntity = TaggedObject { unTagObject :: (TaggedEntity tagEntity, o) }
   deriving stock (Generic)
 
-instance HasID (TaggedObject o tagEntity) where
-  getID = getID . fst . unTagObject
+instance HasEntity (TaggedObject o tagEntity) where
+  getEntity = getEntity . fst . unTagObject
 
 instance Display o => Display (TaggedObject o tag) where
   displayBuilder = displayBuilder . snd . unTagObject
 
 -- | Unsafely tagEntity an object when we know it's sensible.
 unsafeTagObject ::
-  HasID o
+  HasEntity o
   => o
   -> TaggedObject o tagEntity
-unsafeTagObject o = TaggedObject (unsafeTagEntity $ getID o, o)
+unsafeTagObject o = TaggedObject (unsafeTagEntity $ getEntity o, o)
 
 -- | An entity @e@ can be tagged as a `TaggedEntity` @taggableTo@ (a phantom type)
 -- given a witness of type @taggableWith@.
 class Taggable taggableWith taggableTo where
-  tagEntity :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
-  default tagEntity :: HasID e => taggableWith -> e -> TaggedEntity taggableTo
-  tagEntity _ = unsafeTagEntity . getID
+  tagEntity :: HasEntity e => taggableWith -> e -> TaggedEntity taggableTo
+  default tagEntity :: HasEntity e => taggableWith -> e -> TaggedEntity taggableTo
+  tagEntity _ = unsafeTagEntity . getEntity
 
 -- | you can always tagEntity something as itself
 instance Taggable (TaggedEntity a) a
@@ -67,7 +67,7 @@ getTag = fst . unTagObject
 
 tagObject ::
   Taggable tagWith taggableTo
-  => HasID e
+  => HasEntity e
   => tagWith
   -> e
   -> TaggedObject e taggableTo

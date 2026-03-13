@@ -81,12 +81,12 @@ instance Display (WMText wm) => Display (Object wm objData s) where
 -- | By generalising `Eq`, we can compare two objects of different kinds. Trivially this is always `False`,
 -- but it does allow comparing a `Thing` and an `AnyObject`.
 objectEquals ::
-  HasID a
-  => HasID b
+  HasEntity a
+  => HasEntity b
   => a
   -> b
   -> Bool
-objectEquals = (. getID) . (==) . getID
+objectEquals = (. getEntity) . (==) . getEntity
 
 instance Eq (Object wm d s) where
   (==) = objectEquals
@@ -95,8 +95,8 @@ instance Eq (Object wm d s) where
 instance Ord (Object wm d s) where
   compare = (. creationTime) . compare . creationTime
 
-instance HasID (Object wm d s) where
-  getID = objectId
+instance HasEntity (Object wm d s) where
+  getEntity = objectId
 
 instance Functor (Object wm d) where
   fmap f = #specifics %~ f
@@ -123,9 +123,9 @@ isRoom ::
   -> Bool
 isRoom = not . isThing
 
-instance {-# OVERLAPPABLE #-} HasID o => IsObject o where
-  isThing = isThing . getID
+instance {-# OVERLAPPABLE #-} HasEntity o => IsObject o where
+  isThing = isThing . getEntity
 
 -- | This is safe as long as we only ever generate object IDs under the right principle.
 instance IsObject Entity where
-  isThing = (> 0) . unID
+  isThing = (> 0) . unEntity

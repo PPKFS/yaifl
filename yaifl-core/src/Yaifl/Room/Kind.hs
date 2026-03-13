@@ -107,8 +107,8 @@ instance HasField x (Object wm (RoomData wm) (WMObjSpecifics wm)) a  => HasField
 instance Display (Room wm) where
   displayBuilder = const "room"
 
-instance HasID (Room wm) where
-  getID (Room a) = objectId a
+instance HasEntity (Room wm) where
+  getEntity (Room a) = objectId a
 
 -- | A place where new `Yaifl.Model.Objects.Thing`s are placed by default, to avoid having locations be `Maybe`.
 voidID :: TaggedEntity RoomTag
@@ -137,10 +137,10 @@ roomIsLighted ::
 roomIsLighted = (== Lighted) . view (#objectData % #darkness)
 
 isVoid ::
-  HasID a
+  HasEntity a
   => a
   -> Bool
-isVoid = (unTagEntity voidID ==) . getID
+isVoid = (unTagEntity voidID ==) . getEntity
 
 updateFirstRoom ::
   State Metadata :> es

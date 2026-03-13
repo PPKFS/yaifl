@@ -17,13 +17,13 @@ import Yaifl.Object.Kind
 import Yaifl.Object.Query
 
 getPropertyOrThrow ::
-  HasID i
+  HasEntity i
   => Error MissingObject :> es
   => Text
   -> i
   -> Maybe v
   -> Eff es v
-getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <> t) (getID o)) pure
+getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <> t) (getEntity o)) pure
 
 defaultPropertySetter ::
   WithoutMissingObjects wm es

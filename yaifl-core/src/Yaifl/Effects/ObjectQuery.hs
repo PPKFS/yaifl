@@ -46,8 +46,8 @@ import Yaifl.Region.Kind
 
 -- | Effect for reading/writing objects from the world.
 data ObjectQuery (wm :: WorldModel) :: Effect where
-  LookupThing :: HasID o => o -> ObjectQuery wm m (Either Text (Thing wm))
-  LookupRoom :: HasID o => o -> ObjectQuery wm m (Either Text (Room wm))
+  LookupThing :: HasEntity o => o -> ObjectQuery wm m (Either Text (Thing wm))
+  LookupRoom :: HasEntity o => o -> ObjectQuery wm m (Either Text (Room wm))
   LookupRegion :: RegionEntity -> ObjectQuery wm m (Either Text (Region wm))
 
   GenerateEntity :: Bool -> ObjectQuery wm m Entity

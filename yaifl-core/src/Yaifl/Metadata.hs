@@ -194,14 +194,14 @@ traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
 
 -- | If some `Entity` represents the current player.
 isPlayer ::
-  HasID o
+  HasEntity o
   => State Metadata :> es
   => o
   -> Eff es Bool
-isPlayer o = (getID o ==) . getID <$> use #currentPlayer
+isPlayer o = (getEntity o ==) . getEntity <$> use #currentPlayer
 
 whenPlayer ::
-  HasID o
+  HasEntity o
   => State Metadata :> es
   => o
   -> Eff es ()

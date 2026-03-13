@@ -23,7 +23,7 @@ import Data.Bitraversable
 class Refreshable wm av where
   refresh :: forall es. WithoutMissingObjects wm es => av -> Eff es av
 
-instance {-# OVERLAPPING #-} (HasID o, Refreshable wm o) => Refreshable wm (TaggedObject o tagEntity) where
+instance {-# OVERLAPPING #-} (HasEntity o, Refreshable wm o) => Refreshable wm (TaggedObject o tagEntity) where
   refresh obj = tagObject obj <$> refresh (getTaggedObject obj)
 
 instance (Refreshable wm a, Refreshable wm b) => Refreshable wm (a, b) where
@@ -47,7 +47,7 @@ instance Refreshable wm (Thing wm) where
   refresh = refreshThing
 
 instance Refreshable wm (AnyObject wm) where
-  refresh t = getObject (getID t)
+  refresh t = getObject (getEntity t)
 
 instance Refreshable wm () where
   refresh = const pass
