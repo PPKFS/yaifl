@@ -1,18 +1,55 @@
+{-|
+Module      : Yaifl.Room.Kind
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Rooms represent environmental locations in the game world that contain objects,
+provide spatial context, and define the game's geography.
+
+This module defines the `Room` type and its associated data structures:
+
+- `Room`: The core room type wrapping `Object` with room-specific data
+- `RoomData`: Comprehensive properties for room behaviour and state
+- `Connection`: Room-to-room connections with direction and explicitness (author-created vs implied)
+- `MapConnections`: Direction-based connection mapping
+- Functions for querying room properties and managing room state
+
+See also:
+- `Yaifl.Object.Kind` for the base Object type
+- `Yaifl.Enclosing.Kind` for enclosing functionality
+- `Yaifl.Tag` for the tagging system used by `tagRoomEntity`
+- `Yaifl.Metadata` for game state management used by `updateFirstRoom`
+-}
+
 module Yaifl.Room.Kind
-  ( ConnectionExplicitness(..)
+  ( -- * Connection types
+    ConnectionExplicitness(..)
   , Connection(..)
   , MapConnections(..)
-  -- ** Rooms
+
+    -- * Room components
   , ContainingRegion(..)
   , Darkness(..)
   , RoomData(..)
   , IsVisited(..)
   , blankRoomData
+
+    -- * Room type
   , Room(..)
+
+    -- * Entity tagging
   , tagRoomEntity
+
+    -- * Default IDs
   , voidID
-  , isNotVisited
+
+    -- * Room queries and utilities
+  , roomIsVisited
   , roomIsLighted
+  , roomConnections
+  , roomRegion
+  , roomEnclosing
   , isVoid
   , updateFirstRoom
 
@@ -98,6 +135,12 @@ makeFieldLabelsNoPrefix ''RoomData
 makeFieldLabelsNoPrefix ''Connection
 
 -- | An `Object` with `RoomData`.
+-- | A room object with room-specific data and behaviour.
+--
+-- Wraps an `Object` (from `Yaifl.Object.Kind`) with `RoomData`, providing access to room properties
+-- such as connections, darkness, visitation state, and regional containment through the
+-- `HasField` instance. Maintains compatibility with the object system via
+-- `HasEntity` and `IsObject` instances.
 newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
@@ -110,14 +153,18 @@ instance Display (Room wm) where
 instance HasEntity (Room wm) where
   getEntity (Room a) = objectId a
 
--- | A place where new `Yaifl.Model.Objects.Thing`s are placed by default, to avoid having locations be `Maybe`.
+-- | The Void room ID used as a default placement location.
+-- The Void (Entity -1) serves as a fallback to avoid `Maybe` locations
+-- when objects need a default container. Objects in The Void are not
+-- considered part of the active game world and may be removed at any time.
 voidID :: TaggedEntity RoomTag
 voidID = unsafeTagEntity $ Entity (-1)
 
 instance Taggable (Room wm) EnclosingTag
 instance Taggable (Room wm) RoomTag
 
--- | Tag a room entity.
+-- | Tag a room with its entity for type-safe references.
+-- Uses the room's object ID to create a tagged entity reference.
 tagRoomEntity ::
   Room wm
   -> TaggedEntity RoomTag
@@ -126,24 +173,47 @@ tagRoomEntity r = tagEntity r (r ^. #objectId)
 instance IsObject (Room wm) where
   isThing = const False
 
-isNotVisited ::
-  RoomData wm
+-- | Check if a room has been visited.
+roomIsVisited ::
+  Room wm
   -> Bool
-isNotVisited = (/= Visited) . isVisited
+roomIsVisited = (== Visited) . view (#objectData % #isVisited)
 
+-- | Check if a room is currently lighted.
 roomIsLighted ::
   Room wm
   -> Bool
 roomIsLighted = (== Lighted) . view (#objectData % #darkness)
 
+-- | Check if an object is the void ID (default placement location).
 isVoid ::
   HasEntity a
   => a
   -> Bool
 isVoid = (unTagEntity voidID ==) . getEntity
 
+-- | Update the first room in metadata to the given room.
+-- This sets the default starting location for the player.
 updateFirstRoom ::
   State Metadata :> es
   => Room wm
   -> Eff es ()
 updateFirstRoom e = #firstRoom .= tagRoomEntity e
+
+-- | Get the connections from a room to other rooms.
+roomConnections ::
+  Room wm
+  -> MapConnections wm
+roomConnections = view (#objectData % #mapConnections)
+
+-- | Get the region containing a room.
+roomRegion ::
+  Room wm
+  -> ContainingRegion
+roomRegion = view (#objectData % #containingRegion)
+
+-- | Get the enclosing data for a room.
+roomEnclosing ::
+  Room wm
+  -> Enclosing
+roomEnclosing = view (#objectData % #enclosing)
