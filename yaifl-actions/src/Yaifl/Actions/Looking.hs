@@ -17,7 +17,7 @@ import Yaifl.Visibility
 import Yaifl.Activity
 import Yaifl.Metadata
 import Yaifl.Object.Kind( Object(..), objectEquals )
-import Yaifl.Entity ( HasID(..) )
+import Yaifl.Entity ( HasEntity(..) )
 import Yaifl.Object.Query
 import Yaifl.Room.Kind ( IsVisited(..) )
 import Yaifl.Store
@@ -111,7 +111,7 @@ roomDescriptionHeading = makeRule "room description heading rule" forPlayer'
           void $ endActivity #printingNameOfADarkRoom
         Just visCeil ->
           -- otherwise if the visibility ceiling is the location:
-          if getID visCeil == getID loc
+          if getEntity visCeil == getEntity loc
           then do
             addTag @Text "Ceiling is the location" ""
             -- say "[visibility ceiling]";

@@ -42,7 +42,7 @@ move objectToMove oLoc = moveBlock
       addTag "current location" (display $ c')
       addTag "new location" (display $ oLoc')
       modifySpan (\s -> s { _spanName = display (objectToMove' ^. #name) })
-      let (movedObj, oldLocation, newLocation) = moveObjects (tagEntity oldLocEnc (getID oLoc')) objectToMove' oldLocEnc loc
+      let (movedObj, oldLocation, newLocation) = moveObjects (tagEntity oldLocEnc (getEntity oLoc')) objectToMove' oldLocEnc loc
       setThing movedObj
       setEnclosing c' oldLocation
       setEnclosing oLoc' newLocation

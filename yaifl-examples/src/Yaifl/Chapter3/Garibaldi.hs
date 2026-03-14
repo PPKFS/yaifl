@@ -66,7 +66,7 @@ theObjectWhenSwitchedOn :: forall wm a. (WMWithProperty wm Device, ArgsMightHave
 theObjectWhenSwitchedOn th = Precondition (pure "the object when switched on") $ \args -> do
   let (mbT :: Maybe (Thing wm)) = args ^? #variables % argsMainObjectMaybe
   let d = mbT >>= getDeviceMaybe
-  return $ Just (getID th) == (getID <$> mbT) && Just True == (switchedOn <$> d)
+  return $ Just (getEntity th) == (getEntity <$> mbT) && Just True == (switchedOn <$> d)
 
 escapeTestMeWith :: [Text]
 escapeTestMeWith = fromI7TestMe [wrappedText|x readout / turn on readout / x readout / lock inner airlock with security pass / x readout|]

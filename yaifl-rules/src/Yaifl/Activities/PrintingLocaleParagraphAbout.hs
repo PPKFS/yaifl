@@ -34,7 +34,7 @@ setLocalePriority ::
   -> LocaleVariables v
   -> Int
   -> LocaleVariables v
-setLocalePriority e lv i = lv & #localePriorities % at (getID e) % _Just % #priority .~ i
+setLocalePriority e lv i = lv & #localePriorities % at (getEntity e) % _Just % #priority .~ i
 
 removeFromLocale ::
   Applicative m
@@ -43,7 +43,7 @@ removeFromLocale ::
   -> LocaleInfo v
   -> m (Maybe (LocaleVariables v, LocaleInfo v), Maybe (LocaleVariables v))
 removeFromLocale e lv li = do
-  pure (Just (lv & #localePriorities % at (getID e) .~ Nothing, li & #priority .~ 0), Nothing)
+  pure (Just (lv & #localePriorities % at (getEntity e) .~ Nothing, li & #priority .~ 0), Nothing)
 
 mentionItemAndIncreaseParagraphCount ::
   Applicative m
@@ -54,7 +54,7 @@ mentionItemAndIncreaseParagraphCount ::
 mentionItemAndIncreaseParagraphCount e lv li = do
   let nowMentionedItem = li & #isMentioned .~ True
   pure (Just (lv &
-    #localePriorities % at (getID e) ?~ nowMentionedItem
+    #localePriorities % at (getEntity e) ?~ nowMentionedItem
     & #paragraphCount %~ (+1), nowMentionedItem), Nothing)
 
 type WithPrintingLocaleParagraphAbout wm =

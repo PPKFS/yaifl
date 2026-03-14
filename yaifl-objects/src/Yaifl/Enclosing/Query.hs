@@ -126,8 +126,8 @@ class IsEnclosingObject o where
 
 class IsEnclosing o where
   getEnclosingEntity :: o -> EnclosingEntity
-  default getEnclosingEntity :: HasID o => o -> EnclosingEntity
-  getEnclosingEntity = unsafeTagEntity . getID
+  default getEnclosingEntity :: HasEntity o => o -> EnclosingEntity
+  getEnclosingEntity = unsafeTagEntity . getEntity
 
 instance IsEnclosing RoomEntity where
   getEnclosingEntity = coerceTag

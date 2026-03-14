@@ -7,7 +7,7 @@ import Yaifl.Prelude
 
 import Breadcrumbs
 import Yaifl.Activity hiding (name)
-import Yaifl.Entity ( HasID(..) )
+import Yaifl.Entity ( HasEntity(..) )
 import Yaifl.AnyObject
 import Yaifl.Enclosing.Kind ( Enclosing(..) )
 import Yaifl.Object.Kind( Object(..) )
@@ -36,5 +36,5 @@ choosingNotableLocaleObjectsImpl = makeActivity "Choosing notable locale objects
           x' <- getThing x
           addAnnotation $ "Found a " <> display (x' ^. #name)
           return x') (DES.toList (contents encl))
-        return (Just (Store $ DEM.fromList $ map (\x -> (getID x, LocaleInfo 5 x False)) l)))
+        return (Just (Store $ DEM.fromList $ map (\x -> (getEntity x, LocaleInfo 5 x False)) l)))
   )]

@@ -174,13 +174,13 @@ goingActionSet ua@(UnverifiedArgs Args{..}) = do
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
-    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom) =<< getDoorMaybe door
+    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom) =<< getDoorMaybe door
     Nothing -> do
       mbThrough <- getMatchingThing "through" ua
       pure $ do
             door <- mbThrough
             ds <- getDoorMaybe door
-            getConnectionViaDoor (tagEntity ds (getID door)) roomGoneFrom
+            getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom
   case mbTargetAndConn of
     Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through" ua
     Just (target, conn) -> do
@@ -274,7 +274,7 @@ toTheRoom ::
   ObjectLike wm r
   => r
   -> Precondition wm (Args wm (GoingActionVariables wm))
-toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> pure $ getID (roomGoneTo $ variables v) == getID r
+toTheRoom r = Precondition (getObject r >>= \o -> pure $ "to the room " <> display (o ^. #name)) $ \v -> pure $ getEntity (roomGoneTo $ variables v) == getEntity r
 {-
 inTheRegion ::
   RegionEntity
@@ -284,10 +284,10 @@ inTheRegion r = Precondition (lookupRegion r >>= \(Right o) -> pure $ "in the re
 -}
 throughTheDoor ::
   forall d wm.
-  HasID d
+  HasEntity d
   => d
   -> Precondition wm (Args wm (GoingActionVariables wm))
-throughTheDoor d = Precondition (pure "through a specific door") $ \v -> pure $ (getID <$> doorGoneThrough (variables v)) == Just (getID d)
+throughTheDoor d = Precondition (pure "through a specific door") $ \v -> pure $ (getEntity <$> doorGoneThrough (variables v)) == Just (getEntity d)
 
 throughTheClosedDoor ::
   forall d wm.
@@ -299,4 +299,4 @@ throughTheClosedDoor d = Precondition (pure "through a specific closed door") $ 
   o <- getThing d
   pure $
     isClosed o &&
-    (getID <$> doorGoneThrough (variables v)) == Just (getID d)
+    (getEntity <$> doorGoneThrough (variables v)) == Just (getEntity d)

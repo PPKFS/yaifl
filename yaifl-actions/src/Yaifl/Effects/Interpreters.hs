@@ -118,7 +118,7 @@ interpretLookup = do
         -> Text
         -> Eff es (Either Text wantedStore)
       lookupHelper e l l' expected errTy = do
-            let i = getID e
+            let i = getEntity e
             mbObj <- use $ #stores % l % at i
             case mbObj of
               Nothing -> do
@@ -129,8 +129,8 @@ interpretLookup = do
                   Just _ -> pure $ Left $ "Tried to lookup a " <> errTy <> " as a " <> show expected <> ":" <> show i <> ". (at: " <> show cs <> ")."
               Just ao -> pure $ Right ao
   interpret $ \env -> \case
-    LookupThing e -> lookupHelper (getID e) #things #rooms "thing" "room"
-    LookupRoom e -> lookupHelper (getID e) #rooms #things "room" "thing"
+    LookupThing e -> lookupHelper (getEntity e) #things #rooms "thing" "room"
+    LookupRoom e -> lookupHelper (getEntity e) #rooms #things "room" "thing"
     LookupRegion e -> do
       mbReg <- use $ #stores % #regions % at (unTagEntity e)
       case mbReg of
@@ -154,11 +154,11 @@ interpretLookup = do
         r <- (\r -> localSeqUnlift env $ \unlift -> unlift $ f r) aT
         whenJust r (\r' -> localSeqUnlift env $ \unlift -> unlift $ setRegion r')
         return (fromMaybe aT r)) m
-    SetRoom r -> #stores % #rooms % at (getID r) %= updateIt r
-    SetThing t -> #stores % #things % at (getID t) %= updateIt t
+    SetRoom r -> #stores % #rooms % at (getEntity r) %= updateIt r
+    SetThing t -> #stores % #things % at (getEntity t) %= updateIt t
     SetRegion t -> #stores % #regions % at (unTagEntity $ regionID t) %= updateIt t
     GenerateEntity bThing -> if bThing then
-      (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unID) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unID x - 1)
+      (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unEntity) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unEntity x - 1)
 
 updateIt :: a -> Maybe a -> Maybe a
 updateIt newObj mbExisting = case mbExisting of

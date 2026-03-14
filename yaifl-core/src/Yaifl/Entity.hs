@@ -4,12 +4,12 @@ Copyright   : (c) Avery 2022-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-An `Entity` is an object ID. They are used to uniquely identify game objects. Entities should only be generated using `Yaifl.Effects.ObjectQuery.generateEntity`,
-which ensures IDs are globally unique. Positive IDs should be used for `Yaifl.Thing.Kind.Thing`s and negative IDs should be used for `Yaifl.Room.Kind.Room`s.
+An `Entity` is an object ID used to uniquely identify game objects. It is a simple wrapper around an `Int`,
+where positive IDs are implicitly used for `Yaifl.Thing.Kind.Thing`s and negative IDs for `Yaifl.Room.Kind.Room`s.
+Entities should only be generated via `Yaifl.Effects.ObjectQuery.generateEntity` to ensure global uniqueness.
 
-`Entity` keys can also be used for general `Yaifl.Store`s.
-
-For type-safe tagging of entities, see `Yaifl.Tag`.
+`Entity` can also serve as a key for `Yaifl.Store`, where it is treated as an opaque identifier.
+For type-safe references, use `TaggedEntity` with phantom types (see `Yaifl.Tag`).
 -}
 
 module Yaifl.Entity
@@ -21,12 +21,9 @@ module Yaifl.Entity
   , TaggedEntity(unTagEntity)
   , unsafeTagEntity
   -- ** Tags
-  -- | These phantom types are defined here because these ones are foundational enough that they need to be
-  -- forward-declared. That is, we need to be able to refer to type-safe `Entity`s at this level of the library
-  -- that are also:
-  -- `Yaifl.Room.Kind`s and `Yaifl.Thing.Kind`s (as these are two of the key types that everything else is based around);
-  -- `Yaifl.Core.Kinds.Door`s and `Yaifl.Enclosing.Kind` (as these are part of the definition of `Yaifl.Room.Kind`)
-  -- `Yaifl.Core.Kinds.Person` to store a reference to the current player in `Yaifl.Metadata`.
+  -- | These phantom types are defined here because they are foundational and need to be forward-declared.
+  -- They are used to create type-safe references to core types like `Yaifl.Room.Kind.Room` and
+  -- `Yaifl.Thing.Kind.Thing`. The tagging machinery (e.g., `tagEntity`) is defined in `Yaifl.Tag`.
   , ThingTag
   , ThingEntity
   , RoomTag
@@ -56,8 +53,9 @@ class HasEntity n where
 instance HasEntity Entity where
   getEntity = id
 
--- | This should only be exposed in logs and tracing; i.e. the end user should never need to know there
--- is an ID system under it all.
+-- | `Display` instance for debugging and logging purposes. This instance is intended for internal use only
+-- and should not be exposed to end users. The output format is @(ID: <number>)@, where @<number>@ is the
+-- underlying `Int` value of the `Entity`.
 instance Display Entity where
   displayBuilder i = "(ID: " <> show i <> ")"
 
@@ -67,8 +65,11 @@ newtype TaggedEntity tagEntity = TaggedEntity { unTagEntity :: Entity }
   deriving stock (Show, Generic)
   deriving newtype (Eq, Read, Bounded, Hashable, Enum, Ord)
 
--- | Tag an entity without a witness. This is unsafe and should be avoided unless absolutely necessary,
--- as it bypasses type safety checks. Prefer using `Yaifl.Tag.tagEntity` with a proper witness.
+-- | Tag an entity without a witness. This is unsafe and should only be used in controlled contexts
+-- (e.g., testing, initialization, or legacy code), as it bypasses type safety checks and can lead to
+-- runtime errors or undefined behavior if misused.
+--
+-- For type-safe tagging, use `Yaifl.Tag.tagEntity` with a proper witness.
 unsafeTagEntity ::
   Entity
   -> TaggedEntity tagEntity
@@ -76,27 +77,28 @@ unsafeTagEntity = TaggedEntity
 
 instance HasEntity (TaggedEntity t) where
   getEntity = unTagEntity
--- | Phantom type for tagging `Yaifl.Thing.Kind`s.
+-- | Phantom type for tagging objects that can be treated as a thing (that have a `Yaifl.Thing.Kind.Thing` somewhere).
 data ThingTag
--- | Phantom type for tagging `Yaifl.Room.Kind`s.
-data RoomTag
--- | Phantom type for tagging objects that enclose something (that have a `Yaifl.Enclosing.Kind` somewhere).
-data EnclosingTag
--- | Phantom type for tagging doors (that have a `Yaifl.Door.Kind` somewhere).
-data DoorTag
--- | Phantom type for tagging people (that have a `Yaifl.Person.Kind` somewhere).
-data PersonTag
-
--- | Shorthand for enclosing entities.
-type EnclosingEntity = TaggedEntity EnclosingTag
--- | Shorthand for room entities.
-type RoomEntity = TaggedEntity RoomTag
--- | Shorthand for thing entities.
+-- | For tagged things.
 type ThingEntity = TaggedEntity ThingTag
--- | Shorthand for door entities.
+
+-- | Phantom type for tagging objects that can be treated as a room (that have a `Yaifl.Room.Kind.Room` somewhere).
+data RoomTag
+-- | For tagged rooms.
+type RoomEntity = TaggedEntity RoomTag
+
+-- | Phantom type for tagging objects that can be treated as an enclosing (that have a `Yaifl.Enclosing.Kind.Enclosing` somewhere).
+data EnclosingTag
+-- | For tagged enclosings.
+type EnclosingEntity = TaggedEntity EnclosingTag
+
+-- | Phantom type for tagging objects that can be treated as a door (that have a `Yaifl.Door.Kind.Door` somewhere).
+data DoorTag
+-- | For tagged doors.
 type DoorEntity = TaggedEntity DoorTag
--- | Shorthand for person entities.
+
+-- | Phantom type for tagging objects that can be treated as a person (that have a `Yaifl.Person.Kind.Person` somewhere).
+data PersonTag
+-- | For tagged people.
 type PersonEntity = TaggedEntity PersonTag
 
-makeFieldLabelsNoPrefix ''TaggedEntity
-makeFieldLabelsNoPrefix ''Entity
