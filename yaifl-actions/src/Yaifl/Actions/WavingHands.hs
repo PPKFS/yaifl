@@ -1,0 +1,30 @@
+module Yaifl.Actions.WavingHands
+  ( WavingHandsResponses(..)
+  , WavingHandsAction
+  , WavingHandsRule
+  , wavingHandsAction
+  , wavingHandsResponses
+  ) where
+
+import Yaifl.Prelude
+import Yaifl.Actions.Imports
+import Yaifl.Thing.Kind
+
+data WavingHandsResponses wm =
+  FooA
+
+wavingHandsResponses :: WavingHandsResponses wm -> Response wm (Args wm (Thing wm))
+wavingHandsResponses = \case
+  _ -> notImplementedResponse "response"
+
+type WavingHandsAction wm = Action wm (WavingHandsResponses wm) 'TakesNoParameter (Thing wm)
+type WavingHandsRule wm = ActionRule wm (WavingHandsAction wm) (Thing wm)
+wavingHandsAction :: WavingHandsAction wm
+wavingHandsAction = (makeAction "wavingHands")
+  { responses = wavingHandsResponses
+  , checkRules = makeActionRulebook "check wavingHands" ([] <> map notImplementedRule
+    [ "can't do wavingHands"
+    ])
+  , carryOutRules = makeActionRulebook "carry out wavingHands" [ notImplementedRule "standard wavingHands"  ]
+  , reportRules = makeActionRulebook "report wavingHands"  [ notImplementedRule "standard report wavingHands"  ]
+  }

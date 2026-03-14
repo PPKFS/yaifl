@@ -1,6 +1,6 @@
 cabal-version: 3.6
-name:          yaifl
-version:       0.0.18.830
+name:          yaifl-core
+version:       0.1.0.0
 synopsis:      Yet another interactive fiction library.
 description:
   A parser-based interactive fiction library for Haskell.
@@ -23,21 +23,24 @@ source-repository head
 
 library
   build-depends:
-    aeson-optics ^>=1.2.1,
-    random ^>=1.3.1,
     base >= 4.17.2 && < 5,
     breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
     containers >= 0.6.7 && < 1.7,
     effectful-core >= 2.3.0 && < 3.4,
     effectful-plugin >= 1.1.0 && < 2.2,
+    effectful-th >= 1.0.0 && < 2.1,
     enummapset >= 0.7.2 && < 1.8,
-    yaifl-core,
-    aeson >= 2.0,
-    yaml,
-    yaifl-objects,
-    yaifl-actions,
-    yaifl-rules,
-    text >= 2.0.2 && < 3.1
+    haskell-src-exts >= 1.23.1 && < 2.0,
+    haskell-src-meta >= 0.8.13 && < 2.0,
+    megaparsec >= 9.6.1 && < 10.0,
+    named >= 0.3.0 && < 1.0,
+    optics,
+    prettyprinter >= 1.7.1 && < 3.0,
+    random,
+    relude,
+    template-haskell >= 2.19.0 && < 3.20,
+    text >= 2.0.2 && < 3.1,
+    text-display >= 0.0.5 && < 1.0,
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
@@ -51,8 +54,8 @@ library
   default-extensions:
     DataKinds
     DefaultSignatures
-    DerivingStrategies
     DeriveAnyClass
+    DerivingStrategies
     DuplicateRecordFields
     FunctionalDependencies
     LambdaCase
@@ -69,5 +72,39 @@ library
 
   hs-source-dirs:  src
   exposed-modules:
-    Yaifl
-    Yaifl.Create.Rule
+    Yaifl.Prelude
+
+    Yaifl.Action
+    Yaifl.Actions.Args
+    Yaifl.Actions.GoesWith
+    Yaifl.Activity
+    Yaifl.AnyObject
+    Yaifl.Effects.ActionHandler
+    Yaifl.Effects.Input
+    Yaifl.Effects.ObjectQuery
+    Yaifl.Effects.Print
+    Yaifl.Effects.RuleEffects
+    Yaifl.Enclosing.Kind
+    Yaifl.Entity
+    Yaifl.Property.Has
+    Yaifl.KindGraph
+    Yaifl.Metadata
+    Yaifl.Object.Kind
+    Yaifl.Object.Query
+    Yaifl.ObjectLike
+    Yaifl.Property.Query
+    Yaifl.Refreshable
+    Yaifl.Region.Kind
+    Yaifl.Room.Kind
+    Yaifl.Rulebook
+    Yaifl.Rulebooks.Run
+    Yaifl.Store
+    Yaifl.TH
+    Yaifl.Tag
+    Yaifl.Text.AdaptiveNarrative
+    Yaifl.Text.Responses
+    Yaifl.Text.SayQQ
+    Yaifl.Text.SayableValue
+    Yaifl.Text.Verb
+    Yaifl.Thing.Kind
+    Yaifl.WorldModel

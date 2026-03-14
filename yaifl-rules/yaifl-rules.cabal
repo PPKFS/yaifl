@@ -1,5 +1,5 @@
 cabal-version: 3.6
-name:          yaifl
+name:          yaifl-rules
 version:       0.0.18.830
 synopsis:      Yet another interactive fiction library.
 description:
@@ -23,21 +23,15 @@ source-repository head
 
 library
   build-depends:
-    aeson-optics ^>=1.2.1,
-    random ^>=1.3.1,
     base >= 4.17.2 && < 5,
     breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
-    containers >= 0.6.7 && < 1.7,
     effectful-core >= 2.3.0 && < 3.4,
     effectful-plugin >= 1.1.0 && < 2.2,
     enummapset >= 0.7.2 && < 1.8,
     yaifl-core,
-    aeson >= 2.0,
-    yaml,
     yaifl-objects,
-    yaifl-actions,
-    yaifl-rules,
-    text >= 2.0.2 && < 3.1
+    text >= 2.0.2 && < 3.1,
+    text-display
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
@@ -69,5 +63,26 @@ library
 
   hs-source-dirs:  src
   exposed-modules:
-    Yaifl
-    Yaifl.Create.Rule
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.ListingContents
+    Yaifl.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Activities.PrintingTheLocaleDescription
+    Yaifl.Activities.PrintingRoomDescriptionDetails
+    Yaifl.Activities.PrintingInventoryDetails
+
+    Yaifl.Locale
+    Yaifl.Rulebooks.ActionProcessing
+
+    Yaifl.Text.DynamicText
+    Yaifl.Text.ListWriter
+    Yaifl.Text.ListWriter.AfterEntry
+    Yaifl.Text.ListWriter.Parameters
+    Yaifl.Text.ListWriter.Responses
+    Yaifl.Text.ListWriter.WriteListR
+    Yaifl.Text.ResponseCollection
+    Yaifl.Text.Regarding
+    Yaifl.Text.Say
+
+    Yaifl.Rulebooks.WhenPlayBegins
+    Yaifl.Rulebooks.TurnSequence
+    Yaifl.Rulebooks.Accessibility

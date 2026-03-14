@@ -12,9 +12,15 @@ source-repository-package
   tag: 60093b23ad22302da6ff8e83863a1ee759b229d4
 packages:
   yaifl/yaifl.cabal
-  yaifl-rogue/yaifl-rogue.cabal
-  roguefunctor/roguefunctor.cabal
-  yaifl-discord/yaifl-discord.cabal
+  yaifl-core/yaifl-core.cabal
+  yaifl-objects/yaifl-objects.cabal
+  yaifl-rules/yaifl-rules.cabal
+  yaifl-actions/yaifl-actions.cabal
+  yaifl/yaifl.cabal
+  yaifl-examples/yaifl-examples.cabal
+  -- yaifl-rogue/yaifl-rogue.cabal
+  -- roguefunctor/roguefunctor.cabal
+  -- yaifl-discord/yaifl-discord.cabal
 
 -- documentation: true
 haddock-all: true

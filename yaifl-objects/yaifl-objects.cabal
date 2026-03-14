@@ -1,5 +1,5 @@
 cabal-version: 3.6
-name:          yaifl
+name:          yaifl-objects
 version:       0.0.18.830
 synopsis:      Yet another interactive fiction library.
 description:
@@ -23,8 +23,6 @@ source-repository head
 
 library
   build-depends:
-    aeson-optics ^>=1.2.1,
-    random ^>=1.3.1,
     base >= 4.17.2 && < 5,
     breadcrumbs >= 1.0.0.0 && <= 10.0.0.0,
     containers >= 0.6.7 && < 1.7,
@@ -32,11 +30,6 @@ library
     effectful-plugin >= 1.1.0 && < 2.2,
     enummapset >= 0.7.2 && < 1.8,
     yaifl-core,
-    aeson >= 2.0,
-    yaml,
-    yaifl-objects,
-    yaifl-actions,
-    yaifl-rules,
     text >= 2.0.2 && < 3.1
 
   ghc-options:
@@ -69,5 +62,38 @@ library
 
   hs-source-dirs:  src
   exposed-modules:
-    Yaifl
-    Yaifl.Create.Rule
+    Yaifl.Animal.Query
+    Yaifl.Backdrop.Create
+    Yaifl.Backdrop.Kind
+    Yaifl.Backdrop.Query
+    Yaifl.Container.Create
+    Yaifl.Container.Kind
+    Yaifl.Container.Query
+    Yaifl.Device.Create
+    Yaifl.Device.Kind
+    Yaifl.Device.Query
+    Yaifl.Direction.Kind
+    Yaifl.Door.Create
+    Yaifl.Door.Kind
+    Yaifl.Door.Query
+    Yaifl.Enclosing.Query
+    Yaifl.Move
+    Yaifl.MultiLocated.Kind
+    Yaifl.MultiLocated.Query
+    Yaifl.Object.Create
+    Yaifl.ObjectSpecifics
+    Yaifl.Openable.Kind
+    Yaifl.Openable.Query
+    Yaifl.Person.Create
+    Yaifl.Person.Kind
+    Yaifl.Person.Query
+    Yaifl.Region.Create
+    Yaifl.Region.Query
+    Yaifl.Room.Connection
+    Yaifl.Room.Create
+    Yaifl.Room.Query
+    Yaifl.Supporter.Create
+    Yaifl.Supporter.Kind
+    Yaifl.Supporter.Query
+    Yaifl.Thing.Create
+    Yaifl.Thing.Query
