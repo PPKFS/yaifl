@@ -215,41 +215,37 @@ runOnLookingParagraph ::
   => Eff es ()
 runOnLookingParagraph = void $ modifyBuffer (\m -> m & #lastMessageContext % #runningOnLookingParagraph .~ True)
 
--- we want to add the possible whitespace /before/ the next thing we print, rather than
--- at the /end/ of the thing that caused it.
--- we need to add a pbreak if:
--- we have finished the rule which the last printed text was from.
--- |
+-- | Determine appropriate line breaks and whitespace for message formatting.
+-- Handles paragraph breaks between different rules and manages spacing consistency.
 checkForLinebreaking ::
   Print :> es
-  => Text
-  -> Text
-  -> Eff es (Bool, Text)
-checkForLinebreaking _rule "" = pure (False, "") -- this is nothing, so we just ignore it
+  => Text -- ^ Current rule context
+  => Text -- ^ Message text to process
+  -> Eff es (Bool, Text) -- ^ (should add linebreak after, processed text)
+checkForLinebreaking _rule "" = pure (False, "") -- Empty message, nothing to process
 checkForLinebreaking rule t = do
   lsc <- getLastMessageContext
   let hangingSpace = T.length $ T.takeWhileEnd (=='\n') (lastPrint lsc)
-  --printDoc Nothing . PP.pretty $ show @Text $ (lastPrint lsc, shouldPrintPbreak lsc, messageFromRule lsc, rule, runningOnParagraph lsc, lastPrint lsc)
-  -- if we are in a different rule, then we need to write a paragraph break
-  newPrepend <- if shouldPrintPbreak lsc -- we need to force a break anyway
-    || (messageFromRule lsc /= "¬¬¬" -- this isn't the first message
-    && messageFromRule lsc /= rule -- different rule
+  
+  -- Determine if we need to add paragraph breaks
+  newPrepend <- if shouldPrintPbreak lsc -- Force break if explicitly requested
+    || (messageFromRule lsc /= "¬¬¬" -- Not the first message
+    && messageFromRule lsc /= rule -- Different rule context
     && not (runningOnParagraph lsc)
     && not (runningOnLookingParagraph lsc))
     then do
-        --printDoc Nothing . PP.pretty $ ("pbreak" :: Text)
-        --printDoc Nothing . PP.pretty $ ("\n\n" :: Text)
-        --void $ modifyBuffer (\m -> m & #lastMessageContext % #lastPrint .~ "\n\n" & #lastMessageContext % #shouldPrintPbreak .~ False)
-        pure "\n\n"
+        pure "\n\n" -- Add paragraph break
     else
-      if runningOnLookingParagraph lsc || shouldPrintLinebreak lsc then pure "\n"
-      else pure ""
-  -- we want there to be max two spaces between what we just printed, what we are appending, and what is coming up
+      if runningOnLookingParagraph lsc || shouldPrintLinebreak lsc 
+      then pure "\n" -- Add single line break
+      else pure "" -- No break needed
+  
+  -- Ensure consistent spacing (max 2 newlines between elements)
   let newStr1 = newPrepend <> t
       upcomingSpace = T.length $ T.takeWhile (=='\n') newStr1
-  -- if hanging space + upcoming space is N, and N is greater than 2, we want to drop (N - 2) newlines from the start?
       newStr = T.dropWhileEnd (=='\n') $ T.drop (max 0 (min upcomingSpace (hangingSpace + upcomingSpace - 2))) newStr1
-  -- then we want to check if we should be putting a linebreak after this message
+  
+  -- Determine if linebreak should be added after this message
   pure (T.empty /= t && T.last t `elem` ['.', '!', '?', ':'], newStr)
 
 -- | Print @message@ with a newline.

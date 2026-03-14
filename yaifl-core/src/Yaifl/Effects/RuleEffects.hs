@@ -1,3 +1,28 @@
+{-|
+Module      : Yaifl.Effects.RuleEffects
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+The RuleEffects system defines the core effect stack used throughout Yaifl for rule processing,
+providing access to all necessary game state and operations in a single constraint.
+
+This module defines:
+
+- `RuleEffects`: Core effect constraint bundling all required effects
+- Collector types for managing activities, responses, and actions
+- `ConcreteRuleStack`: Complete effect stack for rule execution
+
+The RuleEffects constraint includes:
+- Game metadata and state management
+- Input/output operations
+- Activity and response management
+- Action handling
+- Object querying
+- Error handling
+- Debugging and tracing
+-}
+
 module Yaifl.Effects.RuleEffects
   ( RuleEffects
   , ActionHandler(..)
@@ -20,8 +45,19 @@ import Yaifl.Effects.Print
 import Yaifl.Effects.ActionHandler
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 
+-- | Wrapper around `WMActivities wm` to avoid ambiguity in state operations.
+-- Without this newtype, `State (WMActivities wm)` could be ambiguous depending on the
+-- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
+
+-- | Wrapper around `WMResponses wm` to avoid ambiguity in state operations.
+-- Without this newtype, `State (WMResponses wm)` could be ambiguous depending on the
+-- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }
+
+-- | Wrapper around `WMActions wm` to avoid ambiguity in state operations.
+-- Without this newtype, `State (WMActions wm)` could be ambiguous depending on the
+-- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ActionCollector wm = ActionCollector { activityCollection :: WMActions wm }
 
 makeFieldLabelsNoPrefix ''ActivityCollector

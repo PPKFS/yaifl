@@ -1,12 +1,31 @@
 {-|
 Module      : Yaifl.Metadata
-Copyright   : (c) Avery 2023-2025
+Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-General game-specific metadata (user settings and configs, object type information,
-and helpers for the construction phase). Should not be dependent on anything major
-because most things rely on this in some form.
+General game-specific metadata including user settings, configuration, object type information,
+and construction phase helpers. This module serves as the central repository for game state
+that doesn't depend on the world model or dynamic game elements.
+
+This module defines:
+
+- `Metadata`: Core metadata record containing game configuration and state
+- `RoomDescriptions`: Configuration for room description verbosity
+- `CurrentStage`: Tracking of build-verify-run process stages
+- `AnalysisLevel`: Configuration for analysis and error checking depth
+- `WithMetadata`: Convenience type synonym for metadata-dependent effects
+- Error handling utilities for construction and runtime phases
+- Construction phase helpers and guards
+- Game object type querying and manipulation functions
+- Random number generation utilities
+
+The metadata system enables:
+- Centralized game configuration management
+- Phase-appropriate error handling
+- Construction vs runtime behavior distinction
+- Type-safe game state access
+- Object kind inheritance and querying
 -}
 
 module Yaifl.Metadata (
@@ -148,6 +167,7 @@ setTitle ::
   -> Eff es ()
 setTitle = (#title .=)
 
+-- | Set whether to use paragraph breaks after prompts.
 setPostPromptSpacing ::
   State Metadata :> es
   => Bool
@@ -200,6 +220,7 @@ isPlayer ::
   -> Eff es Bool
 isPlayer o = (getEntity o ==) . getEntity <$> use #currentPlayer
 
+-- | Execute an action only if the given entity is the current player.
 whenPlayer ::
   HasEntity o
   => State Metadata :> es
@@ -236,6 +257,8 @@ isKind o = isKindInternal (o ^. #objectType)
           else
             anyM (`isKindInternal` e') iv
 
+-- | Map over all kinds of an object, including inherited kinds.
+-- Applies the given function to each kind's information and returns a set of results.
 mapKindsOf ::
   forall es k o a.
   WithMetadata es
@@ -257,6 +280,7 @@ mapKindsOf o f = mapKindsInternal (o ^. #objectType)
         then pure $ S.fromList [f oki]
         else S.insert (f oki) . mconcat <$> mapM mapKindsInternal (S.toList (oki ^. #parentKinds))
 
+-- | Add additional nouns that can be used to refer to objects of this kind.
 kindIsUnderstoodAs ::
   WithMetadata es
   => ObjectKind
@@ -265,6 +289,7 @@ kindIsUnderstoodAs ::
 kindIsUnderstoodAs kind otherKinds =
   #kindDAG % at kind % _Just % #understandAs %= (otherKinds<>)
 
+-- | Add additional plural nouns that can be used to refer to objects of this kind.
 kindPluralIsUnderstoodAs ::
   WithMetadata es
   => ObjectKind
@@ -273,6 +298,7 @@ kindPluralIsUnderstoodAs ::
 kindPluralIsUnderstoodAs kind otherKinds =
   #kindDAG % at kind % _Just % #pluralUnderstandAs %= (otherKinds<>)
 
+-- | Generate a random value within the specified range using the metadata RNG.
 randomR ::
   UniformRange a
   => WithMetadata es
@@ -284,6 +310,7 @@ randomR ran = do
   #rng .= rng2
   pure res
 
+-- | Generate a random value using the metadata RNG.
 random ::
   Uniform a
   => WithMetadata es

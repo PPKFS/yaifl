@@ -19,7 +19,7 @@ This module defines the core `Object` data structure and its supporting componen
 module Yaifl.Object.Kind (
   -- * Objects
   -- ** Components
-  , NamePlurality(..)
+  NamePlurality(..)
   , NameProperness(..)
   , NamePrivacy(..)
   -- ** Objects

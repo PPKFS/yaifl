@@ -1,11 +1,25 @@
 {-|
 Module      : Yaifl.WorldModel
-Description : Some type family nonsense to avoid writing massive amounts of type parameters.
-Copyright   : (c) Avery 2022-2024
+Copyright   : (c) Avery 2022-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-To save having to write increasingly large amounts of type parameters.
+The WorldModel system provides a type-level configuration mechanism that
+bundles all of Yaifl's type parameters into a single manageable type.
+This avoids the "parameter explosion" problem that would otherwise require
+passing many individual type parameters throughout the codebase.
+
+This module defines:
+
+- `WorldModel`: Core configuration type containing all type parameters
+- Type families for accessing components (WMObjSpecifics, WMDirection, WMValues, etc.)
+- Constraint synonyms for common typeclass requirements (WMShow, WMRead, etc.)
+
+The WorldModel enables:
+- Centralized type configuration for games
+- Clean separation between type parameters and implementation
+- Extensible architecture through type families
+- Type-safe access to game components
 -}
 
 module Yaifl.WorldModel (

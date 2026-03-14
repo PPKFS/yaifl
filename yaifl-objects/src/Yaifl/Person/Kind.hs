@@ -1,12 +1,32 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
+{-|
+Module      : Yaifl.Person.Kind
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Persons represent characters in the game world.
+
+This module defines the `Person` type and its associated components:
+
+- `Person`: The core person type with gender and inventory data
+- `Gender`: Enumeration of gender identities
+- `TaggedPerson`: Type-safe reference to person objects
+- Functions for creating and manipulating persons
+-}
+
 module Yaifl.Person.Kind
-  ( Gender(..)
+  ( -- * Person types
+    Gender(..)
   , Person(..)
   , TaggedPerson
+
+    -- * Person functions
   , getPersonMaybe
   , defaultPersonEnclosing
 
+    -- * Gender queries
   , isMale
   , isFemale
   ) where
@@ -38,6 +58,8 @@ data Person = Person
   , carrying :: Enclosing
   } deriving stock (Eq, Ord, Show, Generic, Read)
 
+-- | Default enclosing component for people.
+-- Provides inventory capacity of 100 items.
 defaultPersonEnclosing :: Enclosing
 defaultPersonEnclosing = Enclosing
   { contents = ES.empty

@@ -1,25 +1,71 @@
 {-# LANGUAGE RecordWildCards #-}
 
+{-|
+Module      : Yaifl.Action
+Copyright   : (c) Avery 2022-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Actions represent commands that players type or that NPCs execute, following the Inform7 action model.
+This module provides the foundation for Yaifl's interactive fiction command system.
+
+The action system includes:
+
+- `Action`: Core action type with comprehensive lifecycle phases (before/instead/check/carry out/report/after)
+- `ActionRulebook`: Specialized rulebooks for each action phase
+- `ParseArguments`: Argument parsing system equivalent to Inform7's "understand" grammar
+- `ActionPhrase`: Container for different action types (regular, interpreted, out-of-world)
+- Helper functions for creating and working with actions
+
+Actions follow the Inform7 lifecycle model:
+- Argument parsing and understanding
+- Before rules (setup and validation)
+- Instead rules (alternative behaviors)
+- Check rules (precondition checking)
+- Carry out rules (main execution)
+- Report rules (output generation)
+- After rules (cleanup and side effects)
+
+This modular approach enables:
+- Fine-grained control over action behavior
+- Reusable rule components across actions
+- Type-safe action definitions
+- Integration with Yaifl's effect system
+
+See also:
+- `Yaifl.Rulebook` for the underlying rulebook system
+- `Yaifl.Actions.Args` for argument handling
+- `Yaifl.Actions.GoesWith` for action signature patterns
+-}
+
 module Yaifl.Action
-  ( Action(..)
+  ( -- * Core Types
+    Action(..)
   , ActionRulebook
   , ActionRule
-  , ParseArguments(..)
+  , WrappedAction(..)
+
+    -- * Action Components
   , ActionPhrase(..)
   , InterpretAs(..)
   , OutOfWorldAction(..)
 
-  , WrappedAction(..)
+    -- * Argument Processing
+  , ParseArguments(..)
   , ParseArgumentEffects
   , ParseArgumentResult(..)
-  , ActionInterrupt(..)
 
+    -- * Action Lifecycle
+  , ActionInterrupt(..)
+  , withActionInterrupt'
+
+    -- * Action Construction
+  , makeAction
   , makeActionRulebook
+
+    -- * Action Utilities
   , actionName
   , getAllRules
-  , makeAction
-
-  , withActionInterrupt'
   ) where
 
 import Yaifl.Prelude hiding (Reader)
@@ -41,6 +87,8 @@ import Yaifl.Effects.Print (printLn)
 
 type ParseArgumentEffects wm es = (WithMetadata es, WithoutMissingObjects wm es, RuleEffects wm es)
 
+-- | The result of attempting to parse action arguments.
+-- Represents success, failure, or conversion to a different action pattern.
 data ParseArgumentResult wm v =
   FailedParse Text
   | SuccessfulParse v
@@ -72,12 +120,18 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
     } -> Action wm resps goesWith v
   deriving stock (Generic)
 
+-- | A wrapper around an `Action` that provides type-safe constraints.
+-- Ensures the action's value type is refreshable, follows the goes-with pattern,
+-- and is displayable before allowing construction.
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
     (Refreshable wm v, GoesWith goesWith, Display v)
     => Action wm resp goesWith v
     -> WrappedAction wm
 
+-- | An action that operates outside the normal game world context.
+-- Used for meta-commands, debugging actions, or system-level operations
+-- that don't follow the standard action lifecycle.
 data OutOfWorldAction wm = OutOfWorldAction
   { name :: Text
   , runOutOfWorldAction :: forall es. RuleEffects wm es => Eff es ()
@@ -88,9 +142,14 @@ data OutOfWorldAction wm = OutOfWorldAction
 type ActionRulebook wm ac v = Rulebook wm ((:>) (Reader ac)) (Args wm v) Bool
 type ActionRule wm ac v = Rule wm ((:>) (Reader ac)) (Args wm v) Bool
 
+-- | Controls whether action processing should continue or stop.
+-- Used to interrupt the normal action lifecycle when appropriate.
 data ActionInterrupt = ContinueAction | StopAction
   deriving stock (Eq, Ord, Enum, Bounded, Generic, Read, Show)
 
+-- | A container that can hold different types of action-like operations.
+-- Used to unify regular actions, interpreted actions, and out-of-world actions
+-- in a single type for processing and dispatch.
 data ActionPhrase (wm :: WorldModel) =
   Interpret (InterpretAs wm)
   | RegularAction (WrappedAction wm)
@@ -147,7 +206,11 @@ makeActionRulebook ::
   -> ActionRulebook wm (Action wm resps goesWith v) v
 makeActionRulebook n = Rulebook n Nothing
 
+-- | Get a comma-separated string of all rule names from an action's rulebooks.
+-- This includes rules from all action phases: before, instead, check, carry out, report, and after.
+-- Primarily useful for debugging and introspection purposes.
 getAllRules ::
   Action wm resp goesWith v
   -> Text
-getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $ [ beforeRules, checkRules, carryOutRules, reportRules ]
+getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $
+  [ beforeRules, insteadRules, checkRules, carryOutRules, reportRules, afterRules ]

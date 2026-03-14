@@ -1,11 +1,24 @@
 {-|
 Module      : Yaifl.Effects.ObjectQuery
-Copyright   : (c) Avery 2023-2024
+Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Effects for getting, setting, modifying, traversing over the `Object` collections and some
-type synonyms for bundling common constraints together.
+The ObjectQuery effect provides operations for reading, writing, and traversing
+game objects (things, rooms, regions) in the world state.
+
+This module defines:
+
+- `ObjectQuery`: Core effect for object operations
+- Object lookup and modification operations
+- Object traversal utilities
+- Error handling for missing objects
+- Constraint synonyms for common effect combinations
+
+The ObjectQuery system enables:
+- Type-safe access to game objects
+- Comprehensive object traversal and modification
+- Graceful handling of missing object references
 -}
 
 module Yaifl.Effects.ObjectQuery
@@ -62,24 +75,28 @@ data ObjectQuery (wm :: WorldModel) :: Effect where
 
 makeEffect ''ObjectQuery
 
+-- | Internal helper for object traversal that discards results.
 traverseObjects_ ::
   ((a -> Eff es (Maybe a)) -> Eff es [a])
   -> (a -> Eff es (Maybe a))
   -> Eff es ()
 traverseObjects_ selector f = void $ selector (\t -> f t >> return Nothing)
 
+-- | Traverse all things, applying a modification function and discarding results.
 traverseThings_ ::
   ObjectQuery wm :> es
   => (Thing wm -> Eff es (Maybe (Thing wm)))
   -> Eff es ()
 traverseThings_ = traverseObjects_ traverseThings
 
+-- | Traverse all rooms, applying a modification function and discarding results.
 traverseRooms_ ::
   ObjectQuery wm :> es
   => (Room wm -> Eff es (Maybe (Room wm)))
   -> Eff es ()
 traverseRooms_ = traverseObjects_ traverseRooms
 
+-- | Traverse all regions, applying a modification function and discarding results.
 traverseRegions_ ::
   ObjectQuery wm :> es
   => (Region wm -> Eff es (Maybe (Region wm)))
@@ -98,6 +115,8 @@ type WithoutMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :>
   -- I hate putting this in here but it makes everything such a mess otherwise :(
   , Display (WMText wm), WithMetadata es)
 
+-- | Execute an operation that may fail with missing objects, providing a recovery handler.
+-- The handler typically returns a default value or empty result when objects are missing.
 withoutMissingObjects ::
   HasCallStack
   => (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
@@ -110,6 +129,8 @@ withoutMissingObjects f def = do
     Left err' -> def (snd err')
     Right x -> return x
 
+-- | Execute an operation that fails with an error if objects are missing.
+-- Used when missing objects represent unrecoverable errors.
 failHorriblyIfMissing ::
   HasCallStack
   => Breadcrumbs :> es

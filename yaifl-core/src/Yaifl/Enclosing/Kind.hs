@@ -1,16 +1,33 @@
 {-|
 Module      : Yaifl.Enclosing.Kind
-Copyright   : (c) Avery 2023-2025
+Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-A property component for things that can contain other things (rooms, supporters, containers, etc).
+Enclosing components represent objects that can contain other objects,
+including rooms, containers, and supporters.
+
+This module defines the core `Enclosing` data structure and related types:
+
+- `Enclosing`: The core component for object containment
+- `EnclosingEntity`: Type-safe reference to enclosing objects
+- Functions for creating and manipulating enclosing components
+
+See also:
+- `Yaifl.Object.Kind` for the base Object type
+- `Yaifl.Thing.Kind` for thing containment
+- `Yaifl.Room.Kind` for room enclosing functionality
 -}
 
 module Yaifl.Enclosing.Kind (
-  -- * Enclosing
+  -- * Enclosing types
     Enclosing(..)
+
+  -- * Enclosing functions
   , blankEnclosing
+
+  -- * Re-exports
+  , EnclosingEntity
   ) where
 
 import Yaifl.Prelude
