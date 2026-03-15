@@ -1,8 +1,32 @@
 
 {-# LANGUAGE UndecidableInstances #-}
 
+{-|
+Module      : Yaifl.Effects.Print
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Text output and message formatting system for interactive fiction.
+
+This module provides a comprehensive printing system for game messages with:
+
+- `Print` effect: Core printing functionality for game text output
+- `MessageBuffer`: Accumulates and formats messages before display
+- `MessageContext`: Tracks formatting context and paragraph breaks
+- `MessageAnnotation`: Rich text styling (colors, bold, italics, underline)
+- `StyledDoc`: Formatted document representation using Prettyprinter
+
+Key features:
+- Context-aware message formatting with automatic paragraph breaks
+- Rich text styling with colors and font effects
+- Message buffering and flushing system
+- Rule-based context tracking for consistent output
+- Support for both pure (testing) and IO-based printing
+-}
+
 module Yaifl.Effects.Print
-  ( -- * Types
+  ( -- * Core Types
     MessageBuffer (..)
   , MessageContext(..)
   , MessageAnnotation(..)
@@ -10,25 +34,40 @@ module Yaifl.Effects.Print
   , Has(..)
   , PartialState
   , StyledDoc
-  -- * Smart constructors
-  , blankMessageBuffer
-  -- * Buffer modification
-  , setStyle
-  , modifyBuffer
-  , runOnParagraph
-  , runOnLookingParagraph
-  , printText
-  , printLn
-  , printIf
-  , runPrintPure
-  , runPrintIO
 
-  , bold
+  -- * Style Types
   , Bold(..)
   , Italics(..)
   , Underlined(..)
   , Colour(..)
   , Color
+
+  -- * Smart Constructors
+  , blankMessageBuffer
+
+  -- * Buffer Operations
+  -- | Set the current message style.
+  -- Updates the formatting style used for subsequent messages.
+  , setStyle
+  -- | Modify the message buffer.
+  -- Apply a transformation function to the current message buffer state.
+  , modifyBuffer
+
+  -- * Context Management
+  , runOnParagraph
+  , runOnLookingParagraph
+
+  -- * Printing Functions
+  , printText
+  , printLn
+  , printIf
+
+  -- * Effect Interpreters
+  , runPrintPure
+  , runPrintIO
+
+  -- * Style Functions
+  , bold
   , toHex
   , fromARGB
   , fromRGB
@@ -50,21 +89,34 @@ import Data.Ord (clamp)
 
 type StyledDoc style = PP.Doc style
 
+-- | ARGB color representation using a 32-bit word.
+-- The color is stored as 0xAARRGGBB where AA is alpha, RR is red, GG is green, BB is blue.
 newtype Colour = Colour { toWord32 :: Word32 }
   deriving stock (Generic)
   deriving newtype (Show, Read, Eq, Ord, Bits, FiniteBits, Num, Enum, Bounded, Ix, Real, Integral)
 
 type Color = Colour
 
+-- | Convert a color to its hexadecimal representation.
+-- Returns a text string in the format "AARRGGBB" where AA is alpha, RR is red,
+-- GG is green, and BB is blue (e.g., "80FF0000" for semi-transparent red).
 toHex :: Colour -> Text
 toHex = fromString . flip showHex "" . toWord32
 
+-- | Create a color from ARGB components.
+-- Each component should be in the range 0-255.
 fromARGB :: Word8 -> Word8 -> Word8 -> Word8 -> Colour
 fromARGB a r g b = (fromIntegral a `shiftL` 24) .|. (fromIntegral r `shiftL` 16) .|. (fromIntegral g `shiftL` 8) .|. fromIntegral b
 
+-- | Create an opaque color from RGB components.
+-- Equivalent to @fromARGB 0xFF r g b@.
+-- Each component should be in the range 0-255.
 fromRGB :: Word8 -> Word8 -> Word8 -> Colour
 fromRGB = fromARGB 0xFF
 
+-- | Create a colour from ARGB components specified as floating-point values in the range 0-1.
+-- Each component is automatically clamped to the valid range and scaled to 0-255.
+-- This is a convenience function for when working with normalised colour values.
 fromARGBFloat :: RealFrac a => RealFrac r => RealFrac g => RealFrac b => a -> r -> g -> b -> Colour
 fromARGBFloat a r g b = fromARGB (clampScale a) (clampScale r) (clampScale g) (clampScale b)
   where
@@ -106,13 +158,17 @@ colour c = mempty { foregroundAnnotation = Just c }
 bold :: MessageAnnotation
 bold = mempty { boldAnnotation = Just Bold }
 
+-- | Context information about the current message being processed.
+-- Tracks rule origin, paragraph state, and formatting requirements for consistent output.
 data MessageContext = MessageContext
-  { messageFromRule :: Text
-  , runningOnParagraph :: Bool
-  , shouldPrintLinebreak :: Bool
-  , runningOnLookingParagraph :: Bool
-  , shouldPrintPbreak :: Bool
-  , lastPrint :: Text
+  { messageFromRule :: Text -- ^ The rule that generated this message.
+  , runningOnParagraph :: Bool -- ^ Whether this message is part of a paragraph context.
+  , shouldPrintLinebreak :: Bool -- ^ Whether a line break should be added after this message.
+  , runningOnLookingParagraph :: Bool -- ^ Whether this message is part of a "looking" action context.
+                                        -- When 'True', prevents paragraph breaks between different rules and forces
+                                        -- single line breaks, creating compact room descriptions.
+  , shouldPrintPbreak :: Bool -- ^ Whether a paragraph break should be added before the next message.
+  , lastPrint :: Text -- ^ The text of the last printed message.
   } deriving stock (Show, Ord, Generic, Eq)
 
 data Print :: Effect where
@@ -121,18 +177,22 @@ data Print :: Effect where
   PrintDoc :: Maybe MessageContext -> StyledDoc MessageAnnotation-> Print m ()
   SetStyle :: Maybe MessageAnnotation -> Print m ()
 
+-- | Message buffer that accumulates formatted messages before display.
+-- Tracks the current state of message formatting including style, context, and rule information.
 data MessageBuffer = MessageBuffer
   { buffer :: [StyledDoc MessageAnnotation] -- ^ Current messages held before flushing.
-  , lastMessageContext :: MessageContext -- ^ some metadata about the last printed message, to deal with pbreaks and lines
-  , style :: Maybe MessageAnnotation -- ^ Current formatting; 'Nothing' = plain.
-  , context :: [StyledDoc MessageAnnotation] -- ^ Possibly nested prefixes before every message.
-  , ruleContext :: Text -- ^ the currently executing rule
+  , lastMessageContext :: MessageContext -- ^ Metadata about the last printed message, used for paragraph breaks and line spacing.
+  , style :: Maybe MessageAnnotation -- ^ Current formatting style; 'Nothing' indicates plain text.
+  , context :: [StyledDoc MessageAnnotation] -- ^ Possibly nested prefixes that appear before every message.
+  , ruleContext :: Text -- ^ The currently executing rule that is generating messages.
   } deriving stock (Show, Generic)
 
 makeEffect ''Print
 makeFieldLabelsNoPrefix ''MessageBuffer
 makeFieldLabelsNoPrefix ''MessageContext
 
+-- | Create an empty message buffer with default settings.
+-- Initializes with no messages, default context, no styling, and empty rule context.
 blankMessageBuffer :: MessageBuffer
 blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False False "") Nothing [] ""
 
@@ -157,6 +217,9 @@ type PartialState s t es = (Has s t, State s :> es)
 instance Has s s where
   buf = castOptic simple
 
+-- | Run a 'Print' effect purely, accumulating messages in a buffer.
+-- This interpreter is suitable for testing and scenarios where IO output is not desired.
+-- Messages are stored in the buffer and can be retrieved later for inspection.
 runPrintPure ::
   forall s es a.
   PartialState s (MessageBuffer) es
@@ -173,6 +236,9 @@ runPrintPure = interpret $ \_ -> \case
     use buf
   GetBuffer -> use buf
 
+-- | Run a 'Print' effect with IO output.
+-- This interpreter prints messages directly to standard output using 'print'.
+-- Suitable for production use where immediate console output is desired.
 runPrintIO ::
   forall s es a.
   IOE :> es
@@ -190,6 +256,9 @@ runPrintIO = interpret $ \_ -> \case
     use buf
   GetBuffer -> use buf
 
+-- | Get the context of the last printed message.
+-- Returns the 'MessageContext' which includes information about the rule that generated
+-- the message, paragraph state, and formatting requirements.
 getLastMessageContext ::
   Print :> es
   => Eff es MessageContext
@@ -210,6 +279,10 @@ runOnParagraph ::
   => Eff es ()
 runOnParagraph = void $ modifyBuffer (\m -> m & #lastMessageContext % #runningOnParagraph .~ True)
 
+-- | Set the message context to "looking" mode.
+-- In looking mode, paragraph breaks between different rules are suppressed and single line breaks are forced,
+-- creating a more compact, flowing format suitable for room descriptions and object examinations.
+-- This is typically called at the beginning of "look" actions and related room description activities.
 runOnLookingParagraph ::
   Print :> es
   => Eff es ()
@@ -217,16 +290,19 @@ runOnLookingParagraph = void $ modifyBuffer (\m -> m & #lastMessageContext % #ru
 
 -- | Determine appropriate line breaks and whitespace for message formatting.
 -- Handles paragraph breaks between different rules and manages spacing consistency.
+-- Automatically handles edge cases like empty text or text with only whitespace.
 checkForLinebreaking ::
   Print :> es
   => Text -- ^ Current rule context
-  => Text -- ^ Message text to process
+  -> Text -- ^ Message text to process
   -> Eff es (Bool, Text) -- ^ (should add linebreak after, processed text)
-checkForLinebreaking _rule "" = pure (False, "") -- Empty message, nothing to process
-checkForLinebreaking rule t = do
+checkForLinebreaking rule t
+  | T.null t = pure (False, "") -- Empty message, nothing to process
+  | T.all (== '\n') t = pure (False, t) -- All whitespace, preserve but no linebreak
+  | otherwise = do
   lsc <- getLastMessageContext
   let hangingSpace = T.length $ T.takeWhileEnd (=='\n') (lastPrint lsc)
-  
+
   -- Determine if we need to add paragraph breaks
   newPrepend <- if shouldPrintPbreak lsc -- Force break if explicitly requested
     || (messageFromRule lsc /= "¬¬¬" -- Not the first message
@@ -236,17 +312,18 @@ checkForLinebreaking rule t = do
     then do
         pure "\n\n" -- Add paragraph break
     else
-      if runningOnLookingParagraph lsc || shouldPrintLinebreak lsc 
+      if runningOnLookingParagraph lsc || shouldPrintLinebreak lsc
       then pure "\n" -- Add single line break
       else pure "" -- No break needed
-  
+
   -- Ensure consistent spacing (max 2 newlines between elements)
   let newStr1 = newPrepend <> t
       upcomingSpace = T.length $ T.takeWhile (=='\n') newStr1
       newStr = T.dropWhileEnd (=='\n') $ T.drop (max 0 (min upcomingSpace (hangingSpace + upcomingSpace - 2))) newStr1
-  
+
   -- Determine if linebreak should be added after this message
-  pure (T.empty /= t && T.last t `elem` ['.', '!', '?', ':'], newStr)
+  let shouldBreakAfter = not (T.null newStr) && T.last newStr `elem` ['.', '!', '?', ':']
+  pure (shouldBreakAfter, newStr)
 
 -- | Print @message@ with a newline.
 printLn ::
@@ -273,6 +350,9 @@ setStyle' ::
   -> Eff es ()
 setStyle' s = buf % (#style @(Lens' (MessageBuffer) (Maybe MessageAnnotation))) .= s
 
+-- | Execute an action with a temporary message style.
+-- Sets the specified style for the duration of the action, then restores the previous style.
+-- Useful for applying consistent styling to a block of messages.
 withStyle ::
   forall es a.
   Print :> es

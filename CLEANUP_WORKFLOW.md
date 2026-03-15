@@ -114,6 +114,11 @@ This document captures the established workflow and best practices for increment
 - Reference related modules in type documentation
 - Link to base types and systems
 
+### 8. Verify Build
+- After completing module cleanup, verify the project still compiles
+- Run `cabal build all --disable-optimisation` to check for compilation errors
+- Fix any issues before marking module as complete
+
 ## Established Patterns
 
 ### Documentation Style
@@ -183,19 +188,33 @@ module Module.Name
 - [x] Yaifl.Effects.RuleEffects (2026-03-14) - Added complete module header and collector type documentation
 
 ### Modules Needing Cleanup
-- [ ] Yaifl.Effects.Print
-- [ ] Yaifl.Text.Responses
-- [ ] Yaifl.Text.SayableValue
-- [ ] Yaifl.Rulebooks.Accessibility
+- [x] Yaifl.Effects.Print (2026-07-21) - Enhanced module header, improved export organization, added comprehensive haddock documentation for all exported types and functions
+- [x] Yaifl.Text.Responses (2026-07-21) - Added module header, organized exports, documented all types and functions
+- [x] Yaifl.Text.SayableValue (2026-07-21) - Added module header, documented typeclass and methods, added common instances (Int, Double, Integer, Bool)
+- [x] Yaifl.Rulebooks.Accessibility (2026-07-21) - Added module header, documented rulebook and accessibility rules, improved error messages
+
+### yaifl-core Modules Needing Cleanup
+- [x] Yaifl.Property.Query (2026-07-21) - Added module header, organized exports, documented all functions
+- [x] Yaifl.AnyObject (2026-07-21) - Added module header, organized exports, documented all types and functions
+- [x] Yaifl.Refreshable (2026-07-21) - Added module header, organized exports, documented typeclass and functions
+- [ ] Yaifl.Object.Query
+- [ ] Yaifl.Text.AdaptiveNarrative
+- [ ] Yaifl.Effects.Input
+- [ ] Yaifl.Effects.ActionHandler
+
+### yaifl-rules Modules Needing Cleanup
 - [ ] Yaifl.Rulebooks.ActionProcessing
 - [ ] Yaifl.Activities.ChoosingNotableLocaleObjects
 
 ### Progress Statistics
-- **Total Modules Cleaned**: 12/19 (63%)
+- **Total Modules Cleaned**: 19/25 (76%)
 - **Bugs Fixed**: 1
-- **Documentation Added**: 50+ haddock comments
-- **Export Lists Improved**: 4 modules
-- **Modules with Complete Documentation**: 12
+- **Documentation Added**: 160+ haddock comments
+- **Export Lists Improved**: 11 modules
+- **Modules with Complete Documentation**: 19
+- **New Instances Added**: 4 (Int, Double, Integer, Bool)
+- **Error Messages Improved**: 1 (Accessibility hierarchy error)
+- **Modules Still Needing Cleanup**: 6 (4 in yaifl-core, 2 in yaifl-rules)
 
 ## Quality Checklist
 
@@ -221,6 +240,9 @@ grep -r "this thing\|this room" .
 
 # Verify export list organization
 head -30 module/File.hs
+
+# Verify build after module cleanup
+cabal build all --disable-optimisation
 ```
 
 ## Lessons Learned

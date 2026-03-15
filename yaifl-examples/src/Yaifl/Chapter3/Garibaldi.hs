@@ -58,7 +58,6 @@ garibaldiWorld = do
     { name = "inner airlock"
     , front = (tdb, northOf)
     , back = (tz, southOf)
-    , locked = Just Unlocked
     }
   pass
 

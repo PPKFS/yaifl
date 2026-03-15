@@ -57,10 +57,16 @@
         "Potential refactoring opportunities",
         "Integration with other systems",
         "Critical dependencies and their stability",
-        "Error handling and failure modes"
+        "Error handling and failure modes",
+        "Domain-specific patterns and conventions",
+        "Authoring patterns and customisation points",
+        "Complexity analysis: overly complex areas, simplification opportunities",
+        "Type signature review: can signatures be simplified?",
+        "Unnecessary functions/fields: identify redundant or unused components",
+        "API design review: consistency and usability assessment"
       ],
       "tools": ["read_file", "grep", "bash"],
-      "output": "Comprehensive architectural analysis report"
+      "output": "Comprehensive architectural analysis report with simplification recommendations"
     },
     {
       "step": 3.5,
@@ -174,6 +180,18 @@
       "action": "Repeat or move to next module",
       "description": "Either continue with remaining improvements for this module or select next module",
       "output": "Workflow continues or completes"
+    },
+    {
+      "step": 8,
+      "action": "Verify build",
+      "description": "After completing module cleanup, verify the project still compiles without errors",
+      "tools": ["bash"],
+      "process": [
+        "Run cabal build all --disable-optimisation",
+        "Check for compilation errors",
+        "Fix any issues before marking module as complete"
+      ],
+      "output": "Verified compilation success"
     }
   ],
   "guiding_principles": [
@@ -206,7 +224,15 @@
     "Provide clear progress reporting and status updates",
     "Create todo items for identified architectural improvements",
     "Track architectural improvements separately from documentation tasks",
-    "Prioritize architectural improvements by impact and feasibility"
+    "Prioritize architectural improvements by impact and feasibility",
+    "Prefer haddock inline comments (-- ^) over @x@ style argument documentation",
+    "Use complete sentences in haddock comments",
+    "Avoid sales pitch language in documentation",
+    "Provide usage examples in documentation where helpful",
+    "Document edge cases and error conditions",
+    "Use British spelling consistently throughout",
+    "Add cross-references to related modules and types where appropriate",
+    "Include module header with copyright, license, and maintainer in every module"
   ],
   "example_improvement_areas": [
     {

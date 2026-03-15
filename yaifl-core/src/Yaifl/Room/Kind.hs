@@ -46,6 +46,7 @@ module Yaifl.Room.Kind
 
     -- * Room queries and utilities
   , roomIsVisited
+  , roomIsNotVisited
   , roomIsLighted
   , roomConnections
   , roomRegion
@@ -178,6 +179,12 @@ roomIsVisited ::
   Room wm
   -> Bool
 roomIsVisited = (== Visited) . view (#objectData % #isVisited)
+
+-- | Check if a room has not been visited.
+roomIsNotVisited ::
+  Room wm
+  -> Bool
+roomIsNotVisited = not . roomIsVisited
 
 -- | Check if a room is currently lighted.
 roomIsLighted ::

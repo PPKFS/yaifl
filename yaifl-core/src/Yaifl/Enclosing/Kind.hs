@@ -51,7 +51,4 @@ blankEnclosing = Enclosing
   , capacity = Nothing
   }
 
--- | Shorthand for enclosing entities.
-type EnclosingEntity = TaggedEntity EnclosingTag
-
 instance Taggable Enclosing EnclosingTag

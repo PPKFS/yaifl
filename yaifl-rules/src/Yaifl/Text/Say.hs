@@ -158,9 +158,6 @@ sayVerb' ::
   -> Eff es ()
 sayVerb' = sayVerb Positive
 
-instance SayableValue Int wm where
-  sayTell x = tell (display x)
-
 instance SayableValue (SayModalVerb "can't") wm where
   sayTell (SayModalVerb cap) = withCapitalisation cap "can't"
 
