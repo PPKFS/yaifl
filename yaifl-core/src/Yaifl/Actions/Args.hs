@@ -1,15 +1,54 @@
 {-|
-Module: Yaifl.Actions.Args
-Description: Arguments handled by actions.
-Copyright: (c) Avery 2024-2025
-License: MIT
-Maintainer: Avery ppkfs@outlook.com
+Module      : Yaifl.Actions.Args
+Copyright   : (c) Avery 2024-2025
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
-This module implements a payload type for arguments to game actions that includes the source of the action -
-the object (usually the player, but can be an NPC or other AI) that attempted to performm the action as well as a timestamp
-and additional options such as whether the prompt icon (usually ">") should be printed.
+Action argument handling and configuration.
 
-All 'Yaifl.Action's implicitly use 'Args' as the rulebook variables, whereas plain rulebooks and activities may use any @v@.
+This module defines the data structures and typeclasses for handling action
+arguments in Yaifl. It provides the infrastructure for:
+
+- **Action arguments**: Payload types containing source, variables, and configuration
+- **Argument parsing**: Two-phase parsing from raw input to typed variables
+- **Main object extraction**: Unified interface for accessing primary action targets
+- **Action configuration**: Silent vs normal action behavior
+
+The `Args` type is fundamental to Yaifl's action system, serving as the standard
+payload for all actions. It includes:
+
+- **Source**: The entity performing the action (player, NPC, etc.)
+- **Variables**: Action-specific parameters (targets, tools, etc.)
+- **Options**: Configuration like prompt suppression
+- **Timestamp**: When the action was initiated
+
+Key features:
+- Two-phase parsing for flexible argument handling
+- Type-safe variable extraction via `ActionExpects`
+- Main object abstraction for generic preconditions
+- Silent action support for UI flexibility
+
+Example usage:
+@
+  -- Create action arguments
+  let args = Args
+        { source = player
+        , variables = targetObject
+        , actionOptions = normalAction
+        , timestamp = currentTime
+        }
+  
+  -- Access the main object
+  mainObj <- args ^. argsMainObject
+  
+  -- Check if action is silent
+  unlessSilent args $ print "Action performed!"
+@
+
+This module works closely with:
+- `Yaifl.Actions.GoesWith`: Action parameter parsing
+- `Yaifl.Action`: Action definitions and execution
+- `Yaifl.Core.Rules`: Rulebook system for action processing
 -}
 
 {-# LANGUAGE RecordWildCards #-}
@@ -43,7 +82,35 @@ import Yaifl.WorldModel
 import Yaifl.Effects.ActionHandler
 import Yaifl.Room.Kind
 
--- | Arguments for a 'Yaifl.Action.Action' with variables of type @v@.
+-- | Standard action argument payload.
+--
+-- This record contains all the information needed to execute an action in Yaifl.
+-- It serves as the standard argument type for all actions, providing:
+--
+-- - `source`: The entity performing the action (typically the player)
+-- - `variables`: Action-specific parameters (targets, tools, etc.)
+-- - `actionOptions`: Configuration for this action invocation
+-- - `timestamp`: When the action was initiated
+--
+-- The `Args` type is parameterized by:
+-- - `wm`: The world model type
+-- - `v`: The type of action-specific variables
+--
+-- Example:
+-- @
+--   -- Args for a "take" action
+--   data TakeVariables wm = TakeVariables { target :: Thing wm }
+--   
+--   takeArgs = Args
+--     { source = player
+--     , variables = TakeVariables { target = sword }
+--     , actionOptions = normalAction
+--     , timestamp = currentTime
+--     }
+-- @
+--
+-- This type is used throughout Yaifl's action system as the standard way to
+-- pass action context and parameters.
 data Args (wm :: WorldModel) v = Args
   { source :: Thing wm -- ^ the originating entity that is performing the action.
   , variables :: v -- ^ the variables for the action.
@@ -60,6 +127,19 @@ instance (Display v, Display (WMText wm)) => Display (Args wm v) where
     , displayBuilder variables
     ]
 
+-- | Refresh an `Args` value by refreshing its components.
+--
+-- This instance enables the `Args` type to work with Yaifl's refreshable system,
+-- which is used for updating stale references after object modifications.
+--
+-- The implementation refreshes both the source entity and the variables,
+-- ensuring all references remain valid after world modifications.
+--
+-- Example:
+-- @
+--   -- Refresh args after object updates
+--   freshArgs <- refresh oldArgs
+-- @
 instance {-# OVERLAPPING #-} Refreshable wm v => Refreshable wm (Args wm v) where
   refresh av = do
     v <- refresh (variables av)
@@ -84,19 +164,88 @@ makeFieldLabelsNoPrefix ''UnverifiedArgs
 instance Functor (Args wm) where
   fmap f = #variables %~ f
 
--- | Default configuration for silent actions - don't print the prompt, do the action silently.
+-- | Action configuration options.
+--
+-- This data type controls how actions are executed and displayed.
+-- Currently supports:
+-- - `silent`: Whether to suppress the command prompt
+-- - `suppressResponses`: Whether to suppress action responses
+--
+-- Example:
+-- @
+--   -- Create silent action configuration
+--   config = ActionOptions True True
+--   
+--   -- Create normal action configuration
+--   config = ActionOptions False False
+-- @
+--
+-- This type enables fine-grained control over action execution behavior,
+-- particularly useful for NPC actions or system-generated actions that
+-- shouldn't produce player-visible output.
+data ActionOptions wm = ActionOptions
+  { silently :: Bool -- ^ Suppress the command prompt (e.g., ">")
+  , suppressResponses :: Bool -- ^ Suppress action responses and output
+  }
+
+-- | Default configuration for silent actions.
+--
+-- Use this configuration when you want an action to execute without any
+-- visible output or prompts. This is useful for:
+-- - NPC actions
+-- - System-generated actions
+-- - Background processes
+-- - Actions that should be invisible to the player
+--
+-- Example:
+-- @
+--   -- Perform an action silently
+--   args = Args { actionOptions = silentAction, ... }
+-- @
 silentAction :: ActionOptions wm
 silentAction = ActionOptions True True
 
--- | Default configuration for normal actions - print the prompt, do not suppress any responses.
+-- | Default configuration for normal actions.
+--
+-- Use this configuration for standard player actions that should:
+-- - Show the command prompt
+-- - Display all action responses
+-- - Provide full feedback to the player
+--
+-- Example:
+-- @
+--   -- Perform a normal player action
+--   args = Args { actionOptions = normalAction, ... }
+-- @
 normalAction :: ActionOptions wm
 normalAction = ActionOptions False False
 
--- | Do something as long as the action isn't silent.
+-- | Execute an action only if it's not silent.
+--
+-- This utility function checks if an action is configured to be silent
+-- and only executes the given computation if it's not.
+--
+-- Parameters:
+-- - `args`: Action arguments to check
+-- - `computation`: Action to perform if not silent
+--
+-- Returns: Unit result
+--
+-- Example:
+-- @
+--   -- Print a message only for non-silent actions
+--   unlessSilent args $ print "Action performed!"
+--   
+--   -- Show UI effects for visible actions
+--   unlessSilent args showSpecialEffects
+-- @
+--
+-- This is commonly used for UI elements, sound effects, and other
+-- player-visible aspects that should be suppressed for silent actions.
 unlessSilent ::
   Applicative m
-  => Args wm v -- ^ Action arguments.
-  -> m () -- ^ Computation to do.
+  => Args wm v -- ^ Action arguments to check
+  -> m () -- ^ Computation to perform if not silent
   -> m ()
 unlessSilent args = unless (silently . actionOptions $ args)
 

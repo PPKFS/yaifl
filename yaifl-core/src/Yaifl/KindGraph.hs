@@ -27,31 +27,64 @@ module Yaifl.KindGraph
 import Yaifl.Prelude
 import Yaifl.Object.Kind
 
+-- | The hierarchical relationships between object kinds.
+--
+-- This DAG defines the inheritance structure for game objects:
+-- - Basic types: object, thing, room
+-- - Container types: container, supporter
+-- - Character types: person, man, woman, animal
+-- - Special types: device, door, backdrop
+--
+-- Each entry maps a kind to its parent kinds. For example:
+-- - "thing" inherits from "object"
+-- - "person" inherits from "animal" which inherits from "thing"
+-- - "container" inherits from "thing"
+--
+-- This structure enables runtime type queries and classification.
 makeKindDAG :: Map ObjectKind (Set ObjectKind)
 makeKindDAG = fromList
-  [ ("object", fromList [])
-  , ("thing", fromList ["object"])
-  , ("room", fromList ["object"])
-  -- probably useless because we don't have first class directions
-  , ("direction", fromList [])
-  , ("container", fromList ["thing"])
-  , ("supporter", fromList ["thing"])
-  , ("backdrop", fromList ["thing"])
-  , ("person", fromList ["animal"])
-  , ("man", fromList ["person"])
-  , ("woman", fromList ["person"])
-  , ("animal", fromList ["thing"])
-  , ("device", fromList ["thing"])
-  -- same as direction, probably useless
-  , ("region", fromList [])
-  , ("door", fromList ["thing"])
-  -- we also haven't (yet) got concepts
+  [ ("object", fromList [])  -- Root type, no parents
+  , ("thing", fromList ["object"])  -- Physical objects
+  , ("room", fromList ["object"])  -- Locations
+  , ("direction", fromList [])  -- Cardinal directions
+  , ("container", fromList ["thing"])  -- Objects that can contain others
+  , ("supporter", fromList ["thing"])  -- Objects that can support others
+  , ("backdrop", fromList ["thing"])  -- Scenery objects
+  , ("person", fromList ["animal"])  -- Human characters
+  , ("man", fromList ["person"])  -- Male characters
+  , ("woman", fromList ["person"])  -- Female characters
+  , ("animal", fromList ["thing"])  -- Non-human creatures
+  , ("device", fromList ["thing"])  -- Interactive objects
+  , ("region", fromList [])  -- Geographic areas
+  , ("door", fromList ["thing"])  -- Portals between rooms
   ]
 
+-- | Runtime information about an object kind.
+--
+-- This record stores metadata associated with each object kind that applies
+-- to ALL objects of that kind. This enables automatic understanding of objects
+-- without requiring manual configuration for each instance.
+--
+-- Fields:
+-- - `parentKinds`: The set of parent kinds this kind inherits from
+-- - `understandAs`: Terms that can be used to refer to ANY object of this kind
+-- - `pluralUnderstandAs`: Plural forms of the understanding terms
+--
+-- The understanding terms are used by the parser to recognize different
+-- ways players might refer to objects. For example, if "sword" has
+-- "blade" and "weapon" in its `understandAs` list, then ANY sword
+-- in the game can be referred to as "blade" or "weapon" without
+-- needing to manually add these terms to each individual sword object.
+--
+-- This system provides automatic synonym support and reduces the need
+-- for per-object configuration.
 data ObjectKindInfo = ObjectKindInfo
   { parentKinds :: Set ObjectKind
+  -- ^ Parent kinds this kind inherits from
   , understandAs :: [Text]
+  -- ^ Terms that apply to all objects of this kind (e.g., "blade" for swords)
   , pluralUnderstandAs :: [Text]
+  -- ^ Plural forms of the kind-specific terms
   }
 
 makeFieldLabelsNoPrefix ''ObjectKindInfo

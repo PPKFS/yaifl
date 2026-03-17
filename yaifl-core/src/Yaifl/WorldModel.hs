@@ -50,6 +50,39 @@ import Yaifl.Prelude
 -- This allows us to tie the knot in some weird way - we need some way to refer
 -- to sets of activities or actions or object types, but these then need to depend
 -- on the fundamental types themselves.
+-- | The core configuration type that bundles all of Yaifl's type parameters.
+--
+-- This data type serves as a central configuration point that avoids parameter explosion
+-- by bundling all type parameters into a single manageable type. Each field represents
+-- a different aspect of the game's type configuration:
+--
+-- - `wmObjSpecifics`: Type for object-specific data (see `WMObjSpecifics`)
+-- - `wmDirection`: Type for directional values (see `WMDirection`)
+-- - `wmValues`: Type for global game state values (see `WMValues`)
+-- - `wmThingData`: Additional fields for thing objects (extensions to standard `Yaifl.Thing.Kind`)
+-- - `wmRoomData`: Additional fields for room objects (extensions to standard `Yaifl.Room.Kind`)
+-- - `wmRegionData`: Additional fields for region objects (extensions to standard `Yaifl.Region.Kind`)
+-- - `wmActivities`: Activity record type (see `WMActivities`)
+-- - `wmResponses`: Response record type (see `WMResponses`)
+-- - `wmText`: Dynamic text type (see `WMText`)
+-- - `wmActions`: Action record type (see `WMActions`)
+--
+-- These extension fields allow game authors to add custom properties to core types without
+-- modifying the standard definitions. If no additional properties are needed, use `()`.
+--
+-- Example usage:
+-- @
+--   -- Minimal world model using standard types with no extensions
+--   type SimpleWorldModel = 'WorldModel' 
+--     'Yaifl.Model.ObjectSpecifics'  -- Standard object specifics
+--     'Yaifl.Direction.Kind'        -- Standard directions
+--     MyGameState                   -- Custom game state
+--     () () ()                      -- No extensions to Things, Rooms, Regions
+--     'Yaifl.Activity.Record'       -- Standard activities
+--     'Yaifl.Text.Response.Record'  -- Standard responses
+--     'Yaifl.Text.DynamicText'      -- Standard dynamic text
+--     'Yaifl.Action.Record'         -- Standard actions
+-- @
 data WorldModel =
   WorldModel
     { wmObjSpecifics :: Type

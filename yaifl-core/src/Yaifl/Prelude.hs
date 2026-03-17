@@ -4,33 +4,68 @@ Copyright   : (c) Avery 2024-2025
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Custom prelude that wraps @relude@ and adds some additional useful functions I've picked up.
-Also includes stateful operators for compatibility between @optics@ and @effectful@.
+Yaifl's custom prelude and utility library.
+
+This module serves as the foundation for Yaifl code, providing:
+
+- **Core imports**: Relude, Optics, Effectful, and other essential libraries
+- **Custom types**: `Pointed`, `And`, `Reversing`, and other utility types
+- **Utility functions**: Collection processing, monadic operations, text manipulation
+- **Optics helpers**: Stateful operators bridging Optics and Effectful
+- **Effect management**: Local state operations and effect combinators
+
+The prelude is designed to provide a consistent, powerful foundation for
+interactive fiction development while maintaining compatibility with the
+haskell ecosystem.
+
+Key design principles:
+- **Consistency**: Uniform naming conventions and behavior
+- **Compatibility**: Bridges between different library ecosystems
+- **Productivity**: Reduces boilerplate for common IF patterns
+- **Safety**: Type-safe operations with clear error handling
+
+Organisation:
+- Re-exports from essential libraries (Relude, Optics, Effectful)
+- Custom types and typeclasses
+- Monadic utilities and combinators
+- Collection processing functions
+- Text and display utilities
+- Stateful optics operators
+- Effect management helpers
 -}
 
 module Yaifl.Prelude
-  ( Pointed(..)
+  ( -- * Custom Types
+    Pointed(..)
+    
+  -- * Re-exports
   , module Named
   , module Data.Text.Display
-  , whileM
-  , And
   , module Relude
   , module Optics
   , module Relude.Extra.Bifunctor
   , module Relude.Extra.Tuple
   , module Effectful
   , module Effectful.State.Dynamic
-  , isPrefixOf'
+    
+  -- * Monadic Utilities
+  , whileM
   , caseM
-  , wrap
-  , composel
   , surroundM
-  , (<$$>)
-  , prettyPrintList
+    
+  -- * Collection Processing
+  , composel
   , bothAnd
-  , Reversing(..)
-  , reversed
-  , universeSans -- UNDERTALE???
+  , eitherJoin
+  , thenATraverse
+    
+  -- * Text Utilities
+  , isPrefixOf'
+  , wrap
+  , prettyPrintList
+    
+  -- * Optics Utilities
+  , universeSans
   , (<<+~)
   , (<<-~)
   , eitherJoin
@@ -42,8 +77,9 @@ module Yaifl.Prelude
   , (%%=)
   , use
   , (<<%=)
+    
+  -- * Stateful Operations
   , WithLabel
-
   , runLocalState
   ) where
 
@@ -153,6 +189,26 @@ infixl 4 <$?>
   -> Bool
 f <$?> m = maybe False f m
 
+-- | Format a list of items with proper English conjunctions.
+--
+-- Converts a list of text items into a properly formatted English list
+-- with appropriate use of commas and "and" for the final conjunction.
+--
+-- This is particularly useful for generating natural-sounding descriptions
+-- in interactive fiction, such as listing objects or inventory items.
+--
+-- Examples:
+-- @
+--   prettyPrintList []          == ""
+--   prettyPrintList ["apple"]   == "apple"
+--   prettyPrintList ["apple", "orange"] == "apple, and orange"
+--   prettyPrintList ["apple", "orange", "pear"] == "apple, orange, and pear"
+-- @
+--
+-- Parameters:
+-- - List of `Text` items to format
+--
+-- Returns: Formatted text with proper English list formatting
 prettyPrintList :: [Text] -> Text
 prettyPrintList [] = ""
 prettyPrintList [x] = x
@@ -214,7 +270,27 @@ instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
 instance Pointed () where
   identityElement = ()
 
-whileM :: Monad m => (a -> Bool) -> m a -> m a
+-- | Monadic while loop.
+--
+-- Executes a monadic action repeatedly while the predicate holds true.
+-- This is useful for implementing game loops, input processing, or
+-- any operation that needs to repeat until a condition is met.
+--
+-- Parameters:
+-- - `pr`: Predicate function that determines whether to continue
+-- - `f`: Monadic action to execute
+--
+-- Returns: The last value produced by `f` before the predicate failed
+--
+-- Example:
+-- @
+--   -- Process player input until they enter "quit"
+--   lastInput <- whileM (/= "quit") getLine
+--   putStrLn "Goodbye!"
+-- @
+whileM :: Monad m => (a -> Bool)  -- ^ Continuation predicate
+                -> m a             -- ^ Action to repeat
+                -> m a             -- ^ Final result
 whileM pr f = do
   a <- f
   if pr a then whileM pr f else return a
@@ -226,6 +302,20 @@ class And c1 c2 l
 instance (c1 l, c2 l) => And c1 c2 l
 
 
+-- | Stateful assignment operator.
+--
+-- Sets the value targeted by an optic in the state monad.
+-- This is the effectful equivalent of (`%=` `const`).
+--
+-- Parameters:
+-- - `o`: Optic targeting the field to set
+-- - `b`: Value to assign
+--
+-- Example:
+-- @
+--   -- Set the player's health to 100
+--   health .= 100
+-- @
 (.=)
   :: Is k A_Setter
   => State s :> es
@@ -234,6 +324,20 @@ instance (c1 l, c2 l) => And c1 c2 l
   -> Eff es ()
 (.=) o = modify . over o . const
 
+-- | Stateful assignment to a `Maybe` field.
+--
+-- Sets a `Maybe`-typed field to `Just` the given value.
+-- Useful for optional fields where you want to ensure a value is present.
+--
+-- Parameters:
+-- - `o`: Optic targeting a `Maybe` field
+-- - `b`: Value to assign (will be wrapped in `Just`)
+--
+-- Example:
+-- @
+--   -- Set the optional current weapon
+--   currentWeapon ?= sword
+-- @
 (?=)
   :: Is k A_Setter
   => State s :> es
@@ -242,6 +346,20 @@ instance (c1 l, c2 l) => And c1 c2 l
   -> Eff es ()
 (?=) o = (modify . over o) . const . Just
 
+-- | Stateful modification operator.
+--
+-- Modifies the value targeted by an optic using a transformation function.
+-- This is the effectful equivalent of the optics (`%~`) operator.
+--
+-- Parameters:
+-- - `o`: Optic targeting the field to modify
+-- - `f`: Transformation function
+--
+-- Example:
+-- @
+--   -- Increment the player's score
+--   score %= (+ 10)
+-- @
 (%=)
   :: Is k A_Setter
   => State s :> es
@@ -250,6 +368,21 @@ instance (c1 l, c2 l) => And c1 c2 l
   -> Eff es ()
 (%=) = (modify .) . over
 
+-- | Get the value targeted by an optic.
+--
+-- Retrieves the current value of a field using an optic.
+-- This is the effectful equivalent of the optics (`^.`) operator.
+--
+-- Parameters:
+-- - `o`: Optic targeting the field to read
+--
+-- Returns: The current value of the targeted field
+--
+-- Example:
+-- @
+--   -- Get the player's current health
+--   currentHealth <- use health
+-- @
 use ::
   forall s a es is k.
   (Is k A_Getter, State s :> es)
@@ -276,5 +409,28 @@ o <<%= f = o %%= toSnd f
 
 type WithLabel sym ty o = LabelOptic' sym A_Lens o ty
 
+-- | Run a stateful computation with local state.
+--
+-- Executes an effectful computation that uses a local `State` effect,
+-- returning the final state value. This is useful for isolated stateful
+-- operations that don't need to be part of a larger effect stack.
+--
+-- Parameters:
+-- - `bl`: Initial state value
+-- - `upd`: Stateful computation to run
+--
+-- Returns: The final state after running the computation
+--
+-- Example:
+-- @
+--   -- Calculate something with local state
+--   finalState <- runLocalState initialValue $ do
+--     modify (+ 1)
+--     modify (* 2)
+--     -- Returns: initialValue + 1 * 2
+-- @
+--
+-- Note: This function discards the computation result and only returns
+-- the final state. Use `runState` if you need both the result and state.
 runLocalState :: a1 -> Eff '[State a1] a2 -> a1
 runLocalState bl upd = snd $ runPureEff $ runStateLocal bl upd

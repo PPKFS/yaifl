@@ -1,4 +1,54 @@
 {-# LANGUAGE UndecidableInstances #-}
+
+{-|
+Module      : Yaifl.Text.Verb
+Copyright   : (c) Avery 2024-2025
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Verb conjugation and inflection system.
+
+This module provides a comprehensive system for handling verb conjugation
+in interactive fiction, supporting multiple tenses, voices, and grammatical
+persons. The system is inspired by Inform7's verb handling but adapted to
+Haskell's type system.
+
+Key Features:
+
+- **Type-safe verbs**: Compile-time verification of verb existence
+- **Comprehensive conjugation**: Support for multiple tenses and persons
+- **Grammatical correctness**: Proper handling of subject-verb agreement
+- **Extensible**: Can be extended with additional verb forms and rules
+
+The verb system handles:
+
+- **Tenses**: Present, past, perfect, past perfect, future
+- **Voices**: Active and passive
+- **Persons**: First, second, third person (singular and plural)
+- **Forms**: Base, infinitive, participles, etc.
+
+This module works closely with:
+
+- `Yaifl.Text.SayQQ`: Adaptive text with verb conjugation
+- `Yaifl.Text.SayableValue`: Value display system
+- `Yaifl.Text.Responses`: Response generation
+
+Example usage:
+
+@
+  -- Conjugate a verb for specific subject and tense
+  conjugated <- conjugate "take" ThirdPersonSingular Present
+  -- Result: "takes"
+  
+  -- Use in adaptive text
+  [saying| You {take} the sword. |]
+  -- Automatically conjugates based on context
+@
+
+The system is designed to handle the complexities of English verb conjugation
+while providing a simple, type-safe interface for game developers.
+-}
+
 module Yaifl.Text.Verb where
 
 import GHC.TypeLits
@@ -15,9 +65,32 @@ define PAST_PARTICIPLE_FORM_TYPE 3
 define ADJOINT_INFINITIVE_FORM_TYPE 4
 english has 5 (present) and 6 (past) too
 -}
+
+-- | Typeclass for verbs that can be conjugated.
+--
+-- This typeclass enables compile-time verification that a symbol represents
+-- a valid verb. The `toVerb` function converts a verb symbol to its runtime
+-- representation.
+--
+-- The overlapping instance provides a helpful error message when attempting
+-- to use a non-verb symbol, guiding developers to add the appropriate instances.
 class ConjugatableVerb (v :: Symbol) where
+  -- | Convert a verb symbol to its runtime representation.
+  --
+  -- This function takes a proxy for a verb symbol and returns the corresponding
+  -- `Verb` value containing all conjugation information.
+  --
+  -- Example:
+  -- @
+  --   verb = toVerb (Proxy @"take")
+  -- @
   toVerb :: Proxy v -> Verb
 
+-- | Compile-time error for non-verb symbols.
+--
+-- This overlapping instance provides a helpful error message when someone
+-- tries to use a symbol that isn't a recognized verb, suggesting they add
+-- the appropriate `SayableValue` instance.
 instance {-# OVERLAPPABLE #-} (TypeError
   ('Text "Cannot conjugate the verb 'to " ':<>: 'ShowType a ':<>:
     'Text "'; perhaps you are missing a SayableValue (SayLiteral " ':<>:
@@ -25,14 +98,67 @@ instance {-# OVERLAPPABLE #-} (TypeError
   toVerb :: Proxy a -> Verb
   toVerb = error "impossible"
 
+-- | Grammatical voice (active vs passive).
+--
+-- Voice determines whether the subject performs the action (active) or receives
+-- it (passive). This affects verb conjugation and sentence structure.
+--
+-- Example:
+-- @
+--   Active: "You take the sword"
+--   Passive: "The sword is taken by you"
+-- @
 data Voice = Active | Passive
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
+
+-- | Verb sense (positive vs negative).
+--
+-- Verb sense indicates whether the action is performed (positive) or not
+-- performed (negative). This affects auxiliary verbs and sentence structure.
+--
+-- Example:
+-- @
+--   Positive: "You take the sword"
+--   Negative: "You do not take the sword"
+-- @
 data VerbSense = Positive | Negative
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
+-- | Grammatical tense.
+--
+-- Tense indicates when the action occurs relative to the current time.
+-- Yaifl supports the five main English tenses used in interactive fiction.
+--
+-- Constructors:
+-- - `Present`: Action occurring now ("You take the sword")
+-- - `Past`: Action that occurred previously ("You took the sword")
+-- - `Perfect`: Action completed at an unspecified time ("You have taken the sword")
+-- - `PastPerfect`: Action completed before another past action ("You had taken the sword")
+-- - `Future`: Action that will occur ("You will take the sword")
+--
+-- Example:
+-- @
+--   -- Narrate actions in different tenses
+--   describe Past "You took the sword yesterday"
+--   describe Future "You will take the sword tomorrow"
+-- @
 data Tense = Present | Past | Perfect | PastPerfect | Future
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
+-- | Grammatical person and number.
+--
+-- Personage combines person (first, second, third) with number (singular, plural)
+-- to determine the correct verb conjugation and pronoun usage.
+--
+-- Constructors:
+-- - `FirstPersonSingular`: "I" ("I take")
+-- - `FirstPersonPlural`: "We" ("We take")
+-- - `SecondPersonSingular`: "You" ("You take")
+-- - `SecondPersonPlural`: "You" ("You take")
+-- - `ThirdPersonSingular`: "He/She/It" ("He takes")
+-- - `ThirdPersonPlural`: "They" ("They take")
+--
+-- This type is crucial for proper subject-verb agreement in English.
 data VerbPersonage =
   FirstPersonSingular
   | FirstPersonPlural
@@ -42,11 +168,37 @@ data VerbPersonage =
   | ThirdPersonSingular
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
+-- | Complete verb information including forms and conjugation tables.
+--
+-- This data type contains all information needed to conjugate a verb in all
+-- supported tenses, persons, and voices. It serves as the runtime representation
+-- of verbs in the system.
+--
+-- Fields:
+-- - `verbForms`: Base forms of the verb (infinitive, participles, etc.)
+-- - `tabulation`: Conjugation tables for all combinations of tense/person/voice
+--
+-- Example:
+-- @
+--   -- Get conjugation for specific tense and person
+--   conjugatedForm <- getConjugation verb Present ThirdPersonSingular
+-- @
 data Verb = Verb
   { verbForms :: VerbForms
+  -- ^ Base forms and irregular conjugations
   , tabulation :: Tabulation
+  -- ^ Complete conjugation tables
   }
 
+-- | Base verb forms storage.
+--
+-- This data type stores the fundamental forms of a verb:
+-- - Base form ("take")
+-- - Infinitive ("to take")
+-- - Present participle ("taking")
+-- - Past participle ("taken")
+--
+-- These forms are used as the basis for generating all conjugated forms.
 data VerbForms = VerbForms
   { infinitive :: Text
   , presentParticiple :: Text

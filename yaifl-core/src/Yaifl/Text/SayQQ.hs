@@ -1,6 +1,41 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
+{-|
+Module      : Yaifl.Text.SayQQ
+Copyright   : (c) Avery 2022-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Adaptive narrative text with grammatical features.
+
+This module provides text interpolation with support for:
+
+- Grammatical adaptation (tense, person, number)
+- Context-aware article selection ("a" vs "an")
+- Modal verbs and auxiliary verbs
+- Dynamic text interpolation
+- Conditional text rendering
+
+Key components:
+- `saying`: Adaptive text quasiquoter with grammatical features
+- `sayingTell`: Variant for "tell" style narration
+- `SayingPiece`: Data type representing parsed text components
+- `Verb`: Typeclass for verb conjugation and adaptation
+
+Example usage:
+@
+  [saying| You see {a sword} on the table. |]
+  -- Automatically chooses "a" or "an" based on the object
+
+  [saying| The door {is} open. |]
+  -- Verb conjugation based on subject and tense
+@
+
+The system enables natural-sounding interactive fiction text that adapts
+to game state and linguistic context.
+-}
+
 module Yaifl.Text.SayQQ
   ( saying
   , sayingTell
@@ -16,10 +51,44 @@ import qualified Data.Text as T
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 
+-- | Narration style for adaptive text.
+--
+-- Determines how the text should be processed and rendered:
+-- - `Tell`: "Tell" style narration (second person, present tense focus)
+-- - `Raw`: Raw text without special processing
+--
+-- This affects verb conjugation and other grammatical adaptations
 data SayingKind = Tell | Raw
 
+-- | Typeclass for verb conjugation and adaptation.
+--
+-- Provides methods for conjugating and adapting verbs based on:
+-- - Tense (past, present, future)
+-- - Person (first, second, third)
+-- - Number (singular, plural)
+-- - Mood (indicative, imperative, subjunctive)
+--
+-- Instances should provide appropriate conjugation rules for different
+-- verb forms and grammatical contexts.
 class Verb v where
 
+-- | Parsed components of adaptive text.
+--
+-- Represents the different elements that can appear in adaptive text,
+-- each with specific grammatical or interpolation behaviour.
+--
+-- Constructors:
+-- - `RegularText`: Literal text that requires no special processing
+-- - `Sayable`: Direct interpolation of a sayable value (e.g., {foo})
+-- - `SayLiteral`: Literal interpolation with formatting (e.g., #{foo})
+-- - `SayModal`: Modal verb construction (e.g., #{modal foo})
+-- - `SayRegarding`: Context-aware text (e.g., #{regarding foo})
+-- - `SayArticle`: Article selection (e.g., {article foo})
+-- - `SayAdapt`: Grammatical adaptation (e.g., #{adapt foo for tense/person bar})
+-- - `SayIf`: Conditional text rendering
+--
+-- The type parameter `sayKind` determines the narration style (Tell/Raw)
+-- which affects how some elements are processed.
 data SayingPiece (sayKind :: SayingKind) =
   RegularText Text -- ^ some literal text
   | Sayable Text -- ^ something sayable directly (a binding); {foo}
@@ -30,6 +99,10 @@ data SayingPiece (sayKind :: SayingKind) =
   | SayAdapt Text Text -- ^ SayAdapt_Foo; #{adapt foo for tense/person bar}
   | SayIf (IfPart sayKind) [IfPart sayKind] (Maybe [SayingPiece sayKind])
 
+-- | Conditional text component with condition and body.
+--
+-- First field: condition expression
+-- Second field: text pieces to render if condition is true
 data IfPart a = IfPart Text [SayingPiece a]
 
 data IfBlock

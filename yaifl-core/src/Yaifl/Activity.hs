@@ -100,21 +100,44 @@ type ActivityRule' wm resps v re r = Rule wm ((:>) (Reader (Activity wm resps v 
 -- | The core activity type representing mechanical game engine processes.
 -- Activities have no actor source and bypass action processing, providing
 -- purely mechanical game logic that can be customized via rules.
+-- | The core activity data type representing mechanical game processes.
+--
+-- An activity encapsulates a complete mechanical process that the game engine can execute.
+-- Unlike actions (which are performed by actors), activities are system-level operations.
+--
+-- Type parameters:
+-- - `wm`: World model type
+-- - `resps`: Response collection type
+-- - `v`: Variables type (activity-specific state)
+-- - `r`: Result type
 data Activity wm resps v r = Activity
     { name :: Text
+    -- ^ Human-readable name of the activity
     , defaultOutcome :: Maybe r
+    -- ^ Default result if no rules produce a result
     , currentVariables :: Maybe v
+    -- ^ Current state variables (Nothing before execution)
     , responses :: resps -> Response wm v
+    -- ^ Function to generate responses from the response collection
     , beforeRules :: ActivityRulebook wm resps v r ()
+    -- ^ Rulebook for pre-execution setup and validation
     , carryOutRules :: ActivityRulebook wm resps v r r
+    -- ^ Rulebook for main execution logic
     , afterRules :: ActivityRulebook wm resps v r r
+    -- ^ Rulebook for post-execution cleanup
     , combineResults :: Maybe r -> Maybe r -> Maybe r
+    -- ^ Function to combine multiple rule results
     } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Activity
 
 -- | Lens for accessing the after-rules of an activity.
 afterActivityRules :: Lens' (Activity wm resps v r) (ActivityRulebook wm resps v r r)
+-- | Lens for accessing the after-rules of an activity.
+--
+-- This provides read/write access to the activity's after rulebook.
+-- The explicit lens avoids ambiguity with overloaded labels between
+-- activities' after rules and actions' after rules.
 afterActivityRules = #afterRules
 
 type ActivityLens wm resps v r = Lens' (WMActivities wm) (Activity wm resps v r)
@@ -137,15 +160,25 @@ makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "
   const
 
 -- | Begin an activity by running its before rules and setting up variables.
+-- | Begin an activity by running its before rules and setting up variables.
+--
+-- This function initiates an activity execution by:
+-- 1. Setting the activity's current variables
+-- 2. Running the before rules with the provided variables
+-- 3. Updating variables based on rule results
+-- 4. Returning the final variables state
+--
+-- The before rules can modify the variables and produce intermediate results,
+-- but the main execution happens in `doActivity`.
 beginActivity ::
   forall wm resps v r es.
   RuleEffects wm es
   => SayableValue (WMText wm) wm
   => Display v
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> v
-  -> Eff es v
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity in the activities record
+  -> v                             -- ^ Initial variables for the activity
+  -> Eff es v                      -- ^ Final variables state after running before rules
 beginActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
@@ -157,15 +190,23 @@ beginActivity acL c = do
         pure $ maybe c fst r)
 
 -- | Variant of `whenHandling` that doesn't take the activity variables.
+-- | Variant of `whenHandling` that doesn't take activity variables.
+--
+-- This function starts an activity and executes it. If the activity
+-- completes without producing a result (returns Nothing), it then
+-- executes the provided action.
+--
+-- Use this when you want to attempt an activity first, but have a
+-- fallback action to perform if the activity doesn't produce a result.
 whenHandling' ::
   RuleEffects wm es
   => SayableValue (WMText wm) wm
   => Display v
   => Display r
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> Eff es a
-  -> Eff es (Either a (Maybe r))
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity
+  -> Eff es a                     -- ^ Fallback action to execute if activity has no result
+  -> Eff es (Either a (Maybe r)) -- ^ Either the fallback result or activity result
 whenHandling' acF f = whenHandling acF (const f)
 
 -- | Execute an activity's carry-out rules with conditional fallback behavior.
@@ -225,14 +266,24 @@ endActivity acF = do
             pure $ maybe (Just c) (Just . fst) r)
 
 -- | Execute a complete activity lifecycle: before, carry-out, and after phases.
+-- | Execute an activity through its complete lifecycle.
+--
+-- This function runs the full activity execution pipeline:
+-- 1. Sets up initial variables
+-- 2. Runs before rules (setup/validation)
+-- 3. Runs carry out rules (main execution)
+-- 4. Runs after rules (cleanup)
+-- 5. Cleans up variables and returns the final result
+--
+-- This is the main entry point for activity execution after `beginActivity`.
 doActivity ::
   forall wm resps r v es.
   (RuleEffects wm es, Display r, Display v)
   => SayableValue (WMText wm) wm
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> v
-  -> Eff es (Maybe r)
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity
+  -> v                             -- ^ Initial variables
+  -> Eff es (Maybe r)              -- ^ Final result (Nothing if no result produced)
 doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac (do

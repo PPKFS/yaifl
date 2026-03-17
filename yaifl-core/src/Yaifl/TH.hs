@@ -24,10 +24,13 @@ module Yaifl.TH
   ) where
 
 import Data.Text (replace)
+import Data.Text (replace)
+import Language.Haskell.TH (Name, Q, Dec, nameBase )
+import Language.Haskell.TH.Syntax (Type(..), Kind, Pred, mkName, appT, conT, varT, arrowT, forallT)
+import qualified Language.Haskell.TH as TH
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
-import Language.Haskell.TH (Name, Q, Dec, nameBase )
 import Yaifl.Property.Has
 import Yaifl.WorldModel
 import Yaifl.AnyObject
@@ -43,12 +46,7 @@ data SpecificsFunctions =
   | ModifyX
   deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
-myDefaultParseMode :: ParseMode
-myDefaultParseMode = defaultParseMode
-  { parseFilename = []
-  , baseLanguage = Haskell2010
-  , extensions = map EnableExtension [DataKinds, ExplicitForAll, ScopedTypeVariables, FlexibleContexts ]
-  }
+
 
 -- | Generate 0-3 of @getPropMaybe@, @setProp@, and @modifyProp@.
 makeSpecificsWithout ::
