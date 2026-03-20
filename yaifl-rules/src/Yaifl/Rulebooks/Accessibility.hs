@@ -112,7 +112,7 @@ insideClosedContainers Args{source=s, variables=v}= do
       hier = case manyHiers of
         [x] -> x
         x -> error $ accessibilityHierarchyError s v x
-  anyClosed <- (join . listToMaybe . catMaybes) <$$> forM (reverse hier) $ \barrier -> do
+  anyClosed <- (join . listToMaybe . catMaybes) <<$>> forM (reverse hier) $ \barrier -> do
     barrierThing <- getThingMaybe barrier
     let isCC = (\t -> isClosedContainer <$?> getContainerMaybe t) <$> barrierThing
     if isCC == Just True then return $ Just barrierThing else return Nothing

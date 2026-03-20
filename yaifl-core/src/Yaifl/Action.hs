@@ -1,89 +1,23 @@
-{-# LANGUAGE RecordWildCards #-}
-
 {-|
 Module      : Yaifl.Action
 Copyright   : (c) Avery 2022-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Interactive fiction action system following the Inform7 model.
+Actions represent commands that players type or that NPCs execute, following the Inform7 action model.
 
-This module implements Yaifl's comprehensive action system, which enables
-players and NPCs to interact with the game world through commands. The system
-is heavily inspired by Inform7 but adapted to Haskell's type system.
+Actions follow the Inform7 lifecycle model:
+- Argument parsing and understanding
+- Before rules (setup and validation)
+- Instead rules (alternative behaviors)
+- Check rules (precondition checking)
+- Carry out rules (main execution)
+- Report rules (output generation)
+- After rules (cleanup and side effects)
 
-Core Components:
-
-- `Action`: Core action type with lifecycle phases
-- `ActionRulebook`: Phase-specific rulebooks
-- `ParseArguments`: Type-safe argument parsing
-- `ActionPhrase`: Container for action variants
-- `WrappedAction`: Runtime action representation
-
-The Inform7 Action Lifecycle:
-
-Yaifl's actions follow Inform7's proven lifecycle model:
-
-1. **Argument Parsing**: Convert player input to typed action variables
-2. **Before Rules**: Setup, validation, and pre-execution logic
-3. **Instead Rules**: Alternative behaviors that replace normal execution
-4. **Check Rules**: Precondition checking and validation
-5. **Carry Out Rules**: Main execution logic
-6. **Report Rules**: Output generation and player feedback
-7. **After Rules**: Cleanup and side effects
-
-This phased approach provides:
-
-- **Modularity**: Each phase can be customized independently
-- **Reusability**: Rules can be shared across different actions
-- **Flexibility**: Fine-grained control over action behavior
-- **Extensibility**: Easy to add new actions and modify existing ones
-
-Key Features:
-
-- **Type Safety**: Haskell's type system ensures actions are well-formed
-- **Effect Integration**: Seamless integration with Yaifl's effect system
-- **Rule-Based**: Declarative rule system for behavior customization
-- **Lifecycle Hooks**: Comprehensive control over action execution
-- **Error Handling**: Phase-appropriate error reporting
-
-Example Usage:
-
-@
-  -- Define a simple action
-  takeAction :: Action wm TakeVariables
-  takeAction = makeAction "take" [
-    -- Before rules: setup
-    beforeRule $ \_ -> logDebug "Preparing to take object",
-    
-    -- Check rules: validation
-    checkRule $ \vars -> do
-      ensureReachable (target vars)
-      ensureVisible (target vars)
-    
-    -- Carry out rules: main logic
-    carryOutRule $ \vars -> do
-      moveObject (target vars) inventory
-      
-    -- Report rules: feedback
-    reportRule $ \vars -> say "You take the {target vars}."
-    ]
-
-  -- Execute the action
-  result <- runAction takeAction player targetObject
-@
-
-Related Modules:
-
-- `Yaifl.Rulebook`: Underlying rulebook system
-- `Yaifl.Actions.Args`: Argument handling and payload types
-- `Yaifl.Actions.GoesWith`: Action parameter patterns and parsing
-- `Yaifl.Effects.ActionHandler`: Action execution effects
-- `Yaifl.Text.Responses`: Response generation system
-
-This module forms the heart of Yaifl's interactive fiction capabilities,
-enabling rich, flexible, and type-safe player interactions.
 -}
+
+{-# LANGUAGE RecordWildCards #-}
 
 module Yaifl.Action
   ( -- * Core Types
@@ -147,51 +81,7 @@ newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ParseArgumentResult wm v)
   }
 
--- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
--- Pretty much all of it is lifted directly from the Inform concept of an action,
--- except that set action variables is not a rulebook.
--- | Core action definition with full lifecycle support.
---
--- This data type represents a complete interactive fiction action with all
--- necessary components for parsing, validation, execution, and reporting.
---
--- The `Action` type is parameterized by:
--- - `wm`: World model type
--- - `resps`: Response collection type
--- - `goesWith`: Action signature (parameter pattern)
--- - `v`: Variables type (action-specific parameters)
---
--- Fields:
--- - `name`: Human-readable action name (e.g., "take", "open")
--- - `understandAs`: Alternative verbs that trigger this action
--- - `matches`: Parameter patterns for parser matching
--- - `touchableNouns`: Objects that can be referenced by touch/proximity
--- - `responses`: Response generation function
--- - `parseArguments`: Argument parsing logic
--- - `beforeRules`: Pre-execution setup and validation
--- - `insteadRules`: Alternative behaviors that replace normal execution
--- - `checkRules`: Precondition checking
--- - `carryOutRules`: Main execution logic
--- - `reportRules`: Output generation
--- - `afterRules`: Post-execution cleanup
---
--- Example:
--- @
---   takeAction = Action
---     { name = "take"
---     , understandAs = ["grab", "pick up", "get"]
---     , matches = [("take", TakesThingParameter)]
---     , parseArguments = takeParser
---     , beforeRules = takeBeforeRules
---     , checkRules = takeCheckRules
---     , carryOutRules = takeCarryOutRules
---     , reportRules = takeReportRules
---     , afterRules = takeAfterRules
---     }
--- @
---
--- This comprehensive structure enables the full Inform7 action lifecycle while
--- maintaining type safety and modularity.
+-- | Core action definition.
 data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
   Action ::
     { name :: Text
@@ -228,24 +118,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
 --
 -- - The action's variables type is `Refreshable`
 -- - The action follows the `goesWith` parameter pattern
--- - The action can be displayed (has `Display` instance)
---
--- The `WrappedAction` type is used throughout Yaifl to ensure that only
--- well-formed actions can be executed, preventing runtime errors and
--- maintaining type safety.
---
--- Example:
--- @
---   -- Create a wrapped action (type-safe)
---   wrappedTake <- makeAction "take" takeRules
---   
---   -- Use in action execution
---   result <- runWrappedAction wrappedTake player target
--- @
---
--- This wrapper pattern is common in Yaifl for complex types that have
--- multiple constraints, providing compile-time verification of properties
--- that would otherwise require runtime checks.
+-- - The action's variables can be displayed (has `Display` instance) for debugging purposes
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
     (Refreshable wm v, GoesWith goesWith, Display v)
@@ -271,8 +144,7 @@ data ActionInterrupt = ContinueAction | StopAction
   deriving stock (Eq, Ord, Enum, Bounded, Generic, Read, Show)
 
 -- | A container that can hold different types of action-like operations.
--- Used to unify regular actions, interpreted actions, and out-of-world actions
--- in a single type for processing and dispatch.
+-- Used to unify regular actions, interpreted actions, and out-of-world actions.
 data ActionPhrase (wm :: WorldModel) =
   Interpret (InterpretAs wm)
   | RegularAction (WrappedAction wm)
@@ -299,9 +171,12 @@ withActionInterrupt' f = do
     Right x -> return x
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
+-- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
 actionName :: Lens' (Action wm resp goesWith v) Text
 actionName = #name
 
+-- | Create a basic `Action` with the given name.
+-- Initializes all fields with default values.
 makeAction ::
   Text
   -> Action wm resp goesWith v
@@ -321,8 +196,8 @@ makeAction n = Action
   , reportRules = makeActionRulebook ("report " <> n <> " rulebook") []
   }
 
--- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
--- we ignore the span to avoid clutter and thread the arguments through.
+-- | Helper function to make a rulebook of an action.
+-- Ignores the span to avoid clutter and threads the arguments through.
 makeActionRulebook ::
   Text -- ^ the name of the rule.
   -> [Rule wm ((:>) (Reader (Action wm resps goesWith v))) (Args wm v) Bool] -- ^ the list of rules.
@@ -330,8 +205,7 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing
 
 -- | Get a comma-separated string of all rule names from an action's rulebooks.
--- This includes rules from all action phases: before, instead, check, carry out, report, and after.
--- Primarily useful for debugging and introspection purposes.
+-- Includes rules from all action phases: before, instead, check, carry out, report, and after.
 getAllRules ::
   Action wm resp goesWith v
   -> Text

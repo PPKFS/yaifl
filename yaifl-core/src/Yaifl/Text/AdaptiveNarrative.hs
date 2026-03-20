@@ -1,27 +1,4 @@
--- | Adaptive narrative system for dynamic text generation based on narrative context.
--- 
--- This module provides functionality for generating text that adapts to the current
--- narrative viewpoint, tense, and previously mentioned objects. It enables natural
--- language generation that responds to game state and player perspective.
---
--- The system tracks:
--- * Narrative viewpoint (first/second/third person, singular/plural)
--- * Tense (past/present/future)
--- * Previously mentioned objects for pronoun resolution
--- * Quantity information for pluralization
---
--- Example usage:
---
--- @
--- -- Set up narrative context
--- narrative <- blankAdaptiveNarrative
---   { narrativeViewpoint = SecondPersonSingular
---   , tense = Present
---   }
--- 
--- -- Generate adaptive text
--- text <- generateAdaptiveText narrative playerAction
--- @
+
 
 module Yaifl.Text.AdaptiveNarrative where
 

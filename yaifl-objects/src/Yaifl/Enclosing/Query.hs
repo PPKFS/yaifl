@@ -96,7 +96,7 @@ getContainingHierarchy ::
   => WMWithProperty wm MultiLocated
   => Thing wm
   -> Eff es (NonEmpty EnclosingEntity)
-getContainingHierarchy = head <$$> getContainingHierarchies
+getContainingHierarchy = head <<$>> getContainingHierarchies
 
 getEnclosingMaybe ::
   forall wm.

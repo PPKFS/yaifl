@@ -20,7 +20,9 @@ See also:
 -}
 
 module Yaifl.KindGraph
-  ( makeKindDAG
+  ( -- * Kind Graph
+    makeKindDAG
+  -- * Kind Information
   , ObjectKindInfo(..)
   ) where
 
@@ -64,11 +66,6 @@ makeKindDAG = fromList
 -- This record stores metadata associated with each object kind that applies
 -- to ALL objects of that kind. This enables automatic understanding of objects
 -- without requiring manual configuration for each instance.
---
--- Fields:
--- - `parentKinds`: The set of parent kinds this kind inherits from
--- - `understandAs`: Terms that can be used to refer to ANY object of this kind
--- - `pluralUnderstandAs`: Plural forms of the understanding terms
 --
 -- The understanding terms are used by the parser to recognize different
 -- ways players might refer to objects. For example, if "sword" has

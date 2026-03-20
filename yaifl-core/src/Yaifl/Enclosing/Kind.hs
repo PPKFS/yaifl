@@ -4,47 +4,19 @@ Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Object containment and spatial relationships.
+Enclosing components represent objects that can contain other objects,
+including rooms, containers, and supporters.
 
-This module defines the core data structures for representing objects that can
-contain other objects. In Yaifl, "enclosing" is a fundamental concept that enables:
+This module defines the core `Enclosing` data structure and related types:
 
-- **Containment**: Objects that can hold other objects (containers, rooms, supporters)
-- **Spatial relationships**: Parent-child relationships between game objects
-- **Capacity management**: Limits on how many objects can be contained
-- **Content tracking**: Efficient storage and retrieval of contained objects
+- `Enclosing`: The core component for object containment
+- `EnclosingEntity`: Type-safe reference to enclosing objects
+- Functions for creating and manipulating enclosing components
 
-The `Enclosing` component is used by various object types:
-
-- **Rooms**: Contain things, people, and other objects
-- **Containers**: Boxes, chests, bags that hold portable items
-- **Supporters**: Surfaces like tables that can have objects on them
-
-Key features:
-- **Efficient storage**: Uses `EnumSet` for compact representation of contents
-- **Capacity control**: Optional limits on contained objects
-- **Type safety**: Tagged entities for safe references
-- **Extensible**: Designed to work with Yaifl's component system
-
-Example usage:
-@
-  -- Create a container with limited capacity
-  chestEnclosing = blankEnclosing { capacity = Just 5 }
-
-  -- Add an object to a container
-  let updatedEnclosing = chestEnclosing { contents = contents chestEnclosing <> one thingEntity }
-
-  -- Check if a container is full
-  isFull enclosing = case capacity enclosing of
-    Just limit -> size (contents enclosing) >= limit
-    Nothing -> False
-@
-
-This module works closely with:
-- `Yaifl.Object.Kind` for base object functionality
-- `Yaifl.Thing.Kind` for portable object containment
-- `Yaifl.Room.Kind` for location-based enclosing
-- `Yaifl.Container.Kind` and `Yaifl.Supporter.Kind` for specific enclosing types
+See also:
+- `Yaifl.Object.Kind` for the base Object type
+- `Yaifl.Thing.Kind` for thing containment
+- `Yaifl.Room.Kind` for room enclosing functionality
 -}
 
 module Yaifl.Enclosing.Kind (

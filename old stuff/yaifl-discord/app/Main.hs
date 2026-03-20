@@ -230,7 +230,7 @@ makeWorld ::
   -> IO (World wm)
 makeWorld conOptions fullTitle initWorld = do
   let emptyWorld = blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)
-  snd <$$> runGame runPrintPure runInputAsBuffer emptyWorld blankActionCollection $ do
+  snd <<$>> runGame runPrintPure runInputAsBuffer emptyWorld blankActionCollection $ do
     withSpan' "worldbuilding" fullTitle $ do
       newWorld
       initWorld

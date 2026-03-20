@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.TH
-Copyright   : (c) Avery 2023-2025
+Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -24,18 +24,16 @@ module Yaifl.TH
   ) where
 
 import Data.Text (replace)
-import Data.Text (replace)
-import Language.Haskell.TH (Name, Q, Dec, nameBase )
-import Language.Haskell.TH.Syntax (Type(..), Kind, Pred, mkName, appT, conT, varT, arrowT, forallT)
-import qualified Language.Haskell.TH as TH
 import Language.Haskell.Exts.Extension ( Extension(..), KnownExtension(..), Language(..) )
 import Language.Haskell.Exts.Parser ( defaultParseMode, ParseMode(..) )
 import Language.Haskell.Meta ( parseDecsWithMode )
+import Language.Haskell.TH (Name, Q, Dec, nameBase )
 import Yaifl.Property.Has
 import Yaifl.WorldModel
 import Yaifl.AnyObject
 import Yaifl.Prelude
 import Yaifl.Property.Query
+
 -- | The functions we *don't* want to autogenerate for a given property
 -- because we want to do something special with them (e.g. see `Yaifl.Enclosing.Kind`
 -- in `Yaifl.Object.Query` where @getEnclosingMaybe@ does something special with
@@ -46,7 +44,12 @@ data SpecificsFunctions =
   | ModifyX
   deriving stock (Show, Eq, Enum, Ord, Generic, Bounded)
 
-
+myDefaultParseMode :: ParseMode
+myDefaultParseMode = defaultParseMode
+  { parseFilename = []
+  , baseLanguage = Haskell2010
+  , extensions = map EnableExtension [DataKinds, ExplicitForAll, ScopedTypeVariables, FlexibleContexts ]
+  }
 
 -- | Generate 0-3 of @getPropMaybe@, @setProp@, and @modifyProp@.
 makeSpecificsWithout ::

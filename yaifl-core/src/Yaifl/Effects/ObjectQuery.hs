@@ -4,21 +4,7 @@ Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-The ObjectQuery effect provides operations for reading, writing, and traversing
-game objects (things, rooms, regions) in the world state.
-
-This module defines:
-
-- `ObjectQuery`: Core effect for object operations
-- Object lookup and modification operations
-- Object traversal utilities
-- Error handling for missing objects
-- Constraint synonyms for common effect combinations
-
-The ObjectQuery system enables:
-- Type-safe access to game objects
-- Comprehensive object traversal and modification
-- Graceful handling of missing object references
+Object query effect for reading, writing, and traversing game objects.
 -}
 
 module Yaifl.Effects.ObjectQuery
@@ -104,19 +90,24 @@ traverseRegions_ ::
 traverseRegions_ = traverseObjects_ traverseRegions
 
 -- | Error payload for when an object is not present in the world.
--- However, most places currently just throw instead of doing any kind of error recovery...
+--
+-- Contains information about what was expected and the missing entity.
+-- Note: Most places currently throw errors rather than doing recovery.
 data MissingObject = MissingObject
-  { expected :: Text
-  , entity :: Entity
+  { expected :: Text  -- ^ What was expected (e.g., "thing", "room")
+  , entity :: Entity  -- ^ The entity that was not found
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
--- | Type synonym for reading/writing objects with a way to handle missing IDs.
+-- | Type synonym for reading/writing objects with missing object handling.
+--
+-- Combines error handling with object query capabilities and required constraints.
 type WithoutMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es
   -- I hate putting this in here but it makes everything such a mess otherwise :(
   , Display (WMText wm), WithMetadata es)
 
 -- | Execute an operation that may fail with missing objects, providing a recovery handler.
--- The handler typically returns a default value or empty result when objects are missing.
+--
+-- Runs the operation and handles missing object errors with the provided handler.
 withoutMissingObjects ::
   HasCallStack
   => (HasCallStack => Eff (Error MissingObject ': es) a) -- ^ the block
@@ -130,7 +121,9 @@ withoutMissingObjects f def = do
     Right x -> return x
 
 -- | Execute an operation that fails with an error if objects are missing.
+--
 -- Used when missing objects represent unrecoverable errors.
+-- Adds an annotation and throws a runtime error with details about the missing object.
 failHorriblyIfMissing ::
   HasCallStack
   => Breadcrumbs :> es

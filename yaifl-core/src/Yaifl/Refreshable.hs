@@ -20,7 +20,7 @@ Key components:
 module Yaifl.Refreshable
   ( -- * Core Typeclass
     Refreshable(..)
-  
+
   -- * Refresh Functions
   , refreshRoom
   , refreshThing
@@ -42,64 +42,59 @@ import Yaifl.Store
 import Yaifl.Tag
 import Data.Bitraversable
 
--- | Typeclass for refreshable values.
---
--- This class defines the interface for types that can be refreshed to ensure they
--- contain current data. Implementations should fetch the latest version of the
--- value and return it.
---
--- The 'WithoutMissingObjects' constraint ensures that refresh operations can assume
--- referenced objects exist, simplifying error handling.
+-- | Interface for types that can be 'refreshed' to ensure current data.
+-- That is, we want to have actual resolved objects around (when running actions, for example)
+-- but not for them to become out of sync with the current object model.
+-- The 'WithoutMissingObjects' constraint ensures referenced objects exist.
 class Refreshable wm av where
-  -- | Refresh a value to its current state.
-  --
-  -- This method updates the value to reflect the latest data from the game state.
-  -- For objects, this typically involves re-fetching from the store.
-  --
-  -- @wm@: The world model type
-  -- @av@: The value type being refreshed
-  -- @es@: Effect stack requiring 'WithoutMissingObjects wm'
-  --
-  -- Returns the refreshed value.
   refresh :: forall es. WithoutMissingObjects wm es => av -> Eff es av
 
 instance {-# OVERLAPPING #-} (HasEntity o, Refreshable wm o) => Refreshable wm (TaggedObject o tagEntity) where
+  -- | Refresh a tagged object by refreshing the underlying object and re-tagging.
+  -- This preserves the tag while ensuring the object data is current.
   refresh obj = tagObject obj <$> refresh (getTaggedObject obj)
 
 instance (Refreshable wm a, Refreshable wm b) => Refreshable wm (a, b) where
+  -- | Refresh a pair by refreshing both elements.
   refresh (a, b) = refresh a >>= \a' -> refresh b <&> (a', )
 
 instance Refreshable wm a => Refreshable wm (Store a) where
+  -- | Refresh a store by refreshing all contained values.
   refresh = mapM refresh
 
 instance Refreshable wm a => Refreshable wm (Maybe a) where
+  -- | Refresh a Maybe value by refreshing the contained value if present.
   refresh t = case t of
     Nothing -> return t
     Just x -> Just <$> refresh x
 
 instance (Refreshable wm b, Refreshable wm a) => Refreshable wm (Either a b) where
+  -- | Refresh an Either value by refreshing whichever constructor is present.
   refresh = bimapM refresh refresh
 
 instance Refreshable wm Int where
+  -- | Int values are trivially refreshable (no state to update).
   refresh = pure
 
 instance Refreshable wm (Thing wm) where
+  -- | Refresh a thing using the specialized refreshThing function.
   refresh = refreshThing
 
 instance Refreshable wm (AnyObject wm) where
+  -- | Refresh an AnyObject by re-resolving its entity.
   refresh t = getObject (getEntity t)
 
 instance Refreshable wm () where
+  -- | Unit values are trivially refreshable (no state to update).
   refresh = const pass
 
 instance Refreshable wm (Room wm) where
+  -- | Refresh a room using the specialized refreshRoom function.
   refresh = refreshRoom
 
 -- | Refresh a room to its current state.
 --
--- This function fetches the latest version of a room from the object store and checks
--- if it has been modified since the last refresh. If modification is detected,
--- a runtime error is noted for debugging purposes.
+-- Fetches latest room data and checks for modifications when tracing is enabled.
 refreshRoom ::
   WithoutMissingObjects wm es
   => RoomLike wm o
@@ -116,9 +111,7 @@ refreshRoom tl = do
 
 -- | Refresh a thing to its current state.
 --
--- This function fetches the latest version of a thing from the object store and checks
--- if it has been modified since the last refresh. If modification is detected,
--- a runtime error is noted for debugging purposes.
+-- Fetches latest thing data and checks for modifications when tracing is enabled.
 refreshThing ::
   WithoutMissingObjects wm es
   => ThingLike wm o

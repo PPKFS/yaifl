@@ -54,13 +54,13 @@ getConnection ::
   => WMDirection wm
   -> Room wm
   -> Maybe (RoomEntity, Connection wm)
-getConnection dir = (view #otherSide &&& id) <$$> preview (connectionLens dir % _Just)
+getConnection dir = (view #otherSide &&& id) <<$>> preview (connectionLens dir % _Just)
 
 getConnectionViaDoor ::
   DoorEntity
   -> Room wm
   -> Maybe (RoomEntity, Connection wm)
-getConnectionViaDoor door = ((view #otherSide &&& id) <$$> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
+getConnectionViaDoor door = ((view #otherSide &&& id) <<$>> find (\c -> c ^. #doorThrough == Just door)) . M.elems . getAllConnections
 
 makeConnection ::
   WMStdDirections wm

@@ -5,42 +5,22 @@ Copyright   : (c) Avery 2022-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Modular, composable rule system for game logic.
+Rulebooks provide modular, ordered collections of named processing steps (rules)
+that can be dynamically composed and executed. Rules may have preconditions
+determining when they apply.
 
-This module implements Yaifl's powerful rulebook system, which provides a
-flexible, declarative approach to game logic. Rulebooks are ordered collections
-of named rules that can be dynamically composed and executed, forming the
-foundation for:
+Core components:
+- `Rulebook`: Ordered collection of rules with default outcome
+- `Rule`: Named processing steps with optional preconditions
+- `Precondition`: Conditions for rule applicability
 
-- **Action processing**: Before/check/carry out/report rules
-- **Activity execution**: Mechanical game processes
-- **Game mechanics**: Customizable behavior patterns
-- **AI decision making**: Rule-based NPC logic
+Execution model: iterate through rules, check preconditions, execute applicable rules
+until one produces a result or execution halts.
 
-Core Components:
-
-- `Rulebook`: Container for ordered rules with default outcome
-- `Rule`: Individual processing steps with names and preconditions
-- `Precondition`: Conditions that gate rule execution
-- Comprehensive API for rulebook manipulation
-
-The Rulebook Execution Model:
-
-Rulebooks execute according to a predictable pattern:
-
-1. **Iteration**: Process rules in order (first to last)
-2. **Precondition Check**: Evaluate each rule's preconditions
-3. **Execution**: Run the first applicable rule that produces a result
-4. **Fallback**: Return default value if no rules produce results
-5. **Short-circuiting**: Stop execution if a rule explicitly halts
-
-This model enables:
-
-- **Modularity**: Rules are self-contained units of logic
-- **Composability**: Rulebooks can be combined and extended
-- **Dynamic behavior**: Rules can be added/removed at runtime
-- **Declarative style**: Logic expressed as "what should happen" rather than "how to make it happen"
-- **Override patterns**: Later rules can override earlier ones
+Rules act as modular building blocks that can be:
+- Added, removed, or reordered by name
+- Dynamically composed at runtime
+- Shared across different rulebook configurations
 
 Key Features:
 
@@ -49,35 +29,6 @@ Key Features:
 - **Default outcomes**: Fallback behavior when no rules match
 - **Rule ordering**: Execution order can be dynamically adjusted
 - **Rule sharing**: Common rules can be reused across rulebooks
-
-Example Usage:
-
-@
-  -- Create a rulebook for taking objects
-  takeRulebook = blankRulebook "take"
-    `addRuleLast` canTakeRule
-    `addRuleLast` takeFromContainerRule
-    `addRuleLast` takeFromSupporterRule
-    
-  -- Define a rule with preconditions
-  canTakeRule = makeRule "canTake" [reachable, visible] $ \vars -> do
-    ensureNotFixed (target vars)
-    ensureCapacity (destination vars)
-    
-  -- Execute the rulebook
-  result <- runRulebook takeRulebook player target
-@
-
-Related Modules:
-
-- `Yaifl.Effects.RuleEffects`: Effect system integration for rules
-- `Yaifl.Action`: Action system that uses rulebooks extensively
-- `Yaifl.Activity`: Activity system built on rulebooks
-- `Yaifl.Core.Rules`: Additional rule utilities and patterns
-
-The rulebook system is one of Yaifl's most powerful features, enabling
-declarative, modular, and maintainable game logic that can be easily
-extended and customized.
 -}
 
 module Yaifl.Rulebook
@@ -122,27 +73,9 @@ import Yaifl.Text.SayableValue
 
 -- | Rule execution precondition.
 --
--- Preconditions determine whether a rule should be considered for execution.
--- Each precondition has:
+-- Determines whether a rule should execute. Each precondition has:
 -- - A name (for debugging and logging)
 -- - A check function that evaluates the precondition
---
--- Preconditions enable fine-grained control over when rules apply, allowing
--- for context-sensitive behavior without complex conditional logic in the
--- rule itself.
---
--- Example:
--- @
---   -- Precondition that checks if an object is reachable
---   reachablePrecondition = Precondition
---     { preconditionName = pure "reachable"
---     , checkPrecondition = \vars -> isReachable (target vars)
---     }
---   
---   -- Rule that only executes when target is reachable
---   takeRule = makeRule "take" [reachablePrecondition] $ \vars -> do
---     moveToInventory (target vars)
--- @
 --
 -- Multiple preconditions can be combined - all must pass for the rule to execute.
 data Precondition wm v = Precondition
@@ -158,30 +91,6 @@ data Precondition wm v = Precondition
 -- - A unique name for identification and management
 -- - Zero or more preconditions that must be satisfied
 -- - A main function that executes the rule logic
---
--- The rule function receives the current variables and can:
--- - Return `Nothing`: Rule doesn't produce a result (continue to next rule)
--- - Return `Just newVars`: Rule produces a result with updated variables
--- - Return `Just result`: Rule produces a final result
---
--- Rules are the fundamental building blocks of Yaifl's behavior system,
--- enabling modular, reusable, and composable game logic.
---
--- Example:
--- @
---   -- Simple rule that always succeeds
---   simpleRule = makeRule "alwaysSucceed" [] $ \vars -> do
---     logDebug "Rule executed"
---     return (Just vars, Just "success")
---   
---   -- Rule with preconditions
---   conditionalRule = makeRule "conditional" [isVisible, isReachable] $ \vars -> do
---     performAction (target vars)
---     return (Just vars, Just "done")
--- @
---
--- Rules can modify the game world, generate output, and control the
--- flow of execution through their return values.
 data Rule wm (x :: [Effect] -> Constraint) v r = Rule
   { name :: Text
   -- ^ Unique identifier for the rule
@@ -196,15 +105,6 @@ data Rule wm (x :: [Effect] -> Constraint) v r = Rule
 -- This typeclass serves as a marker for rules that don't require additional
 -- effect constraints beyond the basic `RuleEffects`. It's used as a type
 -- parameter in `Rule` when no specific effect requirements are needed.
---
--- The empty instance allows any type to satisfy the constraint, making it
--- useful for rulebooks that should work with minimal effect requirements.
---
--- Example:
--- @
---   -- Rulebook that works with basic effects
---   simpleRulebook :: Rulebook wm Unconstrained v r
--- @
 class Unconstrained t
 instance Unconstrained t
 
@@ -245,6 +145,8 @@ stopTheAction ::
   => m (Maybe Bool)
 stopTheAction = return (Just False)
 
+-- | Conditionally execute a rule based on a boolean condition.
+-- If the condition is false, returns `(Nothing, Nothing)` (rule pass).
 ruleGuard ::
   Monad m
   => Bool
@@ -252,6 +154,8 @@ ruleGuard ::
   -> m (Maybe b, Maybe r)
 ruleGuard cond f = if cond then f else pure (Nothing, Nothing)
 
+-- | Conditionally execute a rule based on a boolean condition.
+-- If the condition is false, returns `Nothing` (rule pass).
 ruleWhen ::
   Monad m
   => Bool
@@ -259,6 +163,8 @@ ruleWhen ::
   -> m (Maybe r)
 ruleWhen cond f = if cond then f else rulePass
 
+-- | Conditionally execute a rule based on a monadic boolean condition.
+-- If the condition is false, returns `(Nothing, Nothing)` (rule pass).
 ruleGuardM ::
   Monad m
   => m Bool
@@ -266,6 +172,8 @@ ruleGuardM ::
   -> m (Maybe b, Maybe r)
 ruleGuardM cond f = ifM cond f $ pure (Nothing, Nothing)
 
+-- | Execute a rule function only if the Maybe value is Just.
+-- If Nothing, returns `(Nothing, Nothing)` (rule pass).
 ruleWhenJustM ::
   Monad m
   => m (Maybe a)
@@ -277,40 +185,7 @@ ruleWhenJustM mb f = do
 
 makeFieldLabelsNoPrefix ''Rule
 
--- | A 'Rulebook' is a computation (ia -> m (Maybe r)) built out of an initialisation (ia -> Maybe v), a default `Maybe r`,
--- and component rules `[(Text, (v -> m (Maybe v, Maybe r))]`
 -- | Container for ordered rules with default outcome.
---
--- A `Rulebook` represents a complete processing pipeline for a specific
--- game logic domain. It contains:
---
--- - `name`: Identifier for the rulebook (used in debugging)
--- - `defaultOutcome`: Fallback result if no rules produce output
--- - `rules`: Ordered list of rules to execute
---
--- Rulebooks are the primary mechanism for organizing game logic in Yaifl.
--- They enable declarative, modular behavior definition that can be:
---
--- - Dynamically composed at runtime
--- - Extended with additional rules
--- - Reused across different contexts
--- - Customized for specific scenarios
---
--- Example:
--- @
---   -- Create a rulebook for opening containers
---   openRulebook = Rulebook
---     { name = "open"
---     , defaultOutcome = Just "You can't open that."
---     , rules = [canOpenRule, openDoorRule, openContainerRule]
---     }
---   
---   -- Execute the rulebook
---   result <- runRulebook openRulebook player target
--- @
---
--- The rulebook system is designed to be flexible and extensible, supporting
--- complex game mechanics while maintaining clean separation of concerns.
 data Rulebook wm x v r = Rulebook
   { name :: Text
   -- ^ Identifier for this rulebook
@@ -322,20 +197,8 @@ data Rulebook wm x v r = Rulebook
 
 -- | Get the names of all rules in a rulebook.
 --
--- This function is primarily intended for debugging purposes.
--- It returns a list of rule names, with blank rules marked as "blank rule".
---
--- Parameters:
--- - `rulebook`: The rulebook to inspect
---
--- Returns: List of rule names for debugging
---
--- Example:
--- @
---   -- Debug: print all rule names
---   ruleNames <- getRuleNames takeRulebook
---   logDebug $ "Rules: " <> show ruleNames
--- @
+-- Primarily intended for debugging purposes.
+-- Returns a list of rule names, with blank rules marked as "blank rule".
 getRuleNames ::
   Rulebook wm x v r
   -> [Text]

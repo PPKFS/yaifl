@@ -301,7 +301,7 @@ sayingParser = many piece <* P.eof where
       [x] -> pure $ Sayable x
       [art, x] -> pure $ SayArticle art x
       _ -> error "too many substitution pieces"
-  oneOrTwoPieces = toText <$$> many (P.takeWhile1P Nothing (\x -> x `notElem` ['}', ' ']) <* optional (P.single ' ')) <* P.char '}'
+  oneOrTwoPieces = toText <<$>> many (P.takeWhile1P Nothing (\x -> x `notElem` ['}', ' ']) <* optional (P.single ' ')) <* P.char '}'
   lit = RegularText . stripNewlines . toText <$> P.takeWhile1P Nothing (\x -> x `notElem` ['{', '#'])
 
 stripNewlines :: Text -> Text

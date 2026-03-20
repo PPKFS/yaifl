@@ -14,37 +14,7 @@ This module defines the `Region` type and its associated components:
 - `RegionEntity`: Type-safe reference to region objects
 - Functions for creating and manipulating regions
 
-Regions serve several important purposes in game world organisation:
 
-1. **Hierarchical spatial structure**: Regions can contain sub-regions, creating
-   a tree-like organisation of the game world (e.g., continent → country → city → district)
-
-2. **Logical grouping**: Rooms with similar themes or purposes can be grouped together
-   (e.g., "castle grounds", "dungeon level 1", "enchanted forest")
-
-3. **Navigation aids**: Regions help players understand the spatial relationships
-   between different areas of the game world
-
-4. **World management**: Regions provide a way to organise and manage large game
-   worlds efficiently
-
-Example usage:
-
-@
--- Create a simple region
-castleRegion <- createRegion "Castle Grounds"
-  { subRegions = S.empty
-  , superRegion = Nothing
-  , rooms = S.singleton greatHallRoom
-  }
-
--- Create a nested region hierarchy
-forestRegion <- createRegion "Enchanted Forest"
-  { subRegions = S.singleton darkGroveRegion
-  , superRegion = Just wildernessRegion
-  , rooms = S.fromList [clearingRoom, streamRoom]
-  }
-@
 -}
 
 module Yaifl.Region.Kind (
