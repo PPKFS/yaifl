@@ -1,3 +1,16 @@
+{-|
+Module      : Yaifl.Rulebooks.Run
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Rulebook execution.
+
+Provides core functions for running rulebooks, processing rule lists,
+checking preconditions, and handling rule outcomes with proper logging
+and error handling.
+-}
+
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid lambda" #-}

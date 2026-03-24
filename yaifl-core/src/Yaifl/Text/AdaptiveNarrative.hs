@@ -1,5 +1,24 @@
 
 
+{-|
+Module      : Yaifl.Text.AdaptiveNarrative
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Adaptive narrative context for dynamic text generation.
+
+Tracks narrative state including viewpoint, tense, and object references
+to enable context-aware text generation with proper pronoun resolution
+and grammatical consistency.
+
+Key components:
+- `AdaptiveNarrative`: Core narrative context type
+- `getMentioned*`: Functions for retrieving referenced objects
+- `with*`: Convenience functions for working with mentioned objects
+- `getPersonageOfObject`: Verb conjugation helper
+-}
+
 module Yaifl.Text.AdaptiveNarrative where
 
 import Yaifl.Prelude
@@ -26,21 +45,9 @@ let views be {first person singular, first person plural, second person singular
 -}
 
 -- | Narrative context containing the current state of text generation.
---
--- This record tracks all the information needed to generate text that adapts
--- to the current narrative situation, including:
---
--- * 'narrativeViewpoint': The perspective from which text is generated
--- * 'tense': The temporal setting (past, present, future)
--- * 'priorNamedObject': The last mentioned object for pronoun resolution
--- * 'priorQuantity': Quantity information for proper pluralization
---
--- The 'wm' type parameter represents the world model being used.
-
 data AdaptiveNarrative wm = AdaptiveNarrative
   { narrativeViewpoint :: VerbPersonage
   -- ^ The narrative perspective (first, second, or third person)
-  --, adaptiveTextViewpoint :: NarrativeViewpoint
   , tense :: Tense
   -- ^ The tense in which text should be generated
   , priorNamedObject :: Maybe (AnyObject wm)
@@ -63,25 +70,10 @@ makeFieldLabelsNoPrefix ''AdaptiveNarrative
 --
 -- This is suitable for most interactive fiction scenarios where the player
 -- is addressed directly in the present tense.
---
--- Example:
---
--- @
--- -- Start with default narrative settings
--- let narrative = blankAdaptiveNarrative
--- 
--- -- Or customize for third-person past tense narrative
--- let storyNarrative = blankAdaptiveNarrative
---       { narrativeViewpoint = ThirdPersonSingular
---       , tense = Past
---       }
--- @
-
 blankAdaptiveNarrative :: AdaptiveNarrative wm
 blankAdaptiveNarrative = AdaptiveNarrative
   { narrativeViewpoint = SecondPersonSingular
   -- ^ Default to addressing the player directly
-  --, adaptiveTextViewpoint = FirstPersonPlural
   , tense = Present
   -- ^ Default to present tense for immediate action
   , priorNamedObject = Nothing
@@ -95,16 +87,6 @@ blankAdaptiveNarrative = AdaptiveNarrative
 -- Returns 'Nothing' if no object has been mentioned yet, or 'Just' the
 -- 'AnyObject' that was last referenced. This is used for pronoun resolution
 -- and maintaining narrative coherence.
---
--- Example:
---
--- @
--- mentionedObj <- getMentioned
--- case mentionedObj of
---   Nothing -> say "You see nothing special."
---   Just obj -> say $ "You see " <> display obj <> " again."
--- @
-
 getMentioned ::
   State (AdaptiveNarrative wm) :> es
   => Eff es (Maybe (AnyObject wm))
@@ -116,22 +98,6 @@ getMentioned = use #priorNamedObject
 -- 'Room'. If the object is not a room, this function throws an error.
 -- This is useful for narrative contexts where rooms are being described or
 -- interacted with.
---
--- Effects required:
--- * 'State' (AdaptiveNarrative wm): Access to narrative context
--- * 'State' Metadata: Access to metadata
--- * 'Display' (WMText wm): For displaying text
--- * 'ObjectQuery' wm: For querying object information
--- * 'Breadcrumbs': For navigation context
---
--- Example:
---
--- @
--- -- Get the current room being discussed
--- currentRoom <- getMentionedRoom
--- say $ "The " <> display (currentRoom ^. #name) <> " is dark."
--- @
-
 getMentionedRoom ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
@@ -152,18 +118,6 @@ getMentionedRoom = do
 -- Convenience function that retrieves the last mentioned room and passes it
 -- to the provided function. This is useful for operations that need to work
 -- with the current narrative room context.
---
--- Effects required: Same as 'getMentionedRoom'
---
--- Example:
---
--- @
--- -- Describe the current room
--- withRoom $ \room -> do
---   say $ "You are in " <> display (room ^. #name)
---   describeRoomContents room
--- @
-
 withRoom ::
   forall wm es a.
   State (AdaptiveNarrative wm) :> es
@@ -183,23 +137,6 @@ withRoom f = do
 -- 'Thing'. If the object is not a thing, this function throws an error.
 -- This is useful for narrative contexts where objects are being manipulated
 -- or described.
---
--- Effects required:
--- * 'State' (AdaptiveNarrative wm): Access to narrative context
--- * 'HasCallStack': For better error reporting
--- * 'State' Metadata: Access to metadata
--- * 'ObjectQuery' wm: For querying object information
--- * 'Display' (WMText wm): For displaying text
--- * 'Breadcrumbs': For navigation context
---
--- Example:
---
--- @
--- -- Get the current thing being discussed
--- currentThing <- getMentionedThing
--- say $ "The " <> display (currentThing ^. #name) <> " is heavy."
--- @
-
 getMentionedThing ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
@@ -221,18 +158,6 @@ getMentionedThing = do
 -- Convenience function that retrieves the last mentioned thing and passes it
 -- to the provided function. This is useful for operations that need to work
 -- with the current narrative object context.
---
--- Effects required: Same as 'getMentionedThing'
---
--- Example:
---
--- @
--- -- Examine the current thing being discussed
--- withThing $ \thing -> do
---   say $ "You examine " <> display (thing ^. #name) <> " closely."
---   describeThingDetails thing
--- @
-
 withThing ::
   forall wm es a.
   HasCallStack

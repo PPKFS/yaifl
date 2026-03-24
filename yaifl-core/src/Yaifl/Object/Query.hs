@@ -5,22 +5,6 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 
 Object query and modification utilities.
-
-This module provides functions for safely accessing and modifying game objects
-in the world model. It includes:
-
-- Safe object retrieval functions that return Maybe values (to handle cases where
-  objects might not exist or might be of the wrong type)
-- Object modification functions with proper error handling
-- Functions for managing object metadata and understanding
-
-Key functions:
-- `getThingMaybe`: Safely get a thing by entity ID (returns Nothing if not found or wrong type)
-- `getRoomMaybe`: Safely get a room by entity ID (returns Nothing if not found or wrong type)
-- `modifyObject`: Modify any object with error handling
-- `modifyThing`: Modify a thing with type safety
-- `modifyRoom`: Modify a room with type safety
-- `isUnderstoodAs`: Add terms to an object's understanding list (modifies metadata)
 -}
 
 module Yaifl.Object.Query
@@ -54,8 +38,6 @@ import Yaifl.WorldModel
 -- Returns `Nothing` if:
 -- - The object doesn't exist
 -- - The object exists but is not a thing
--- - Any other error occurs during retrieval
---
 -- This is the safe way to access things when you're not certain
 -- the object exists or is of the correct type.
 getThingMaybe ::
@@ -72,8 +54,6 @@ getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getEntity
 -- Returns `Nothing` if:
 -- - The object doesn't exist
 -- - The object exists but is not a room
--- - Any other error occurs during retrieval
---
 -- This is the safe way to access rooms when you're not certain
 -- the object exists or is of the correct type.
 getRoomMaybe ::
@@ -104,15 +84,6 @@ modifyObjectFrom g s o u = do
 -- This function provides safe modification of thing objects with proper
 -- error handling. The modification function receives the current thing
 -- and returns a modified version.
---
--- The `WithoutMissingObjects` constraint ensures the object exists before
--- attempting modification, preventing runtime errors.
---
--- Example:
--- @
---   -- Set the description property of a thing
---   modifyThing swordRef ($ #description .~ "A shiny steel sword")
--- @
 modifyThing ::
   WithoutMissingObjects wm es
   => ThingLike wm o
@@ -126,15 +97,6 @@ modifyThing o u = modifyObjectFrom (fmap coerce refreshThing) (setThing . Thing)
 -- This function provides safe modification of room objects with proper
 -- error handling. The modification function receives the current room
 -- and returns a modified version.
---
--- The `WithoutMissingObjects` constraint ensures the object exists before
--- attempting modification, preventing runtime errors.
---
--- Example:
--- @
---   -- Set the description property of a room
---   modifyRoom caveRef ($ #description .~ "A dark and damp cave")
--- @
 modifyRoom ::
   WithoutMissingObjects wm es
   => RoomLike wm o
@@ -148,15 +110,6 @@ modifyRoom o u = modifyObjectFrom (fmap coerce refreshRoom) (setRoom . Room) o (
 -- This is a generic modification function that works with any object type
 -- (things, rooms, etc.). It automatically dispatches to the appropriate
 -- type-specific modification function based on the object's actual type.
---
--- The `WithoutMissingObjects` constraint ensures the object exists before
--- attempting modification, preventing runtime errors.
---
--- Example:
--- @
---   -- Modify any object's name property
---   modifyObject objRef ($ #name .~ "New Name")
--- @
 modifyObject ::
   WithoutMissingObjects wm es
   => ObjectLike wm o
@@ -187,15 +140,6 @@ anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
 --
 -- The terms are added to the object's `understandAs` set in its metadata.
 -- If a term is already present, it won't be duplicated.
---
--- Example:
--- @
---   -- Make a sword understandable as "weapon" and "blade"
---   isUnderstoodAs swordRef ["weapon", "blade"]
--- @
---
--- Note: This modifies the object's metadata, not its core properties.
--- The `WithoutMissingObjects` constraint ensures the object exists.
 isUnderstoodAs ::
   WithoutMissingObjects wm es
   => ObjectLike wm o

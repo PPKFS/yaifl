@@ -6,15 +6,6 @@ Maintainer  : ppkfs@outlook.com
 
 Regions represent spatial organisations in the game world that group
 related rooms and provide hierarchical structure.
-
-This module defines the `Region` type and its associated components:
-
-- `Region`: The core region type with spatial organisation data
-- `RegionTag`: Phantom type for region entity tagging
-- `RegionEntity`: Type-safe reference to region objects
-- Functions for creating and manipulating regions
-
-
 -}
 
 module Yaifl.Region.Kind (
@@ -33,33 +24,16 @@ import Yaifl.Object.Kind
 data RegionTag
 type RegionEntity = TaggedEntity RegionTag
 
--- | A spatial organisation that groups related rooms.
---
--- Regions form hierarchical structures with parent-child relationships,
--- enabling logical organisation of game worlds. Each region can contain
--- multiple rooms and sub-regions, creating a tree-like structure that
--- represents the spatial organisation of the game environment.
---
--- The 'Region' type is parameterised by 'wm' (world model) to allow for
--- world-model-specific data storage while maintaining a consistent interface.
---
--- Example of region hierarchy:
---
+-- | Spatial organization that groups related rooms.
+-- Example hierarchy:
 -- @
 -- World
 -- ├── Continent
 -- │   ├── Country
--- │   │   ├── City
--- │   │   │   ├── District 1
--- │   │   │   └── District 2
--- │   │   └── Wilderness
--- │   └── Ocean
--- └── Underworld
+-- │   │   ├── City (with rooms)
+-- │   │   └── Wilderness (with rooms)
+-- └── Underworld (with rooms)
 -- @
---
--- Performance note: The use of 'S.Set' for storing sub-regions and rooms
--- provides efficient lookup and membership testing.
-
 data Region wm = Region
   { regionID :: RegionEntity
     -- ^ Unique identifier for this region. Used for entity reference and equality testing.
@@ -72,7 +46,7 @@ data Region wm = Region
   , superRegion :: Maybe RegionEntity
     -- ^ Parent region, if this region is nested within a larger region. 'Nothing' for top-level regions.
   , rooms :: S.Set RoomEntity
-    -- ^ Rooms that belong to this region. Rooms can only belong to one region at a time.
+    -- ^ Rooms that belong to this region. Rooms can only belong to 0-1 regions at a time.
   , regionData :: WMRegionData wm
     -- ^ World-model-specific region data. Allows different world models to extend regions with custom data.
   } deriving stock (Generic)
