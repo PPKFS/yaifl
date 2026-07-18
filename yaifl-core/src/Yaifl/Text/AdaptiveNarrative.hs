@@ -1,5 +1,3 @@
-
-
 {-|
 Module      : Yaifl.Text.AdaptiveNarrative
 Copyright   : (c) Avery 2023-2026
@@ -62,14 +60,8 @@ makeFieldLabelsNoPrefix ''AdaptiveNarrative
 
 -- | Create a default 'AdaptiveNarrative' with sensible defaults.
 --
--- The default narrative uses:
--- * Second person singular viewpoint ("you")
--- * Present tense
--- * No prior named object
--- * Quantity of 0
---
--- This is suitable for most interactive fiction scenarios where the player
--- is addressed directly in the present tense.
+-- Defaults to second person singular viewpoint ("you"), present tense,
+-- no prior named object, and quantity of 0.
 blankAdaptiveNarrative :: AdaptiveNarrative wm
 blankAdaptiveNarrative = AdaptiveNarrative
   { narrativeViewpoint = SecondPersonSingular
@@ -85,8 +77,7 @@ blankAdaptiveNarrative = AdaptiveNarrative
 -- | Get the last mentioned object from the narrative context.
 --
 -- Returns 'Nothing' if no object has been mentioned yet, or 'Just' the
--- 'AnyObject' that was last referenced. This is used for pronoun resolution
--- and maintaining narrative coherence.
+-- 'AnyObject' that was last referenced.
 getMentioned ::
   State (AdaptiveNarrative wm) :> es
   => Eff es (Maybe (AnyObject wm))
@@ -95,9 +86,7 @@ getMentioned = use #priorNamedObject
 -- | Get the last mentioned object as a 'Room'.
 --
 -- Retrieves the previously mentioned object and attempts to convert it to a
--- 'Room'. If the object is not a room, this function throws an error.
--- This is useful for narrative contexts where rooms are being described or
--- interacted with.
+-- 'Room'. Throws an error if the object is not a room.
 getMentionedRoom ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
@@ -116,8 +105,7 @@ getMentionedRoom = do
 -- | Execute an action with the last mentioned room.
 --
 -- Convenience function that retrieves the last mentioned room and passes it
--- to the provided function. This is useful for operations that need to work
--- with the current narrative room context.
+-- to the provided function.
 withRoom ::
   forall wm es a.
   State (AdaptiveNarrative wm) :> es
@@ -134,9 +122,7 @@ withRoom f = do
 -- | Get the last mentioned object as a 'Thing'.
 --
 -- Retrieves the previously mentioned object and attempts to convert it to a
--- 'Thing'. If the object is not a thing, this function throws an error.
--- This is useful for narrative contexts where objects are being manipulated
--- or described.
+-- 'Thing'. Throws an error if the object is not a thing.
 getMentionedThing ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
@@ -156,8 +142,7 @@ getMentionedThing = do
 -- | Execute an action with the last mentioned thing.
 --
 -- Convenience function that retrieves the last mentioned thing and passes it
--- to the provided function. This is useful for operations that need to work
--- with the current narrative object context.
+-- to the provided function.
 withThing ::
   forall wm es a.
   HasCallStack
@@ -174,28 +159,9 @@ withThing f = do
 
 -- | Determine the appropriate verb personage for the last mentioned object.
 --
--- This function calculates the correct 'VerbPersonage' to use when referring
--- to the last mentioned object, taking into account:
---
--- * If the object is the player, use the narrative viewpoint
--- * If the object is plural or quantity > 1, use third person plural
--- * Otherwise, use third person singular
---
 -- Returns 'ThirdPersonSingular' if no object has been mentioned.
---
--- Effects required:
--- * 'State' Metadata: Access to metadata
--- * 'State' (AdaptiveNarrative wm): Access to narrative context
---
--- Example:
---
--- @
--- -- Get the appropriate pronoun for the current object
--- personage <- getPersonageOfObject
--- verbForm <- conjugateVerb personage Present "go"
--- say $ "They " <> verbForm <> " quickly."
--- @
-
+-- For the player, uses the narrative viewpoint. For plural objects or
+-- quantity > 1, uses third person plural. Otherwise, uses third person singular.
 getPersonageOfObject ::
   forall wm es.
   State Metadata :> es

@@ -62,30 +62,14 @@ data SayingKind = Tell | Raw
 
 -- | Typeclass for verb conjugation and adaptation.
 --
--- Provides methods for conjugating and adapting verbs based on:
--- - Tense (past, present, future)
--- - Person (first, second, third)
--- - Number (singular, plural)
--- - Mood (indicative, imperative, subjunctive)
---
--- Instances should provide appropriate conjugation rules for different
--- verb forms and grammatical contexts.
+-- Provides methods for conjugating and adapting verbs based on tense,
+-- person, number, and mood.
 class Verb v where
 
 -- | Parsed components of adaptive text.
 --
 -- Represents the different elements that can appear in adaptive text,
 -- each with specific grammatical or interpolation behaviour.
---
--- Constructors:
--- - `RegularText`: Literal text that requires no special processing
--- - `Sayable`: Direct interpolation of a sayable value (e.g., {foo})
--- - `SayLiteral`: Literal interpolation with formatting (e.g., #{foo})
--- - `SayModal`: Modal verb construction (e.g., #{modal foo})
--- - `SayRegarding`: Context-aware text (e.g., #{regarding foo})
--- - `SayArticle`: Article selection (e.g., {article foo})
--- - `SayAdapt`: Grammatical adaptation (e.g., #{adapt foo for tense/person bar})
--- - `SayIf`: Conditional text rendering
 --
 -- The type parameter `sayKind` determines the narration style (Tell/Raw)
 -- which affects how some elements are processed.

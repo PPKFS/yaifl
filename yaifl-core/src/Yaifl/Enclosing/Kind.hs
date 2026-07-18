@@ -7,8 +7,7 @@ Maintainer  : ppkfs@outlook.com
 Enclosing components represent objects that can contain other objects,
 including rooms, containers, and supporters.
 
-This module defines the core `Enclosing` data structure and related types:
-
+Provides:
 - `Enclosing`: The core component for object containment
 - `EnclosingEntity`: Type-safe reference to enclosing objects
 - Functions for creating and manipulating enclosing components
@@ -36,12 +35,7 @@ import Yaifl.Tag
 --
 -- Stores objects contained within an enclosing object (room, container, supporter).
 -- Uses `EnumSet` for efficient storage and operations.
---
--- Capacity behavior:
--- - `Nothing`: Unlimited capacity
--- - `Just n`: Maximum of @n@ contained objects
---
--- Example:s
+-- Examples:
 -- @
 --   -- Infinite capacity container
 --   bottomlessBag = Enclosing Data.EnumSet.empty Nothing

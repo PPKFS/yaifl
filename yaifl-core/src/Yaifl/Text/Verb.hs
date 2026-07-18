@@ -2,23 +2,14 @@
 
 {-|
 Module      : Yaifl.Text.Verb
-Copyright   : (c) Avery 2024-2025
+Copyright   : (c) Avery 2024-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
 Verb conjugation and inflection system.
 
-This module provides a comprehensive system for handling verb conjugation
-in interactive fiction, supporting multiple tenses, voices, and grammatical
-persons. The system is inspired by Inform7's verb handling but adapted to
-Haskell's type system.
-
-Key Features:
-
-- **Type-safe verbs**: Compile-time verification of verb existence
-- **Comprehensive conjugation**: Support for multiple tenses and persons
-- **Grammatical correctness**: Proper handling of subject-verb agreement
-- **Extensible**: Can be extended with additional verb forms and rules
+This module provides a comprehensive system for handling verb conjugation,
+supporting multiple tenses, voices, and grammatical persons.
 
 The verb system handles:
 
@@ -26,27 +17,17 @@ The verb system handles:
 - **Voices**: Active and passive
 - **Persons**: First, second, third person (singular and plural)
 - **Forms**: Base, infinitive, participles, etc.
-
-This module works closely with:
-
-- `Yaifl.Text.SayQQ`: Adaptive text with verb conjugation
-- `Yaifl.Text.SayableValue`: Value display system
-- `Yaifl.Text.Responses`: Response generation
-
 Example usage:
 
 @
   -- Conjugate a verb for specific subject and tense
   conjugated <- conjugate "take" ThirdPersonSingular Present
   -- Result: "takes"
-  
+
   -- Use in adaptive text
   [saying| You {take} the sword. |]
   -- Automatically conjugates based on context
 @
-
-The system is designed to handle the complexities of English verb conjugation
-while providing a simple, type-safe interface for game developers.
 -}
 
 module Yaifl.Text.Verb where
@@ -71,19 +52,11 @@ english has 5 (present) and 6 (past) too
 -- This typeclass enables compile-time verification that a symbol represents
 -- a valid verb. The `toVerb` function converts a verb symbol to its runtime
 -- representation.
---
--- The overlapping instance provides a helpful error message when attempting
--- to use a non-verb symbol, guiding developers to add the appropriate instances.
 class ConjugatableVerb (v :: Symbol) where
   -- | Convert a verb symbol to its runtime representation.
   --
   -- This function takes a proxy for a verb symbol and returns the corresponding
   -- `Verb` value containing all conjugation information.
-  --
-  -- Example:
-  -- @
-  --   verb = toVerb (Proxy @"take")
-  -- @
   toVerb :: Proxy v -> Verb
 
 -- | Compile-time error for non-verb symbols.
@@ -108,7 +81,8 @@ instance {-# OVERLAPPABLE #-} (TypeError
 --   Active: "You take the sword"
 --   Passive: "The sword is taken by you"
 -- @
-data Voice = Active | Passive
+data Voice = Active  -- ^ Subject performs the action
+           | Passive -- ^ Subject receives the action
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
 -- | Verb sense (positive vs negative).
@@ -149,40 +123,20 @@ data Tense = Present | Past | Perfect | PastPerfect | Future
 --
 -- Personage combines person (first, second, third) with number (singular, plural)
 -- to determine the correct verb conjugation and pronoun usage.
---
--- Constructors:
--- - `FirstPersonSingular`: "I" ("I take")
--- - `FirstPersonPlural`: "We" ("We take")
--- - `SecondPersonSingular`: "You" ("You take")
--- - `SecondPersonPlural`: "You" ("You take")
--- - `ThirdPersonSingular`: "He/She/It" ("He takes")
--- - `ThirdPersonPlural`: "They" ("They take")
---
 -- This type is crucial for proper subject-verb agreement in English.
 data VerbPersonage =
-  FirstPersonSingular
-  | FirstPersonPlural
-  | SecondPersonSingular
-  | SecondPersonPlural
-  | ThirdPersonPlural
-  | ThirdPersonSingular
+  FirstPersonSingular  -- ^ "I" ("I take")
+  | FirstPersonPlural    -- ^ "We" ("We take")
+  | SecondPersonSingular  -- ^ "You" ("You take")
+  | SecondPersonPlural    -- ^ "You" ("You take")
+  | ThirdPersonPlural     -- ^ "They" ("They take")
+  | ThirdPersonSingular   -- ^ "He/She/It" ("He takes")
   deriving stock (Enum, Bounded, Generic, Eq, Show, Ord)
 
 -- | Complete verb information including forms and conjugation tables.
 --
 -- This data type contains all information needed to conjugate a verb in all
--- supported tenses, persons, and voices. It serves as the runtime representation
--- of verbs in the system.
---
--- Fields:
--- - `verbForms`: Base forms of the verb (infinitive, participles, etc.)
--- - `tabulation`: Conjugation tables for all combinations of tense/person/voice
---
--- Example:
--- @
---   -- Get conjugation for specific tense and person
---   conjugatedForm <- getConjugation verb Present ThirdPersonSingular
--- @
+-- supported tenses, persons, and voices.
 data Verb = Verb
   { verbForms :: VerbForms
   -- ^ Base forms and irregular conjugations
@@ -192,31 +146,36 @@ data Verb = Verb
 
 -- | Base verb forms storage.
 --
--- This data type stores the fundamental forms of a verb:
--- - Base form ("take")
--- - Infinitive ("to take")
--- - Present participle ("taking")
--- - Past participle ("taken")
---
--- These forms are used as the basis for generating all conjugated forms.
+-- Stores the fundamental forms of a verb used for conjugation.
 data VerbForms = VerbForms
   { infinitive :: Text
+  -- ^ Base form of the verb
   , presentParticiple :: Text
+  -- ^ Present participle form
   , pastParticiple :: Text
+  -- ^ Past participle form
   , adjointInfinitive :: Maybe Verb
+  -- ^ Optional adjoint verb for complex forms
   , presentForm :: Text
+  -- ^ Present tense form
   , pastForm :: Text
+  -- ^ Past tense form
   }
 
+-- | Verb conjugation tables.
+--
+-- Contains complete conjugation information for efficient lookup.
 newtype Tabulation = Tabulation { runTabulation :: Voice -> Tense -> VerbSense -> VerbPersonage -> Text }
 
+-- | Create a verb from its base form.
+--
+-- Generates all verb forms and conjugation tables for a given verb.
 makeVerb :: Text -> Verb
 makeVerb x = let forms = makeVerbForms x in Verb forms (makeVerbTabulation forms)
 
--- we make verbs in two parts; firstly the forms and then the tabulation
--- since we need the forms to do the tabulation
--- even though many of these forms at used, I may as well add them for completeness sake
--- I believe that the expansion of a verb is always in active.
+-- | Create verb forms for a given verb.
+--
+-- Handles both regular verbs and common irregular verbs.
 makeVerbForms :: Text -> VerbForms
 makeVerbForms "aren't" = VerbForms "aren't" "being" "was" Nothing "is" "are"
 makeVerbForms "be" = VerbForms "be" "being" "been" Nothing "is" "was"
@@ -225,6 +184,10 @@ makeVerbForms "do" = VerbForms "do" "doing" "done" Nothing "does" "did"
 makeVerbForms "pass" = VerbForms "pass" "passing" "passed" Nothing "passes" "passed"
 makeVerbForms x = VerbForms x (x <> "s") (x <> "ed") Nothing (x <> "s") (x <> "ed")
 
+-- | Create conjugation tables for a verb.
+--
+-- Generates complete conjugation information based on verb forms.
+-- Handles special cases for common irregular verbs.
 makeVerbTabulation :: VerbForms -> Tabulation
 makeVerbTabulation v@VerbForms{infinitive="'re"} = toBeJustEnd True v toBePresentEnd toBePast
 makeVerbTabulation v@VerbForms{infinitive="aren't"} = toBeTabulation True v
@@ -237,6 +200,9 @@ makeVerbTabulation x = regularVerbConjugation x
 tabulate :: Verb -> Tense -> VerbSense -> VerbPersonage -> Text
 tabulate = (`runTabulation` Active) . tabulation
 
+-- | Conjugation tables for the verb "to be".
+--
+-- Handles both abbreviated ('re) and full forms.
 toBeTabulation :: Bool -> VerbForms -> Tabulation
 toBeTabulation isAbbreviated v = toHaveAndToBe isAbbreviated v toBePresent toBePast
 
@@ -303,6 +269,7 @@ toBePast = \case
 
 -- the lantern had had?
 
+-- | Conjugation tables for the verb "to have".
 toHaveTabulation :: VerbForms -> Tabulation
 toHaveTabulation v = toHaveAndToBe False v toHavePresent (const "had")
 
@@ -311,6 +278,7 @@ toHavePresent = \case
   ThirdPersonSingular -> "has"
   _ -> "have"
 
+-- | Conjugation tables for the verb "to do".
 toDoTabulation :: VerbForms -> Tabulation
 toDoTabulation v = Tabulation $ \case
   -- pretty sure this is junk?
@@ -337,6 +305,9 @@ toDoPresent = \case
   ThirdPersonSingular -> "does"
   _ -> "do"
 
+-- | Conjugation tables for regular verbs.
+--
+-- Handles standard verb conjugation patterns.
 regularVerbConjugation :: VerbForms -> Tabulation
 regularVerbConjugation v = Tabulation $ \case
   Passive -> \vs t vp -> tabulate toBe vs t vp #| pastParticiple v #| "by"
@@ -363,6 +334,9 @@ adjointMaybe v form = maybe "" (form . verbForms) (adjointInfinitive v)
 
 -- this is the non-auxiliary version; "he can" "we could not", etc.
 -- the version with an actual meaning ("he will not be able to reach") is the auxiliary one
+-- | Conjugation tables for "be able to" constructions.
+--
+-- Handles modal ability expressions.
 toBeAbleToTabulation :: VerbForms -> Tabulation
 toBeAbleToTabulation v =
   let

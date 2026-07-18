@@ -62,7 +62,6 @@ import GHC.Records
 import Yaifl.Entity
 import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
-import Yaifl.Tag
 import Yaifl.WorldModel
 import qualified Data.Map.Strict as Map
 import Yaifl.Metadata
@@ -136,10 +135,6 @@ makeFieldLabelsNoPrefix ''RoomData
 makeFieldLabelsNoPrefix ''Connection
 
 -- | A room object with room-specific data and behaviour.
---
--- Wraps an `Object` with `RoomData`, providing access to room properties
--- such as connections, darkness, visitation state, and regional containment.
--- Maintains compatibility with the object system via `HasEntity` and `IsObject` instances.
 newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 

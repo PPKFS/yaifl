@@ -39,9 +39,7 @@ import Yaifl.Metadata
 
 -- | Get a property or throw an error if missing.
 --
--- This function attempts to get a property value, and if the value is 'Nothing',
--- it throws a 'MissingObject' error with a descriptive message including the property name
--- and the entity that was searched.
+-- Throws 'MissingObject' error if the property value is 'Nothing'.
 getPropertyOrThrow ::
   HasEntity i
   => Error MissingObject :> es
@@ -53,8 +51,7 @@ getPropertyOrThrow t o = maybe (throwError $ MissingObject ("Could not find " <>
 
 -- | Get a property from an object's specifics.
 --
--- This function uses optics to safely extract a property value from an object's specifics.
--- It returns 'Nothing' if the property doesn't exist or the object doesn't have specifics.
+-- Returns 'Nothing' if the property doesn't exist or the object doesn't have specifics.
 defaultPropertyGetter ::
   forall wm o v.
   WMWithProperty wm v
@@ -65,8 +62,7 @@ defaultPropertyGetter o = preview (#specifics % propertyAT) (toAny o)
 
 -- | Set a property on an object's specifics.
 --
--- This function uses optics to set a property value on an object's specifics.
--- It assumes the object exists (enforced by 'WithoutMissingObjects' constraint).
+-- Assumes the object exists (enforced by 'WithoutMissingObjects' constraint).
 defaultPropertySetter ::
   WithoutMissingObjects wm es
   => WMWithProperty wm v
@@ -78,9 +74,7 @@ defaultPropertySetter e v = modifyObject (toAny e) (#specifics % propertyAT .~ v
 
 -- | Modify a property using getter/setter functions.
 --
--- This function provides a flexible way to modify properties by taking getter and setter
--- functions as arguments. It safely handles the case where the property doesn't exist
--- by doing nothing in that case.
+-- Does nothing if the property doesn't exist.
 modifyProperty ::
   WithMetadata es
   => CanBeAny wm o

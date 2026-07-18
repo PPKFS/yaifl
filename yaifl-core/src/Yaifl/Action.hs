@@ -171,7 +171,6 @@ withActionInterrupt' f = do
     Right x -> return x
 
 -- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
--- | Get the name of an action. This is mostly here to avoid overlapping instances with label optics and duplicate fields.
 actionName :: Lens' (Action wm resp goesWith v) Text
 actionName = #name
 

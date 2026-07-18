@@ -48,7 +48,7 @@ data Region wm = Region
   , rooms :: S.Set RoomEntity
     -- ^ Rooms that belong to this region. Rooms can only belong to 0-1 regions at a time.
   , regionData :: WMRegionData wm
-    -- ^ World-model-specific region data. Allows different world models to extend regions with custom data.
+    -- ^ World-model-specific region data.]
   } deriving stock (Generic)
 
 deriving stock instance Show (WMRegionData wm) => Show (Region wm)

@@ -22,7 +22,7 @@ import Yaifl.Device.Create
 import Yaifl.Create.Rule
 import Yaifl.Person.Query
 import Yaifl.Room.Create
-import Yaifl.Door.Create
+import Yaifl.Door.Create as Door
 import Yaifl.Device.Kind (Device(..), getDeviceMaybe)
 import Yaifl.Thing.Kind (Thing)
 import Yaifl.TH
@@ -34,7 +34,6 @@ garibaldiWorld :: Game PlainWorldModel ()
 garibaldiWorld = do
   setTitle "Garibaldi"
   sr <- addDevice "security readout"
-    ! #initialAppearance "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
     ! #description "The screen is blank."
     ! done
   insteadOf #examining [theObjectWhenSwitchedOn sr] $ \_ -> do
@@ -55,7 +54,8 @@ garibaldiWorld = do
   s <- addRoom' "Space" ! done
   ml <- addRoom "Medlab" ! done
   tia <- addDoor $ newDoor
-    { name = "inner airlock"
+    { Door.name = "inner airlock"
+    , initialAppearance = "awa"
     , front = (tdb, northOf)
     , back = (tz, southOf)
     }

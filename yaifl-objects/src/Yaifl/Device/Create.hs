@@ -1,6 +1,6 @@
 module Yaifl.Device.Create
   ( addDevice
-
+  , DeviceConfig(..)
   ) where
 
 import Yaifl.Prelude
@@ -14,6 +14,14 @@ import Yaifl.Device.Kind
 import Yaifl.WorldModel
 import Yaifl.ObjectSpecifics
 import Yaifl.Thing.Create
+import Yaifl.Door.Create
+data DeviceConfig wm p = DeviceConfig
+  { name :: RequiredName p wm
+  , description :: WMText wm
+  , front :: Required "door front side" p (RoomEntity, WMDirection wm)
+  , back :: Required "door back side" p (RoomEntity, WMDirection wm)
+  , initialAppearance :: WMText wm
+  }
 
 addDevice ::
   forall wm es.

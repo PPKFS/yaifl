@@ -76,8 +76,7 @@ runRulebookAndReturnVariables mbSpanId skipParagraphBreaks Rulebook{..} args =
       addTagTo (Just rbSpan) "outcome" (display $ snd outcome)
       return (Just outcome)
 
--- | Mostly this is a very complicated "run a list of functions until you get
--- something that isn't a Nothing, or a default if you get to the end".
+-- | Process a list of rules until one succeeds or return a default.
 processRuleList ::
   (Refreshable wm v, Display v, Display re)
   => SayableValue (WMText wm) wm

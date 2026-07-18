@@ -3,6 +3,10 @@ module Yaifl.Door.Create
   ( addDoor
   , newDoor
   , DoorConfig(..)
+  , Purpose(..)
+  , RequiredParameter(..)
+  , Required
+  , RequiredName
   ) where
 
 import Yaifl.Prelude
