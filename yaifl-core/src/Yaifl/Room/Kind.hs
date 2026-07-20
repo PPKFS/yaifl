@@ -62,7 +62,6 @@ import GHC.Records
 import Yaifl.Entity
 import Yaifl.Enclosing.Kind
 import Yaifl.Object.Kind
-import Yaifl.Tag
 import Yaifl.WorldModel
 import qualified Data.Map.Strict as Map
 import Yaifl.Metadata
@@ -72,12 +71,12 @@ import Yaifl.Metadata
 data ConnectionExplicitness = Explicit | Implicit
   deriving stock (Eq, Show, Read, Enum, Ord, Generic)
 
--- | A connection from one room to another.
+-- | Connection between rooms with direction and optional door.
 data Connection wm = Connection
-  { explicitness :: ConnectionExplicitness
-  , otherSide :: RoomEntity
-  , doorThrough :: Maybe DoorEntity
-  , direction :: WMDirection wm
+  { explicitness :: ConnectionExplicitness -- ^ Explicit (author-created) or implicit
+  , otherSide :: RoomEntity -- ^ Connected room entity
+  , doorThrough :: Maybe DoorEntity -- ^ Optional blocking door
+  , direction :: WMDirection wm -- ^ Connection direction
   } deriving stock (Generic)
 
 deriving stock instance (Eq (WMDirection wm)) => Eq (Connection wm)
@@ -86,9 +85,9 @@ deriving stock instance (Read (WMDirection wm)) => Read (Connection wm)
 deriving stock instance (Ord (WMDirection wm)) => Ord (Connection wm)
 
 
--- | The connections from one room to another, stored by direction.
+-- | Room connections mapped by direction.
 newtype MapConnections wm = MapConnections
-  { unMapConnections :: Map.Map (WMDirection wm) (Connection wm)
+  { unMapConnections :: Map.Map (WMDirection wm) (Connection wm) -- ^ Direction-to-connection mapping
   }
 
 deriving newtype instance (Generic (Map (WMDirection wm) (Connection wm))) => Generic (MapConnections wm)
@@ -113,14 +112,14 @@ newtype ContainingRegion = ContainingRegion
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, Generic)
 
--- | The properties that make up a room.
+-- | Core room properties and state.
 data RoomData wm = RoomData
-  { isVisited :: IsVisited
-  , darkness :: Darkness
-  , mapConnections :: MapConnections wm
-  , containingRegion :: ContainingRegion
-  , enclosing :: Enclosing
-  , roomData :: WMRoomData wm
+  { isVisited :: IsVisited -- ^ Visitation status
+  , darkness :: Darkness -- ^ Intrinsic light level
+  , mapConnections :: MapConnections wm -- ^ Room connections by direction
+  , containingRegion :: ContainingRegion -- ^ Parent region
+  , enclosing :: Enclosing -- ^ Containment data
+  , roomData :: WMRoomData wm -- ^ World-model-specific data
   } deriving stock (Generic)
 
 deriving stock instance (Ord (WMDirection wm), Ord (WMRoomData wm)) => Ord (RoomData wm)
@@ -135,13 +134,7 @@ blankRoomData = RoomData Unvisited Lighted (MapConnections Map.empty) (Containin
 makeFieldLabelsNoPrefix ''RoomData
 makeFieldLabelsNoPrefix ''Connection
 
--- | An `Object` with `RoomData`.
 -- | A room object with room-specific data and behaviour.
---
--- Wraps an `Object` (from `Yaifl.Object.Kind`) with `RoomData`, providing access to room properties
--- such as connections, darkness, visitation state, and regional containment through the
--- `HasField` instance. Maintains compatibility with the object system via
--- `HasEntity` and `IsObject` instances.
 newtype Room wm = Room (Object wm (RoomData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 

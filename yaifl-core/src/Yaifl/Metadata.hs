@@ -7,29 +7,10 @@ Maintainer  : ppkfs@outlook.com
 General game-specific metadata including user settings, configuration, object type information,
 and construction phase helpers. This module serves as the central repository for game state
 that doesn't depend on the world model or dynamic game elements.
-
-This module defines:
-
-- `Metadata`: Core metadata record containing game configuration and state
-- `RoomDescriptions`: Configuration for room description verbosity
-- `CurrentStage`: Tracking of build-verify-run process stages
-- `AnalysisLevel`: Configuration for analysis and error checking depth
-- `WithMetadata`: Convenience type synonym for metadata-dependent effects
-- Error handling utilities for construction and runtime phases
-- Construction phase helpers and guards
-- Game object type querying and manipulation functions
-- Random number generation utilities
-
-The metadata system enables:
-- Centralized game configuration management
-- Phase-appropriate error handling
-- Construction vs runtime behavior distinction
-- Type-safe game state access
-- Object kind inheritance and querying
 -}
 
 module Yaifl.Metadata (
-  -- * Metadata Components
+  -- * Metadata Types
   RoomDescriptions(..)
   , Timestamp(..)
   , CurrentStage(..)
@@ -37,12 +18,12 @@ module Yaifl.Metadata (
   -- * Metadata
   , Metadata(..)
   , WithMetadata
-  -- * Error handling
+  -- * Error Handling
   , noteError
   , noteRuntimeError
   , traceGuard
   , setPostPromptSpacing
-  -- * Construction helpers
+  -- * Construction Helpers
   , whenConstructing
   , whenConstructingM
   , setTitle
@@ -73,7 +54,10 @@ import Yaifl.KindGraph
 import qualified Data.Set as S
 import System.Random ( StdGen, UniformRange, uniformR, Uniform, uniform )
 
--- | Whether the room descriptions should be printed verbosely sometimes, all the time, or never.
+-- | Room description verbosity configuration.
+--
+-- Controls how room descriptions are printed to the player, affecting the balance
+-- between immersion and brevity.
 data RoomDescriptions =
   SometimesAbbreviatedRoomDescriptions -- ^ Print full descriptions when visiting a room for the first time only.
   | AbbreviatedRoomDescriptions -- ^ Never print full descriptions (except when looking).
@@ -85,19 +69,34 @@ instance Display RoomDescriptions where
   displayBuilder NoAbbreviatedRoomDescriptions = "Never abbreviated"
   displayBuilder AbbreviatedRoomDescriptions = "Always abbreviated"
 
--- | The status of the build-verify-run process.
+-- | Game lifecycle stage tracking.
+--
+-- Represents the current phase in Yaifl's build-verify-run lifecycle.
+--
+-- - `Construction`: Game is being built (object creation, world setup)
+-- - `Verification`: Game is being validated (consistency checks, error detection)
+-- - `Runtime`: Game is running normally (player interaction)
 data CurrentStage = Construction | Verification | Runtime
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
--- | How much analysis should happen; this is a more lax version of property testing, where having a high analysis level
--- means that more checks will be done and errors printed.
--- TODO: actually decide on what happens at each tier.
+-- | Analysis and validation depth configuration.
+--
+-- Controls how thorough the game's internal consistency checking and error detection
+-- should be.
+--
+-- Levels (from least to most thorough):
+-- - `None`: Minimal checking (production mode)
+-- - `Low`: Basic consistency checks
+-- - `Medium`: Comprehensive validation
+-- - `High`: Extensive checking with detailed reporting
+-- - `Maximal`: All possible checks (development/debugging mode)
 data AnalysisLevel = None | Low | Medium | High | Maximal
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
 -- | All the misc values about the game are stored here so we can carry it around. Notably, this does not include
 -- anything dynamic (actions, activities) or anything relying on the worldmodel (objects), which means this remains
 -- lightweight and simple.
+--
 data Metadata = Metadata
   { title :: Text -- ^ The title of the game.
   , roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
@@ -115,32 +114,55 @@ data Metadata = Metadata
   , bufferedInput :: [Text]
   , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
   , rng :: StdGen
-  , usePostPromptPbreak :: Bool
+  , usePostPromptPbreak :: Bool -- ^ Whether to add paragraph breaks after prompts
   -- more to come I guess
   } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Metadata
 
--- | As basically everywhere where we need the `Metadata` probably uses logging, this type synonym
--- makes it a bit easier.
+-- |
+-- This synonym combines the two most common effects for general monadic functions:
+-- - `State Metadata`: Access to the metadata state
+-- - `Breadcrumbs`: Logging and annotation capabilities
 type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
 
--- | Take note of an error (to be reported later) but continue execution.
+-- | Record an error and continue execution.
+--
+-- Adds an error message to the error log and continues with a recovery value.
+-- This is used for non-fatal errors that should be reported but shouldn't
+-- crash the game.
+--
+-- The error is:
+-- - Added to the `errorLog` for later reporting/testing
+-- - Logged via `Breadcrumbs` for immediate visibility
+-- - Used to compute a recovery value via the provided function
+--
+-- This function is phase-agnostic and will record errors in all stages.
+-- For runtime-specific error handling, see `noteRuntimeError`.
 noteError ::
   WithMetadata es
-  => (Text -> a) -- ^ How to recover.
-  -> Text -- ^ Error message.
+  => (Text -> a) -- ^ Recovery function (error message -> result)
+  -> Text -- ^ Error message to record
   -> Eff es a
 noteError f t = do
   #errorLog %= (t:)
   addAnnotation t
   pure $ f t
 
--- | Take note of an error if we're out of the building phase (to be reported later) but continue execution.
+-- | Record an error during runtime phase only.
+--
+-- Similar to `noteError`, but only records the error if the game is in the
+-- `Runtime` stage. This is useful for errors that are expected during
+-- construction but should be reported during actual gameplay.
+--
+-- The error handling follows the same pattern as `noteError`:
+-- - Error is added to `errorLog`
+-- - Error is logged via `Breadcrumbs`
+-- - Recovery value is computed and returned
 noteRuntimeError ::
   WithMetadata es
-  => (Text -> a) -- ^ How to recover.
-  -> Text -- ^ Error message.
+  => (Text -> a) -- ^ Recovery function (error message -> result)
+  -> Text -- ^ Error message to record
   -> Eff es a
 noteRuntimeError f t = do
   whenM isRuntime $ do
@@ -212,7 +234,7 @@ traceGuard ::
   -> Eff es Bool
 traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
 
--- | If some `Entity` represents the current player.
+-- | If some object represents the current player.
 isPlayer ::
   HasEntity o
   => State Metadata :> es

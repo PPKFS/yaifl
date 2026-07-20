@@ -1,6 +1,5 @@
 module Yaifl.Chapter3.Escape
   ( ex21
-
   ) where
 
 import Yaifl.Prelude
@@ -8,11 +7,9 @@ import Yaifl.Prelude
 import Yaifl (PlainWorldModel)
 
 import Yaifl.Object.Kind
-import Yaifl.Object.Create
 import Yaifl.Effects.Interpreters
 import Yaifl.Metadata
 import Yaifl.Test.Common
-import Yaifl.Tag
 import Yaifl.Direction.Kind
 import Yaifl.Text.SayableValue
 import Yaifl.Actions.Imports
@@ -22,6 +19,7 @@ import Yaifl.Door.Create
 import Yaifl.Create.Rule
 import Yaifl.Door.Query
 import Yaifl.Preconditions
+import Yaifl.Combinators
 
 ex21 :: (Text, [Text], Game PlainWorldModel ())
 ex21 = ("Escape", escapeTestMeWith, escapeWorld)
@@ -29,26 +27,20 @@ ex21 = ("Escape", escapeTestMeWith, escapeWorld)
 escapeWorld :: Game PlainWorldModel ()
 escapeWorld = do
   setTitle "Escape"
-  yb <- addRoom "Your Bedroom" ! done
-  gs <- addRoom "Grassy Slope" ! #modify makeNameImproper ! done
-  w <- addDoor $ newDoor
-    { name = "bedroom window"
-    , front = (yb, West)
-    , back = (gs, East)
-    }
+  yb <- addRoom' "Your Bedroom"
+  gs <- addRoom "Grassy Slope" $ newRoom & makeRoomImproperlyNamed
+  w <- addDoor "bedroom window" $ newDoor (yb `isToThe` West) (gs `isToThe` East)
 
-  insteadOf #searching [theObject w] $ \_ -> do
+  insteadOf' #searching [theObject w] $ do
     bs <- getOtherSideOfDoor w
     [saying|Through the window, you make out {the bs}.|]
-  insteadOf #climbing [theObject w] $ tryAction "enter" [TheThing $ coerceTag w]
+  insteadOf #climbing [theObject w] $ tryActionWithThing "enter" w
 
   -- the original requires you to define "climb through [something]" as an alias, whereas
   -- my parser will just assume you want to climb something called the "through window" and considers
   -- one word enough of a match.
-
   -- I don't know if this needs fixing but if I leave this here for when I inevitably rewrite the parser it'll help.
-  insteadOf #going [throughTheClosedDoor w] $ const [saying|The window is shut: you'd break the glass.|]
-  pass
+  insteadOf' #going [throughTheClosedDoor w] [saying|The window is shut: you'd break the glass.|]
 
 {-
 Your Bedroom

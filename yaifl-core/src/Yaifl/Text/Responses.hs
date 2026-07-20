@@ -1,5 +1,4 @@
 {-# LANGUAGE UndecidableInstances #-}
-
 {-|
 Module      : Yaifl.Text.Responses
 Copyright   : (c) Avery 2023-2026
@@ -23,11 +22,11 @@ module Yaifl.Text.Responses
   ( -- * Core Types
     Response(..)
   , WithResponseSet
-  
+
   -- * Response Constructors
   , constResponse
   , notImplementedResponse
-  
+
   -- * Response Execution
   , sayResponse
   , sayTellResponse
@@ -44,10 +43,9 @@ import Yaifl.Effects.RuleEffects
 import Yaifl.Text.SayableValue
 
 -- | A parameterised response that generates text output.
--- Responses act as customisable placeholders that can be overridden by game authors
--- to change text output without modifying the underlying game logic.
 --
--- The response receives context of type @v@ and produces text via the Writer effect.
+-- Responses act as customisable placeholders that can be overridden to change
+-- text output without modifying the underlying game logic.
 newtype Response wm v = Response { runResponse :: forall es. SayableValue (WMText wm) wm => (RuleEffects wm es) => v -> Eff (Writer Text : es) () }
 
 makeFieldLabelsNoPrefix ''Response
@@ -63,8 +61,8 @@ constResponse ::
 constResponse t = Response $ const [sayingTell|{t}|]
 
 -- | Execute a response and output the result using 'say'.
--- Looks up the response in the response set using the provided optic
--- and executes it with the given variable.
+--
+-- Looks up the response in the response set and executes it with the given variable.
 sayResponse ::
   (RuleEffects wm es, SayableValue (WMText wm) wm)
   => Reader a :> es
@@ -80,6 +78,7 @@ sayResponse aL v = do
   say r
 
 -- | Execute a response and output the result to a Writer effect.
+--
 -- Unlike 'sayResponse', this writes the response text to a Writer effect
 -- where it can be captured as Text rather than immediately printed.
 sayTellResponse ::
@@ -98,12 +97,6 @@ sayTellResponse aL v = do
   sayTell r
 
 -- | Constraint alias for working with response sets.
+--
 -- Provides the necessary constraints for accessing response sets stored in the world model.
---
--- @wm@: The world model type
--- @k@: The kind of optic (typically 'A_Lens')
--- @name@: The name of the response set field
--- @v@: The response set type
---
--- This is typically used when defining response sets in the world model.
 type WithResponseSet wm k (name :: Symbol) v = (Is k A_Lens, LabelOptic' name k (WMResponses wm) v)

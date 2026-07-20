@@ -1,29 +1,19 @@
-
-{-# LANGUAGE UndecidableInstances #-}
-
 {-|
 Module      : Yaifl.Effects.Print
 Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Text output and message formatting system for interactive fiction.
+Text output and message formatting system.
 
-This module provides a comprehensive printing system for game messages with:
-
-- `Print` effect: Core printing functionality for game text output
-- `MessageBuffer`: Accumulates and formats messages before display
-- `MessageContext`: Tracks formatting context and paragraph breaks
-- `MessageAnnotation`: Rich text styling (colors, bold, italics, underline)
-- `StyledDoc`: Formatted document representation using Prettyprinter
-
-Key features:
-- Context-aware message formatting with automatic paragraph breaks
+Provides:
+- Context-aware formatting with automatic paragraph breaks
 - Rich text styling with colors and font effects
-- Message buffering and flushing system
-- Rule-based context tracking for consistent output
+- Message buffering and flushing
 - Support for both pure (testing) and IO-based printing
 -}
+
+{-# LANGUAGE UndecidableInstances #-}
 
 module Yaifl.Effects.Print
   ( -- * Core Types
@@ -46,11 +36,7 @@ module Yaifl.Effects.Print
   , blankMessageBuffer
 
   -- * Buffer Operations
-  -- | Set the current message style.
-  -- Updates the formatting style used for subsequent messages.
   , setStyle
-  -- | Modify the message buffer.
-  -- Apply a transformation function to the current message buffer state.
   , modifyBuffer
 
   -- * Context Management
@@ -98,8 +84,7 @@ newtype Colour = Colour { toWord32 :: Word32 }
 type Color = Colour
 
 -- | Convert a color to its hexadecimal representation.
--- Returns a text string in the format "AARRGGBB" where AA is alpha, RR is red,
--- GG is green, and BB is blue (e.g., "80FF0000" for semi-transparent red).
+-- Returns a text string in the format "AARRGGBB" (e.g., "80FF0000" for semi-transparent red).
 toHex :: Colour -> Text
 toHex = fromString . flip showHex "" . toWord32
 
@@ -135,9 +120,9 @@ data Underlined = Underlined
 data MessageAnnotation = MessageAnnotation
     { foregroundAnnotation  :: Maybe Colour -- ^ Set the foreground color, or keep the old one.
     , backgroundAnnotation  :: Maybe Colour -- ^ Set the background color, or keep the old one.
-    , boldAnnotation :: Maybe Bold               -- ^ Switch on boldness, or don’t do anything.
-    , italics :: Maybe Italics         -- ^ Switch on italics, or don’t do anything.
-    , underlined :: Maybe Underlined         -- ^ Switch on underlining, or don’t do anything.
+    , boldAnnotation :: Maybe Bold -- ^ Switch on boldness, or don’t do anything.
+    , italics :: Maybe Italics -- ^ Switch on italics, or don’t do anything.
+    , underlined :: Maybe Underlined -- ^ Switch on underlining, or don’t do anything.
     } deriving stock (Eq, Ord, Show, Generic)
 
 instance Monoid MessageAnnotation where
@@ -145,11 +130,11 @@ instance Monoid MessageAnnotation where
 
 instance Semigroup MessageAnnotation where
   (<>) m1 m2 = MessageAnnotation
-    { foregroundAnnotation = (foregroundAnnotation m1) <|> foregroundAnnotation m2
-    , backgroundAnnotation = (backgroundAnnotation m1) <|> backgroundAnnotation m2
-    , boldAnnotation = (boldAnnotation m1) <|> boldAnnotation m2
-    , italics = (italics m1) <|> italics m2
-    , underlined = (underlined m1) <|> underlined m2
+    { foregroundAnnotation = foregroundAnnotation m1 <|> foregroundAnnotation m2
+    , backgroundAnnotation = backgroundAnnotation m1 <|> backgroundAnnotation m2
+    , boldAnnotation = boldAnnotation m1 <|> boldAnnotation m2
+    , italics = italics m1 <|> italics m2
+    , underlined = underlined m1 <|> underlined m2
     }
 
 colour :: Colour -> MessageAnnotation
@@ -159,7 +144,6 @@ bold :: MessageAnnotation
 bold = mempty { boldAnnotation = Just Bold }
 
 -- | Context information about the current message being processed.
--- Tracks rule origin, paragraph state, and formatting requirements for consistent output.
 data MessageContext = MessageContext
   { messageFromRule :: Text -- ^ The rule that generated this message.
   , runningOnParagraph :: Bool -- ^ Whether this message is part of a paragraph context.
@@ -172,7 +156,7 @@ data MessageContext = MessageContext
   } deriving stock (Show, Ord, Generic, Eq)
 
 data Print :: Effect where
-  ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m (MessageBuffer)
+  ModifyBuffer :: (MessageBuffer -> MessageBuffer) -> Print m MessageBuffer
   GetBuffer :: Print m MessageBuffer
   PrintDoc :: Maybe MessageContext -> StyledDoc MessageAnnotation-> Print m ()
   SetStyle :: Maybe MessageAnnotation -> Print m ()
@@ -198,7 +182,7 @@ blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False
 
 processDoc ::
   forall s es.
-  PartialState s (MessageBuffer) es
+  PartialState s MessageBuffer es
   => StyledDoc MessageAnnotation
   -> Eff es (StyledDoc MessageAnnotation)
 processDoc msg = do
@@ -222,14 +206,14 @@ instance Has s s where
 -- Messages are stored in the buffer and can be retrieved later for inspection.
 runPrintPure ::
   forall s es a.
-  PartialState s (MessageBuffer) es
+  PartialState s MessageBuffer es
   => Eff (Print : es) a
   -> Eff es a
 runPrintPure = interpret $ \_ -> \case
   PrintDoc mbMetadata doc -> do
     r <- processDoc doc
-    modify (\s -> s & buf % (#buffer @(Lens' (MessageBuffer) [StyledDoc MessageAnnotation])) %~ (r:))
-    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ metadata)
+    modify (\s -> s & buf % (#buffer @(Lens' MessageBuffer [StyledDoc MessageAnnotation])) %~ (r:))
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata)
   SetStyle mbStyle -> setStyle' mbStyle
   ModifyBuffer f -> do
     modify (\s -> s & buf %~ f)
@@ -242,13 +226,13 @@ runPrintPure = interpret $ \_ -> \case
 runPrintIO ::
   forall s es a.
   IOE :> es
-  => PartialState s (MessageBuffer) es
+  => PartialState s MessageBuffer es
   => Eff (Print : es) a
   -> Eff es a
 runPrintIO = interpret $ \_ -> \case
   PrintDoc mbMetadata doc -> do
     r <- processDoc doc
-    whenJust mbMetadata $ \metadata -> modify (\s -> s & (buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ metadata))
+    whenJust mbMetadata $ \metadata -> modify (\s -> s & (buf % #lastMessageContext @(Lens' MessageBuffer MessageContext) .~ metadata))
     print r
   SetStyle mbStyle -> setStyle' mbStyle
   ModifyBuffer f -> do
@@ -345,10 +329,10 @@ printIf False = const pass
 -- | whereas 'Nothing' will remove it. This will not affect previous messages.
 setStyle' ::
   forall s es.
-  PartialState s (MessageBuffer) es
+  PartialState s MessageBuffer es
   => Maybe MessageAnnotation -- ^ The updated style.
   -> Eff es ()
-setStyle' s = buf % (#style @(Lens' (MessageBuffer) (Maybe MessageAnnotation))) .= s
+setStyle' s = buf % (#style @(Lens' MessageBuffer (Maybe MessageAnnotation))) .= s
 
 -- | Execute an action with a temporary message style.
 -- Sets the specified style for the duration of the action, then restores the previous style.

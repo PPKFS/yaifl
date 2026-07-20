@@ -1,4 +1,17 @@
+{-|
+Module      : Yaifl.Actions.GoesWith
+Copyright   : (c) Avery 2022-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
+Action parameter and compatibility system.
+
+Provides:
+- `ActionSignature`: Type-level action parameter requirements
+- `ActionParameter`: Runtime parameter representation
+- `GoesWith`: Typeclass for action-object compatibility
+- `ActionExpects`: Maps signatures to concrete types
+-}
 
 module Yaifl.Actions.GoesWith
   ( ActionSignature(..)
@@ -15,6 +28,16 @@ import qualified Data.Set as S
 import Yaifl.Thing.Kind
 import Yaifl.AnyObject
 
+-- | Type-level description of what parameters an action expects.
+--
+-- Constructors:
+-- - `TakesNoParameter`: No parameters
+-- - `Optionally sig`: Optional parameter
+-- - `TakesDirectionParameter`: Direction parameter
+-- - `TakesObjectParameter`: Object parameter
+-- - `TakesThingParameter`: Thing parameter
+-- - `TakesOneOf sig1 sig2`: Either sig1 or sig2
+-- - `TakesConstantParameter`: Constant/string parameter
 data ActionSignature =
   TakesNoParameter
   | Optionally ActionSignature
@@ -25,6 +48,15 @@ data ActionSignature =
   | TakesConstantParameter
   deriving stock ( Show, Eq, Ord, Generic )
 
+-- | Runtime representation of action parameters.
+--
+-- Constructors:
+-- - `NoParameter`: No parameter provided
+-- - `DirectionParameter dir`: Direction value
+-- - `ObjectParameter obj`: Object reference
+-- - `ThingParameter thing`: Thing reference
+-- - `ConstantParameter text`: Constant string value
+-- - `PluralParameter [params]`: Multiple parameters
 data ActionParameter wm =
   NoParameter
   | DirectionParameter (WMDirection wm)
@@ -46,6 +78,16 @@ instance Show (ActionParameter wm) where
 deriving stock instance Eq (WMDirection wm) => Eq (ActionParameter wm)
 deriving stock instance Ord (WMDirection wm) => Ord (ActionParameter wm)
 
+-- | Map action signatures to their expected Haskell types.
+--
+-- Type family mapping:
+-- - `TakesNoParameter` → `()`
+-- - `Optionally sig` → `Maybe (ActionExpects wm sig)`
+-- - `TakesDirectionParameter` → `WMDirection wm`
+-- - `TakesObjectParameter` → `AnyObject wm`
+-- - `TakesThingParameter` → `Thing wm`
+-- - `TakesConstantParameter` → `Text`
+-- - `TakesOneOf sig1 sig2` → `Either (ActionExpects wm sig1) (ActionExpects wm sig2)`
 type family ActionExpects wm (goesWith :: ActionSignature) where
   ActionExpects wm TakesNoParameter = ()
   ActionExpects wm (Optionally goesWith) = Maybe (ActionExpects wm goesWith)
@@ -56,9 +98,27 @@ type family ActionExpects wm (goesWith :: ActionSignature) where
   ActionExpects wm (TakesOneOf goesWith1 goesWith2) = Either (ActionExpects wm goesWith1) (ActionExpects wm goesWith2)
   --ActionExpects wm (PluralParameter goesWith) = [ActionExpects wm goesWith]
 
+-- | Typeclass for parsing action parameters into expected types.
+--
+-- Bridges type-level action signatures and runtime parameter values.
+-- Provides parsing logic via `goesWithA` and `tryParseArguments`.
 class GoesWith (g :: ActionSignature) where
+  -- | Convert type-level signature to runtime value.
   goesWithA :: Proxy g -> ActionSignature
+
+  -- | Parse runtime parameters into expected type.
+  --
+  -- This is the core parsing function that enables type-safe action execution.
+  -- It takes a set of runtime parameters and attempts to convert them into
+  -- the concrete Haskell type expected by the action signature.
+  --
+  -- Returns `Just` with the parsed value on success, `Nothing` on failure.
   tryParseArguments :: Proxy g -> Set (ActionParameter wm) -> Maybe (ActionExpects wm g)
+
+  -- | Default implementation that always fails.
+  --
+  -- Concrete instances override this to provide specific parsing logic
+  -- for their action signature type.
   default tryParseArguments :: Proxy g -> Set (ActionParameter wm) -> Maybe (ActionExpects wm g)
   tryParseArguments _ _ = Nothing
 

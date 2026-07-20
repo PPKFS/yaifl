@@ -79,7 +79,7 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
-  fst <$$> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
@@ -94,7 +94,7 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
                 wa <- get @(WorldActions wm)
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
-                failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
+                failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBeginsRulebook) ())
                 setInputBuffer actionsToDo
                 runTurnsFromBuffer
                 (w2 :: World wm) <- get

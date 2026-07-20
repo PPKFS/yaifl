@@ -118,10 +118,8 @@ blankThingData = ThingData (coerceTag voidID) NotLit NotWearable Described NotHa
 
 -- | A thing object with thing-specific data and behaviour.
 --
--- Wraps an `Object` (from `Yaifl.Object.Kind`) with `ThingData`, providing access to thing properties
--- such as lighting, wearability, portability, and containment through the
--- `HasField` instance. Maintains compatibility with the object system via
--- `HasEntity` and `IsObject` instances.
+-- Wraps an `Object` with `ThingData`, providing access to thing properties
+-- through the `HasField` instance.
 newtype Thing wm = Thing (Object wm (ThingData wm) (WMObjSpecifics wm))
   deriving newtype (Eq, Ord, Generic)
 
@@ -144,7 +142,6 @@ type EnclosingThing wm = TaggedObject (Thing wm) EnclosingTag
 instance Taggable (Thing wm) ThingTag
 
 -- | Tag a thing with its entity for type-safe references.
--- Uses the thing's object ID to create a tagged entity reference.
 tagThingEntity ::
   Thing wm
   -> TaggedEntity ThingTag

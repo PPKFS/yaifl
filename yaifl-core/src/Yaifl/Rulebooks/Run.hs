@@ -1,3 +1,16 @@
+{-|
+Module      : Yaifl.Rulebooks.Run
+Copyright   : (c) Avery 2023-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
+
+Rulebook execution.
+
+Provides core functions for running rulebooks, processing rule lists,
+checking preconditions, and handling rule outcomes with proper logging
+and error handling.
+-}
+
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid lambda" #-}
@@ -63,8 +76,7 @@ runRulebookAndReturnVariables mbSpanId skipParagraphBreaks Rulebook{..} args =
       addTagTo (Just rbSpan) "outcome" (display $ snd outcome)
       return (Just outcome)
 
--- | Mostly this is a very complicated "run a list of functions until you get
--- something that isn't a Nothing, or a default if you get to the end".
+-- | Process a list of rules until one succeeds or return a default.
 processRuleList ::
   (Refreshable wm v, Display v, Display re)
   => SayableValue (WMText wm) wm

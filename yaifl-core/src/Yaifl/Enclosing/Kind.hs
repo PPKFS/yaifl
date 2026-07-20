@@ -7,27 +7,22 @@ Maintainer  : ppkfs@outlook.com
 Enclosing components represent objects that can contain other objects,
 including rooms, containers, and supporters.
 
-This module defines the core `Enclosing` data structure and related types:
-
+Provides:
 - `Enclosing`: The core component for object containment
 - `EnclosingEntity`: Type-safe reference to enclosing objects
 - Functions for creating and manipulating enclosing components
-
-See also:
-- `Yaifl.Object.Kind` for the base Object type
-- `Yaifl.Thing.Kind` for thing containment
-- `Yaifl.Room.Kind` for room enclosing functionality
 -}
 
 module Yaifl.Enclosing.Kind (
   -- * Enclosing types
     Enclosing(..)
+  , EnclosingEntity
 
   -- * Enclosing functions
   , blankEnclosing
 
   -- * Re-exports
-  , EnclosingEntity
+  , module Yaifl.Tag
   ) where
 
 import Yaifl.Prelude
@@ -36,19 +31,33 @@ import Data.EnumSet ( EnumSet, empty )
 import Yaifl.Entity
 import Yaifl.Tag
 
--- | A component that contains other objects.
+-- | Component representing an object's containment capabilities.
+--
+-- Stores objects contained within an enclosing object (room, container, supporter).
+-- Uses `EnumSet` for efficient storage and operations.
+-- Examples:
+-- @
+--   -- Infinite capacity container
+--   bottomlessBag = Enclosing Data.EnumSet.empty Nothing
+--
+--   -- Limited capacity container (3 items max)
+--   smallChest = Enclosing Data.EnumSet.empty (Just 3)
+-- @
 data Enclosing = Enclosing
   { contents :: EnumSet ThingEntity -- ^ The contained objects.
-  , capacity :: Maybe Int -- ^ An optional number of items that can be contained. Nothing = infinite.
+  , capacity :: Maybe Int -- ^ Optional maximum capacity. Nothing = unlimited.
   } deriving stock (Eq, Show, Read, Ord, Generic)
 
 makeFieldLabelsNoPrefix ''Enclosing
 
--- | An enclosing component with nothing in it.
+-- | Create an empty enclosing component.
 blankEnclosing :: Enclosing
 blankEnclosing = Enclosing
   { contents = Data.EnumSet.empty
   , capacity = Nothing
   }
 
+-- | `Taggable` instance for `Enclosing`.
+--
+-- See `Yaifl.Tag` for more information on the tagging system.
 instance Taggable Enclosing EnclosingTag

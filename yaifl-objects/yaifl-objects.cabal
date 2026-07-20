@@ -66,6 +66,8 @@ library
     Yaifl.Backdrop.Create
     Yaifl.Backdrop.Kind
     Yaifl.Backdrop.Query
+    Yaifl.Builder
+    Yaifl.Combinators
     Yaifl.Container.Create
     Yaifl.Container.Kind
     Yaifl.Container.Query

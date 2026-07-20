@@ -102,6 +102,7 @@ library
     Yaifl.TH
     Yaifl.Tag
     Yaifl.Text.AdaptiveNarrative
+    Yaifl.Text.DynamicText
     Yaifl.Text.Responses
     Yaifl.Text.SayQQ
     Yaifl.Text.SayableValue

@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 {-|
 Module      : Yaifl.Action
 Copyright   : (c) Avery 2022-2026
@@ -7,15 +5,6 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 
 Actions represent commands that players type or that NPCs execute, following the Inform7 action model.
-This module provides the foundation for Yaifl's interactive fiction command system.
-
-The action system includes:
-
-- `Action`: Core action type with comprehensive lifecycle phases (before/instead/check/carry out/report/after)
-- `ActionRulebook`: Specialized rulebooks for each action phase
-- `ParseArguments`: Argument parsing system equivalent to Inform7's "understand" grammar
-- `ActionPhrase`: Container for different action types (regular, interpreted, out-of-world)
-- Helper functions for creating and working with actions
 
 Actions follow the Inform7 lifecycle model:
 - Argument parsing and understanding
@@ -26,17 +15,9 @@ Actions follow the Inform7 lifecycle model:
 - Report rules (output generation)
 - After rules (cleanup and side effects)
 
-This modular approach enables:
-- Fine-grained control over action behavior
-- Reusable rule components across actions
-- Type-safe action definitions
-- Integration with Yaifl's effect system
-
-See also:
-- `Yaifl.Rulebook` for the underlying rulebook system
-- `Yaifl.Actions.Args` for argument handling
-- `Yaifl.Actions.GoesWith` for action signature patterns
 -}
+
+{-# LANGUAGE RecordWildCards #-}
 
 module Yaifl.Action
   ( -- * Core Types
@@ -100,29 +81,44 @@ newtype ParseArguments wm ia v = ParseArguments
   { runParseArguments :: forall es. (ParseArgumentEffects wm es, Refreshable wm v) => ia -> Eff es (ParseArgumentResult wm v)
   }
 
--- | An 'Action' is a command that the player types, or that an NPC chooses to execute.
--- Pretty much all of it is lifted directly from the Inform concept of an action,
--- except that set action variables is not a rulebook.
+-- | Core action definition.
 data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
   Action ::
     { name :: Text
+    -- ^ Human-readable action name
     , understandAs :: [Text]
+    -- ^ Alternative verbs that trigger this action
     , matches :: [(Text, ActionSignature)]
+    -- ^ Parameter patterns for parser matching
     , touchableNouns :: Args wm v -> [Thing wm]
+    -- ^ Objects referenceable by touch/proximity
     , responses :: resps -> Response wm (Args wm v)
+    -- ^ Response generation function
     , parseArguments :: ParseArguments wm (UnverifiedArgs wm goesWith) v
+    -- ^ Argument parsing logic
     , beforeRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Pre-execution setup and validation
     , insteadRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Alternative behaviors
     , checkRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Precondition checking
     , carryOutRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Main execution logic
     , reportRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Output generation
     , afterRules :: ActionRulebook wm (Action wm resps goesWith v) v
+    -- ^ Post-execution cleanup
     } -> Action wm resps goesWith v
   deriving stock (Generic)
 
--- | A wrapper around an `Action` that provides type-safe constraints.
--- Ensures the action's value type is refreshable, follows the goes-with pattern,
--- and is displayable before allowing construction.
+-- | Type-safe wrapper for `Action` values.
+--
+-- This GADT ensures that actions meet necessary constraints before they can be
+-- constructed and used. It serves as a type-safe container that guarantees:
+--
+-- - The action's variables type is `Refreshable`
+-- - The action follows the `goesWith` parameter pattern
+-- - The action's variables can be displayed (has `Display` instance) for debugging purposes
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
     (Refreshable wm v, GoesWith goesWith, Display v)
@@ -148,8 +144,7 @@ data ActionInterrupt = ContinueAction | StopAction
   deriving stock (Eq, Ord, Enum, Bounded, Generic, Read, Show)
 
 -- | A container that can hold different types of action-like operations.
--- Used to unify regular actions, interpreted actions, and out-of-world actions
--- in a single type for processing and dispatch.
+-- Used to unify regular actions, interpreted actions, and out-of-world actions.
 data ActionPhrase (wm :: WorldModel) =
   Interpret (InterpretAs wm)
   | RegularAction (WrappedAction wm)
@@ -179,6 +174,8 @@ withActionInterrupt' f = do
 actionName :: Lens' (Action wm resp goesWith v) Text
 actionName = #name
 
+-- | Create a basic `Action` with the given name.
+-- Initializes all fields with default values.
 makeAction ::
   Text
   -> Action wm resp goesWith v
@@ -198,8 +195,8 @@ makeAction n = Action
   , reportRules = makeActionRulebook ("report " <> n <> " rulebook") []
   }
 
--- | Helper function to make a rulebook of an action; since there are a lot of these for each action,
--- we ignore the span to avoid clutter and thread the arguments through.
+-- | Helper function to make a rulebook of an action.
+-- Ignores the span to avoid clutter and threads the arguments through.
 makeActionRulebook ::
   Text -- ^ the name of the rule.
   -> [Rule wm ((:>) (Reader (Action wm resps goesWith v))) (Args wm v) Bool] -- ^ the list of rules.
@@ -207,8 +204,7 @@ makeActionRulebook ::
 makeActionRulebook n = Rulebook n Nothing
 
 -- | Get a comma-separated string of all rule names from an action's rulebooks.
--- This includes rules from all action phases: before, instead, check, carry out, report, and after.
--- Primarily useful for debugging and introspection purposes.
+-- Includes rules from all action phases: before, instead, check, carry out, report, and after.
 getAllRules ::
   Action wm resp goesWith v
   -> Text

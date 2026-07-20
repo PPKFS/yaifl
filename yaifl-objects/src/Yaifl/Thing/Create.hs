@@ -1,66 +1,63 @@
+{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Thing.Create
-  ( makeItScenery
-  , addThing
-
+  ( addThing
+  , ThingConfig(..)
+  , newThing
   ) where
 
 import Yaifl.Prelude
 
-import Yaifl.Entity
-import Yaifl.Object.Kind
-import Yaifl.WorldModel
-
+import Yaifl.Builder
 import Yaifl.Effects.ObjectQuery
+import Yaifl.Entity
+import Yaifl.Object.Create
+import Yaifl.Object.Kind
 import Yaifl.Object.Query
 import Yaifl.Thing.Kind
-import Yaifl.Enclosing.Kind ( Enclosing )
+import Yaifl.WorldModel
 
-import Yaifl.Property.Has
-import Yaifl.Object.Create
+data ThingConfig wm p = ThingConfig
+  { description :: WMText wm
+  , specifics :: WMObjSpecifics wm
+  , initialAppearance :: WMText wm
+  , thingModify :: Eff '[State (Thing wm)] ()
+  , location :: Maybe EnclosingEntity
+  , objType :: ObjectKind
+  , thingData :: ThingData wm
+  } deriving stock (Generic)
+
+newThing :: forall wm. (Pointed (WMObjSpecifics wm), IsString (WMText wm), Pointed (WMThingData wm)) => ThingConfig wm 'Complete
+newThing = ThingConfig
+  { description = ""
+  , initialAppearance = ""
+  , thingModify = pass
+  , location = Nothing
+  , specifics = identityElement @(WMObjSpecifics wm)
+  , objType = ObjectKind "thing"
+  , thingData = blankThingData ""
+  }
 
 addThingInternal ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => WMText wm -- ^ Name.
-  -> WMText wm
   -> WMText wm -- ^ Description.
   -> ObjectKind -- ^ Type.
-  -> Maybe (WMObjSpecifics wm)
-  -> Maybe (ThingData wm)
+  -> WMObjSpecifics wm
+  -> ThingData wm
   -> Maybe EnclosingEntity
   -> Eff es ThingEntity
-addThingInternal name ia desc objtype specifics details mbLoc = do
-  t <- Thing <$> addObject (setThing . Thing) name desc objtype
-        True specifics (fromMaybe (blankThingData ia) details) mbLoc
+addThingInternal name desc objtype specifics details mbLoc = do
+  t <- Thing <$> addObject (setThing . Thing) name desc objtype True (Just specifics) details mbLoc
   pure (tagThingEntity t)
 
 addThing ::
   forall wm es.
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
-  => WMText wm -- ^ Name.
-  -> "initialAppearance" :? WMText wm
-  -> "description" :? WMText wm -- ^ Description.
-  -> "specifics" :? WMObjSpecifics wm
-  -> "modify" :? Eff '[State (Thing wm)] () -- ^ Build your own thing monad!
-  -> "location" :? EnclosingEntity
-  -> "type" :? ObjectKind
-  -> "thingData" :? ThingData wm
-  -> "portable" :? ThingPortable
+  AddObjects wm es
+  => WMText wm
+  -> ThingConfig wm 'Complete
   -> Eff es ThingEntity
-addThing n
-  (argDef #initialAppearance "" -> ia)
-  (argDef #description "" -> d)
-  (argF #specifics -> s)
-  (argF #modify -> stateUpdate)
-  (argF #location -> loc)
-  (argDef #type (ObjectKind "thing") -> ki)
-  (argDef #thingData (blankThingData ia) -> td)
-  (argF #portable -> p) = do
-    let td' = td & (#portable %~ maybe id const p)
-    t <- addThingInternal n ia d ki s (Just td') loc
-    whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyThing t (`runLocalState` su)
+addThing n ThingConfig{..} = do
+    let td' = thingData & #initialAppearance .~ initialAppearance
+    t <- addThingInternal n description objType specifics td' location
+    failHorriblyIfMissing $ modifyThing t (`runLocalState` thingModify)
     pure t
-
-makeItScenery :: Eff '[State (Thing wm)] ()
-makeItScenery = #objectData % #isScenery .= True

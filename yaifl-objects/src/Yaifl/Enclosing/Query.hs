@@ -27,7 +27,6 @@ import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.ObjectLike
 import Yaifl.Property.Query
-import Yaifl.Tag
 import Yaifl.Object.Query
 import qualified Data.EnumSet as ES
 import Yaifl.Property.Has
@@ -96,7 +95,7 @@ getContainingHierarchy ::
   => WMWithProperty wm MultiLocated
   => Thing wm
   -> Eff es (NonEmpty EnclosingEntity)
-getContainingHierarchy = head <$$> getContainingHierarchies
+getContainingHierarchy = head <<$>> getContainingHierarchies
 
 getEnclosingMaybe ::
   forall wm.

@@ -10,11 +10,8 @@ in contrast to actions which are executed by actors (players or NPCs).
 Key differences from actions:
 - Activities have no actor source or controller
 - Activities bypass action processing (visibility checks, etc.)
-- Activities are purely mechanical game logic
-- Both activities and actions support rule-level modularity for customization
 
 This module defines the activity system:
-
 - `Activity`: Core activity type with before/carry out/after phases
 - `ActivityRulebook`: Specialized rulebooks for activity phases
 - Activity lifecycle functions: `beginActivity`, `doActivity`, `endActivity`
@@ -24,23 +21,6 @@ The activity lifecycle includes:
 - Before phase: Setup and initialization
 - Carry out phase: Main execution (can be interrupted)
 - After phase: Cleanup and finalization
-
-Example use cases:
-- Printing room descriptions in darkness
-- Listing inventory contents
-- Generating locale descriptions
-- Other system-level text generation and behavior
-
-Activities support:
-- Type-safe variable management
-- Flexible result combination strategies
-- Rule-based customization without code changes
-- Integration with Yaifl's effect and rulebook systems
-
-See also:
-- `Yaifl.Rulebook` for the underlying rulebook system
-- `Yaifl.Rulebooks.Run` for rulebook execution
-- `Yaifl.Text.Responses` for response generation
 -}
 
 module Yaifl.Activity
@@ -97,23 +77,35 @@ type WithListingNondescriptItems wm = WithActivity "listingNondescriptItems" wm 
 type ActivityRulebook wm resps v re r = Rulebook wm ((:>) (Reader (Activity wm resps v re))) v r
 type ActivityRule wm resps v r = ActivityRule' wm resps v r r
 type ActivityRule' wm resps v re r = Rule wm ((:>) (Reader (Activity wm resps v re))) v r
--- | The core activity type representing mechanical game engine processes.
--- Activities have no actor source and bypass action processing, providing
--- purely mechanical game logic that can be customized via rules.
+-- | The core activity data type representing mechanical game processes.
+--
+-- An activity encapsulates a complete mechanical process that the game engine can execute.
+-- Unlike actions (which are performed by actors), activities are system-level operations.
+-- "look" would be an action the player carries out, whereas "printing the name of a room in the dark"
+-- would be an activity.
 data Activity wm resps v r = Activity
     { name :: Text
+    -- ^ Human-readable name of the activity
     , defaultOutcome :: Maybe r
+    -- ^ Default result if no rules produce a result
     , currentVariables :: Maybe v
+    -- ^ Current state variables (Nothing before execution)
     , responses :: resps -> Response wm v
+    -- ^ Function to generate responses from the response collection
     , beforeRules :: ActivityRulebook wm resps v r ()
+    -- ^ Rulebook for pre-execution setup and validation
     , carryOutRules :: ActivityRulebook wm resps v r r
+    -- ^ Rulebook for main execution logic
     , afterRules :: ActivityRulebook wm resps v r r
+    -- ^ Rulebook for post-execution cleanup
     , combineResults :: Maybe r -> Maybe r -> Maybe r
+    -- ^ Function to combine multiple rule results
     } deriving stock (Generic)
 
 makeFieldLabelsNoPrefix ''Activity
 
 -- | Lens for accessing the after-rules of an activity.
+-- This avoids ambiguity with the overloaded label between the after rules of an Activity and an Action.
 afterActivityRules :: Lens' (Activity wm resps v r) (ActivityRulebook wm resps v r r)
 afterActivityRules = #afterRules
 
@@ -137,15 +129,19 @@ makeActivity n rs = Activity n Nothing Nothing (const $ notImplementedResponse "
   const
 
 -- | Begin an activity by running its before rules and setting up variables.
+-- This function initiates an activity execution by:
+-- 1. Setting the activity's current variables
+-- 2. Running the before rules with the provided variables
+-- 3. Updating variables based on rule results
 beginActivity ::
   forall wm resps v r es.
   RuleEffects wm es
   => SayableValue (WMText wm) wm
   => Display v
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> v
-  -> Eff es v
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity in the activities record
+  -> v -- ^ Initial variables for the activity
+  -> Eff es v -- ^ Final variables state after running before rules
 beginActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "begin activity" (ac ^. #name) $ \aSpan ->
@@ -156,22 +152,24 @@ beginActivity acL c = do
         whenJust r $ \r' -> modify @(ActivityCollector wm) (#activityCollection % acL % #currentVariables ?~ fst r')
         pure $ maybe c fst r)
 
--- | Variant of `whenHandling` that doesn't take the activity variables.
+-- | Variant of `whenHandling` that doesn't take activity variables.
+-- This function starts an activity and executes it. If the activity
+-- completes without producing a result (returns Nothing), it then
+-- executes the provided action.
 whenHandling' ::
   RuleEffects wm es
   => SayableValue (WMText wm) wm
   => Display v
   => Display r
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> Eff es a
-  -> Eff es (Either a (Maybe r))
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity
+  -> Eff es a                     -- ^ Fallback action to execute if activity has no result
+  -> Eff es (Either a (Maybe r)) -- ^ Either the fallback result or activity result
 whenHandling' acF f = whenHandling acF (const f)
 
 -- | Execute an activity's carry-out rules with conditional fallback behavior.
 -- If the carry-out rules produce no result, executes the provided function.
 -- If the carry-out rules produce a result, returns that result without executing the function.
--- Manages activity variables and updates them based on rule execution.
 whenHandling ::
   forall wm resps v r a es.
   RuleEffects wm es
@@ -203,6 +201,10 @@ whenHandling acL f = do
           Just (_, Just x) -> pure (Right (Just x))
 
 -- | End an activity by running its after rules and cleaning up variables.
+-- This function finalizes an activity execution by:
+-- 1. Running the after rules with the current variables
+-- 2. Cleaning up the activity's current variables
+-- 3. Returning the final variables state
 endActivity ::
   forall wm resps v r es.
   HasCallStack
@@ -225,14 +227,20 @@ endActivity acF = do
             pure $ maybe (Just c) (Just . fst) r)
 
 -- | Execute a complete activity lifecycle: before, carry-out, and after phases.
+-- This function runs the full activity execution pipeline:
+-- 1. Sets up initial variables
+-- 2. Runs before rules (setup/validation)
+-- 3. Runs carry out rules (main execution)
+-- 4. Runs after rules (cleanup)
+-- 5. Cleans up variables and returns the final result
 doActivity ::
   forall wm resps r v es.
   (RuleEffects wm es, Display r, Display v)
   => SayableValue (WMText wm) wm
   => Refreshable wm v
-  => ActivityLens wm resps v r
-  -> v
-  -> Eff es (Maybe r)
+  => ActivityLens wm resps v r  -- ^ Lens to access the activity
+  -> v -- ^ Initial variables
+  -> Eff es (Maybe r) -- ^ Final result (Nothing if no result produced)
 doActivity acL c = do
   ac <- use @(ActivityCollector wm) (#activityCollection % acL)
   withSpan "activity" (ac ^. #name) $ \aSpan -> runReader ac (do

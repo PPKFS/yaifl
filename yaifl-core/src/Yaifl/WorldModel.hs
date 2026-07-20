@@ -4,22 +4,14 @@ Copyright   : (c) Avery 2022-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-The WorldModel system provides a type-level configuration mechanism that
-bundles all of Yaifl's type parameters into a single manageable type.
-This avoids the "parameter explosion" problem that would otherwise require
-passing many individual type parameters throughout the codebase.
+Type-level configuration mechanism bundling Yaifl's type parameters.
 
-This module defines:
+Provides:
+- `WorldModel`: Core configuration type
+- Type families for component access
+- Constraint synonyms for common requirements
 
-- `WorldModel`: Core configuration type containing all type parameters
-- Type families for accessing components (WMObjSpecifics, WMDirection, WMValues, etc.)
-- Constraint synonyms for common typeclass requirements (WMShow, WMRead, etc.)
-
-The WorldModel enables:
-- Centralized type configuration for games
-- Clean separation between type parameters and implementation
-- Extensible architecture through type families
-- Type-safe access to game components
+Enables centralized configuration, extensibility, and type-safe component access.
 -}
 
 module Yaifl.WorldModel (
@@ -46,10 +38,11 @@ module Yaifl.WorldModel (
 
 import Yaifl.Prelude
 
--- | All the various type parameters wrapped into a single type.
--- This allows us to tie the knot in some weird way - we need some way to refer
--- to sets of activities or actions or object types, but these then need to depend
--- on the fundamental types themselves.
+-- | The core configuration type that bundles all of Yaifl's type parameters.
+--
+-- This allows centralized type configuration and avoids parameter explosion.
+-- The type families enable type-safe access to game components while maintaining
+-- extensibility through the dependent types.
 data WorldModel =
   WorldModel
     { wmObjSpecifics :: Type
@@ -68,11 +61,11 @@ data WorldModel =
 type family WMObjSpecifics (wm :: WorldModel) :: Type where
   WMObjSpecifics ('WorldModel objSpec dir v td rd red a r re ac) = objSpec
 
--- | Directions, which is required to be a superset of `Yaifl.Direction.Kind`.
+-- | Direction types for spatial relationships.
 type family WMDirection (wm :: WorldModel) :: Type where
   WMDirection ('WorldModel objSpec dir v td rd red a r re ac) = dir
 
--- | Record of values passed around as a global state.
+-- | Global state values.
 type family WMValues (wm :: WorldModel) :: Type where
   WMValues ('WorldModel objSpec dir v td rd red a r re ac) = v
 
@@ -105,13 +98,17 @@ type family WMText (wm :: WorldModel) :: Type where
 type family WMActions (wm :: WorldModel) :: Type where
   WMActions ('WorldModel objSpec dir v td rd red a r re ac) = ac ('WorldModel objSpec dir v td rd red a r re ac)
 
+-- | Helper constraint for applying a constraint to core WorldModel components.
+--
+-- Applies constraint `c` to object specifics, values, and directions.
+-- Used to define the standard constraint synonyms below.
 type WMConstr (c :: Type -> Constraint) wm = (c (WMObjSpecifics wm), c (WMValues wm), c (WMDirection wm))
 
--- | Constraint that object specifics, values, and directions are Showable.
+
 type WMShow wm = WMConstr Show wm
--- | Constraint that object specifics, values, and directions are Readble.
+
 type WMRead wm = WMConstr Read wm
--- | Constraint that object specifics, values, and directions are Ordable.
+
 type WMOrd wm = WMConstr Ord wm
--- | Constraint that object specifics, values, and directions are Eqable.
+
 type WMEq wm = WMConstr Eq wm

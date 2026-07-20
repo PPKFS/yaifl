@@ -36,8 +36,7 @@ import Yaifl.Effects.Print
 -- * `sayTell`: Writes text to a Writer effect where it can be accumulated
 -- * `say`: Outputs text directly using the Print effect
 --
--- Implementations should provide at least `sayTell`. The default `say` implementation
--- uses `sayTell` and prints the result.
+-- Implementations should provide at least `sayTell`.
 class SayableValue s wm where
     -- | Output text to a Writer effect for accumulation.
   sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()

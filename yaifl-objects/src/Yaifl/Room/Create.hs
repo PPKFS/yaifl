@@ -2,6 +2,8 @@ module Yaifl.Room.Create
   ( addRoom
   , addRoom'
   , addRoomInternal
+  , RoomConfig(..)
+  , newRoom
 
   ) where
 
@@ -12,16 +14,25 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Object.Query
 import Yaifl.Room.Kind ( RoomData, blankRoomData, Room (..), tagRoomEntity, isVoid, updateFirstRoom )
-import Yaifl.Enclosing.Kind ( Enclosing )
 import Yaifl.WorldModel
 
-import Yaifl.Property.Has
 import Yaifl.Object.Create
 import Yaifl.Metadata (Metadata(..))
+import Yaifl.Builder
+
+data RoomConfig wm p = RoomConfig
+  { description :: WMText wm
+  , roomModify :: Eff '[State (Room wm)] ()
+  } deriving stock (Generic)
+
+newRoom :: IsString (WMText wm) => RoomConfig wm 'Complete
+newRoom = RoomConfig
+  { description = ""
+  , roomModify = pass
+  }
 
 addRoomInternal ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => WMText wm -- ^ Name.
   -> WMText wm -- ^ Description.
   -> ObjectKind -- ^ Type.
@@ -37,8 +48,7 @@ addRoomInternal name desc objtype specifics details stateUpdate = do
   return (tagRoomEntity e)
 
 addRoomInternal1 ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => WMText wm -- ^ Name.
   -> WMText wm -- ^ Description.
   -> Maybe (Eff '[State (Room wm)] v)
@@ -47,18 +57,14 @@ addRoomInternal1 n d rd = addRoomInternal n d (ObjectKind "room")
   Nothing Nothing (void <$> rd)
 
 addRoom ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => WMText wm -- ^ Name.
-  -> "description" :? WMText wm -- ^ Description.
-  -> "modify" :? Eff '[State (Room wm)] ()
+  -> RoomConfig wm 'Complete
   -> Eff es RoomEntity
-addRoom n (argDef #description "" -> d) (argF #modify -> rd) = addRoomInternal1 n d rd
+addRoom n config = addRoomInternal1 n (view #description config) (Just $ view #roomModify config)
 
 addRoom' ::
-  WMWithProperty wm Enclosing
-  => AddObjects wm es
+  AddObjects wm es
   => WMText wm -- ^ Name.
-  -> "description" :? WMText wm -- ^ Description.
   -> Eff es RoomEntity
-addRoom' n (argDef #description "" -> d) = addRoomInternal1 n d Nothing
+addRoom' n = addRoom n newRoom

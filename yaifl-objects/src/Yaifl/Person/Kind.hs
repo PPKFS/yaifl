@@ -38,7 +38,6 @@ import Yaifl.Property.Query
 import Yaifl.Enclosing.Kind
 import qualified Data.EnumSet as ES
 import qualified Data.Text.Lazy.Builder as TLB
-import Yaifl.Tag
 import Yaifl.Thing.Kind
 import Yaifl.Entity
 import Yaifl.Enclosing.Query

@@ -14,7 +14,6 @@ import Yaifl.Container.Kind
 import Yaifl.Enclosing.Kind
 import Yaifl.Property.Query
 import Yaifl.TH
-import Yaifl.Tag
 import Yaifl.Thing.Kind ( Thing )
 import Yaifl.Enclosing.Query
 

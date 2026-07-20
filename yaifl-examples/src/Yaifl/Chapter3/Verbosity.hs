@@ -34,8 +34,8 @@ tmrDesc = [wrappedText|Well, yes, you really shouldn't be in here. But the neare
 ex3World :: Game PlainWorldModel ()
 ex3World = do
     setTitle "Verbosity"
-    w <- addRoom' wmrwN  ! #description wmrwDesc
-    tmr <- addRoom' tmrN ! #description tmrDesc
+    w <- addRoom wmrwN $ newRoom & #description .~ wmrwDesc
+    tmr <- addRoom tmrN $ newRoom & #description .~ tmrDesc
     tmr `isWestOf` w
     pass
 

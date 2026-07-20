@@ -7,12 +7,6 @@ Maintainer  : ppkfs@outlook.com
 The RuleEffects system defines the core effect stack used throughout Yaifl for rule processing,
 providing access to all necessary game state and operations in a single constraint.
 
-This module defines:
-
-- `RuleEffects`: Core effect constraint bundling all required effects
-- Collector types for managing activities, responses, and actions
-- `ConcreteRuleStack`: Complete effect stack for rule execution
-
 The RuleEffects constraint includes:
 - Game metadata and state management
 - Input/output operations
@@ -58,11 +52,17 @@ newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMRespo
 -- | Wrapper around `WMActions wm` to avoid ambiguity in state operations.
 -- Without this newtype, `State (WMActions wm)` could be ambiguous depending on the
 -- WorldModel instantiation, as multiple components might have the same underlying type.
-newtype ActionCollector wm = ActionCollector { activityCollection :: WMActions wm }
+newtype ActionCollector wm = ActionCollector { actionCollection :: WMActions wm }
 
 makeFieldLabelsNoPrefix ''ActivityCollector
 makeFieldLabelsNoPrefix ''ResponseCollector
 
+-- | Core effect constraint for rule processing in Yaifl.
+--
+-- This type synonym bundles all the effects required for rule execution:
+-- game state management, I/O operations, activity/response collection,
+-- action handling, object querying, and error management.
+--
 type RuleEffects wm es = (
   State Metadata :> es
   , Input :> es
@@ -76,6 +76,10 @@ type RuleEffects wm es = (
   , ObjectQuery wm :> es
   )
 
+-- | Concrete effect stack implementation for rule execution.
+--
+-- This type provides a specific ordering of effects that satisfies the
+-- 'RuleEffects' constraint.
 type ConcreteRuleStack wm = '[
   ActionHandler wm
   , Input

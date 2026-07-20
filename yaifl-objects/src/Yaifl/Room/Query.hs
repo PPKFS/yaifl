@@ -32,7 +32,6 @@ import Yaifl.Room.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Thing.Kind
 import Yaifl.ObjectLike
-import Yaifl.Tag
 import Yaifl.Property.Has
 import Yaifl.Entity
 import Yaifl.Direction.Kind

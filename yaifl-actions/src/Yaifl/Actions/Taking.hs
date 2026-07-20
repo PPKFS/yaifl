@@ -14,7 +14,6 @@ import Yaifl.Metadata
 import Yaifl.Person.Kind
 import Yaifl.Person.Query
 import Yaifl.Property.Has
-import Yaifl.Tag
 import Yaifl.Text.Regarding
 import Yaifl.Preconditions
 import Yaifl.ActionOn

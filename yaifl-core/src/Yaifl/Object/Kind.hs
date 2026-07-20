@@ -4,15 +4,12 @@ Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-Game objects represent the fundamental building blocks of the game world,
-encompassing both things (portable objects) and rooms (environmental locations).
+Core game object system representing both portable things and environmental rooms.
 
-This module defines the core `Object` data structure and its supporting components:
-
-- `Object`: The primary data structure combining identification, naming, and kind-specific behaviour
-- `ObjectKind`: Classification system for object kinds (distinct from Haskell types)
-- `Timestamp`: Creation and modification tracking for objects
-- `Name*` types: Linguistic properties controlling article usage and pluralisation
+- `Object`: Primary data structure with identification, naming, and kind-specific behavior
+- `ObjectKind`: Flexible classification system for object roles/categories
+- `Timestamp`: Creation/modification tracking infrastructure
+- `Name*` types: Linguistic properties for proper article usage and pluralization
 - `IsObject`: Typeclass for thing/room classification
 -}
 
@@ -54,18 +51,14 @@ data NameProperness = Improper | Proper
 data NamePrivacy = PrivatelyNamed | PubliclyNamed
   deriving stock (Show, Eq, Ord, Bounded, Enum, Generic, Read)
 
--- | A classification type for game objects, representing their role or category in the game world.
--- ObjectKinds form a directed acyclic graph (see `Yaifl.Metadata.typeDAG`) where relationships
--- between types are explicitly defined rather than implied through inheritance or polymorphism.
+-- | Classification type for game objects representing their role or category.
 --
--- This design allows flexible classification: an object can be classified as a "supporter" without
--- requiring any specific data structure or behavioural implementation. The type system is purely
--- descriptive, enabling runtime type checking and hierarchical organisation without code coupling.
+-- Forms a DAG (see `Yaifl.Metadata.typeDAG`) allowing flexible classification without
+-- inheritance. Enables runtime type checking and hierarchical organization.
 --
--- Examples of object kinds include: "container", "supporter", "door", "person", "scenery".
+-- Examples: "container", "supporter", "door", "person", "scenery".
 --
--- The `ObjectKind` is a simple wrapper around `Text` for type safety and to enable specific
--- instances and operations related to the type system.
+-- Simple `Text` wrapper for type safety and kind-specific operations.
 newtype ObjectKind = ObjectKind
   { unObjectKind :: Text
   } deriving stock (Eq, Show)
@@ -75,10 +68,7 @@ newtype ObjectKind = ObjectKind
 -- Timestamps do not necessarily correspond to game turns, but rather to state update ticks.
 -- If an object's timestamp is older than the current game state, it indicates the object
 -- may be out of date and should be refreshed.
---
--- Currently implemented but not actively used in game logic, this field provides
--- infrastructure for potential future features such as object aging, undo functionality,
--- or temporal queries.
+-- Or it would, if it was ever implemented.
 newtype Timestamp = Timestamp
   { unTimestamp :: Int
   } deriving stock (Show, Read, Generic)
@@ -86,18 +76,18 @@ newtype Timestamp = Timestamp
 
 -- | A game object.
 data Object wm objData objSpecifics = Object
-  { name :: WMText wm
-  , pluralName :: Maybe (WMText wm)
-  , namePrivacy :: NamePrivacy
-  , indefiniteArticle :: Maybe (WMText wm)
-  , understandAs :: Set Text
-  , namePlurality :: NamePlurality
-  , nameProperness :: NameProperness
-  , description :: WMText wm
-  , objectId :: Entity
-  , objectType :: ObjectKind
-  , creationTime :: Timestamp
-  , modifiedTime :: Timestamp
+  { name :: WMText wm -- ^ Primary name of the object
+  , pluralName :: Maybe (WMText wm) -- ^ Optional plural form of the name
+  , namePrivacy :: NamePrivacy -- ^ Whether the name is publicly accessible to parser
+  , indefiniteArticle :: Maybe (WMText wm) -- ^ Optional indefinite article ("a", "an")
+  , understandAs :: Set Text -- ^ Alternative text representations for parsing
+  , namePlurality :: NamePlurality -- ^ Pluralization behavior (singular/plural)
+  , nameProperness :: NameProperness -- ^ Whether name is proper noun
+  , description :: WMText wm -- ^ Detailed description of the object
+  , objectId :: Entity -- ^ Unique identifier for the object
+  , objectType :: ObjectKind -- ^ Classification type of the object
+  , creationTime :: Timestamp -- ^ When the object was created
+  , modifiedTime :: Timestamp -- ^ When the object was last modified
   , specifics :: objSpecifics -- ^ Kind-specific data (e.g., door mechanics, container contents)
   , objectData :: objData -- ^ `ThingData`, `RoomData`, or `Either ThingData RoomData`.
   } deriving stock (Generic)
@@ -152,6 +142,9 @@ instance Bitraversable (Object wm) where
 class IsObject o where
   isThing :: o -> Bool
 
+-- | Check if an object is a room (negative entity ID).
+--
+-- Rooms have negative entity IDs while things have positive IDs.
 isRoom ::
   IsObject o
   => o

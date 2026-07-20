@@ -23,7 +23,6 @@ import Breadcrumbs
 import Yaifl.Move
 import Yaifl.Enclosing.Kind
 import qualified Data.Map as Map
-import Yaifl.Tag
 import Yaifl.ObjectLike
 import Yaifl.Openable.Kind
 import Yaifl.Effects.Print (runOnLookingParagraph)

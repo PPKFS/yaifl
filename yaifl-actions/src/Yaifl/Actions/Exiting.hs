@@ -5,7 +5,6 @@ import Yaifl.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Enclosing.Kind
 import Yaifl.Container.Kind
-import Yaifl.Tag
 import Yaifl.AnyObject
 import Yaifl.Metadata
 import Yaifl.Supporter.Kind

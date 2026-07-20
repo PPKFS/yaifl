@@ -73,7 +73,6 @@ library
     Yaifl.Locale
     Yaifl.Rulebooks.ActionProcessing
 
-    Yaifl.Text.DynamicText
     Yaifl.Text.ListWriter
     Yaifl.Text.ListWriter.AfterEntry
     Yaifl.Text.ListWriter.Parameters

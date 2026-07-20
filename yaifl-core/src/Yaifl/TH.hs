@@ -1,6 +1,6 @@
 {-|
 Module      : Yaifl.TH
-Copyright   : (c) Avery 2023-2025
+Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
@@ -33,6 +33,7 @@ import Yaifl.WorldModel
 import Yaifl.AnyObject
 import Yaifl.Prelude
 import Yaifl.Property.Query
+
 -- | The functions we *don't* want to autogenerate for a given property
 -- because we want to do something special with them (e.g. see `Yaifl.Enclosing.Kind`
 -- in `Yaifl.Object.Query` where @getEnclosingMaybe@ does something special with

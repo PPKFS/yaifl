@@ -1,15 +1,16 @@
 {-|
-Module: Yaifl.Actions.Args
-Description: Arguments handled by actions.
-Copyright: (c) Avery 2024-2025
-License: MIT
-Maintainer: Avery ppkfs@outlook.com
+Module      : Yaifl.Actions.Args
+Copyright   : (c) Avery 2024-2026
+License     : MIT
+Maintainer  : ppkfs@outlook.com
 
-This module implements a payload type for arguments to game actions that includes the source of the action -
-the object (usually the player, but can be an NPC or other AI) that attempted to performm the action as well as a timestamp
-and additional options such as whether the prompt icon (usually ">") should be printed.
+Action argument handling and configuration.
 
-All 'Yaifl.Action's implicitly use 'Args' as the rulebook variables, whereas plain rulebooks and activities may use any @v@.
+Provides:
+- `Args`: Standard action argument payload
+- `UnverifiedArgs`: Intermediate parsing stage
+- Typeclasses for main object extraction
+- Silent/normal action configuration
 -}
 
 {-# LANGUAGE RecordWildCards #-}
@@ -43,9 +44,9 @@ import Yaifl.WorldModel
 import Yaifl.Effects.ActionHandler
 import Yaifl.Room.Kind
 
--- | Arguments for a 'Yaifl.Action.Action' with variables of type @v@.
+-- | Standard action argument payload.
 data Args (wm :: WorldModel) v = Args
-  { source :: Thing wm -- ^ the originating entity that is performing the action.
+  { source :: Thing wm -- ^ the originating object that is performing the action.
   , variables :: v -- ^ the variables for the action.
   , actionOptions :: ActionOptions wm -- ^ specific configuration for this invokation of the action.
   , timestamp :: Timestamp -- ^ the timestamp when the action was initiated.
@@ -60,6 +61,9 @@ instance (Display v, Display (WMText wm)) => Display (Args wm v) where
     , displayBuilder variables
     ]
 
+-- | Refresh an `Args` value by refreshing its components.
+--
+-- Refreshes both source entity and variables to maintain valid references.
 instance {-# OVERLAPPING #-} Refreshable wm v => Refreshable wm (Args wm v) where
   refresh av = do
     v <- refresh (variables av)
@@ -84,19 +88,21 @@ makeFieldLabelsNoPrefix ''UnverifiedArgs
 instance Functor (Args wm) where
   fmap f = #variables %~ f
 
--- | Default configuration for silent actions - don't print the prompt, do the action silently.
+-- | Default configuration for silent actions (no output/prompts).
 silentAction :: ActionOptions wm
 silentAction = ActionOptions True True
 
--- | Default configuration for normal actions - print the prompt, do not suppress any responses.
+-- | Default configuration for normal actions (full output/feedback).
 normalAction :: ActionOptions wm
 normalAction = ActionOptions False False
 
--- | Do something as long as the action isn't silent.
+-- | Execute an action only if it's not silent.
+--
+-- Used for action printing that should be suppressed for silent actions.
 unlessSilent ::
   Applicative m
-  => Args wm v -- ^ Action arguments.
-  -> m () -- ^ Computation to do.
+  => Args wm v -- ^ Action arguments to check
+  -> m () -- ^ Computation to perform if not silent
   -> m ()
 unlessSilent args = unless (silently . actionOptions $ args)
 
@@ -119,9 +125,11 @@ instance ArgsHaveMainObject (Room wm) (Room wm) where
   argsMainObject = castOptic $ iso id id
 
 instance (ArgsHaveMainObject vars o) => ArgsHaveMainObject (Args wm vars) o where
+  -- | Delegate to variables' main object through the variables lens.
   argsMainObject = #variables % argsMainObject
 
 instance (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject (Args wm vars) o where
+  -- | Delegate to variables' main object (maybe) through the variables lens.
   argsMainObjectMaybe = #variables % argsMainObjectMaybe
 
 instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject vars o where

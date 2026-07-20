@@ -1,14 +1,14 @@
 {-|
 Module      : Yaifl.Entity
-Copyright   : (c) Avery 2022-2025
+Copyright   : (c) Avery 2022-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-An `Entity` is an object ID used to uniquely identify game objects. It is a simple wrapper around an `Int`,
-where positive IDs are implicitly used for `Yaifl.Thing.Kind.Thing`s and negative IDs for `Yaifl.Room.Kind.Room`s.
-Entities should only be generated via `Yaifl.Effects.ObjectQuery.generateEntity` to ensure global uniqueness.
+An `Entity` is a unique identifier for game objects, wrapping an `Int`.
+Positive IDs are for `Yaifl.Thing.Kind.Thing`s, negative for `Yaifl.Room.Kind.Room`s.
+Generate entities via `Yaifl.Effects.ObjectQuery.generateEntity` for global uniqueness.
 
-`Entity` can also serve as a key for `Yaifl.Store`, where it is treated as an opaque identifier.
+`Entity` can also serve as a key for `Yaifl.Store`, treated as an opaque identifier.
 For type-safe references, use `TaggedEntity` with phantom types (see `Yaifl.Tag`).
 -}
 
@@ -17,13 +17,14 @@ module Yaifl.Entity
     Entity(..)
   , HasEntity(..)
   -- ** TaggedEntity
-  -- | Entities tagged with a phantom type that allows for additional type-safety when making indirect references.
+  -- | Entities tagged with a phantom type for additional type-safety when making indirect references.
   , TaggedEntity(unTagEntity)
   , unsafeTagEntity
   -- ** Tags
-  -- | These phantom types are defined here because they are foundational and need to be forward-declared.
-  -- They are used to create type-safe references to core types like `Yaifl.Room.Kind.Room` and
-  -- `Yaifl.Thing.Kind.Thing`. The tagging machinery (e.g., `tagEntity`) is defined in `Yaifl.Tag`.
+  -- | Phantom types for type-safe references to core types.
+  -- `EnclosingTag` is forward-declared for the containment relation on `Thing`s.
+  -- `DoorTag` is forward-declared for the connection between `Room`s potentially having a door.
+  -- `PersonTag` is forward-declared to keep track of the current player.
   , ThingTag
   , ThingEntity
   , RoomTag
@@ -53,23 +54,17 @@ class HasEntity n where
 instance HasEntity Entity where
   getEntity = id
 
--- | `Display` instance for debugging and logging purposes. This instance is intended for internal use only
--- and should not be exposed to end users. The output format is @(ID: <number>)@, where @<number>@ is the
--- underlying `Int` value of the `Entity`.
+-- | `Display` instance for debugging. Format: @(ID: <number>)@.
 instance Display Entity where
   displayBuilder i = "(ID: " <> show i <> ")"
 
--- | An entity tagged with a phantom @tagEntity@ for keeping some semblance of type safety
--- when indirectly storing references to other objects. For tagging mechanisms, see `Yaifl.Tag`.
+-- | An entity tagged with a phantom type for type-safe references.
 newtype TaggedEntity tagEntity = TaggedEntity { unTagEntity :: Entity }
   deriving stock (Show, Generic)
   deriving newtype (Eq, Read, Bounded, Hashable, Enum, Ord)
 
--- | Tag an entity without a witness. This is unsafe and should only be used in controlled contexts
--- (e.g., testing, initialization, or legacy code), as it bypasses type safety checks and can lead to
--- runtime errors or undefined behavior if misused.
---
--- For type-safe tagging, use `Yaifl.Tag.tagEntity` with a proper witness.
+-- | Tag an entity without a witness. Unsafe; use only in controlled contexts.
+-- Prefer `Yaifl.Tag.tagEntity` for type-safe tagging.
 unsafeTagEntity ::
   Entity
   -> TaggedEntity tagEntity
@@ -77,12 +72,13 @@ unsafeTagEntity = TaggedEntity
 
 instance HasEntity (TaggedEntity t) where
   getEntity = unTagEntity
--- | Phantom type for tagging objects that can be treated as a thing (that have a `Yaifl.Thing.Kind.Thing` somewhere).
+
+-- | Phantom type for tagging objects that can be treated as a `Yaifl.Thing.Kind.Thing`.
 data ThingTag
 -- | For tagged things.
 type ThingEntity = TaggedEntity ThingTag
 
--- | Phantom type for tagging objects that can be treated as a room (that have a `Yaifl.Room.Kind.Room` somewhere).
+-- | Phantom type for tagging objects that can be treated as a `Yaifl.Room.Kind.Room`.
 data RoomTag
 -- | For tagged rooms.
 type RoomEntity = TaggedEntity RoomTag
