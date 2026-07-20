@@ -21,7 +21,6 @@ import qualified Data.EnumSet as ES
 import Yaifl.Text.ListWriter
 import Yaifl.Activities.ListingContents (WithListingContents)
 import Breadcrumbs (addAnnotation)
-import Yaifl.Tag
 import Yaifl.WorldModel
 import Yaifl.Property.Has
 import Yaifl.Text.Regarding

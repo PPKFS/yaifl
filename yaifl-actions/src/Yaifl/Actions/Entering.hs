@@ -6,7 +6,6 @@ import Yaifl.Prelude
 import Yaifl.Enclosing.Kind
 import Yaifl.Move
 import Yaifl.Container.Kind
-import Yaifl.Tag
 import Yaifl.Object.Query
 import Yaifl.AnyObject
 import Yaifl.Metadata

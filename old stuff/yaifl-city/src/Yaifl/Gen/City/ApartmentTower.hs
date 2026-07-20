@@ -71,7 +71,7 @@ constructApartmentBuildingFloor :: BuildingGeneration wm es
   => Int -> Eff es RoomEntity
 constructApartmentBuildingFloor floorNum = do
   addRoom ("Apartment Building, Floor " <> show floorNum <> "; Hallway")
-    ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
+    & #description .~ "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
     ! done
 
 constructFoyer ::
@@ -80,11 +80,11 @@ constructFoyer ::
   => Eff es RoomEntity
 constructFoyer = do
   f <- addRoom "Apartment building Foyer"
-    ! #description "The foyer of the apartment block is run-down and tired. At the far end of the slightly dark corridor is a staircase \
+    & #description .~ "The foyer of the apartment block is run-down and tired. At the far end of the slightly dark corridor is a staircase \
 \ leading upwards to the apartments. A dirty door to the west leads to what you assume is the receptionist's office."
     ! done
   o <- addRoom "Apartment building office"
-    ! #description "it's an office"
+    & #description .~ "it's an office"
     ! done
   addDoor "dirty wooden door"
     ! #front (o, West)
@@ -148,7 +148,7 @@ singleApartmentFloor = todo
 landing2Apartment :: BuildingGeneration wm es => ApartmentFloorPlan es (ApartmentTowerBase wm) (BuildingFloor wm)
 landing2Apartment (floorRegion, (floorNum, (building, foyer), prevFloors)) = do
   r1 <- addRoom (fromString $ toString $ (building ^. #name) <> ", Floor " <> show floorNum <> "; Hallway")
-    ! #description "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
+    & #description .~ "The hallway landing is threadbare, with a clearly worn trail across the carpet towards the two apartment doors."
     ! done
   let belowFloor = fromMaybe foyer (viaNonEmpty head prevFloors) ^. #exits % _1
   addDoor "staircase"
@@ -186,10 +186,10 @@ smallFoyer1Staircase (floorRegion, building) = do
   let wayOut = building ^. #entranceIsOnFace
   -- TODO: this should come in from the building inputs
   outside <- addRoom "Outside"
-    ! #description ("It's a little chilly in the winter air. To the " <> (show $ opposite $ building ^. #entranceIsOnFace) <> " is a big apartment tower.")
+    & #description .~ ("It's a little chilly in the winter air. To the " <> (show $ opposite $ building ^. #entranceIsOnFace) <> " is a big apartment tower.")
     ! done
   r1 <- addRoom (fromString $ toString $ (building ^. #name) <> ", Foyer")
-    ! #description "The foyer is small."--(foyerDescription @wm ! #size Small ! #wayOut wayOut ! #stairsUp (opposite wayOut) ! done)
+    & #description .~ "The foyer is small."--(foyerDescription @wm ! #size Small ! #wayOut wayOut ! #stairsUp (opposite wayOut) ! done)
     ! done
 
   -- TODO: this is annoying

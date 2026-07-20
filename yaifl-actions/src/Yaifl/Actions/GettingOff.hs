@@ -5,7 +5,6 @@ import Yaifl.Actions.Imports
 import Yaifl.Prelude
 import Yaifl.Thing.Kind ( thingContainedBy )
 import Yaifl.Enclosing.Kind
-import Yaifl.Tag ( getTaggedObject, tagObject )
 import Yaifl.Supporter.Kind
 import Yaifl.Move (move)
 import Yaifl.Object.Query

@@ -19,12 +19,9 @@ import Yaifl.Object.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
 import Yaifl.Enclosing.Query
-import Yaifl.Object.Query
 import Yaifl.Effects.RuleEffects
-import Yaifl.Tag
 import Yaifl.Visibility
 import Yaifl.Direction.Kind ( HasDirectionalTerms(..) )
-import Yaifl.Person.Kind
 import Yaifl.Rulebooks.ActionProcessing
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 import Yaifl.Text.ListWriter
