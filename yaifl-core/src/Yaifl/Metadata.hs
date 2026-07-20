@@ -7,17 +7,6 @@ Maintainer  : ppkfs@outlook.com
 General game-specific metadata including user settings, configuration, object type information,
 and construction phase helpers. This module serves as the central repository for game state
 that doesn't depend on the world model or dynamic game elements.
-
-This module defines:
-- `Metadata`: Core metadata record containing game configuration and state
-- `RoomDescriptions`: Configuration for room description verbosity
-- `CurrentStage`: Tracking of build-verify-run process stages
-- `AnalysisLevel`: Configuration for analysis and error checking depth
-- `WithMetadata`: Convenience type synonym for metadata-dependent effects
-- Error handling utilities for construction and runtime phases
-- Construction phase helpers and guards
-- Game object type querying and manipulation functions
-- Random number generation utilities
 -}
 
 module Yaifl.Metadata (

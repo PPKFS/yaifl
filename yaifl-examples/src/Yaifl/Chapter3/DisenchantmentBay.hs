@@ -4,18 +4,16 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Object.Create
-import Yaifl.Effects.Interpreters
-import Yaifl.Container.Kind
-import Yaifl.Openable.Kind
-import Yaifl.Supporter.Kind
-import Yaifl.Metadata
-import Yaifl.Test.Common
-import Yaifl.Object.Kind
-import Yaifl.Room.Create
+import Yaifl.Combinators
 import Yaifl.Container.Create
-import Yaifl.Supporter.Create
-import Yaifl.Thing.Create
+import Yaifl.Container.Kind
+import Yaifl.Effects.Interpreters
+import Yaifl.Metadata
+import Yaifl.Room.Create as R
+import Yaifl.Supporter.Create as S
+import Yaifl.Supporter.Kind
+import Yaifl.Test.Common
+import Yaifl.Thing.Create as T
 
 ex14 :: (Text, [Text], Game PlainWorldModel ())
 ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)
@@ -23,31 +21,28 @@ ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorl
 disenchantmentBayWorld :: Game PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
-  addRoom "The Cabin"
-    ! #description [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
+  addRoom "The Cabin" $ newRoom
+    & #description .~ [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
 a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
 vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the
 wall contains several fishing rods.
 
 Scratched windows offer a view of the surrounding bay, and there is a door south to the deck.
 A sign taped to one wall announces the menu of tours offered by the Yakutat Charter Boat Company.|]
-    ! done
 
-  gc <- addContainer "glass case"
-    ! #openable Openable
-    ! #opacity Transparent
-    ! #opened Closed
-    ! done
-  addThing "collection of fishing rods"
-    ! #location (inThe gc)
-    ! done
-  b <- addSupporter "bench"
-    ! #enterable Enterable
-    ! done
-  addThing "blue vinyl cushions"
-    ! #modify (#namePlurality .= PluralNamed)
-    ! #location (onThe b)
-    ! done
+  glassCase <- addContainer "glass case" $ newContainer
+    & makeItClosedAndOpenable
+    & makeItTransparent
+
+  addThing "collection of fishing rods" $ newThing
+    & placeIt (inThe glassCase)
+
+  bench <- addSupporter "bench" $ newSupporter
+    & makeItEnterable
+
+  addThing "blue vinyl cushions" $ newThing
+    & makeItPlural
+    & placeIt (onThe bench)
   pass
 
 disenchantmentBayTestMeWith :: [Text]

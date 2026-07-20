@@ -51,7 +51,6 @@ import Yaifl.Thing.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Property.Query( defaultPropertyGetter )
 import Yaifl.TH ( WMWithProperty, makeGetMaybe )
-import Yaifl.Tag
 import Yaifl.Openable.Kind
 import qualified Data.EnumSet as ES
 

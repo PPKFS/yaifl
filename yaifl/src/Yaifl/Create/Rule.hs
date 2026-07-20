@@ -1,7 +1,9 @@
 module Yaifl.Create.Rule
   ( before
+  , before'
   , after
   , insteadOf
+  , insteadOf'
   , afterActivity
   , afterPrintingTheNameOf
   , duringActivity
@@ -9,6 +11,7 @@ module Yaifl.Create.Rule
   , ActionOrActivity(..)
   , ActionPointer
   , tryAction
+  , tryActionWithThing
   , ParameterReference(..)
   --, doAction
   --, doAction
@@ -26,6 +29,7 @@ import Yaifl.ActionCollection (ActionCollection)
 import Yaifl.Rulebooks.ActionProcessing
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
+import Yaifl.Tag
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
@@ -42,6 +46,15 @@ before a precs t f = do
   let rule = makeRule t precs f
   a % #beforeRules %= addRuleLast rule
   pass
+
+before' ::
+  State (ActionCollection wm) :> es
+  => ActionPointer wm resps goesWith v
+  -> [Precondition wm (Args wm v)]
+  -> Text
+  -> (forall es'. (RuleEffects wm es') => Eff es' (Maybe Bool)) -- ^ Rule function.
+  -> Eff es ()
+before' a precs t f = before a precs t (const f)
 
 after ::
   State (ActionCollection wm) :> es
@@ -77,6 +90,13 @@ insteadOf a precs f = do
   let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
   a % #insteadRules %= addRuleLast rule
 
+insteadOf' ::
+  State (ActionCollection wm) :> es
+  => ActionPointer wm resps goesWith v
+  -> [Precondition wm (Args wm v)]
+  -> (forall es'. (RuleEffects wm es') => Eff es' a) -- ^ Rule function.
+  -> Eff es ()
+insteadOf' a precs f = insteadOf a precs (const f)
 data ParameterReference wm =
   TheDirection (WMDirection wm)
   | TheObject Entity
@@ -84,6 +104,14 @@ data ParameterReference wm =
   | TheConstant Text
   | TheList [ParameterReference wm]
   deriving stock ( Generic )
+
+tryActionWithThing :: RuleEffects wm es
+  => Taggable (TaggedEntity a) ThingTag
+  => Text
+  -> TaggedEntity a
+  -> Args wm v
+  -> Eff es Bool
+tryActionWithThing ac w = tryAction ac [TheThing . coerceTag $ w]
 
 toNamedActionParameter ::
   WithoutMissingObjects wm es

@@ -4,7 +4,6 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Object.Create
 import Yaifl.Effects.Interpreters
 import Yaifl.Metadata
 import Yaifl.Test.Common
@@ -19,11 +18,11 @@ ex19 = ("Laura", lauraTestMeWith, lauraWorld)
 lauraWorld :: Game PlainWorldModel ()
 lauraWorld = do
   setTitle "Laura"
-  addRoom "City of Angels" ! done
+  addRoom' "City of Angels"
 
   -- this one is made very easy because we don't have natural english problems
-  ip <- addThing "incriminating photograph of a woman with blonde hair" ! done
-  dr <- addThing "drawing" ! done
+  ip <- addThing "incriminating photograph of a woman with blonde hair" newThing
+  dr <- addThing "drawing" newThing
   -- Understand "eyes" or "brown eyes" as "[brown eyes]". Understand "man" or "man with [brown eyes]" or "brown-eyed man" as "[man]". Understand "[man]" or "drawing of [man]" or "drawing of a [man]" as the drawing.]
   dr `isUnderstoodAs` (do
     brownEyes <- ["eyes", "brown eyes"]

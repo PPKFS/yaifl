@@ -94,7 +94,7 @@ testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
                 wa <- get @(WorldActions wm)
                 unless (suffix == "") $ printLn suffix
                 --when I write a proper game loop, this is where it needs to go
-                failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBegins) ())
+                failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBeginsRulebook) ())
                 setInputBuffer actionsToDo
                 runTurnsFromBuffer
                 (w2 :: World wm) <- get

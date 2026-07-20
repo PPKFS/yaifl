@@ -1,55 +1,60 @@
+{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Container.Create
   ( addContainer
+  , ContainerConfig(..)
+  , newContainer
 
   ) where
 
 import Yaifl.Prelude
 
 import Yaifl.Entity
-import Yaifl.Object.Kind
 import Yaifl.Object.Create
 import Yaifl.Thing.Kind
 import Yaifl.Container.Kind
-import Yaifl.Enclosing.Kind ( Enclosing (..) )
-import Yaifl.Property.Has ( WMWithProperty )
 import Yaifl.Openable.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel
 import Yaifl.ObjectSpecifics
+import Yaifl.Builder
 import Yaifl.Thing.Create
+
+data ContainerConfig wm p = ContainerConfig
+  { description :: WMText wm
+  , initialAppearance :: WMText wm
+  , location :: Maybe EnclosingEntity
+  , thingModify :: Eff '[State (Thing wm)] ()
+  , opacity :: Opacity
+  , enterable :: Enterable
+  , openStatus :: (Opened, Openable)
+  , carryingCapacity :: Int
+  } deriving stock (Generic)
+
+newContainer :: IsString (WMText wm) => ContainerConfig wm 'Complete
+newContainer = ContainerConfig
+  { description = ""
+  , initialAppearance = ""
+  , thingModify = pass
+  , opacity = Opaque
+  , carryingCapacity = 100
+  , enterable = NotEnterable
+  , openStatus = (Open, NotOpenable)
+  , location = Nothing
+  }
 
 addContainer ::
   forall wm es.
-  WMHasObjSpecifics wm
-  => WMWithProperty wm Enclosing
-  => AddObjects wm es
-  => WMText wm -- ^ Name.
-  -> "initialAppearance" :? WMText wm
-  -> "description" :? WMText wm
-  -> "carryingCapacity" :? Int
-  -> "opacity" :? Opacity
-  -> "enterable" :? Enterable
-  -> "openable" :? Openable
-  -> "opened" :? Opened
-  -> "location" :? EnclosingEntity
-  -> "portable" :? ThingPortable
-  -> "modify" :? Eff '[State (Thing wm)] ()
+  AddObjects wm es
+  => WMText wm
+  -> ContainerConfig wm 'Complete
   -> Eff es ContainerEntity
-addContainer n ia d
-  (argF #carryingCapacity -> cc)
-  (argF #opacity -> op)
-  (argF #enterable -> e)
-  (argF #openable -> o)
-  (argF #opened -> od)
-  (argF #location -> l)
-  (argF #portable -> p)
-  (argF #modify -> m) = do
-    let cs = makeContainer cc op e o od
-    c <- addThing @wm n ia d
-        ! #specifics (inj (Proxy @wm) $ ContainerSpecifics cs)
-        ! #type (ObjectKind "container")
-        ! paramF #location l
-        ! paramF #portable p
-        ! paramF #modify m
-        ! done
+addContainer name ContainerConfig{..} = do
+    let cs = makeContainer (Just carryingCapacity) (Just opacity) (Just enterable) (Just $ snd openStatus) (Just $ fst openStatus)
+    c <- addThing name newThing
+          { description
+          , initialAppearance
+          , specifics = inj (Proxy @wm) $ ContainerSpecifics cs
+          , location
+          , thingModify
+          }
     pure $ tagEntity @Container @ContainerTag cs c

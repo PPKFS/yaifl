@@ -25,18 +25,17 @@ import Yaifl.Prelude hiding ( Reader, runReader )
 
 import Breadcrumbs
 import System.Random.Stateful
-import Yaifl.Action
-import Yaifl.Actions.Args
-import Yaifl.Actions.GoesWith
-import Yaifl.Activity
-import Yaifl.Effects.ObjectQuery
+import Yaifl.Action ( ActionPhrase(..), InterpretAs(..), OutOfWorldAction )
+import Yaifl.Actions.Args ( ActionOptions(ActionOptions) )
+import Yaifl.Actions.GoesWith ( ActionParameter(NoParameter) )
+import Yaifl.Activity ( Activity, blankActivity )
+import Yaifl.Effects.ObjectQuery ( ObjectQuery, MissingObject )
 import Yaifl.Entity
 import Yaifl.AnyObject
 import Yaifl.Room.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Metadata
 import Yaifl.Effects.RuleEffects
-import Yaifl.Rulebook
 import Yaifl.Store
 import Yaifl.WorldModel
 import Yaifl.Rulebooks.Accessibility
@@ -73,14 +72,14 @@ import Effectful.Provider.List
 import Yaifl.Properties
 import Yaifl.Effects.Input
 import Yaifl.Property.Has
-import Yaifl.Enclosing.Kind
 import Yaifl.Object.Create
-import Yaifl.Person.Create
+import Yaifl.Person.Create as P
 import Yaifl.Room.Create
 import Yaifl.Person.Kind
 import Yaifl.Rulebooks.Run
 import Yaifl.Object.Kind
 import Yaifl.MultiLocated.Kind
+import Yaifl.Combinators
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 
@@ -167,7 +166,7 @@ blankActions ::
   => WorldActions wm
 blankActions = WorldActions
   { actionsMap = DM.empty
-  , whenPlayBegins = whenPlayBeginsRules
+  , whenPlayBeginsRulebook = whenPlayBeginsRules
   , actionProcessing = actionProcessingRules
   , turnSequence = turnSequenceRules
   , everyTurnRules = everyTurnRulesImpl
@@ -218,15 +217,17 @@ newWorld = do
   addBaseActions
 
 addBaseObjects ::
+  forall wm es.
   AddObjects wm es
   => Eff es ()
 addBaseObjects = do
-  v <- addRoom "The Void" ! #description "If you're seeing this, you did something wrong." ! done
-  addPerson "yourself" ! #description "It's you, looking handsome as always" !
-    #gender NonBinary !
-    #modify (do
+  addRoom "The Void" $ newRoom & #description .~ "If you're seeing this, you did something wrong."
+  addPerson "yourself" $ newPerson NonBinary
+    & #description .~ "It's you, looking handsome as always"
+    & makeThingProperlyNamed
+    & #thingModify %~ (>> do
       #objectData % #described .= Undescribed
-      #nameProperness .= Proper) ! done
+      #nameProperness .= Proper)
   pass
 
 blankActivityCollection ::

@@ -4,12 +4,12 @@ import Yaifl.Prelude
 import Yaifl
 import Yaifl.Supporter.Kind
 import Yaifl.Container.Kind
-import Yaifl.Object.Create
 import Yaifl.Room.Create
 import Yaifl.Thing.Create
 import Yaifl.Supporter.Create
 import Yaifl.Room.Query
 import Yaifl.Container.Create
+import Yaifl.Combinators
 
 ex12 :: (Text, [Text], Game PlainWorldModel ())
 ex12 = ("Midsummer Day", midsummerDayTestMeWith, midsummerDayWorld)
@@ -17,19 +17,17 @@ ex12 = ("Midsummer Day", midsummerDayTestMeWith, midsummerDayWorld)
 midsummerDayWorld :: Game PlainWorldModel ()
 midsummerDayWorld = do
   setTitle "Midsummer Day"
-  ga <- addRoom "Garden" ! done
-  gz <- addRoom "Gazebo" ! done
+  ga <- addRoom' "Garden"
+  gz <- addRoom' "Gazebo"
   gz `isEastOf` ga
-  bt <- addSupporter "billiards table" ! done
-  tc <- addContainer "trophy cup"
-    ! #location (onThe bt)
-    ! done
-  addThing "starting pistol"
-    ! #location (inThe tc)
-    ! done
-  th <- addRoom "Treehouse" ! done
+  bt <- addSupporter "billiards table" newSupporter
+  tc <- addContainer "trophy cup" $ newContainer
+    & placeIt (onThe bt)
+  addThing "starting pistol" $ newThing
+    & placeIt (inThe tc)
+  th <- addRoom' "Treehouse"
   th `isAbove` ga
-  addContainer "cardboard box" ! done
+  addContainer "cardboard box" newContainer
   pass
 
 midsummerDayTestMeWith :: [Text]

@@ -11,7 +11,7 @@ import Yaifl.Container.Kind
 import Yaifl.Openable.Kind
 import Yaifl.Text.Say
 import Yaifl.Container.Create
-import Yaifl.Object.Create
+import Yaifl.Object.Kind
 import Yaifl.Room.Create
 import Yaifl.Thing.Create
 import Yaifl.Supporter.Create
@@ -20,6 +20,7 @@ import Yaifl.Create.Rule
 import Yaifl.Supporter.Query
 import Yaifl.Preconditions
 import Yaifl.Room.Query
+import Yaifl.Combinators
 
 ex13 :: (Text, [Text], Game PlainWorldModel ())
 ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
@@ -27,35 +28,32 @@ ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
 tamedWorld :: Game PlainWorldModel ()
 tamedWorld = do
   setTitle "Tamed"
-  tcr <- addRoom "Center Ring" ! done
+  tcr <- addRoom' "Center Ring"
 
-  tc <- addContainer "cage"
-    ! #enterable Enterable
-    ! #openable Openable
-    ! #opacity Transparent
-    ! #opened Closed
-    ! done
-  addThing "lion"
-    ! #location (inThe tc)
-    ! done
-  ped <- addSupporter "pedestal"
-    ! #enterable Enterable
-    ! done
+  tc <- addContainer "cage" $ newContainer
+    & makeItEnterable
+    & makeItClosedAndOpenable
+    & #opacity .~ Transparent
+
+  addThing "lion" $ newThing
+    & placeIt (inThe tc)
+
+  ped <- addSupporter "pedestal" $ newSupporter
+    & makeItEnterable
+
   p <- getPlayer
   p `isNowOn` ped
-  everyTurn "" [whenPlayerIsIn tc] $ do
+  everyTurn "check the lion rule" [whenPlayerIsIn tc] $ do
     r <- random @Bool
     if r then
       [saying|The lion eyes you with obvious discontent.|]
       else [saying|Though the lion does not move, you are aware that it is watching you closely.|]
-  _tmb <- addContainer "magician's booth"
-      ! #initialAppearance "Off to one side is a magician's booth, used in disappearing acts. The exterior is covered with painted gilt stars."
-      ! #enterable Enterable
-      ! #openable NotOpenable
-      ! #portable FixedInPlace
-      ! done
-  tsv <- addRoom "Starry Vastness"
-      ! done
+  addContainer "magician's booth" $ newContainer
+    & #initialAppearance .~ "Off to one side is a magician's booth, used in disappearing acts. The exterior is covered with painted gilt stars."
+    & makeItEnterable
+    & #openStatus % _2 .~ NotOpenable
+    & #thingModify %~ (>> (#objectData % #portable) .= FixedInPlace)
+  tsv <- addRoom' "Starry Vastness"
   tsv `isInsideFrom` tcr
   pass
 

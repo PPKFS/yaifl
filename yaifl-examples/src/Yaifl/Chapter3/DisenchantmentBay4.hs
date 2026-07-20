@@ -4,23 +4,18 @@ import Yaifl.Prelude
 
 import Yaifl (PlainWorldModel)
 
-import Yaifl.Object.Create
 import Yaifl.Effects.Interpreters
 import Yaifl.Container.Kind
-import Yaifl.Openable.Kind
 import Yaifl.Supporter.Kind
 import Yaifl.Metadata
 import Yaifl.Test.Common
-import Yaifl.Object.Kind
-import Yaifl.Effects.ObjectQuery (traverseRooms)
-import Yaifl.Tag
-import Yaifl.Room.Kind
-import qualified Data.List.NonEmpty as NE
+import Yaifl.Effects.ObjectQuery (allRooms)
 import Yaifl.Room.Create
 import Yaifl.Container.Create
 import Yaifl.Supporter.Create
 import Yaifl.Thing.Create
 import Yaifl.Backdrop.Create
+import Yaifl.Combinators
 
 ex18 :: (Text, [Text], Game PlainWorldModel ())
 ex18 = ("Disenchantment Bay 4", disenchantmentBayTestMeWith, disenchantmentBayWorld)
@@ -28,8 +23,8 @@ ex18 = ("Disenchantment Bay 4", disenchantmentBayTestMeWith, disenchantmentBayWo
 disenchantmentBayWorld :: Game PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
-  addRoom' "The Cabin" ! #description
-    [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
+  addRoom "The Cabin" $ newRoom
+    & #description .~ [wrappedText|The front of the small cabin is entirely occupied with navigational instruments,
 a radar display, and radios for calling back to shore. Along each side runs a bench with faded blue
 vinyl cushions, which can be lifted to reveal the storage space underneath. A glass case against the
 wall contains several fishing rods.
@@ -37,37 +32,35 @@ wall contains several fishing rods.
 Scratched windows offer a view of the surrounding bay, and there is a door south to the deck.
 A sign taped to one wall announces the menu of tours offered by the Yakutat Charter Boat Company.|]
 
-  gc <- addContainer "glass case"
-    ! #openable Openable
-    ! #opacity Transparent
-    ! #opened Closed
-    ! #modify makeItScenery
-    ! done
-  addThing "collection of fishing rods"
-    ! #location (inThe gc)
-    ! done
-  b <- addSupporter "bench"
-    ! #enterable Enterable
-    ! #modify makeItScenery
-    ! done
-  addThing "blue vinyl cushions"
-    ! #modify (makeItScenery >> #namePlurality .= PluralNamed)
-    ! #location (onThe b)
-    ! done
-  mapM_ (\(n, d) -> addThing n ! #description d ! #modify (makeItScenery >> #namePlurality .= PluralNamed) ! done)
+  glassCase <- addContainer "glass case" $ newContainer
+    & makeItClosedAndOpenable
+    & makeItTransparent
+    & makeItScenery
+
+  addThing "collection of fishing rods" $ newThing
+    & placeIt (inThe glassCase)
+
+  bench <- addSupporter "bench" $ newSupporter
+    & makeItEnterable
+    & makeItScenery
+
+  addThing "blue vinyl cushions" $ newThing
+    & makeItPlural
+    & placeIt (onThe bench)
+    & makeItScenery
+
+  mapM_ (\(n, d) -> addThing n $ newThing & #description .~ d & makeItPlural & makeItScenery)
     [ ("navigational instruments", "Knowing what they do is the Captain's job.")
     , ("scratched windows", "They're a bit the worse for wear, but you can still get an impressive view of the glacier through them. There were whales earlier, but they're gone now.")
     , ("radios", "With any luck you will not need to radio for help, but it is reassuring that these things are here.")
     ]
-  mapM_ (\(n, d) -> addThing n ! #description d ! #modify makeItScenery ! done)
+  mapM_ (\(n, d) -> addThing n $ newThing & #description .~ d & makeItScenery)
     [ ("sign", "You can get half-day and full-day sight-seeing tours, and half-day and full-day fishing trips.")
     , ("radar display", "Apparently necessary to avoid the larger icebergs.")
     ]
-  allRooms <- traverseRooms (const (return Nothing))
-  case allRooms of
-    [] -> error "impossible; traverseRooms is broken"
-    r:rs -> addBackdrop "view of the Malaspina glacier" ! #description "The Malaspina glacier covers much of the nearby slope, and -- beyond it -- an area as large as Rhode Island."
-              ! #locations (NE.map (coerceTag . tagRoomEntity) $ r :| rs) ! done
+  rs <- allRooms
+  addBackdrop "view of the Malaspina glacier" $ newBackdrop (backdropInRooms rs)
+    & #description .~ "The Malaspina glacier covers much of the nearby slope, and -- beyond it -- an area as large as Rhode Island."
 
   pass
 

@@ -15,7 +15,6 @@ import Yaifl.ObjectLike
 import Yaifl.Metadata
 import Yaifl.Enclosing.Query
 import Yaifl.Move
-import Yaifl.Tag
 import qualified Data.Set as S
 
 makeModify ''MultiLocated

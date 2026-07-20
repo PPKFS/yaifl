@@ -25,6 +25,9 @@ module Yaifl.Effects.ObjectQuery
   , traverseRegions_
   , traverseRegions
   , generateEntity
+
+  , allRooms
+  , allThings
   -- ** Type synonyms
   , WithoutMissingObjects
   , MissingObject(..)
@@ -60,6 +63,16 @@ data ObjectQuery (wm :: WorldModel) :: Effect where
 
 
 makeEffect ''ObjectQuery
+
+allRooms :: ObjectQuery wm :> es => Eff es (NonEmpty (Room wm))
+allRooms = traverseRooms (const (return Nothing)) <&> \case
+  [] -> error "somehow had no rooms at all to traverse"
+  (x:xs) -> x :| xs
+
+allThings :: ObjectQuery wm :> es => Eff es (NonEmpty (Thing wm))
+allThings = traverseThings (const (return Nothing)) <&> \case
+  [] -> error "somehow had no things at all to traverse"
+  (x:xs) -> x :| xs
 
 -- | Internal helper for object traversal that discards results.
 traverseObjects_ ::

@@ -2,7 +2,7 @@ module Yaifl.World
   ( World(..)
   , WorldStores(..)
   , addAction
-  , addWhenPlayBegins
+  , whenPlayBegins
   ) where
 
 import Yaifl.Prelude
@@ -46,11 +46,11 @@ data WorldStores (wm :: WorldModel) = WorldStores
 instance Has (World wm) MessageBuffer where
   buf = #messageBuffer
 
-addWhenPlayBegins ::
+whenPlayBegins ::
   State (WorldActions wm) :> es
   => Rule wm Unconstrained () Bool
   -> Eff es ()
-addWhenPlayBegins r = #whenPlayBegins %= addRuleLast r
+whenPlayBegins r = #whenPlayBeginsRulebook %= addRuleLast r
 
 -- | Add an action to the registry.
 addAction ::

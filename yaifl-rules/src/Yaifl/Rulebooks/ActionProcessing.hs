@@ -91,7 +91,7 @@ import Yaifl.Rulebooks.Run
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
-  , whenPlayBegins :: Rulebook wm Unconstrained () Bool
+  , whenPlayBeginsRulebook :: Rulebook wm Unconstrained () Bool
   , turnSequence :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
   , everyTurnRules :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
   , actionProcessing :: ActionProcessing wm
