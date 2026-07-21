@@ -60,6 +60,7 @@ module Yaifl.Rulebook
 
     -- * Constraint Utilities
   , Unconstrained
+  , Rule'
   ) where
 
 
@@ -107,6 +108,8 @@ data Rule wm (x :: [Effect] -> Constraint) v r = Rule
 -- parameter in `Rule` when no specific effect requirements are needed.
 class Unconstrained t
 instance Unconstrained t
+
+type Rule' wm v r = Rule wm Unconstrained v r
 
 -- | A helper for rules which are not implemented and therefore blank.
 notImplementedRule ::

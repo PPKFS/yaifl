@@ -5,6 +5,7 @@ module Yaifl.Create.Rule
   , insteadOf
   , insteadOf'
   , afterActivity
+  , afterActivity'
   , afterPrintingTheNameOf
   , duringActivity
   , everyTurn
@@ -79,6 +80,15 @@ afterActivity a precs t f = do
   let rule = makeRule t precs f
   #activityCollection % a % afterActivityRules %= addRuleLast rule
   pass
+
+afterActivity' ::
+  State (ActivityCollector wm) :> es
+  => ActivityLens wm resps v r
+  -> [Precondition wm v]
+  -> Text
+  -> (forall es'. (RuleEffects wm es') => Eff es' ()) -- ^ Rule function.
+  -> Eff es ()
+afterActivity' a precs t f = afterActivity a precs t (const $ f >> rulePass)
 
 insteadOf ::
   State (ActionCollection wm) :> es
