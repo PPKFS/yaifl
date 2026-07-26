@@ -146,13 +146,14 @@ foreachVisibilityHolder a e = do
     (sayResponse (RoomDescriptionHeadingC e) a)
 
 roomDescriptionBody ::
+  forall wm.
   HasLookingProperties wm
   => LookingRule wm
 roomDescriptionBody = makeRule "room description body rule" forPlayer'
     (\a@Args{variables=(LookingActionVariables _ lvls ac)} -> do
       let mbVisCeil = viaNonEmpty last lvls
-      roomDesc <- use @Metadata #roomDescriptions
-      dw <- use @Metadata #darknessWitnessed
+      roomDesc <- use @(Metadata wm) #roomDescriptions
+      dw <- use @(Metadata wm) #darknessWitnessed
       addTag "darkness witnessed" dw
       addTag "room descriptions" roomDesc
       let abbrev = roomDesc == AbbreviatedRoomDescriptions
@@ -199,6 +200,7 @@ aboutObjects = makeRule "room description paragraphs about objects rule" forPlay
       return Nothing)
 
 checkNewArrival ::
+  forall wm.
   HasLookingProperties wm
   => LookingRule wm
 checkNewArrival = makeRule "check new arrival rule" forPlayer'
@@ -208,7 +210,7 @@ checkNewArrival = makeRule "check new arrival rule" forPlayer'
         -- if in darkness:
         Nothing ->
           -- now the darkness witnessed is true;
-          modify @Metadata (#darknessWitnessed .~ True) >> rulePass
+          modify @(Metadata wm) (#darknessWitnessed .~ True) >> rulePass
         Just _ -> do
           -- if the location is a room, now the location is visited;
           -- except...a location is always a room.

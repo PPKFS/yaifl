@@ -32,6 +32,7 @@ newRoom = RoomConfig
   }
 
 addRoomInternal ::
+  forall wm es.
   AddObjects wm es
   => WMText wm -- ^ Name.
   -> WMText wm -- ^ Description.
@@ -42,7 +43,7 @@ addRoomInternal ::
   -> Eff es RoomEntity
 addRoomInternal name desc objtype specifics details stateUpdate = do
   e <- Room <$> addObject (setRoom . Room) name desc objtype False specifics (fromMaybe blankRoomData details) Nothing
-  md <- get @Metadata
+  md <- get @(Metadata wm)
   when (isVoid $ md ^. #firstRoom) (updateFirstRoom e)
   whenJust stateUpdate $ \su -> failHorriblyIfMissing $ modifyRoom e (`runLocalState` su)
   return (tagRoomEntity e)

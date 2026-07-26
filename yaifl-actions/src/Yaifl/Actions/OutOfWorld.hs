@@ -11,7 +11,7 @@ import Yaifl.Action
 import Yaifl.Text.Say
 
 changeRoomAbbreviations ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => RoomDescriptions
   -> Eff es Text
 changeRoomAbbreviations rd = do

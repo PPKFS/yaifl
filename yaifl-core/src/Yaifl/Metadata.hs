@@ -1,21 +1,22 @@
 {-|
-Module      : Yaifl.Metadata
+Module      : Yaifl.Metadata wm
 Copyright   : (c) Avery 2023-2026
 License     : MIT
 Maintainer  : ppkfs@outlook.com
 
-General game-specific metadata including user settings, configuration, object type information,
+General game-specific Metadata wm including user settings, configuration, object type information,
 and construction phase helpers. This module serves as the central repository for game state
 that doesn't depend on the world model or dynamic game elements.
 -}
 
 module Yaifl.Metadata (
-  -- * Metadata Types
+  -- * Metadata wm Types
   RoomDescriptions(..)
   , Timestamp(..)
   , CurrentStage(..)
   , AnalysisLevel(..)
-  -- * Metadata
+  -- * Metadata wm
+  , StatusBar(..)
   , Metadata(..)
   , WithMetadata
   -- * Error Handling
@@ -27,6 +28,8 @@ module Yaifl.Metadata (
   , whenConstructing
   , whenConstructingM
   , setTitle
+  , setLeftStatusBar
+  , setRightStatusBar
   , isRuntime
   -- * Querying
   , isPlayer
@@ -93,11 +96,16 @@ data CurrentStage = Construction | Verification | Runtime
 data AnalysisLevel = None | Low | Medium | High | Maximal
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
+data StatusBar = StatusBar
+  { leftStatusBar :: Text
+  , rightStatusBar :: Text
+  }deriving stock (Eq, Show, Read, Ord, Generic)
+
 -- | All the misc values about the game are stored here so we can carry it around. Notably, this does not include
 -- anything dynamic (actions, activities) or anything relying on the worldmodel (objects), which means this remains
 -- lightweight and simple.
 --
-data Metadata = Metadata
+data Metadata wm = Metadata
   { title :: Text -- ^ The title of the game.
   , roomDescriptions :: RoomDescriptions -- ^ See `RoomDescriptions`.
   , globalTime :: Timestamp -- ^ See `Timestamp`.
@@ -115,6 +123,7 @@ data Metadata = Metadata
   , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
   , rng :: StdGen
   , usePostPromptPbreak :: Bool -- ^ Whether to add paragraph breaks after prompts
+  , statusBar :: StatusBar
   -- more to come I guess
   } deriving stock (Generic)
 
@@ -122,9 +131,9 @@ makeFieldLabelsNoPrefix ''Metadata
 
 -- |
 -- This synonym combines the two most common effects for general monadic functions:
--- - `State Metadata`: Access to the metadata state
+-- - `State Metadata wm`: Access to the Metadata wm state
 -- - `Breadcrumbs`: Logging and annotation capabilities
-type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
+type WithMetadata wm es = (State (Metadata wm) :> es, Breadcrumbs :> es)
 
 -- | Record an error and continue execution.
 --
@@ -140,7 +149,7 @@ type WithMetadata es = (State Metadata :> es, Breadcrumbs :> es)
 -- This function is phase-agnostic and will record errors in all stages.
 -- For runtime-specific error handling, see `noteRuntimeError`.
 noteError ::
-  WithMetadata es
+  WithMetadata wm es
   => (Text -> a) -- ^ Recovery function (error message -> result)
   -> Text -- ^ Error message to record
   -> Eff es a
@@ -160,7 +169,7 @@ noteError f t = do
 -- - Error is logged via `Breadcrumbs`
 -- - Recovery value is computed and returned
 noteRuntimeError ::
-  WithMetadata es
+  WithMetadata wm es
   => (Text -> a) -- ^ Recovery function (error message -> result)
   -> Text -- ^ Error message to record
   -> Eff es a
@@ -172,26 +181,37 @@ noteRuntimeError f t = do
 
 -- | Retrieve the global timestamp.
 getGlobalTime ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Eff es Timestamp
 getGlobalTime = use #globalTime
 
 -- | Increase the global timestamp.
 tickGlobalTime ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Eff es ()
 tickGlobalTime = #globalTime %= (+1)
 
 -- | Modify the title of the game.
 setTitle ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Text -- ^ New title.
   -> Eff es ()
 setTitle = (#title .=)
 
+setLeftStatusBar ::
+  State (Metadata wm) :> es
+  => Text -- ^ New title.
+  -> Eff es ()
+setLeftStatusBar = (#statusBar % #leftStatusBar .=)
+
+setRightStatusBar ::
+  State (Metadata wm) :> es
+  => Text -- ^ New title.
+  -> Eff es ()
+setRightStatusBar = (#statusBar % #rightStatusBar .=)
 -- | Set whether to use paragraph breaks after prompts.
 setPostPromptSpacing ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Bool
   -> Eff es ()
 setPostPromptSpacing = (#usePostPromptPbreak .=)
@@ -200,13 +220,13 @@ setPostPromptSpacing = (#usePostPromptPbreak .=)
 -- for the sake of things which should be errors or ignored during construction
 -- but should loudly complain when actually playing the game.
 isRuntime ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Eff es Bool
 isRuntime = (Runtime ==) <$> use #currentStage
 
 -- | Run something only during construction, where the condition is monadic.
 whenConstructingM ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Eff es Bool
   -> Eff es ()
   -> Eff es ()
@@ -217,7 +237,7 @@ whenConstructingM cond =
 
 -- | Run something only during construction.
 whenConstructing ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Bool
   -> Eff es ()
   -> Eff es ()
@@ -229,7 +249,7 @@ whenConstructing cond =
 -- | A guard for construction or when the analysis level enabled is greater than the specified
 -- level.
 traceGuard ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => AnalysisLevel
   -> Eff es Bool
 traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
@@ -237,7 +257,7 @@ traceGuard lvl = ((lvl <=) <$> use #traceAnalysisLevel) ||^ (not <$> isRuntime)
 -- | If some object represents the current player.
 isPlayer ::
   HasEntity o
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => o
   -> Eff es Bool
 isPlayer o = (getEntity o ==) . getEntity <$> use #currentPlayer
@@ -245,7 +265,7 @@ isPlayer o = (getEntity o ==) . getEntity <$> use #currentPlayer
 -- | Execute an action only if the given entity is the current player.
 whenPlayer ::
   HasEntity o
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => o
   -> Eff es ()
   -> Eff es ()
@@ -254,7 +274,7 @@ whenPlayer o = whenM (isPlayer o)
 -- | Determine whether an object is of a certain type. This is separate to anything on Haskell's side
 -- and the type system.
 isKind ::
-  WithMetadata es
+  WithMetadata wm es
   => Is k A_Getter
   => LabelOptic' "objectType" k o ObjectKind
   => o -- ^ The object.
@@ -263,7 +283,7 @@ isKind ::
 isKind o = isKindInternal (o ^. #objectType)
   where
     isKindInternal ::
-      WithMetadata es
+      WithMetadata wm es
       => ObjectKind
       -> ObjectKind
       -> Eff es Bool
@@ -282,8 +302,8 @@ isKind o = isKindInternal (o ^. #objectType)
 -- | Map over all kinds of an object, including inherited kinds.
 -- Applies the given function to each kind's information and returns a set of results.
 mapKindsOf ::
-  forall es k o a.
-  WithMetadata es
+  forall wm es k o a.
+  WithMetadata wm es
   => Ord a
   => Is k A_Getter
   => LabelOptic' "objectType" k o ObjectKind
@@ -294,7 +314,7 @@ mapKindsOf o f = mapKindsInternal (o ^. #objectType)
   where
   mapKindsInternal :: ObjectKind -> Eff es (S.Set a)
   mapKindsInternal ty = do
-    td <- gets @Metadata $ preview (#kindDAG % at ty % _Just)
+    td <- gets @(Metadata wm) $ preview (#kindDAG % at ty % _Just)
     case td of
       Nothing -> noteError (const $ S.fromList []) ("Found no kind entry for " <> show ty)
       Just oki ->
@@ -304,7 +324,7 @@ mapKindsOf o f = mapKindsInternal (o ^. #objectType)
 
 -- | Add additional nouns that can be used to refer to objects of this kind.
 kindIsUnderstoodAs ::
-  WithMetadata es
+  WithMetadata wm es
   => ObjectKind
   -> [Text]
   -> Eff es ()
@@ -313,17 +333,17 @@ kindIsUnderstoodAs kind otherKinds =
 
 -- | Add additional plural nouns that can be used to refer to objects of this kind.
 kindPluralIsUnderstoodAs ::
-  WithMetadata es
+  WithMetadata wm es
   => ObjectKind
   -> [Text]
   -> Eff es ()
 kindPluralIsUnderstoodAs kind otherKinds =
   #kindDAG % at kind % _Just % #pluralUnderstandAs %= (otherKinds<>)
 
--- | Generate a random value within the specified range using the metadata RNG.
+-- | Generate a random value within the specified range using the Metadata wm RNG.
 randomR ::
   UniformRange a
-  => WithMetadata es
+  => WithMetadata wm es
   => (a, a)
   -> Eff es a
 randomR ran = do
@@ -332,10 +352,10 @@ randomR ran = do
   #rng .= rng2
   pure res
 
--- | Generate a random value using the metadata RNG.
+-- | Generate a random value using the Metadata wm RNG.
 random ::
   Uniform a
-  => WithMetadata es
+  => WithMetadata wm es
   => Eff es a
 random = do
   r <- use #rng

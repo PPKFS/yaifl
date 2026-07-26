@@ -43,7 +43,7 @@ import Yaifl.WorldModel
 getThingMaybe ::
   ObjectQuery wm :> es
   => Display (WMText wm)
-  => WithMetadata es
+  => WithMetadata wm es
   => ObjectLike wm o
   => o  -- ^ Object reference (entity, thing reference, etc.)
   -> Eff es (Maybe (Thing wm))  -- ^ Nothing if not found/wrong type, Just thing if found
@@ -59,14 +59,14 @@ getThingMaybe e = withoutMissingObjects (preview _Thing <$> getObject (getEntity
 getRoomMaybe ::
   ObjectQuery wm :> es
   => Display (WMText wm)
-  => WithMetadata es
+  => WithMetadata wm es
   => ObjectLike wm o
   => o  -- ^ Object reference (entity, room reference, etc.)
   -> Eff es (Maybe (Room wm))  -- ^ Nothing if not found/wrong type, Just room if found
 getRoomMaybe e = withoutMissingObjects (preview _Room <$> getObject (getEntity e)) (const $ pure Nothing)
 
 modifyObjectFrom ::
-  WithMetadata es
+  WithMetadata wm es
   => (o -> Eff es (Object wm any s))
   -> (Object wm any s -> Eff es ())
   -> o
@@ -134,11 +134,11 @@ anyModifyToRoom f t = fromMaybe t (preview _Room $ f (review _Room t))
 
 -- | Add terms to an object's understanding list.
 --
--- This function extends an object's metadata with additional terms that
+-- This function extends an object's Metadata wm with additional terms that
 -- the object can be understood or referred to as. This is used by the
 -- parser to recognize different ways players might refer to objects.
 --
--- The terms are added to the object's `understandAs` set in its metadata.
+-- The terms are added to the object's `understandAs` set in its Metadata wm.
 -- If a term is already present, it won't be duplicated.
 isUnderstoodAs ::
   WithoutMissingObjects wm es

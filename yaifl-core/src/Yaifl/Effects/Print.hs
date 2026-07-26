@@ -160,15 +160,17 @@ data Print :: Effect where
   GetBuffer :: Print m MessageBuffer
   PrintDoc :: Maybe MessageContext -> StyledDoc MessageAnnotation-> Print m ()
   SetStyle :: Maybe MessageAnnotation -> Print m ()
+  FlushBatch :: Print m ()
 
 -- | Message buffer that accumulates formatted messages before display.
 -- Tracks the current state of message formatting including style, context, and rule information.
 data MessageBuffer = MessageBuffer
   { buffer :: [StyledDoc MessageAnnotation] -- ^ Current messages held before flushing.
-  , lastMessageContext :: MessageContext -- ^ Metadata about the last printed message, used for paragraph breaks and line spacing.
+  , lastMessageContext :: MessageContext -- ^ Metadata wm about the last printed message, used for paragraph breaks and line spacing.
   , style :: Maybe MessageAnnotation -- ^ Current formatting style; 'Nothing' indicates plain text.
   , context :: [StyledDoc MessageAnnotation] -- ^ Possibly nested prefixes that appear before every message.
   , ruleContext :: Text -- ^ The currently executing rule that is generating messages.
+  , messageHistory :: [Text] -- ^ Fully rendered messages
   } deriving stock (Show, Generic)
 
 makeEffect ''Print
@@ -178,7 +180,7 @@ makeFieldLabelsNoPrefix ''MessageContext
 -- | Create an empty message buffer with default settings.
 -- Initializes with no messages, default context, no styling, and empty rule context.
 blankMessageBuffer :: MessageBuffer
-blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False False "") Nothing [] ""
+blankMessageBuffer = MessageBuffer [] (MessageContext "¬¬¬" False False False False "") Nothing [] "" []
 
 processDoc ::
   forall s es.
@@ -186,7 +188,7 @@ processDoc ::
   => StyledDoc MessageAnnotation
   -> Eff es (StyledDoc MessageAnnotation)
 processDoc msg = do
-  (MessageBuffer _ _ style cxt _) <- use @s buf
+  (MessageBuffer _ _ style cxt _ _) <- use @s buf
   -- if we have no context, we just monoid it.
   let joinOp = case cxt of
         [] -> (<>)
@@ -219,6 +221,9 @@ runPrintPure = interpret $ \_ -> \case
     modify (\s -> s & buf %~ f)
     use buf
   GetBuffer -> use buf
+  FlushBatch -> do
+    (msgList :: [StyledDoc MessageAnnotation]) <- gets (view $ buf % #buffer @(Lens' MessageBuffer [StyledDoc MessageAnnotation]) % reversed)
+    buf % #messageHistory @(Lens' MessageBuffer [Text]) %= (((mconcat . map show) msgList):)
 
 -- | Run a 'Print' effect with IO output.
 -- This interpreter prints messages directly to standard output using 'print'.
@@ -239,6 +244,7 @@ runPrintIO = interpret $ \_ -> \case
     modify (\s -> s & buf %~ f)
     use buf
   GetBuffer -> use buf
+  FlushBatch -> error ""
 
 -- | Get the context of the last printed message.
 -- Returns the 'MessageContext' which includes information about the rule that generated

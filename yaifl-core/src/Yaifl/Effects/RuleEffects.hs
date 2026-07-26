@@ -8,7 +8,7 @@ The RuleEffects system defines the core effect stack used throughout Yaifl for r
 providing access to all necessary game state and operations in a single constraint.
 
 The RuleEffects constraint includes:
-- Game metadata and state management
+- Game Metadata wm and state management
 - Input/output operations
 - Activity and response management
 - Action handling
@@ -40,12 +40,12 @@ import Yaifl.Effects.ActionHandler
 import Yaifl.Text.AdaptiveNarrative (AdaptiveNarrative)
 
 -- | Wrapper around `WMActivities wm` to avoid ambiguity in state operations.
--- Without this newtype, `State (WMActivities wm)` could be ambiguous depending on the
+-- Without this, `State (WMActivities wm)` could be ambiguous depending on the
 -- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ActivityCollector wm = ActivityCollector { activityCollection :: WMActivities wm }
 
 -- | Wrapper around `WMResponses wm` to avoid ambiguity in state operations.
--- Without this newtype, `State (WMResponses wm)` could be ambiguous depending on the
+-- Without this, `State (WMResponses wm)` could be ambiguous depending on the
 -- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMResponses wm }
 
@@ -57,14 +57,9 @@ newtype ActionCollector wm = ActionCollector { actionCollection :: WMActions wm 
 makeFieldLabelsNoPrefix ''ActivityCollector
 makeFieldLabelsNoPrefix ''ResponseCollector
 
--- | Core effect constraint for rule processing in Yaifl.
---
--- This type synonym bundles all the effects required for rule execution:
--- game state management, I/O operations, activity/response collection,
--- action handling, object querying, and error management.
---
+-- |  This type synonym bundles all the effects required for rule execution.
 type RuleEffects wm es = (
-  State Metadata :> es
+  State (Metadata wm) :> es
   , Input :> es
   , State (ActivityCollector wm) :> es
   , State (ResponseCollector wm) :> es
@@ -87,7 +82,7 @@ type ConcreteRuleStack wm = '[
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)
   , ObjectQuery wm
-  , State Metadata
+  , State (Metadata wm)
   , Print
   , Breadcrumbs
   , Error MissingObject

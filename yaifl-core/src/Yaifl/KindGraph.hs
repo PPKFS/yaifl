@@ -16,7 +16,7 @@ This module provides a directed acyclic graph (DAG) structure that:
 
 See also:
 - `Yaifl.Object.Kind` for the ObjectKind type definition
-- `Yaifl.Metadata` for the kind system usage in game logic
+- `Yaifl.Metadata wm` for the kind system usage in game logic
 -}
 
 module Yaifl.KindGraph
@@ -63,7 +63,7 @@ makeKindDAG = fromList
 
 -- | Runtime information about an object kind.
 --
--- This record stores metadata associated with each object kind that applies
+-- This record stores Metadata wm associated with each object kind that applies
 -- to ALL objects of that kind. This enables automatic understanding of objects
 -- without requiring manual configuration for each instance.
 --

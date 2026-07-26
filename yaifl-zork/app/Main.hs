@@ -21,25 +21,7 @@ import Yaifl.Thing.Create as T
 import Yaifl.Thing.Kind
 import qualified Data.Text as T
 import Yaifl.Create.Rule
-
-
-
-
-
-data ConstructionOptions wm = ConstructionOptions
-  { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
-  , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
-  }
-
-defaultOptions :: ConstructionOptions PlainWorldModel
-defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
-
-isBlankDescription ::
-  SayableValue (WMText wm) wm
-  => RuleEffects wm es
-  => Thing wm
-  -> Eff es Bool
-isBlankDescription d = T.null <$> sayText (d ^. #description)
+import Yaifl.Run
 
 scoreAndRankRule :: Rule' wm () r
 scoreAndRankRule = makeRule' "score and rank rule" $ rulePass
@@ -57,8 +39,8 @@ zorkWorld :: Game PlainWorldModel ()
 zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"
   whenPlayBegins $ makeRule' "set status line" $ do
-    setLeftHandStatusLine "[the player's surroundings] [if in darkness] [otherwise]   Score: [score]/[turn count][end if]"
-    setRightHandStatusLine ""
+    setLeftStatusBar "[the player's surroundings] [if in darkness] [otherwise]   Score: [score]/[turn count][end if]"
+    setRightStatusBar ""
     rulePass
 
   afterActivity' #printingTheBannerText [] "print the authors and copyright" $ do
@@ -85,46 +67,5 @@ Carry out requesting the score:
 
 main :: IO ()
 main = do
-  r <- testHarness "Zork" defaultOptions zorkWorld
+  r <- gameHarness "Zork" defaultOptions zorkWorld
   mapM_ putTextLn (lines r)
-
-testHarness ::
-  forall wm a.
-  HasStandardProperties wm
-  => WMHasObjSpecifics wm
-  => HasCallStack
-  => Text
-  -> ConstructionOptions wm
-  -> Game wm a
-  -> IO Text
-testHarness fullTitle conOptions initWorld = do
-  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
-      output <- withSpan' "test run" fullTitle $ do
-        withSpan' "worldbuilding" fullTitle $ do
-          newWorld
-          initWorld
-          -- this just moves the actions from the indexed, static, standard library collection
-          -- into the dynamic collection
-          -- we do it here because we need to copy over changes to actions and we can't modify WrappedActions directly
-          addStandardActions
-        --withSpan "world verification" fullTitle $ do
-        let runWorld suffix = do
-              withSpan' ("run " <> suffix) fullTitle $ do
-                wa <- get @(WorldActions wm)
-                unless (suffix == "") $ printLn suffix
-                --when I write a proper game loop, this is where it needs to go
-                failHorriblyIfMissing (runRulebook Nothing False (wa ^. #whenPlayBeginsRulebook) ())
-                setInputBuffer []
-                runTurnsFromBuffer
-                (w2 :: World wm) <- get
-                let (x, _) = runPureEff $ runStateShared w2 $ do
-                      -- take it down and flip it around
-                      msgList <- gets (view $ #messageBuffer % #buffer % reversed)
-                      return $ (mconcat . map show) msgList
-                pure $ case w2 ^. #metadata % #errorLog of
-                  [] -> x <> "\n"
-                  _ -> x <> "\n"
-                  -- xs -> x <> "\nEncountered the following errors:  \n" <> unlines (reverse xs)
-        runWorld ""
-      flush
-      pure output

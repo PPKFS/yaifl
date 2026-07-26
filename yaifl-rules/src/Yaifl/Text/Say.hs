@@ -122,7 +122,7 @@ withCapitalisation True t = tell $ t & _head  %~ toUpper
 
 conjugateVerb ::
   forall wm es.
-  State Metadata :> es
+  State (Metadata wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => VerbSense
   -> Verb

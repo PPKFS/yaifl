@@ -66,7 +66,7 @@ import Yaifl.Text.Responses
 import Yaifl.Refreshable
 import Yaifl.Effects.Print (printLn)
 
-type ParseArgumentEffects wm es = (WithMetadata es, WithoutMissingObjects wm es, RuleEffects wm es)
+type ParseArgumentEffects wm es = (WithMetadata wm es, WithoutMissingObjects wm es, RuleEffects wm es)
 
 -- | The result of attempting to parse action arguments.
 -- Represents success, failure, or conversion to a different action pattern.

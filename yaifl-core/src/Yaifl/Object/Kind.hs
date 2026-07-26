@@ -53,7 +53,7 @@ data NamePrivacy = PrivatelyNamed | PubliclyNamed
 
 -- | Classification type for game objects representing their role or category.
 --
--- Forms a DAG (see `Yaifl.Metadata.typeDAG`) allowing flexible classification without
+-- Forms a DAG (see `Yaifl.Metadata wm.typeDAG`) allowing flexible classification without
 -- inheritance. Enables runtime type checking and hierarchical organization.
 --
 -- Examples: "container", "supporter", "door", "person", "scenery".

@@ -126,7 +126,7 @@ type YaiflEffects (wm :: WorldModel) es =
     , Input :> es
     , State (ActionCollection wm) :> es
     , ObjectQuery wm :> es
-    , State Metadata :> es
+    , State (Metadata wm) :> es
     , State (WorldActions wm) :> es
     , Print :> es
     , State (World wm) :> es
@@ -183,7 +183,7 @@ blankStores = WorldStores
   , regions = emptyStore
   }
 
-blankMetadata :: Metadata
+blankMetadata :: Metadata wm
 blankMetadata = Metadata
   { title = "Untitled"
   , roomDescriptions = NoAbbreviatedRoomDescriptions
@@ -202,6 +202,7 @@ blankMetadata = Metadata
   , mentionedThings = S.empty
   , rng = mkStdGen 69
   , usePostPromptPbreak = True
+  , statusBar = StatusBar "" ""
   }
 
 newWorld ::
@@ -321,13 +322,14 @@ addOutOfWorld cs e = forM_ cs $ \c ->
   #actionsMap % at c ?= OtherAction e
 
 runTurnsFromBuffer ::
+  forall wm es.
   IOE :> es
   => RuleEffects wm es
   => SayableValue (WMText wm) wm
   => State (WorldActions wm) :> es
   => Eff es ()
 runTurnsFromBuffer = do
-  b <- use @Metadata #bufferedInput
+  b <- use @(Metadata wm) #bufferedInput
   unless (null b) $ runTurn >> runTurnsFromBuffer
 
 runTurn ::

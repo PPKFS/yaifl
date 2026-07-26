@@ -76,7 +76,7 @@ defaultPropertySetter e v = modifyObject (toAny e) (#specifics % propertyAT .~ v
 --
 -- Does nothing if the property doesn't exist.
 modifyProperty ::
-  WithMetadata es
+  WithMetadata wm es
   => CanBeAny wm o
   => (AnyObject wm -> Maybe p) -- ^ Getter function
   -> (AnyObject wm -> p -> Eff es ()) -- ^ Setter function

@@ -89,7 +89,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
     addAnnotation "object created"
     updWorld obj
     addAnnotation "object added to world"
-    lastRoomE <- use #previousRoom
+    lastRoomE <- use @(Metadata wm) #previousRoom
     tickGlobalTime
     do
       obj' <- getObject e
@@ -105,7 +105,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
                 (void . move t)
                 encLoc
         )
-        (\r -> #previousRoom .= tagRoomEntity r) obj'
+        (\r -> (#previousRoom :: Lens' (Metadata wm) (RoomEntity) )  .= tagRoomEntity r) obj'
     pure obj
 
 

@@ -19,7 +19,7 @@ See also:
 - `Yaifl.Object.Kind` for the base Object type
 - `Yaifl.Enclosing.Kind` for enclosing functionality
 - `Yaifl.Tag` for the tagging system used by `tagRoomEntity`
-- `Yaifl.Metadata` for game state management used by `updateFirstRoom`
+- `Yaifl.Metadata wm` for game state management used by `updateFirstRoom`
 -}
 
 module Yaifl.Room.Kind
@@ -192,10 +192,10 @@ isVoid ::
   -> Bool
 isVoid = (unTagEntity voidID ==) . getEntity
 
--- | Update the first room in metadata to the given room.
+-- | Update the first room in Metadata wm to the given room.
 -- This sets the default starting location for the player.
 updateFirstRoom ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Room wm
   -> Eff es ()
 updateFirstRoom e = #firstRoom .= tagRoomEntity e

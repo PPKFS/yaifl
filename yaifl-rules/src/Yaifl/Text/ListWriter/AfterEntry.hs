@@ -163,6 +163,7 @@ printBriefDetailsAbout locP thingWrittenAbout lit asCont = do
   when anythingAtAll $ sayTellResponse B thingWrittenAbout
 
 printFullDetailsAbout ::
+  forall wm es.
   Writer Text :> es
   => WithListWriting wm
   => Reader (ListWriting wm) :> es
@@ -188,7 +189,7 @@ printFullDetailsAbout thingWrittenAbout lit asCont = do
         -- open a parenthesis
         if alreadyPrinted
         then do
-          serialComma <- use @Metadata #oxfordCommaEnabled
+          serialComma <- use @(Metadata wm) #oxfordCommaEnabled
           when serialComma $ tell ","
           sayTellResponse C thingWrittenAbout
         else sayTellResponse A thingWrittenAbout

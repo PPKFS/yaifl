@@ -54,7 +54,7 @@ writeListR = do
     modify @(ListWritingVariables wm) (#lwp % #prefacingWithIsAre .~ False)
   --isAre is now off.
   forM_ (zip [1..] adjustedList) $ \(i, item) -> do
-    oxfordComma <- use @Metadata #oxfordCommaEnabled
+    oxfordComma <- use @(Metadata wm) #oxfordCommaEnabled
     case item of
       SingleObject obj -> singleClassGroup (i == 1) 1 (SingleObject obj)
       GroupedItems xs -> multiClassGroup xs

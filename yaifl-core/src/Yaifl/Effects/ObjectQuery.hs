@@ -116,7 +116,7 @@ data MissingObject = MissingObject
 -- Combines error handling with object query capabilities and required constraints.
 type WithoutMissingObjects wm es = (Error MissingObject :> es, ObjectQuery wm :> es
   -- I hate putting this in here but it makes everything such a mess otherwise :(
-  , Display (WMText wm), WithMetadata es)
+  , Display (WMText wm), WithMetadata wm es)
 
 -- | Execute an operation that may fail with missing objects, providing a recovery handler.
 --

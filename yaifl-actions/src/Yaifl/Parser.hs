@@ -48,7 +48,7 @@ type ActionHandlerConstraints es wm =
   , State (ActivityCollector wm) :> es
   , State (AdaptiveNarrative wm) :> es
   , State (ResponseCollector wm) :> es
-  , State Metadata :> es
+  , State (Metadata wm) :> es
   , State (WorldActions wm) :> es
   )
 
@@ -176,10 +176,11 @@ parseNouns _ wordsToMatch mbParameter command = runErrorNoCallStack $ failHorrib
       either throwError pure cmdArgs >>= \c -> pure (c, matchWords)
 
 addPostPromptSpacing ::
-  (Print :> es, State Metadata :> es)
+  forall wm es.
+  (Print :> es, State (Metadata wm) :> es)
   => Eff es ()
 addPostPromptSpacing = do
-  usePostPrompt <- use @Metadata #usePostPromptPbreak
+  usePostPrompt <- use @(Metadata wm) #usePostPromptPbreak
   void $ modifyBuffer (\b -> b & #lastMessageContext % (if usePostPrompt then #shouldPrintPbreak else #shouldPrintLinebreak) .~ True)
 
 printPrompt ::
@@ -309,7 +310,7 @@ findObjectsFrom t allItems considerAmbiguity = do
       phraseSet = S.fromList . map (T.intercalate " ") $ phraseTails
   -- the scores here are likelihood that it's matching as a singular or part of a plural
   scores <- zip allItems <$> mapM (scoreParserMatch phraseSet) allItems
-  threshold <- use @Metadata #parserMatchThreshold
+  threshold <- use @(Metadata wm) #parserMatchThreshold
   let singularMatches = sortOn ((1-) . fst . snd) $ filter ((> threshold) . fst . snd) scores
   let pluralMatches = sortOn ((1-) . snd . snd) $ filter ((> threshold) . snd . snd) scores
   case (singularMatches, pluralMatches) of

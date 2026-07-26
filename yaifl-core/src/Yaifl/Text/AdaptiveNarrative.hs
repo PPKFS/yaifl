@@ -90,7 +90,7 @@ getMentioned = use #priorNamedObject
 getMentionedRoom ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => Display (WMText wm)
   => ObjectQuery wm :> es
   => Breadcrumbs :> es
@@ -109,7 +109,7 @@ getMentionedRoom = do
 withRoom ::
   forall wm es a.
   State (AdaptiveNarrative wm) :> es
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => Display (WMText wm)
   => ObjectQuery wm :> es
   => Breadcrumbs :> es
@@ -127,7 +127,7 @@ getMentionedThing ::
   forall wm es.
   State (AdaptiveNarrative wm) :> es
   => HasCallStack
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => ObjectQuery wm :> es
   => Display (WMText wm)
   => Breadcrumbs :> es
@@ -147,7 +147,7 @@ withThing ::
   forall wm es a.
   HasCallStack
   => State (AdaptiveNarrative wm) :> es
-  => State Metadata :> es
+  => State (Metadata wm) :> es
   => Display (WMText wm)
   => ObjectQuery wm :> es
   => Breadcrumbs :> es
@@ -164,7 +164,7 @@ withThing f = do
 -- quantity > 1, uses third person plural. Otherwise, uses third person singular.
 getPersonageOfObject ::
   forall wm es.
-  State Metadata :> es
+  State (Metadata wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Eff es VerbPersonage
 getPersonageOfObject = do

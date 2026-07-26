@@ -68,3 +68,4 @@ library
   exposed-modules:
     Yaifl
     Yaifl.Create.Rule
+    Yaifl.Run

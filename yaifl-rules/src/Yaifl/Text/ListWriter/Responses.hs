@@ -22,7 +22,7 @@ newtype ListWriting wm = LW { responses :: ListWriterResponses -> Response wm (T
 data ListWriterResponses = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | Y
   deriving stock (Show, Eq, Ord, Enum, Generic, Bounded, Read)
 
-listWriterResponsesImpl :: ListWriterResponses -> Response wm (Thing wm)
+listWriterResponsesImpl :: forall wm. ListWriterResponses -> Response wm (Thing wm)
 listWriterResponsesImpl = \case
   A -> constResponse " ("
   B -> constResponse ")"
@@ -34,7 +34,7 @@ listWriterResponsesImpl = \case
   H -> constResponse "closed and providing light"
   I -> constResponse "empty and providing light"
   J -> Response $ const $ do
-    oc <- use @Metadata #oxfordCommaEnabled
+    oc <- use @(Metadata wm) #oxfordCommaEnabled
     [sayingTell|closed, empty{?if oc},{?end if}|]
   R -> Response $ \o -> do
     p <- objectIsKind "person" o

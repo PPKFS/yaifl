@@ -9,7 +9,7 @@ import Yaifl.Prelude
 
 import Yaifl.Entity ( Entity )
 import Yaifl.Store
-import Yaifl.Metadata ( Metadata )
+import Yaifl.Metadata ( Metadata(..) )
 import Yaifl.Effects.RuleEffects
 import Yaifl.Effects.Print ( Has(..), MessageBuffer )
 import Yaifl.WorldModel ( WMValues, WorldModel )
@@ -25,7 +25,7 @@ import Yaifl.Refreshable
 import Yaifl.Actions.GoesWith
 
 data World (wm :: WorldModel) = World
-  { metadata :: Metadata
+  { metadata :: Metadata wm
   , stores :: WorldStores wm
   , actions :: WorldActions wm
   , activities :: ActivityCollector wm

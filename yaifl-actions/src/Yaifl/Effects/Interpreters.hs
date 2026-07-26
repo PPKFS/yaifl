@@ -33,7 +33,7 @@ type EffStack (wm :: WorldModel) = '[
   , Input
   , State (ActionCollection wm)
   , ObjectQuery wm
-  , State Metadata
+  , State (Metadata wm)
   , State (WorldActions wm)
   , Print
   , State (World wm)
@@ -66,7 +66,7 @@ convertToIO ::
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => HasLookingProperties wm
   => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
-  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  -> (forall es b. IOE :> es => State (Metadata wm) :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm ++ '[IOE]) a
@@ -80,7 +80,7 @@ convertToUnderlyingStack ::
   -- => WithResponseSet wm An_Iso "listWriterResponses" (ListWriterResponses -> Response wm ())
   => HasLookingProperties wm
   => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
-  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  -> (forall es b. IOE :> es => State (Metadata wm) :> es => Eff (Input : es) b -> Eff es b)
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm ++ es') a
@@ -165,12 +165,14 @@ updateIt newObj mbExisting = case mbExisting of
   Nothing -> Just newObj
   Just _ -> Just newObj
 
+type PrintInterpreter wm = (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
+type InputInterpreter wm = (forall es b. IOE :> es => State (Metadata wm) :> es => Eff (Input : es) b -> Eff es b)
 runGame ::
   forall wm a.
   (Ord (WMDirection wm), Enum (WMDirection wm), Bounded (WMDirection wm), HasDirectionalTerms wm)
   => HasLookingProperties wm
-  => (forall es b. IOE :> es => State (World wm) :> es => Eff (Print : es) b -> Eff es b)
-  -> (forall es b. IOE :> es => State Metadata :> es => Eff (Input : es) b -> Eff es b)
+  => PrintInterpreter wm
+  -> InputInterpreter wm
   -> World wm
   -> ActionCollection wm
   -> Eff (EffStack wm ++ '[IOE]) a
@@ -183,7 +185,7 @@ runInputAsStdin ::
 runInputAsStdin = error "not implemented"
 
 runInputAsBuffer ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Eff (Input : es) a
   -> Eff es a
 runInputAsBuffer = interpret $ \_ -> \case
@@ -196,7 +198,7 @@ runInputAsBuffer = interpret $ \_ -> \case
         pure (Just x)
 
 setInputBuffer ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => [Text]
   -> Eff es ()
 setInputBuffer b = #bufferedInput .= b

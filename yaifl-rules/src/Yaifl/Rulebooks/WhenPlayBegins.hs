@@ -38,7 +38,7 @@ whenPlayBeginsRules = Rulebook
   }
 
 sayIntroText ::
-  State Metadata :> es
+  State (Metadata wm) :> es
   => Print  :> es
   => Eff es ()
 sayIntroText = do
