@@ -16,6 +16,7 @@ import Yaifl.Text.Say
 import Yaifl.Property.Has
 import Yaifl.MultiLocated.Kind
 import Yaifl.Visibility
+import Yaifl.Activities.PrintingTheBannerText (WithPrintingTheBannerText)
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
@@ -31,4 +32,5 @@ type HasStandardProperties s = (
   , HasDirectionalTerms s
   , Pointed (WMObjSpecifics s)
   , SayableValue (WMText s) s
+  , WithPrintingTheBannerText s
   )

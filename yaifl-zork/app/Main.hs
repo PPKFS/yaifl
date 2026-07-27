@@ -16,6 +16,7 @@ import Yaifl.Direction.Kind
 import Yaifl.Text.ResponseCollection (ResponseCollection)
 import Yaifl.Effects.RuleEffects
 import Yaifl.Zork.Scoring
+import Effectful.Writer.Static.Local (execWriter)
 
 
 defaultZorkOptions :: ConstructionOptions ZorkWorldModel
@@ -65,10 +66,10 @@ defaultZorkValues = ZorkData
 zorkWorld :: Game ZorkWorldModel ()
 zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"
-  #metadata % #score % #maxScore .= Just 350
+  scoring
   whenPlayBegins $ makeRule' "set status line" $ do
     setLeftStatusBar $ text "left status bar" $ do
-      surroundings <- getPlayerSurroundings
+      surroundings <- execWriter $ getPlayerSurroundings
       p <- getPlayer'
       notDarkness <- not <$> isInDarkness p
       score <- getScore
@@ -78,24 +79,10 @@ zorkWorld = do
     rulePass
 
   afterActivity' #printingTheBannerText [] "print the authors and copyright" $ do
-    printLn "Current"
-    printLn "Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson"
-    [saying|Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under MIT License.#{paragraphBreak}|]
+    printLn "Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson."
+    [saying|Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under the MIT License.#{paragraphBreak}|]
     [saying|Translated to Yaifl by Avery Garnett, based on the Inform 7 translation by John Escobedo.|]
 
-  afterActivity' #printingThePlayersObituary [] "score and rank" $ do
-    printLn ""
-    runRule scoreAndRankRule ()
-    pass
-
-{-
-Carry out requesting the score:
-	if the player-is-dead is true:
-		say "You're dead! How can you think of your score?";
-		stop the action;
-	follow the score and rank rule;
-	stop the action.
--}
   westOfHouse <- addRoom' "West of House"
   pass
 

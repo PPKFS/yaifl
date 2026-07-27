@@ -19,47 +19,27 @@ import Yaifl.Effects.Print
 import Yaifl.Room.Kind
 import Yaifl.Person.Query
 import Yaifl.Thing.Query
+import Yaifl.Activity
+import Yaifl.Activities.PrintingTheBannerText (WithPrintingTheBannerText)
 
 whenPlayBeginsName :: Text
 whenPlayBeginsName = "when play begins"
 
 -- | The rulebook that runs at the start of the game.
 whenPlayBeginsRules ::
-  WMWithProperty wm Enclosing
+  WithPrintingTheBannerText wm
+  => WMWithProperty wm Enclosing
   => Rulebook wm Unconstrained () Bool
 whenPlayBeginsRules = Rulebook
   { name = whenPlayBeginsName
   , defaultOutcome = Nothing
   , rules =
-      [ makeRule' "Display banner" $ sayIntroText >> rulePass
+      [ makeRule' "Display banner" $ doActivity #printingTheBannerText () >> rulePass
       , makeRule' "Position player in world" positionPlayer
       , makeRule' "Initial room description" initRoomDescription
       ]
   }
 
-sayIntroText ::
-  State (Metadata wm) :> es
-  => Print  :> es
-  => Eff es ()
-sayIntroText = do
-  setStyle (Just (colour (Colour 0xff147421) <> bold))
-  t <- use #title
-  printText $ introText t
-  setStyle Nothing
-  pass
-
-introText ::
-  Text
-  -> Text
-introText w = fold
-  [ longBorder <> "\n"
-  , shortBorder <> " " <> w <> " " <> shortBorder <> "\n"
-  , longBorder
-  ]
-  where
-    shortBorder = "-----"
-    longBorder = mconcat $ replicate
-      (2 * T.length shortBorder + T.length w + 2) "-"
 
 initRoomDescription ::
   RuleEffects wm es

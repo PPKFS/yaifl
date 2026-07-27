@@ -9,8 +9,8 @@ Maze2 is a dark room. The printed name of Maze2 is "Maze". "This is part of a ma
 Maze2 is in the Underground.
 South of Maze2 is Maze1. East of Maze2 is Maze3.
 Instead of going down in Maze2:
-	say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
-	move the player to Maze4.
+  say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
+  move the player to Maze4.
 Maze3 is a dark room. The printed name of Maze3 is "Maze". "This is part of a maze of twisty little passages, all alike."
 Maze3 is in the Underground.
 West of Maze3 is Maze2. North of Maze3 is Maze4. Up from Maze3 is Maze5.
@@ -26,30 +26,30 @@ East of Maze5 is Dead End 2. North of Maze5 is Maze3. Southwest of Maze5 is Maze
 The skeleton is scenery in Maze5.  Understand "bones" and "skeleton" and "body" as the skeleton.
 The description of the skeleton is "It's a skeleton, probably the remains of a luckless adventurer."
 Instead of taking the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of pushing the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of attacking the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of rubbing the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of raising the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of lowering the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of touching the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of kicking the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 Instead of kissing the skeleton:
-	skeleton-curse.
+  skeleton-curse.
 To skeleton-curse:
-	say "A ghost appears in the room and is appalled at your desecration of the remains of a fellow adventurer. He casts a curse on your valuables and banishes them to the Land of the Living Dead. The ghost leaves, muttering obscenities.";
-	repeat with item running through things carried by the player:
-		if the treasure-value of item is greater than 0:
-			now item is in Land of the Dead;
-	if in darkness:
-		say "[line break]It's pitch black in here!".
+  say "A ghost appears in the room and is appalled at your desecration of the remains of a fellow adventurer. He casts a curse on your valuables and banishes them to the Land of the Living Dead. The ghost leaves, muttering obscenities.";
+  repeat with item running through things carried by the player:
+    if the treasure-value of item is greater than 0:
+      now item is in Land of the Dead;
+  if in darkness:
+    say "[line break]It's pitch black in here!".
 The rusty knife is in Maze5. "Beside the skeleton is a rusty knife."
 Understand "knife" and "rusty" as the rusty knife.
 The rusty knife is a weapon.
@@ -76,8 +76,8 @@ Maze7 is a dark room. The printed name of Maze7 is "Maze". "This is part of a ma
 Maze7 is in the Underground.
 Up from Maze7 is Maze14. West of Maze7 is Maze6. East of Maze7 is Maze8. South of Maze7 is Maze15.
 Instead of going down in Maze7:
-	say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
-	move the player to Dead End 1.
+  say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
+  move the player to Dead End 1.
 Maze8 is a dark room. The printed name of Maze8 is "Maze". "This is part of a maze of twisty little passages, all alike."
 Maze8 is in the Underground.
 Northeast of Maze8 is Maze7. West of Maze8 is Maze8. Southeast of Maze8 is Dead End 3.
@@ -88,8 +88,8 @@ Maze9 is a dark room. The printed name of Maze9 is "Maze". "This is part of a ma
 Maze9 is in the Underground.
 North of Maze9 is Maze6. East of Maze9 is Maze10. South of Maze9 is Maze13. West of Maze9 is Maze12. Northwest of Maze9 is Maze9.
 Instead of going down in Maze9:
-	say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
-	move the player to Maze11.
+  say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
+  move the player to Maze11.
 Maze10 is a dark room. The printed name of Maze10 is "Maze". "This is part of a maze of twisty little passages, all alike."
 Maze10 is in the Underground.
 East of Maze10 is Maze9. West of Maze10 is Maze13. Up from Maze10 is Maze11.
@@ -104,29 +104,29 @@ The grate is a door. The grate is scenery. The grate is closed and openable and 
 Understand "grate" and "grating" as the grate.
 The grate is above Grating Room and below Grating Clearing.
 Instead of locking the grate with something when the grate is open:
-	say "You can[apostrophe]t lock an open grate."
+  say "You can[apostrophe]t lock an open grate."
 Instead of locking the grate with something when the player is in Grating Clearing:
-	say "You can[apostrophe]t lock it from this side."
+  say "You can[apostrophe]t lock it from this side."
 Instead of unlocking the grate with something when the player is in Grating Clearing:
-	say "You can[apostrophe]t reach the lock from here."
+  say "You can[apostrophe]t reach the lock from here."
 Instead of unlocking the grate with something when the second noun is not the skeleton key:
-	say "Can you unlock a grating with a [second noun]?"
+  say "Can you unlock a grating with a [second noun]?"
 Instead of inserting something into the grate when the grate is open and the player is in Grating Clearing:
-	if the noun is the coffin or the noun is the trunk of jewels:
-		say "It won[apostrophe]t fit through the grating.";
-	otherwise:
-		now the noun is in Grating Room;
-		say "The [noun] goes through the grating into the darkness below."
+  if the noun is the coffin or the noun is the trunk of jewels:
+    say "It won[apostrophe]t fit through the grating.";
+  otherwise:
+    now the noun is in Grating Room;
+    say "The [noun] goes through the grating into the darkness below."
 Instead of going up in Grating Room:
-	if the grate is not open:
-		say "The grating is closed." instead;
-	move the player to Grating Clearing.
+  if the grate is not open:
+    say "The grating is closed." instead;
+  move the player to Grating Clearing.
 Maze12 is a dark room. The printed name of Maze12 is "Maze". "This is part of a maze of twisty little passages, all alike."
 Maze12 is in the Underground.
 Southwest of Maze12 is Maze11. East of Maze12 is Maze13. Up from Maze12 is Maze9. North of Maze12 is Dead End 4.
 Instead of going down in Maze12:
-	say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
-	move the player to Maze5.
+  say "You won[apostrophe]t be able to get back up to the tunnel you are going through when it gets to the next room.";
+  move the player to Maze5.
 Dead End 4 is a dark room. The printed name of Dead End 4 is "Dead End". "You have come to a dead end in the maze."
 Dead End 4 is in the Underground.
 South of Dead End 4 is Maze12.

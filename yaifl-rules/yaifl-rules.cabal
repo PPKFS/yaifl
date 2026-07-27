@@ -67,6 +67,8 @@ library
     Yaifl.Activities.PrintingTheLocaleDescription
     Yaifl.Activities.PrintingRoomDescriptionDetails
     Yaifl.Activities.PrintingInventoryDetails
+    Yaifl.Activities.PrintingThePlayersObituary
+    Yaifl.Activities.PrintingTheBannerText
 
     Yaifl.Locale
     Yaifl.Rulebooks.ActionProcessing

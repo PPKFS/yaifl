@@ -19,31 +19,31 @@ The description of the mirror-two is "[if the mirror-mung is true]The mirror is 
 Mirror-rubbing it with is an action applying to two things. Understand "rub [something] with [something]" and "touch [something] with [something]" as mirror-rubbing it with.
 Carry out mirror-rubbing it with: say "That doesn[apostrophe]t seem to do anything."
 Instead of mirror-rubbing the mirror-one with something when the mirror-mung is false:
-	say "You feel a faint tingling transmitted through the [second noun]."
+  say "You feel a faint tingling transmitted through the [second noun]."
 Instead of mirror-rubbing the mirror-two with something when the mirror-mung is false:
-	say "You feel a faint tingling transmitted through the [second noun]."
+  say "You feel a faint tingling transmitted through the [second noun]."
 Instead of rubbing the mirror-one:
-	say "There is a rumble from deep within the earth and the room shakes.";
-	move the player to Mirror Room 2, without printing a room description.
+  say "There is a rumble from deep within the earth and the room shakes.";
+  move the player to Mirror Room 2, without printing a room description.
 Instead of rubbing the mirror-two:
-	say "There is a rumble from deep within the earth and the room shakes.";
-	move the player to Mirror Room 1, without printing a room description.
+  say "There is a rumble from deep within the earth and the room shakes.";
+  move the player to Mirror Room 1, without printing a room description.
 Instead of taking the mirror-one: say "The mirror is many times your size. Give up."
 Instead of taking the mirror-two: say "The mirror is many times your size. Give up."
 Instead of attacking the mirror-one:
-	if the mirror-mung is true:
-		say "Haven't you done enough damage already?";
-	otherwise:
-		say "You have broken the mirror. I hope you have a seven years['] supply of good luck handy.";
-		now the mirror-mung is true;
-		now the lucky-flag is false.
+  if the mirror-mung is true:
+    say "Haven't you done enough damage already?";
+  otherwise:
+    say "You have broken the mirror. I hope you have a seven years['] supply of good luck handy.";
+    now the mirror-mung is true;
+    now the lucky-flag is false.
 Instead of attacking the mirror-two:
-	if the mirror-mung is true:
-		say "Haven't you done enough damage already?";
-	otherwise:
-		say "You have broken the mirror. I hope you have a seven years['] supply of good luck handy.";
-		now the mirror-mung is true;
-		now the lucky-flag is false.
+  if the mirror-mung is true:
+    say "Haven't you done enough damage already?";
+  otherwise:
+    say "You have broken the mirror. I hope you have a seven years['] supply of good luck handy.";
+    now the mirror-mung is true;
+    now the lucky-flag is false.
 Small Cave is a dark room. The printed name of Small Cave is "Cave". "This is a tiny cave with entrances west and north, and a staircase leading down."
 Small Cave is in the Underground.
 North of Small Cave is Mirror Room 1. Down from Small Cave is Atlantis Room. South of Small Cave is Atlantis Room. West of Small Cave is Twisting Passage.
@@ -51,11 +51,11 @@ Tiny Cave is a dark room. The printed name of Tiny Cave is "Cave". "This is a ti
 Tiny Cave is in the Underground.
 North of Tiny Cave is Mirror Room 2. West of Tiny Cave is Winding-Passage. Down from Tiny Cave is Entrance to Hades.
 Every turn when the player is in Tiny Cave and the location of the pair of candles is Tiny Cave and the pair of candles is lit (this is the drafty cave candle rule):
-	if a random chance of 50 in 100 succeeds:
-		now the pair of candles is not lit;
-		say "A gust of wind blows out your candles![line break]";
-		if in darkness:
-			say "It is now completely dark.[line break]".
+  if a random chance of 50 in 100 succeeds:
+    now the pair of candles is not lit;
+    say "A gust of wind blows out your candles![line break]";
+    if in darkness:
+      say "It is now completely dark.[line break]".
 Cold Passage is a dark room. "This is a cold and damp corridor where a long east-west passageway turns into a southward path."
 Cold Passage is in the Underground.
 South of Cold Passage is Mirror Room 1. West of Cold Passage is Slide Room.

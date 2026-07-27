@@ -80,6 +80,8 @@ import Yaifl.Rulebooks.Run
 import Yaifl.Object.Kind
 import Yaifl.MultiLocated.Kind
 import Yaifl.Combinators
+import Yaifl.Activities.PrintingTheBannerText (printingTheBannerTextImpl)
+import Yaifl.Activities.PrintingThePlayersObituary (printingThePlayersObituaryImpl)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 
@@ -102,6 +104,8 @@ data ActivityCollection wm = ActivityCollection
   , printingNameOfADarkRoom :: Activity wm () () ()
   , printingRoomDescriptionDetails :: Activity wm () (Thing wm) ()
   , printingInventoryDetails :: Activity wm () (Thing wm) ()
+  , printingThePlayersObituary :: Activity wm () () ()
+  , printingTheBannerText :: Activity wm () () ()
   -- TODO https://ganelson.github.io/inform/standard_rules/S-act.html#SP15
 {-
 
@@ -249,6 +253,8 @@ blankActivityCollection = ActivityCollection
   , printingANumberOf = blankActivity "printing a number of"
   , printingInventoryDetails = blankActivity "printing inventory details of"
   , printingRoomDescriptionDetails = printingRoomDescriptionDetailsImpl
+  , printingThePlayersObituary = printingThePlayersObituaryImpl
+  , printingTheBannerText = printingTheBannerTextImpl
   }
 
 blankWorld ::

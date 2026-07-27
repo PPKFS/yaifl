@@ -320,7 +320,9 @@ printLn ::
   Print :> es
   => Text -- ^ Message.
   -> Eff es ()
-printLn a = printText (a <> "\n")
+printLn a = do
+  printText a
+  printText "\n"
 
 -- | Conditionally Print @message@.
 printIf ::
