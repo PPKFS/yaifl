@@ -15,8 +15,9 @@ module Yaifl.Metadata (
   , Timestamp(..)
   , CurrentStage(..)
   , AnalysisLevel(..)
-  -- * Metadata wm
+  -- * Metadata
   , StatusBar(..)
+  , Score(..)
   , Metadata(..)
   , WithMetadata
   -- * Error Handling
@@ -30,10 +31,12 @@ module Yaifl.Metadata (
   , setTitle
   , setLeftStatusBar
   , setRightStatusBar
+  , getScore
   , isRuntime
   -- * Querying
   , isPlayer
   , whenPlayer
+  , getTurnCount
   -- ** Timestamps
   , getGlobalTime
   , tickGlobalTime
@@ -56,7 +59,7 @@ import Yaifl.Object.Kind
 import Yaifl.KindGraph
 import qualified Data.Set as S
 import System.Random ( StdGen, UniformRange, uniformR, Uniform, uniform )
-
+import Yaifl.WorldModel
 -- | Room description verbosity configuration.
 --
 -- Controls how room descriptions are printed to the player, affecting the balance
@@ -96,14 +99,17 @@ data CurrentStage = Construction | Verification | Runtime
 data AnalysisLevel = None | Low | Medium | High | Maximal
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
-data StatusBar = StatusBar
-  { leftStatusBar :: Text
-  , rightStatusBar :: Text
-  }deriving stock (Eq, Show, Read, Ord, Generic)
+data StatusBar wm = StatusBar
+  { leftStatusBar :: WMText wm
+  , rightStatusBar :: WMText wm
+  } deriving stock (Generic)
 
+data Score = Score
+  { currentScore :: Int
+  , maxScore :: Maybe Int
+  } deriving stock (Eq, Show, Read, Ord, Generic)
 -- | All the misc values about the game are stored here so we can carry it around. Notably, this does not include
--- anything dynamic (actions, activities) or anything relying on the worldmodel (objects), which means this remains
--- lightweight and simple.
+-- anything dynamic (actions, activities) which means this remains lightweight and simple.
 --
 data Metadata wm = Metadata
   { title :: Text -- ^ The title of the game.
@@ -123,7 +129,9 @@ data Metadata wm = Metadata
   , mentionedThings :: S.Set (TaggedEntity ThingTag) -- ^ All the things we've talked about in the last looking action.
   , rng :: StdGen
   , usePostPromptPbreak :: Bool -- ^ Whether to add paragraph breaks after prompts
-  , statusBar :: StatusBar
+  , statusBar :: StatusBar wm
+  , score :: Score
+  , turnCount :: Int
   -- more to come I guess
   } deriving stock (Generic)
 
@@ -200,13 +208,13 @@ setTitle = (#title .=)
 
 setLeftStatusBar ::
   State (Metadata wm) :> es
-  => Text -- ^ New title.
+  => WMText wm
   -> Eff es ()
 setLeftStatusBar = (#statusBar % #leftStatusBar .=)
 
 setRightStatusBar ::
   State (Metadata wm) :> es
-  => Text -- ^ New title.
+  => WMText wm
   -> Eff es ()
 setRightStatusBar = (#statusBar % #rightStatusBar .=)
 -- | Set whether to use paragraph breaks after prompts.
@@ -362,3 +370,13 @@ random = do
   let (res, rng2) = uniform r
   #rng .= rng2
   pure res
+
+getScore ::
+  WithMetadata wm es
+  => Eff es Int
+getScore = use $ #score % #currentScore
+
+getTurnCount ::
+  WithMetadata wm es
+  => Eff es Int
+getTurnCount = use $ #turnCount

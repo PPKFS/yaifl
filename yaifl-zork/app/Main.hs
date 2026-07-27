@@ -2,44 +2,78 @@ module Main where
 
 import Yaifl.Prelude
 
-import Breadcrumbs
 import Yaifl.Actions.Imports
 import Yaifl
-import Yaifl.ActionCollection
-import Yaifl.Combinators
-import Yaifl.Effects.Interpreters
-import Yaifl.Effects.ObjectQuery
 import Yaifl.Effects.Print
-import Yaifl.Effects.RuleEffects
-import Yaifl.Object.Kind
-import Yaifl.ObjectSpecifics
 import Yaifl.Room.Create
-import Yaifl.Rulebooks.ActionProcessing
-import Yaifl.Rulebooks.Run
-import Yaifl.Text.ResponseCollection
-import Yaifl.Thing.Create as T
-import Yaifl.Thing.Kind
-import qualified Data.Text as T
 import Yaifl.Create.Rule
 import Yaifl.Run
+import Yaifl.Visibility
+import Yaifl.Person.Query (getPlayer')
+import Yaifl.Text.DynamicText (text, DynamicText)
+import Yaifl.ObjectSpecifics
+import Yaifl.Direction.Kind
+import Yaifl.Text.ResponseCollection (ResponseCollection)
+import Yaifl.Effects.RuleEffects
+import Yaifl.Zork.Scoring
 
-scoreAndRankRule :: Rule' wm () r
-scoreAndRankRule = makeRule' "score and rank rule" $ rulePass
-{-
-This is the score and rank rule:
-	say "Your score is [score] (total of 350 points), in [turn count] move[if turn count is not 1]s[end if].[line break]This gives you the rank of ";
-	let current-rank be "Beginner";
-	repeat through the Table of Rankings:
-		if the score is at least the score entry:
-			now current-rank is the rank entry;
-	say "[current-rank].[line break]".
 
--}
-zorkWorld :: Game PlainWorldModel ()
+defaultZorkOptions :: ConstructionOptions ZorkWorldModel
+defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues
+
+data ZorkData = ZorkData
+  { trollFlag :: Bool
+  , magicFlag :: Bool
+  , cyclopsFlag :: Bool
+  , domeFlag :: Bool
+  , lldFlag :: Bool
+  , lowTideFlag :: Bool
+  , rainbowFlag :: Bool
+  , wonFlag :: Bool
+  , grateRevealed :: Bool
+  , gateFlag :: Bool
+  , gatesOpenFlag :: Bool
+  , luckyFlag :: Bool
+
+  , playerDeaths :: Int
+  , playerIsDead :: Bool
+  , alwaysLitMode :: Bool
+  } deriving stock (Eq, Ord, Generic, Show)
+
+type ZorkWorldModel = 'WorldModel ObjectSpecifics Direction ZorkData () () () ActivityCollection ResponseCollection DynamicText ActionCollection
+
+defaultZorkValues :: ZorkData
+defaultZorkValues = ZorkData
+  { trollFlag = False
+  , magicFlag = False
+  , cyclopsFlag = False
+  , domeFlag = False
+  , lldFlag = False
+  , lowTideFlag = False
+  , rainbowFlag = False
+  , wonFlag = False
+  , grateRevealed = False
+  , gateFlag = False
+  , gatesOpenFlag = False
+  , luckyFlag = True
+
+  , playerDeaths = 0
+  , playerIsDead = False
+  , alwaysLitMode = False
+
+  }
+zorkWorld :: Game ZorkWorldModel ()
 zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"
+  #metadata % #score % #maxScore .= Just 350
   whenPlayBegins $ makeRule' "set status line" $ do
-    setLeftStatusBar "[the player's surroundings] [if in darkness] [otherwise]   Score: [score]/[turn count][end if]"
+    setLeftStatusBar $ text "left status bar" $ do
+      surroundings <- getPlayerSurroundings
+      p <- getPlayer'
+      notDarkness <- not <$> isInDarkness p
+      score <- getScore
+      turnCount <- getTurnCount
+      [sayingTell|{surroundings}{?if notDarkness}   Score: {score}/{turnCount}{?end if}|]
     setRightStatusBar ""
     rulePass
 
@@ -67,5 +101,5 @@ Carry out requesting the score:
 
 main :: IO ()
 main = do
-  r <- gameHarness "Zork" defaultOptions zorkWorld
+  r <- gameHarness "Zork" (defaultZorkOptions) zorkWorld
   mapM_ putTextLn (lines r)

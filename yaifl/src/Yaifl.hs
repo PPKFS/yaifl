@@ -183,7 +183,7 @@ blankStores = WorldStores
   , regions = emptyStore
   }
 
-blankMetadata :: Metadata wm
+blankMetadata :: IsString (WMText wm) => Metadata wm
 blankMetadata = Metadata
   { title = "Untitled"
   , roomDescriptions = NoAbbreviatedRoomDescriptions
@@ -203,6 +203,8 @@ blankMetadata = Metadata
   , rng = mkStdGen 69
   , usePostPromptPbreak = True
   , statusBar = StatusBar "" ""
+  , score = Score 0 Nothing
+  , turnCount = 0
   }
 
 newWorld ::
@@ -251,10 +253,11 @@ blankActivityCollection = ActivityCollection
 
 blankWorld ::
   HasStandardProperties wm
-  => (ActivityCollection wm -> ActivityCollector wm)
+  => WMValues wm
+  -> (ActivityCollection wm -> ActivityCollector wm)
   -> (ResponseCollection wm -> ResponseCollector wm)
   -> World (wm :: WorldModel)
-blankWorld mkAcColl mkRsColl = World
+blankWorld values mkAcColl mkRsColl = World
   { metadata = blankMetadata
   , stores = blankStores
   , actions = blankActions
@@ -262,6 +265,7 @@ blankWorld mkAcColl mkRsColl = World
   , activities = mkAcColl blankActivityCollection
   , responses = mkRsColl blankResponseCollection
   , adaptiveNarrative = blankAdaptiveNarrative
+  , values = values
   }
 
 addGoingSynonyms ::

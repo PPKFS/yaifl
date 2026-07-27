@@ -33,23 +33,6 @@ import Yaifl.Person.Query
 import Yaifl.Animal.Query
 import Yaifl.Matching
 
-data LookingResponses wm =
-  RoomDescriptionHeadingA
-  | RoomDescriptionHeadingB (AnyObject wm)
-  | RoomDescriptionHeadingC (AnyObject wm)
-  | RoomDescriptionBodyA
-  | LookReportA
-  deriving stock (Generic)
-
--- STATUS: all done, except report other people looking
-roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => LookingResponses wm -> Response wm (Args wm (LookingActionVariables wm))
-roomDescriptionResponsesImpl = \case
-  RoomDescriptionHeadingA -> Response $ const [sayingTell|Darkness|]
-  RoomDescriptionHeadingB intermediateLevel -> Response $ \_ -> [sayingTell| (on {the intermediateLevel})|]
-  RoomDescriptionHeadingC intermediateLevel -> Response $ \_ -> [sayingTell| (in {the intermediateLevel})|]
-  RoomDescriptionBodyA -> Response $ const [sayingTell|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
-  _ -> error ""
-
 type LookingAction wm = Action wm (LookingResponses wm) ('Optionally 'TakesConstantParameter) (LookingActionVariables wm)
 type LookingRule wm = ActionRule wm (LookingAction wm) (LookingActionVariables wm)
 

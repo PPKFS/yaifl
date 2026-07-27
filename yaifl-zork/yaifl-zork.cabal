@@ -23,6 +23,31 @@ executable yaifl-zork
   hs-source-dirs:  app
   main-is: Main.hs
   other-modules:
+    Yaifl.Zork.Boat
+    Yaifl.Zork.Combat
+    Yaifl.Zork.Cyclops
+    Yaifl.Zork.Death
+    Yaifl.Zork.Egg
+    Yaifl.Zork.Grues
+    Yaifl.Zork.Lamps
+    Yaifl.Zork.Misc
+    Yaifl.Zork.Rainbow
+    Yaifl.Zork.RandomText
+    Yaifl.Zork.Scoring
+    Yaifl.Zork.Thief
+    Yaifl.Zork.Troll
+    Yaifl.Zork.World
+    Yaifl.Zork.World.Barrow
+    Yaifl.Zork.World.Canyon
+    Yaifl.Zork.World.Forest
+    Yaifl.Zork.World.House
+    Yaifl.Zork.World.Inside
+    Yaifl.Zork.World.Maze
+    Yaifl.Zork.World.Mine
+    Yaifl.Zork.World.Mirrors
+    Yaifl.Zork.World.Reservoir
+    Yaifl.Zork.World.Temple
+    Yaifl.Zork.World.Underground
   build-depends:
     yaifl
     , yaifl-core

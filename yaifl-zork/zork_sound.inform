@@ -1,0 +1,217 @@
+
+Chapter 10 - Sound and Audio System
+Section 0 - Sound Toggle
+The sound-enabled is a truth state that varies. The sound-enabled is false.
+To decide whether glk sound is supported:
+	(- (glk_gestalt(gestalt_Sound, 0)) -).
+When play begins (this is the auto-enable sound rule):
+	if glk sound is supported:
+		now the sound-enabled is true;
+		say "Sound enabled. Type SOUND OFF to mute.[paragraph break]";
+		follow the ambient audio zone rule.
+Enabling sound is an action out of world.
+Understand "sound on" as enabling sound.
+Carry out enabling sound:
+	now the sound-enabled is true;
+	now the current-zone is zone-silence;
+	say "Sound enabled.";
+	follow the ambient audio zone rule.
+Disabling sound is an action out of world.
+Understand "sound off" as disabling sound.
+Carry out disabling sound:
+	now the sound-enabled is false;
+	stop ambient sound;
+	say "Sound disabled."
+Section 1 - Sound Declarations
+[Ambient zone sounds]
+Sound of forest-ambient is the file "forest.ogg".
+Sound of house-ambient is the file "house.ogg".
+Sound of cave-ambient is the file "cave.ogg".
+Sound of water-ambient is the file "water.ogg".
+Sound of rapids-ambient is the file "rapids.ogg".
+Sound of loud-ambient is the file "loud.ogg".
+Sound of hades-ambient is the file "hades.ogg".
+Sound of mine-ambient is the file "mine.ogg".
+Sound of machinery-ambient is the file "machinery.ogg".
+[Sound effects]
+Sound of bird-sfx is the file "bird.ogg".
+Sound of creak-sfx is the file "creak.ogg".
+Sound of window-sfx is the file "window.ogg".
+Sound of trapdoor-sfx is the file "trapdoor.ogg".
+Sound of bell-sfx is the file "bell.ogg".
+Sound of spirits-sfx is the file "spirits.ogg".
+Sound of bat-sfx is the file "bat.ogg".
+Sound of footsteps-sfx is the file "footsteps.ogg".
+Sound of machine-sfx is the file "machine.ogg".
+Sound of inflate-sfx is the file "inflate.ogg".
+Sound of coffin-sfx is the file "coffin.ogg".
+Sound of match-sfx is the file "match.ogg".
+Sound of grue-sfx is the file "grue.ogg".
+Sound of flood-sfx is the file "flood.ogg".
+Sound of sword-sfx is the file "sword.ogg".
+Sound of laugh-sfx is the file "laugh.ogg".
+Section 2 - Audio Zones
+Audio-zone is a kind of value. The audio-zones are zone-silence, zone-forest, zone-house, zone-cave, zone-water, zone-rapids, zone-loud, zone-hades, zone-mine, and zone-machinery.
+A room has an audio-zone. The audio-zone of a room is usually zone-cave.
+The current-zone is an audio-zone that varies. The current-zone is zone-silence.
+Section 3 - Zone Room Assignments
+[Forest zone - outdoor above-ground areas]
+The audio-zone of West-of-House is zone-forest.
+The audio-zone of North-of-House is zone-forest.
+The audio-zone of South-of-House is zone-forest.
+The audio-zone of Behind House is zone-forest.
+The audio-zone of Forest1 is zone-forest.
+The audio-zone of Forest2 is zone-forest.
+The audio-zone of Forest3 is zone-forest.
+The audio-zone of Mountains is zone-forest.
+The audio-zone of Forest Path is zone-forest.
+The audio-zone of Up a Tree is zone-forest.
+The audio-zone of Clearing is zone-forest.
+The audio-zone of Grating Clearing is zone-forest.
+The audio-zone of Canyon View is zone-forest.
+The audio-zone of Rocky Ledge is zone-forest.
+The audio-zone of On-the-Rainbow is zone-forest.
+The audio-zone of End of Rainbow is zone-forest.
+The audio-zone of Stone Barrow is zone-forest.
+[House zone - house interior]
+The audio-zone of Kitchen is zone-house.
+The audio-zone of Living Room is zone-house.
+The audio-zone of Attic is zone-house.
+[Water zone - calm river and reservoir areas]
+The audio-zone of River1 is zone-water.
+The audio-zone of River2 is zone-water.
+The audio-zone of River3 is zone-water.
+The audio-zone of White Cliffs North is zone-water.
+The audio-zone of White Cliffs South is zone-water.
+The audio-zone of Shore is zone-water.
+The audio-zone of Sandy Beach is zone-water.
+The audio-zone of Sandy Cave is zone-water.
+The audio-zone of In-Stream is zone-water.
+The audio-zone of Stream View is zone-water.
+The audio-zone of Dam-Base is zone-water.
+The audio-zone of Dam-Lobby is zone-water.
+The audio-zone of Reservoir-South is zone-water.
+The audio-zone of Reservoir-North is zone-water.
+The audio-zone of Reservoir is zone-water.
+[Rapids zone - fast water areas]
+The audio-zone of Aragain Falls is zone-rapids.
+The audio-zone of Canyon Bottom is zone-rapids.
+The audio-zone of River4 is zone-rapids.
+The audio-zone of River5 is zone-rapids.
+[Loud Room zone]
+The audio-zone of Loud Room is zone-loud.
+[Hades zone]
+The audio-zone of Entrance to Hades is zone-hades.
+The audio-zone of Land of the Dead is zone-hades.
+[Mine zone - coal mine areas]
+The audio-zone of Mine Entrance is zone-mine.
+The audio-zone of Squeaky Room is zone-mine.
+The audio-zone of Bat-Room is zone-mine.
+The audio-zone of Shaft Room is zone-mine.
+The audio-zone of Smelly Room is zone-mine.
+The audio-zone of Gas Room is zone-mine.
+The audio-zone of Mine1 is zone-mine.
+The audio-zone of Mine2 is zone-mine.
+The audio-zone of Mine3 is zone-mine.
+The audio-zone of Mine4 is zone-mine.
+The audio-zone of Ladder Top is zone-mine.
+The audio-zone of Ladder Bottom is zone-mine.
+The audio-zone of Dead End 5 is zone-mine.
+The audio-zone of Timber Room is zone-mine.
+The audio-zone of Drafty Room is zone-mine.
+The audio-zone of Slide Room is zone-mine.
+[Machinery zone - dam machinery areas]
+The audio-zone of Dam-Room is zone-machinery.
+The audio-zone of Maintenance Room is zone-machinery.
+The audio-zone of Machine-Room is zone-machinery.
+Section 4 - Background Channel Sound Phrases (in place of Sounds by Dannii Willis in Standard Rules - unindexed)
+[Inform 7 creates two Glk sound channels at startup: gg_foregroundchan and
+gg_backgroundchan. The standard "play the sound of X" phrase always uses the
+foreground channel, so playing SFX interrupts ambient. These I6 inclusions
+let us play ambient on the background channel independently.]
+To play (SFX - sound name) as ambient looping:
+	(- PlayOnBackgroundChannel({SFX}, -1); -).
+To play (SFX - sound name) as sfx:
+	(- if ((+ sound-enabled +)) VM_SoundEffect(ResourceIDsOfSounds-->{SFX}); -).
+To stop ambient sound:
+	(- StopBackgroundChannel(); -).
+Include (-
+Constant AMBIENT_VOL = 8192;        ! ~12.5% of max volume (65536)
+Constant CROSSFADE_MS = 2000;        ! 2 second crossfade between zones
+Constant FADEIN_SILENCE_MS = 5000;   ! 5 second fade-in from silence
+Global bg_chan_b = 0;                 ! Second background channel for crossfading
+Global bg_active = 0;                ! 0 = gg_backgroundchan, 1 = bg_chan_b
+Global ambient_playing = 0;          ! Whether ambient sound is currently active
+[ PlayOnBackgroundChannel resource_ID repeats res active_chan inactive_chan;
+	res = ResourceIDsOfSounds-->resource_ID;
+	if (res == 0) rtrue;
+	if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
+	! Ensure both background channels exist
+	if (gg_backgroundchan == 0)
+		gg_backgroundchan = glk_schannel_create(GG_BACKGROUNDCHAN_ROCK);
+	if (bg_chan_b == 0)
+		bg_chan_b = glk_schannel_create(412);
+	if (ambient_playing) {
+		! Crossfade: fade out current, fade in new on alternate channel
+		if (bg_active == 0) {
+			active_chan = gg_backgroundchan;
+			inactive_chan = bg_chan_b;
+		} else {
+			active_chan = bg_chan_b;
+			inactive_chan = gg_backgroundchan;
+		}
+		! Fade out the currently playing channel over 2 seconds
+		glk_schannel_set_volume_ext(active_chan, 0, CROSSFADE_MS, 0);
+		! Start new sound on alternate channel at volume 0, then fade in
+		glk_schannel_set_volume(inactive_chan, 0);
+		glk_schannel_play_ext(inactive_chan, res, repeats, 0);
+		glk_schannel_set_volume_ext(inactive_chan, AMBIENT_VOL, CROSSFADE_MS, 0);
+		! Toggle active channel
+		bg_active = 1 - bg_active;
+	} else {
+		! No ambient currently playing - fade in from zero over 5 seconds
+		if (bg_active == 0)
+			active_chan = gg_backgroundchan;
+		else
+			active_chan = bg_chan_b;
+		glk_schannel_set_volume(active_chan, 0);
+		glk_schannel_play_ext(active_chan, res, repeats, 0);
+		glk_schannel_set_volume_ext(active_chan, AMBIENT_VOL, FADEIN_SILENCE_MS, 0);
+	}
+	ambient_playing = 1;
+];
+[ StopBackgroundChannel;
+	if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
+	! Fade out both channels (active + any still fading from previous crossfade)
+	if (gg_backgroundchan)
+		glk_schannel_set_volume_ext(gg_backgroundchan, 0, CROSSFADE_MS, 0);
+	if (bg_chan_b)
+		glk_schannel_set_volume_ext(bg_chan_b, 0, CROSSFADE_MS, 0);
+	ambient_playing = 0;
+];
+-).
+Section 5 - Ambient Audio Rule
+Every turn when the sound-enabled is true (this is the ambient audio zone rule):
+	let Z be the audio-zone of the location;
+	if Z is not the current-zone:
+		now the current-zone is Z;
+		if Z is zone-silence:
+			stop ambient sound;
+		otherwise if Z is zone-forest:
+			play the sound of forest-ambient as ambient looping;
+		otherwise if Z is zone-house:
+			play the sound of house-ambient as ambient looping;
+		otherwise if Z is zone-cave:
+			play the sound of cave-ambient as ambient looping;
+		otherwise if Z is zone-water:
+			play the sound of water-ambient as ambient looping;
+		otherwise if Z is zone-rapids:
+			play the sound of rapids-ambient as ambient looping;
+		otherwise if Z is zone-loud:
+			play the sound of loud-ambient as ambient looping;
+		otherwise if Z is zone-hades:
+			play the sound of hades-ambient as ambient looping;
+		otherwise if Z is zone-mine:
+			play the sound of mine-ambient as ambient looping;
+		otherwise if Z is zone-machinery:
+			play the sound of machinery-ambient as ambient looping.

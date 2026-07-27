@@ -17,10 +17,11 @@ import Yaifl.Text.ResponseCollection
 data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
   , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
+  , conValues :: WMValues wm
   }
 
-defaultOptions :: ConstructionOptions PlainWorldModel
-defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
+defaultOptions :: (WMValues wm ~ (), WMActivities wm ~ ActivityCollection wm, WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
+defaultOptions = ConstructionOptions ActivityCollector ResponseCollector ()
 
 gameHarness ::
   forall wm a.
@@ -32,7 +33,7 @@ gameHarness ::
   -> Game wm a
   -> IO Text
 gameHarness fullTitle conOptions initWorld = do
-  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (conValues conOptions) (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "game run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld

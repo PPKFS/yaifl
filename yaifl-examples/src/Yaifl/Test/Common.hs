@@ -7,7 +7,6 @@ import Data.Char (isSpace)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote hiding (quoteExp)
 import Yaifl
-import Yaifl.Text.ResponseCollection
 
 import qualified Data.Text as T
 
@@ -17,10 +16,10 @@ import Yaifl.Text.Verb
 import Yaifl.ObjectSpecifics
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Rulebooks.ActionProcessing
-import Yaifl.Effects.RuleEffects
 import Yaifl.Effects.Interpreters
 import Yaifl.ActionCollection
 import Yaifl.Rulebooks.Run
+import Yaifl.Run
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -59,14 +58,6 @@ newlinesToWrap = foldl' (\acc -> \case
   "" -> acc <> "\n" <> (if fmap snd (unsnoc acc) == Just '\n' then "" else "\n")
   x -> if T.empty == acc || T.last acc == '\n' then acc <> x else acc <> " " <> x) "" . lines
 
-data ConstructionOptions wm = ConstructionOptions
-  { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
-  , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
-  }
-
-defaultOptions :: ConstructionOptions PlainWorldModel
-defaultOptions = ConstructionOptions ActivityCollector ResponseCollector
-
 testHarness ::
   forall wm a.
   HasStandardProperties wm
@@ -79,7 +70,7 @@ testHarness ::
   -> Game wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
-  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
+  fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (conValues conOptions) (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld

@@ -191,7 +191,7 @@ convertStack w ac cid restChan g =
   . runStateShared w
   . runPrintPure
   . zoomState #actions
-  . zoomState @(World wm) #metadata
+  . zoomState @(World wm) #Metadata wm
   . runQueryAsLookup
   . runTraverseAsLookup
   . evalStateShared ac
@@ -249,10 +249,10 @@ runPrintAsDiscordHandler ::
   -> Eff (Print : es) a
   -> Eff es a
 runPrintAsDiscordHandler chan restChan testserverid = interpret $ \_ -> \case
-  PrintDoc mbMetadata doc -> do
+  PrintDoc mbMetadata wm doc -> do
     r <- processDoc doc
     modify (\s -> s & buf % (#buffer @(Lens' (MessageBuffer) [StyledDoc MessageAnnotation])) %~ (r:))
-    whenJust mbMetadata $ \metadata -> modify (\s -> s & buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ metadata)
+    whenJust mbMetadata wm $ \Metadata wm -> modify (\s -> s & buf % #lastMessageContext @(Lens' (MessageBuffer) MessageContext) .~ Metadata wm)
     liftIO $ writeRestCall restChan (R.CreateMessage chan (show r))
     pass
   SetStyle mbStyle -> setStyle' mbStyle

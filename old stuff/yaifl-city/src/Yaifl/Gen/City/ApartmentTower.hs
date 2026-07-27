@@ -35,7 +35,7 @@ addStaircases :: (WMDirection wm ~ Direction)
   => BuildingGeneration wm es
   => Eff es ()
 addStaircases = do
-  modify @Metadata (#kindDAG % at (ObjectKind "staircase") ?~ ObjectKindInfo (S.fromList ["door"]) [] [] )
+  modify @Metadata wm (#kindDAG % at (ObjectKind "staircase") ?~ ObjectKindInfo (S.fromList ["door"]) [] [] )
   afterPrintingTheNameOf [aKindOf "door", duringActivity #listingContents] "adding staircase info" $ \_ -> do
     withThing $ \t -> do
       r <- execWriter $

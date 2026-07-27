@@ -66,7 +66,7 @@ main = do
                       -- take it down and flip it around
                       msgList <- gets (view $ #messageBuffer % #buffer % reversed)
                       return $ (mconcat . map show) msgList
-                pure $ case w2 ^. #metadata % #errorLog of
+                pure $ case w2 ^. #Metadata wm % #errorLog of
                   [] -> x <> "\n"
                   xs -> x <> "\nEncountered the following errors:  \n" <> unlines (reverse xs)
         runWorld ""

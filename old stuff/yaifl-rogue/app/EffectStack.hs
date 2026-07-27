@@ -34,7 +34,7 @@ convertStack w ac =
   . runStateShared w
   . runPrintPure
   . zoomState #actions
-  . zoomState @(World wm) #metadata
+  . zoomState @(World wm) #Metadata wm
   . runQueryAsLookup
   . runTraverseAsLookup
   . evalStateShared ac

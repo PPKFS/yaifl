@@ -4,8 +4,8 @@ module Yaifl.Visibility where
 
 import Yaifl.Prelude
 
-import Breadcrumbs ( addAnnotation )
-import Yaifl.Activity (WithPrintingNameOfADarkRoom, WithPrintingDescriptionOfADarkRoom)
+import Breadcrumbs ( addAnnotation, addTag )
+import Yaifl.Activity
 import Yaifl.Activities.PrintingTheLocaleDescription
 import Yaifl.Object.Kind
 import Yaifl.Effects.ObjectQuery
@@ -24,6 +24,12 @@ import Yaifl.Refreshable
 import Yaifl.Property.Has
 import Yaifl.Supporter.Query
 import Yaifl.Container.Query
+import Effectful.Writer.Static.Local (Writer)
+import Yaifl.Person.Query
+import Yaifl.Text.Responses
+import Yaifl.Text.Say
+import Yaifl.Actions.Args
+import Yaifl.Effects.RuleEffects
 
 -- | An easier way to describe the requirements to look.
 type HasLookingProperties wm =
@@ -52,6 +58,13 @@ data LookingActionVariables wm = LookingActionVariables
 
 instance Display (LookingActionVariables wm) where
   displayBuilder = const "todo"
+
+-- | Something is in darkness if its parent has a light level of 0.
+isInDarkness ::
+  WithoutMissingObjects wm es
+  => HasLookingProperties wm
+  => Thing wm -> Eff es Bool
+isInDarkness t = (> 0) <$> recalculateLightOfParent t
 
 getVisibleLevels ::
   WithoutMissingObjects wm es
@@ -205,3 +218,65 @@ hasLight obj = do
   pure (objectItselfHasLight obj)
     ||^ (maybe (return False) isSeeThrough ts
       &&^ containsLitObj obj)
+
+data LookingResponses wm =
+  RoomDescriptionHeadingA
+  | RoomDescriptionHeadingB (AnyObject wm)
+  | RoomDescriptionHeadingC (AnyObject wm)
+  | RoomDescriptionBodyA
+  | LookReportA
+  deriving stock (Generic)
+
+-- STATUS: all done, except report other people looking
+roomDescriptionResponsesImpl :: WithPrintingNameOfSomething wm => LookingResponses wm -> Response wm (Args wm (LookingActionVariables wm))
+roomDescriptionResponsesImpl = \case
+  RoomDescriptionHeadingA -> Response $ const [sayingTell|Darkness|]
+  RoomDescriptionHeadingB intermediateLevel -> Response $ \_ -> [sayingTell| (on {the intermediateLevel})|]
+  RoomDescriptionHeadingC intermediateLevel -> Response $ \_ -> [sayingTell| (in {the intermediateLevel})|]
+  RoomDescriptionBodyA -> Response $ const [sayingTell|#{It} #{are} pitch dark, and #{we} #{can't see} a thing.|]
+  _ -> error "no lookreportA response"
+
+getPlayerSurroundings ::
+  RuleEffects wm es
+  => HasLookingProperties wm
+  => Eff (Writer Text : es) ()
+getPlayerSurroundings = do
+  p <- getPlayer'
+  loc <- getPlayerLocation
+  ifM (isInDarkness p)
+    (do
+                --begin the printing the name of a dark room activity;      
+          beginActivity #printingNameOfADarkRoom ()
+          -- if handling the printing the name of a dark room activity:
+          whenHandling' #printingNameOfADarkRoom $ do
+            -- say "Darkness" (A);
+            [sayingTell|Darkness|]
+          -- end the printing the name of a dark room activity;
+          void $ endActivity #printingNameOfADarkRoom)
+    (do
+      lvls <- getVisibilityLevels (toAny p)
+      let mbVisCeil = viaNonEmpty last lvls
+      case mbVisCeil of
+        -- if the visibility level count is 0:
+        Nothing -> do
+          --begin the printing the name of a dark room activity;      
+          beginActivity #printingNameOfADarkRoom ()
+          -- if handling the printing the name of a dark room activity:
+          whenHandling' #printingNameOfADarkRoom $ do
+            -- say "Darkness" (A);
+            [sayingTell|Darkness|]
+          -- end the printing the name of a dark room activity;
+          void $ endActivity #printingNameOfADarkRoom
+        Just visCeil ->
+          -- otherwise if the visibility ceiling is the location:
+          if visCeil `objectEquals` loc
+          then do
+            addTag @Text "Ceiling is the location" ""
+            -- say "[visibility ceiling]";
+            [sayingTell|{visCeil}|]
+          -- otherwise:
+          else do
+            addTag @Text "Ceiling is not the location" ""
+            --  say "[The visibility ceiling]";
+            [sayingTell|{The visCeil}|]
+      )

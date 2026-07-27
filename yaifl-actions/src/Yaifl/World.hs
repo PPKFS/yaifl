@@ -32,6 +32,7 @@ data World (wm :: WorldModel) = World
   , messageBuffer :: MessageBuffer
   , responses :: ResponseCollector wm
   , adaptiveNarrative :: AdaptiveNarrative wm
+  , values :: WMValues wm
   } deriving stock (Generic)
 
 data WorldStores (wm :: WorldModel) = WorldStores
