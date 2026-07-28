@@ -69,6 +69,7 @@ library
     Yaifl.Activities.PrintingInventoryDetails
     Yaifl.Activities.PrintingThePlayersObituary
     Yaifl.Activities.PrintingTheBannerText
+    Yaifl.Activities.RequestingTheScore
 
     Yaifl.Locale
     Yaifl.Rulebooks.ActionProcessing

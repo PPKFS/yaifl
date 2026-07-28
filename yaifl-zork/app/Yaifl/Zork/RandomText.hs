@@ -1,7 +1,7 @@
 module Yaifl.Zork.RandomText where
 
 {-
-
+TODO
 Section 4b - Random Text Tables
 [ZIL YUKS table - used for non-takeable objects and other futile actions]
 To say yuks:

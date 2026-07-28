@@ -82,6 +82,7 @@ import Yaifl.MultiLocated.Kind
 import Yaifl.Combinators
 import Yaifl.Activities.PrintingTheBannerText (printingTheBannerTextImpl)
 import Yaifl.Activities.PrintingThePlayersObituary (printingThePlayersObituaryImpl)
+import Yaifl.Activities.RequestingTheScore (requestingTheScoreImpl)
 
 type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
 
@@ -106,6 +107,7 @@ data ActivityCollection wm = ActivityCollection
   , printingInventoryDetails :: Activity wm () (Thing wm) ()
   , printingThePlayersObituary :: Activity wm () () ()
   , printingTheBannerText :: Activity wm () () ()
+  , requestingTheScore :: Activity wm () () ()
   -- TODO https://ganelson.github.io/inform/standard_rules/S-act.html#SP15
 {-
 
@@ -207,7 +209,7 @@ blankMetadata = Metadata
   , rng = mkStdGen 69
   , usePostPromptPbreak = True
   , statusBar = StatusBar "" ""
-  , score = Score 0 Nothing
+  , score = (Score 0 Nothing False)
   , turnCount = 0
   }
 
@@ -255,6 +257,7 @@ blankActivityCollection = ActivityCollection
   , printingRoomDescriptionDetails = printingRoomDescriptionDetailsImpl
   , printingThePlayersObituary = printingThePlayersObituaryImpl
   , printingTheBannerText = printingTheBannerTextImpl
+  , requestingTheScore = requestingTheScoreImpl
   }
 
 blankWorld ::
@@ -271,7 +274,7 @@ blankWorld values mkAcColl mkRsColl = World
   , activities = mkAcColl blankActivityCollection
   , responses = mkRsColl blankResponseCollection
   , adaptiveNarrative = blankAdaptiveNarrative
-  , values = values
+  , values = ValueCollector values
   }
 
 addGoingSynonyms ::

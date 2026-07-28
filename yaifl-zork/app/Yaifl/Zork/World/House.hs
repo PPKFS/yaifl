@@ -1,7 +1,7 @@
 module Yaifl.Zork.World.House where
 
 {-
-
+TODO
 Section 2 - Rooms Outside the House
 West-of-House is a room. "You are standing in an open field west of a white house, with a boarded front door.[if the won-flag is true] A secret path leads southwest into the forest.[end if]".
 The printed name of West-of-House is "West of House".

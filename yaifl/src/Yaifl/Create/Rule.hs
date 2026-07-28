@@ -6,6 +6,7 @@ module Yaifl.Create.Rule
   , insteadOf'
   , afterActivity
   , afterActivity'
+  , carryOutActivity
   , afterPrintingTheNameOf
   , duringActivity
   , everyTurn
@@ -90,6 +91,17 @@ afterActivity' ::
   -> Eff es ()
 afterActivity' a precs t f = afterActivity a precs t (const $ f >> rulePass)
 
+carryOutActivity ::
+  State (ActivityCollector wm) :> es
+  => ActivityLens wm resps v r
+  -> [Precondition wm v]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm v) => v -> Eff es' (Maybe r))-- ^ Rule function.
+  -> Eff es ()
+carryOutActivity a precs t f = do
+  let rule = makeRule t precs f
+  #activityCollection % a % #carryOutRules %= addRuleFirst rule
+  pass
 insteadOf ::
   State (ActionCollection wm) :> es
   => ActionPointer wm resps goesWith v

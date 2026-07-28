@@ -27,6 +27,7 @@ import Yaifl.Parser
 
 type EffStack (wm :: WorldModel) = '[
   ActionHandler wm
+  , State (ValueCollector wm)
   , State (AdaptiveNarrative wm)
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)
@@ -101,6 +102,7 @@ convertToUnderlyingStack printHandler i w ac =
   . zoomState @(World wm) #activities
   . zoomState @(World wm) #responses
   . zoomState @(World wm) #adaptiveNarrative
+  . zoomState @(World wm) #values
   . runActionHandlerAsWorldActions
 
 interpretLookup ::

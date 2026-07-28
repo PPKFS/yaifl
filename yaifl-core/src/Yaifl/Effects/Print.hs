@@ -47,6 +47,7 @@ module Yaifl.Effects.Print
   , printText
   , printLn
   , printIf
+  , printLinebreak
 
   -- * Effect Interpreters
   , runPrintPure
@@ -323,6 +324,11 @@ printLn ::
 printLn a = do
   printText a
   printText "\n"
+
+printLinebreak ::
+  Print :> es
+  => Eff es ()
+printLinebreak = printText "\n"
 
 -- | Conditionally Print @message@.
 printIf ::

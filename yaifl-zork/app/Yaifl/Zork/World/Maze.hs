@@ -1,6 +1,7 @@
 module Yaifl.Zork.World.Maze where
 
 {-
+TODO
 Chapter 6 - Maze
 Maze1 is a dark room. The printed name of Maze1 is "Maze". "This is part of a maze of twisty little passages, all alike."
 Maze1 is in the Underground.

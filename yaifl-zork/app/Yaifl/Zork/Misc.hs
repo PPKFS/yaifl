@@ -1,6 +1,8 @@
 module Yaifl.Zork.Misc where
 
-{-Chapter 2 - Sword Glow
+{-
+TODO
+Chapter 2 - Sword Glow
 The sword-glow-level is a number that varies. The sword-glow-level is 0.
 To decide whether (V - a person) is a nearby villain:
   if V is in the location of the player, yes;

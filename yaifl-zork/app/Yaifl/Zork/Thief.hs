@@ -1,6 +1,7 @@
 module Yaifl.Zork.Thief where
 
 {-
+TODO
 Part 4 - The Thief
 Chapter 1 - Thief NPC
 The thief is a person. "There is a suspicious-looking individual, holding a bag, leaning against one wall. He is armed with a vicious-looking stiletto."

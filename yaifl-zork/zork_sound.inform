@@ -3,25 +3,25 @@ Chapter 10 - Sound and Audio System
 Section 0 - Sound Toggle
 The sound-enabled is a truth state that varies. The sound-enabled is false.
 To decide whether glk sound is supported:
-	(- (glk_gestalt(gestalt_Sound, 0)) -).
+  (- (glk_gestalt(gestalt_Sound, 0)) -).
 When play begins (this is the auto-enable sound rule):
-	if glk sound is supported:
-		now the sound-enabled is true;
-		say "Sound enabled. Type SOUND OFF to mute.[paragraph break]";
-		follow the ambient audio zone rule.
+  if glk sound is supported:
+    now the sound-enabled is true;
+    say "Sound enabled. Type SOUND OFF to mute.[paragraph break]";
+    follow the ambient audio zone rule.
 Enabling sound is an action out of world.
 Understand "sound on" as enabling sound.
 Carry out enabling sound:
-	now the sound-enabled is true;
-	now the current-zone is zone-silence;
-	say "Sound enabled.";
-	follow the ambient audio zone rule.
+  now the sound-enabled is true;
+  now the current-zone is zone-silence;
+  say "Sound enabled.";
+  follow the ambient audio zone rule.
 Disabling sound is an action out of world.
 Understand "sound off" as disabling sound.
 Carry out disabling sound:
-	now the sound-enabled is false;
-	stop ambient sound;
-	say "Sound disabled."
+  now the sound-enabled is false;
+  stop ambient sound;
+  say "Sound disabled."
 Section 1 - Sound Declarations
 [Ambient zone sounds]
 Sound of forest-ambient is the file "forest.ogg".
@@ -130,11 +130,11 @@ gg_backgroundchan. The standard "play the sound of X" phrase always uses the
 foreground channel, so playing SFX interrupts ambient. These I6 inclusions
 let us play ambient on the background channel independently.]
 To play (SFX - sound name) as ambient looping:
-	(- PlayOnBackgroundChannel({SFX}, -1); -).
+  (- PlayOnBackgroundChannel({SFX}, -1); -).
 To play (SFX - sound name) as sfx:
-	(- if ((+ sound-enabled +)) VM_SoundEffect(ResourceIDsOfSounds-->{SFX}); -).
+  (- if ((+ sound-enabled +)) VM_SoundEffect(ResourceIDsOfSounds-->{SFX}); -).
 To stop ambient sound:
-	(- StopBackgroundChannel(); -).
+  (- StopBackgroundChannel(); -).
 Include (-
 Constant AMBIENT_VOL = 8192;        ! ~12.5% of max volume (65536)
 Constant CROSSFADE_MS = 2000;        ! 2 second crossfade between zones
@@ -143,75 +143,75 @@ Global bg_chan_b = 0;                 ! Second background channel for crossfadin
 Global bg_active = 0;                ! 0 = gg_backgroundchan, 1 = bg_chan_b
 Global ambient_playing = 0;          ! Whether ambient sound is currently active
 [ PlayOnBackgroundChannel resource_ID repeats res active_chan inactive_chan;
-	res = ResourceIDsOfSounds-->resource_ID;
-	if (res == 0) rtrue;
-	if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
-	! Ensure both background channels exist
-	if (gg_backgroundchan == 0)
-		gg_backgroundchan = glk_schannel_create(GG_BACKGROUNDCHAN_ROCK);
-	if (bg_chan_b == 0)
-		bg_chan_b = glk_schannel_create(412);
-	if (ambient_playing) {
-		! Crossfade: fade out current, fade in new on alternate channel
-		if (bg_active == 0) {
-			active_chan = gg_backgroundchan;
-			inactive_chan = bg_chan_b;
-		} else {
-			active_chan = bg_chan_b;
-			inactive_chan = gg_backgroundchan;
-		}
-		! Fade out the currently playing channel over 2 seconds
-		glk_schannel_set_volume_ext(active_chan, 0, CROSSFADE_MS, 0);
-		! Start new sound on alternate channel at volume 0, then fade in
-		glk_schannel_set_volume(inactive_chan, 0);
-		glk_schannel_play_ext(inactive_chan, res, repeats, 0);
-		glk_schannel_set_volume_ext(inactive_chan, AMBIENT_VOL, CROSSFADE_MS, 0);
-		! Toggle active channel
-		bg_active = 1 - bg_active;
-	} else {
-		! No ambient currently playing - fade in from zero over 5 seconds
-		if (bg_active == 0)
-			active_chan = gg_backgroundchan;
-		else
-			active_chan = bg_chan_b;
-		glk_schannel_set_volume(active_chan, 0);
-		glk_schannel_play_ext(active_chan, res, repeats, 0);
-		glk_schannel_set_volume_ext(active_chan, AMBIENT_VOL, FADEIN_SILENCE_MS, 0);
-	}
-	ambient_playing = 1;
+  res = ResourceIDsOfSounds-->resource_ID;
+  if (res == 0) rtrue;
+  if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
+  ! Ensure both background channels exist
+  if (gg_backgroundchan == 0)
+    gg_backgroundchan = glk_schannel_create(GG_BACKGROUNDCHAN_ROCK);
+  if (bg_chan_b == 0)
+    bg_chan_b = glk_schannel_create(412);
+  if (ambient_playing) {
+    ! Crossfade: fade out current, fade in new on alternate channel
+    if (bg_active == 0) {
+      active_chan = gg_backgroundchan;
+      inactive_chan = bg_chan_b;
+    } else {
+      active_chan = bg_chan_b;
+      inactive_chan = gg_backgroundchan;
+    }
+    ! Fade out the currently playing channel over 2 seconds
+    glk_schannel_set_volume_ext(active_chan, 0, CROSSFADE_MS, 0);
+    ! Start new sound on alternate channel at volume 0, then fade in
+    glk_schannel_set_volume(inactive_chan, 0);
+    glk_schannel_play_ext(inactive_chan, res, repeats, 0);
+    glk_schannel_set_volume_ext(inactive_chan, AMBIENT_VOL, CROSSFADE_MS, 0);
+    ! Toggle active channel
+    bg_active = 1 - bg_active;
+  } else {
+    ! No ambient currently playing - fade in from zero over 5 seconds
+    if (bg_active == 0)
+      active_chan = gg_backgroundchan;
+    else
+      active_chan = bg_chan_b;
+    glk_schannel_set_volume(active_chan, 0);
+    glk_schannel_play_ext(active_chan, res, repeats, 0);
+    glk_schannel_set_volume_ext(active_chan, AMBIENT_VOL, FADEIN_SILENCE_MS, 0);
+  }
+  ambient_playing = 1;
 ];
 [ StopBackgroundChannel;
-	if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
-	! Fade out both channels (active + any still fading from previous crossfade)
-	if (gg_backgroundchan)
-		glk_schannel_set_volume_ext(gg_backgroundchan, 0, CROSSFADE_MS, 0);
-	if (bg_chan_b)
-		glk_schannel_set_volume_ext(bg_chan_b, 0, CROSSFADE_MS, 0);
-	ambient_playing = 0;
+  if (~~glk_gestalt(gestalt_Sound, 0)) rtrue;
+  ! Fade out both channels (active + any still fading from previous crossfade)
+  if (gg_backgroundchan)
+    glk_schannel_set_volume_ext(gg_backgroundchan, 0, CROSSFADE_MS, 0);
+  if (bg_chan_b)
+    glk_schannel_set_volume_ext(bg_chan_b, 0, CROSSFADE_MS, 0);
+  ambient_playing = 0;
 ];
 -).
 Section 5 - Ambient Audio Rule
 Every turn when the sound-enabled is true (this is the ambient audio zone rule):
-	let Z be the audio-zone of the location;
-	if Z is not the current-zone:
-		now the current-zone is Z;
-		if Z is zone-silence:
-			stop ambient sound;
-		otherwise if Z is zone-forest:
-			play the sound of forest-ambient as ambient looping;
-		otherwise if Z is zone-house:
-			play the sound of house-ambient as ambient looping;
-		otherwise if Z is zone-cave:
-			play the sound of cave-ambient as ambient looping;
-		otherwise if Z is zone-water:
-			play the sound of water-ambient as ambient looping;
-		otherwise if Z is zone-rapids:
-			play the sound of rapids-ambient as ambient looping;
-		otherwise if Z is zone-loud:
-			play the sound of loud-ambient as ambient looping;
-		otherwise if Z is zone-hades:
-			play the sound of hades-ambient as ambient looping;
-		otherwise if Z is zone-mine:
-			play the sound of mine-ambient as ambient looping;
-		otherwise if Z is zone-machinery:
-			play the sound of machinery-ambient as ambient looping.
+  let Z be the audio-zone of the location;
+  if Z is not the current-zone:
+    now the current-zone is Z;
+    if Z is zone-silence:
+      stop ambient sound;
+    otherwise if Z is zone-forest:
+      play the sound of forest-ambient as ambient looping;
+    otherwise if Z is zone-house:
+      play the sound of house-ambient as ambient looping;
+    otherwise if Z is zone-cave:
+      play the sound of cave-ambient as ambient looping;
+    otherwise if Z is zone-water:
+      play the sound of water-ambient as ambient looping;
+    otherwise if Z is zone-rapids:
+      play the sound of rapids-ambient as ambient looping;
+    otherwise if Z is zone-loud:
+      play the sound of loud-ambient as ambient looping;
+    otherwise if Z is zone-hades:
+      play the sound of hades-ambient as ambient looping;
+    otherwise if Z is zone-mine:
+      play the sound of mine-ambient as ambient looping;
+    otherwise if Z is zone-machinery:
+      play the sound of machinery-ambient as ambient looping.

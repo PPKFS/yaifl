@@ -32,7 +32,9 @@ module Yaifl.Metadata (
   , setLeftStatusBar
   , setRightStatusBar
   , getScore
+  , getMaxScore
   , isRuntime
+  , gameHasEnded
   -- * Querying
   , isPlayer
   , whenPlayer
@@ -82,7 +84,7 @@ instance Display RoomDescriptions where
 -- - `Construction`: Game is being built (object creation, world setup)
 -- - `Verification`: Game is being validated (consistency checks, error detection)
 -- - `Runtime`: Game is running normally (player interaction)
-data CurrentStage = Construction | Verification | Runtime
+data CurrentStage = Construction | Verification | BeforePlay | DuringPlay | Ended
   deriving stock (Eq, Show, Read, Ord, Enum, Generic)
 
 -- | Analysis and validation depth configuration.
@@ -107,6 +109,7 @@ data StatusBar wm = StatusBar
 data Score = Score
   { currentScore :: Int
   , maxScore :: Maybe Int
+  , usingScore :: Bool
   } deriving stock (Eq, Show, Read, Ord, Generic)
 -- | All the misc values about the game are stored here so we can carry it around. Notably, this does not include
 -- anything dynamic (actions, activities) which means this remains lightweight and simple.
@@ -230,7 +233,12 @@ setPostPromptSpacing = (#usePostPromptPbreak .=)
 isRuntime ::
   State (Metadata wm) :> es
   => Eff es Bool
-isRuntime = (Runtime ==) <$> use #currentStage
+isRuntime = (DuringPlay ==) <$> use #currentStage
+
+gameHasEnded ::
+  State (Metadata wm) :> es
+  => Eff es Bool
+gameHasEnded = (Ended ==) <$> use #currentStage
 
 -- | Run something only during construction, where the condition is monadic.
 whenConstructingM ::
@@ -373,9 +381,17 @@ random = do
 
 getScore ::
   WithMetadata wm es
-  => Eff es Int
-getScore = use $ #score % #currentScore
+  => Eff es (Maybe Int)
+getScore = do
+  s <- use $ #score
+  if usingScore s then return $ Just (currentScore s) else return Nothing
 
+getMaxScore ::
+  WithMetadata wm es
+  => Eff es (Maybe Int)
+getMaxScore = do
+  s <- use $ #score
+  if usingScore s then return $ (maxScore s) else return Nothing
 getTurnCount ::
   WithMetadata wm es
   => Eff es Int

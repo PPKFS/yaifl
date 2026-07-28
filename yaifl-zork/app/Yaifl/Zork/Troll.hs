@@ -1,7 +1,7 @@
 module Yaifl.Zork.Troll where
 
 {-
-
+TODO
 Chapter 4 - Troll NPC
 The troll is a person in Troll-Room. "[if the troll-unconscious is true]An unconscious troll is sprawled on the floor. All passages out of the room are open[otherwise if the troll carries the bloody axe]A nasty-looking troll, brandishing a bloody axe, blocks all passages out of the room[otherwise]A troll is here[end if]."
 Understand "troll" and "nasty" as the troll.

@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import Yaifl.Prelude
@@ -10,59 +11,16 @@ import Yaifl.Create.Rule
 import Yaifl.Run
 import Yaifl.Visibility
 import Yaifl.Person.Query (getPlayer')
-import Yaifl.Text.DynamicText (text, DynamicText)
-import Yaifl.ObjectSpecifics
-import Yaifl.Direction.Kind
-import Yaifl.Text.ResponseCollection (ResponseCollection)
+import Yaifl.Text.DynamicText (text)
 import Yaifl.Effects.RuleEffects
 import Yaifl.Zork.Scoring
 import Effectful.Writer.Static.Local (execWriter)
-
+import Yaifl.Zork.Metadata
+import Yaifl.Zork.Specifics
 
 defaultZorkOptions :: ConstructionOptions ZorkWorldModel
 defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues
 
-data ZorkData = ZorkData
-  { trollFlag :: Bool
-  , magicFlag :: Bool
-  , cyclopsFlag :: Bool
-  , domeFlag :: Bool
-  , lldFlag :: Bool
-  , lowTideFlag :: Bool
-  , rainbowFlag :: Bool
-  , wonFlag :: Bool
-  , grateRevealed :: Bool
-  , gateFlag :: Bool
-  , gatesOpenFlag :: Bool
-  , luckyFlag :: Bool
-
-  , playerDeaths :: Int
-  , playerIsDead :: Bool
-  , alwaysLitMode :: Bool
-  } deriving stock (Eq, Ord, Generic, Show)
-
-type ZorkWorldModel = 'WorldModel ObjectSpecifics Direction ZorkData () () () ActivityCollection ResponseCollection DynamicText ActionCollection
-
-defaultZorkValues :: ZorkData
-defaultZorkValues = ZorkData
-  { trollFlag = False
-  , magicFlag = False
-  , cyclopsFlag = False
-  , domeFlag = False
-  , lldFlag = False
-  , lowTideFlag = False
-  , rainbowFlag = False
-  , wonFlag = False
-  , grateRevealed = False
-  , gateFlag = False
-  , gatesOpenFlag = False
-  , luckyFlag = True
-
-  , playerDeaths = 0
-  , playerIsDead = False
-  , alwaysLitMode = False
-
-  }
 zorkWorld :: Game ZorkWorldModel ()
 zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"

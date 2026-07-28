@@ -34,12 +34,12 @@ import Yaifl.Object.Kind
 
 {-
 let views be {first person singular, first person plural, second person singular, second person plural, third person singular, third person plural };
-	let tenses be {past tense, present tense, future tense, perfect tense, past perfect tense};
-	repeat with the p running through views:
-		repeat with the t running through tenses:
-			now the story viewpoint is p;
-			now the story tense is t;
-			say "[p] [t] - [We] [negate the verb see] / [We] [eat] [line break]";
+  let tenses be {past tense, present tense, future tense, perfect tense, past perfect tense};
+  repeat with the p running through views:
+    repeat with the t running through tenses:
+      now the story viewpoint is p;
+      now the story tense is t;
+      say "[p] [t] - [We] [negate the verb see] / [We] [eat] [line break]";
 -}
 
 -- | Narrative context containing the current state of text generation.

@@ -20,7 +20,7 @@ data ConstructionOptions wm = ConstructionOptions
   , conValues :: WMValues wm
   }
 
-defaultOptions :: (WMValues wm ~ (), WMActivities wm ~ ActivityCollection wm, WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
+defaultOptions :: (WMActivities wm ~ ActivityCollection wm, WMValues wm ~ (), WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
 defaultOptions = ConstructionOptions ActivityCollector ResponseCollector ()
 
 gameHarness ::

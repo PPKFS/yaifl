@@ -1,6 +1,7 @@
 module Yaifl.Zork.Rainbow where
 
 {-
+TODO
 Chapter 18 - Sceptre and Rainbow
 Carry out waving: say "You wave [the noun] around. Nothing happens."
 Instead of waving the sceptre:

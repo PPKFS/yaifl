@@ -1,6 +1,6 @@
 module Yaifl.Zork.Cyclops where
 {-
-
+TODO
 Chapter 9 - Cyclops NPC
 The cyclops is a person in Cyclops-Room.
 Understand "cyclops" and "monster" and "eye" and "hungry" and "giant" as the cyclops.

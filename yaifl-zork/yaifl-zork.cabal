@@ -48,6 +48,9 @@ executable yaifl-zork
     Yaifl.Zork.World.Reservoir
     Yaifl.Zork.World.Temple
     Yaifl.Zork.World.Underground
+
+    Yaifl.Zork.Metadata
+    Yaifl.Zork.Specifics
   build-depends:
     yaifl
     , yaifl-core

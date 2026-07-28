@@ -303,6 +303,7 @@ printName ::
   WithoutMissingObjects wm es
   => ActionHandler wm :> es
   => Print :> es
+  => State (ValueCollector wm) :> es
   => State (ActivityCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Input :> es
@@ -330,6 +331,7 @@ sayParameterName ::
   => ActionHandler wm :> es
   => Print :> es
   => State (ActivityCollector wm) :> es
+  => State (ValueCollector wm) :> es
   => State (AdaptiveNarrative wm) :> es
   => Input :> es
   => State (ResponseCollector wm) :> es

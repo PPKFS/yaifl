@@ -238,6 +238,9 @@ instance {-# OVERLAPPABLE #-} Monoid m => Pointed m where
 instance Pointed () where
   identityElement = ()
 
+instance (Pointed a, Pointed b) => Pointed (a, b) where
+  identityElement = (identityElement, identityElement)
+
 -- | Monadic while loop.
 --
 -- Executes a monadic action repeatedly while the predicate holds true.

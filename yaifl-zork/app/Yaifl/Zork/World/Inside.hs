@@ -1,7 +1,7 @@
 module Yaifl.Zork.World.Inside where
 
 {-
-
+TODO
 Chapter 2 - The House Interior
 Section 1 - Kitchen
 Kitchen is a room. Kitchen is in House Interior.
@@ -121,6 +121,22 @@ Understand "case" and "trophy" as the trophy case.
 The carrying capacity of the trophy case is 100.
 Instead of taking the trophy case:
   say "The trophy case is securely fastened to the wall."
+
+Chapter 7 - Trophy Case Scoring
+Every turn (this is the trophy case scoring rule):
+  let new-score be 0;
+  repeat with item running through things in the trophy case:
+    increase new-score by the treasure-value of the item;
+    repeat with inner running through things enclosed by the item:
+      increase new-score by the treasure-value of the inner;
+  if new-score is not the trophy-case-score:
+    let diff be new-score minus the trophy-case-score;
+    increase the score by diff;
+    now the trophy-case-score is new-score;
+  if the score is at least 350 and the won-flag is false:
+    now the won-flag is true;
+    now the ancient map is zil-visible;
+    say "[line break]An almost inaudible voice whispers in your ear, [quotation mark]Look to your treasures for the final secret.[quotation mark][line break]".
 After looking when the location is Living Room and the number of things in the trophy case is greater than 0:
   say "Your collection of treasures consists of:";
   repeat with item running through things in the trophy case:

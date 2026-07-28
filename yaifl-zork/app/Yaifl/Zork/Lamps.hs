@@ -1,7 +1,7 @@
 module Yaifl.Zork.Lamps where
 
 {-
-
+TODO
 Chapter 6 - Lamp Timer System
 The lamp-turns is a number that varies. The lamp-turns is 0.
 The lamp-stage is a number that varies. The lamp-stage is 0.

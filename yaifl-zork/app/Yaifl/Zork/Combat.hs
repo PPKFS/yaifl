@@ -1,6 +1,7 @@
 module Yaifl.Zork.Combat where
 
 {-
+TODO
 Chapter 3 - Combat Melee Message System
 Section 1 - Combat Variables
 The melee-weapon is a thing that varies.

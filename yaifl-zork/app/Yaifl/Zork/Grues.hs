@@ -1,6 +1,7 @@
 module Yaifl.Zork.Grues where
 
 {-
+TODO
 Chapter 5 - Darkness and Grues
 [ZIL grue behavior: attacks only on movement, never on non-movement actions.
 Two triggers: (1) V-WALK — trying to go a direction with no exit while in dark,

@@ -1,6 +1,7 @@
 module Yaifl.Zork.World.Barrow where
 
 {-
+TODO
 Chapter 20 - Stone Barrow and Endgame
 Stone Barrow is a room. "You are standing in front of a massive barrow of stone. In the east face is a huge stone door which is open. You cannot see into the dark of the tomb."
 Northeast of Stone Barrow is West-of-House.

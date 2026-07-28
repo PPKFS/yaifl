@@ -24,7 +24,12 @@ module Yaifl.Effects.RuleEffects
   , ActivityCollector(..)
   , ResponseCollector(..)
   , ActionCollector(..)
+  , ValueCollector(..)
   , ConcreteRuleStack
+
+  , getValue
+  , setValue
+  , modifyValue
   ) where
 
 import Yaifl.Prelude
@@ -54,6 +59,9 @@ newtype ResponseCollector wm = ResponseCollector { responseCollection :: WMRespo
 -- WorldModel instantiation, as multiple components might have the same underlying type.
 newtype ActionCollector wm = ActionCollector { actionCollection :: WMActions wm }
 
+newtype ValueCollector wm = ValueCollector { valueCollection :: WMValues wm }
+  deriving stock (Generic)
+
 makeFieldLabelsNoPrefix ''ActivityCollector
 makeFieldLabelsNoPrefix ''ResponseCollector
 
@@ -64,6 +72,7 @@ type RuleEffects wm es = (
   , State (ActivityCollector wm) :> es
   , State (ResponseCollector wm) :> es
   , State (AdaptiveNarrative wm) :> es
+  , State (ValueCollector wm) :> es
   , Breadcrumbs :> es
   , WithoutMissingObjects wm es
   , Print :> es
@@ -78,6 +87,7 @@ type RuleEffects wm es = (
 type ConcreteRuleStack wm = '[
   ActionHandler wm
   , Input
+  , State (ValueCollector wm)
   , State (AdaptiveNarrative wm)
   , State (ResponseCollector wm)
   , State (ActivityCollector wm)
@@ -87,3 +97,23 @@ type ConcreteRuleStack wm = '[
   , Breadcrumbs
   , Error MissingObject
   ]
+
+getValue ::
+  State (ValueCollector wm) :> es
+  => Lens' (WMValues wm) a
+  -> Eff es a
+getValue l = use $ #valueCollection % l
+
+modifyValue ::
+  State (ValueCollector wm) :> es
+  => Lens' (WMValues wm) a
+  -> (a -> a)
+  -> Eff es ()
+modifyValue l f = #valueCollection % l %= f
+
+setValue ::
+  State (ValueCollector wm) :> es
+  => Lens' (WMValues wm) a
+  -> a
+  -> Eff es ()
+setValue l v = #valueCollection % l .= v

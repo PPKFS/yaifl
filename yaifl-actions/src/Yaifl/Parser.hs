@@ -50,6 +50,7 @@ type ActionHandlerConstraints es wm =
   , State (ResponseCollector wm) :> es
   , State (Metadata wm) :> es
   , State (WorldActions wm) :> es
+  , State (ValueCollector wm) :> es
   )
 
 -- | The main action handling routine.

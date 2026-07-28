@@ -17,9 +17,8 @@ import Yaifl.Person.Kind
 import Yaifl.WorldModel
 import Yaifl.ObjectSpecifics
 import Yaifl.Thing.Create
-import Yaifl.Builder
 
-data PersonConfig wm (p :: Purpose) = PersonConfig
+data PersonConfig wm = PersonConfig
   { description :: WMText wm
   , initialAppearance :: WMText wm
   , gender :: Gender
@@ -27,7 +26,7 @@ data PersonConfig wm (p :: Purpose) = PersonConfig
   , thingModify :: Eff '[State (Thing wm)] ()
   } deriving stock (Generic)
 
-newPerson :: IsString (WMText wm) => Gender -> PersonConfig wm 'Defaults
+newPerson :: IsString (WMText wm) => Gender -> PersonConfig wm
 newPerson g = PersonConfig
   { description = ""
   , initialAppearance = ""
@@ -40,7 +39,7 @@ addPerson ::
   forall wm es.
   AddObjects wm es
   => WMText wm -- ^ Name.
-  -> PersonConfig wm 'Complete
+  -> PersonConfig wm
   -> Eff es ThingEntity
 addPerson n PersonConfig{..} = addThing @wm n newThing
   { initialAppearance
