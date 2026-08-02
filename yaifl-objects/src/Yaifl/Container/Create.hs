@@ -16,10 +16,9 @@ import Yaifl.Openable.Kind
 import Yaifl.Tag
 import Yaifl.WorldModel
 import Yaifl.ObjectSpecifics
-import Yaifl.Builder
 import Yaifl.Thing.Create
 
-data ContainerConfig wm p = ContainerConfig
+data ContainerConfig wm = ContainerConfig
   { description :: WMText wm
   , initialAppearance :: WMText wm
   , location :: Maybe EnclosingEntity
@@ -30,7 +29,9 @@ data ContainerConfig wm p = ContainerConfig
   , carryingCapacity :: Int
   } deriving stock (Generic)
 
-newContainer :: IsString (WMText wm) => ContainerConfig wm 'Complete
+makeFieldLabelsNoPrefix ''ContainerConfig
+
+newContainer :: IsString (WMText wm) => ContainerConfig wm
 newContainer = ContainerConfig
   { description = ""
   , initialAppearance = ""
@@ -46,7 +47,7 @@ addContainer ::
   forall wm es.
   AddObjects wm es
   => WMText wm
-  -> ContainerConfig wm 'Complete
+  -> ContainerConfig wm
   -> Eff es ContainerEntity
 addContainer name ContainerConfig{..} = do
     let cs = makeContainer (Just carryingCapacity) (Just opacity) (Just enterable) (Just $ snd openStatus) (Just $ fst openStatus)

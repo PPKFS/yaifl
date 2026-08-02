@@ -25,27 +25,27 @@ import Yaifl.Direction.Kind (Direction(..))
 import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable)
 import Yaifl.Room.Query
 import Yaifl.Actions.Going
+import Yaifl.Container.Create
+import Yaifl.Tag
+import Yaifl.Container.Query
+import Yaifl.Container.Kind
+import Yaifl.TH (MayHaveProperty(..))
+import Yaifl.Property.Has
 
+containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
+containerModify f = #specifics % propertyAT %= f
 data OutsideTheHouse = OutsideTheHouse RoomEntity
 roomsOutsideTheHouse :: RegionEntity -> Game ZorkWorldModel OutsideTheHouse
 roomsOutsideTheHouse forestArea = do
+
+  -- make the rooms
+
   houseExterior <- addRegion "House Exterior"
   westOfHouse <- addRoom "West of House" $ newRoom
     & #description .~ (text' $ do
       won <- getValue #wonFlag
       [sayingTell|You are standing in an open field west of a white house, with a boarded front door.{?if won} A secret path leads southwest into the forest.{?end if}|]
       pass)
-  whiteHouse <- addBackdrop "white house" $ newBackdrop (InRegions (houseExterior:|[forestArea]))
-    & #description .~ "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy."
-  whiteHouse `isUnderstoodAs` ["house", "white", "beautiful", "colonial"]
-  let notAtTheHouse :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => ActionPointer ZorkWorldModel resps goesWith v -> Game ZorkWorldModel ()
-      notAtTheHouse l = insteadOf' l [theObject whiteHouse, not_ (whenPlayerIsInRegion houseExterior) ] $ do
-        [saying|You're not at the house.|]
-  notAtTheHouse #taking
-  notAtTheHouse #pushing
-  notAtTheHouse #pulling
-  notAtTheHouse #touching
-
   kitchen <- addRoom' "Kitchen"
 
   behindHouse <- addRoom "Behind House" $ newRoom
@@ -67,6 +67,8 @@ roomsOutsideTheHouse forestArea = do
         )
   [southOfHouse, northOfHouse, behindHouse, westOfHouse] `areInRegion` houseExterior
 
+  -- position the rooms
+
   northOfHouse `isNorthOf` westOfHouse
   southOfHouse `isSouthOf` westOfHouse
   northOfHouse `isNorthEastOf` westOfHouse
@@ -82,6 +84,18 @@ roomsOutsideTheHouse forestArea = do
   behindHouse `isEastOf` northOfHouse
   westOfHouse `isWestOf` northOfHouse
 
+  -- add the house scenery
+  whiteHouse <- addBackdrop "white house" $ newBackdrop (InRegions (houseExterior:|[forestArea]))
+    & #description .~ "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy."
+  whiteHouse `isUnderstoodAs` ["house", "white", "beautiful", "colonial"]
+  let notAtTheHouse :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => ActionPointer ZorkWorldModel resps goesWith v -> Game ZorkWorldModel ()
+      notAtTheHouse l = insteadOf' l [theObject whiteHouse, not_ (whenPlayerIsInRegion houseExterior) ] $ do
+        [saying|You're not at the house.|]
+  notAtTheHouse #taking
+  notAtTheHouse #pushing
+  notAtTheHouse #pulling
+  notAtTheHouse #touching
+
   insteadOf' #entering [theObject whiteHouse, whenPlayerIsInRegion houseExterior, not_ (whenPlayerIsIn behindHouse)] $ do
     [saying|I can't see how to get in from here.|]
   insteadOf' #going [inDirection East, whenPlayerIsIn behindHouse] $ do
@@ -92,6 +106,7 @@ roomsOutsideTheHouse forestArea = do
     then tryAction "go" [TheDirection West] a >> pass
     else [saying|The window is closed.|]
 
+  -- add some objects
   clearing <- addRoom' "Clearing"
   clearing `isEastOf` behindHouse
 
@@ -100,6 +115,18 @@ roomsOutsideTheHouse forestArea = do
   boardedWindows `isUnderstoodAs` ["window", "windows", "boarded"]
   insteadOf' #going [inDirection South, whenPlayerIsIn northOfHouse] $ [saying|The windows are all boarded.|]
   insteadOf' #going [inDirection North, whenPlayerIsIn southOfHouse] $ [saying|The windows are all boarded.|]
+
+  insteadOf' #opening [theObject boardedWindows] $ [saying|The windows are boarded and can't be opened.|]
+  insteadOf' #attacking [theObject boardedWindows] $ [saying|You can't break the windows open.|]
+
+  mailbox <- addContainer "small mailbox" $ newContainer
+    & makeItClosedAndOpenable
+    & #initialAppearance .~ "There is a small mailbox here"
+    & #location ?~ coerceTag westOfHouse
+    & #thingModify .~ (do
+        containerModify $ #enclosing % #capacity ?~ 2
+      )
+  mailbox `isUnderstoodAs` ["mailbox", "box"]
   return (OutsideTheHouse westOfHouse)
 {-
 TODO
@@ -114,18 +141,6 @@ Instead of finding the white house when the location of the player is in House E
 Instead of finding the white house when the location of the player is not in House Exterior and the location of the player is not in House Interior and the location of the player is not the Clearing:
   say "It was here just a minute ago...."
 
-Section 3 - Map Connections Around the House
-
-The printed name of the boarded-windows is "boarded window".
-Understand "window" and "windows" and "boarded" as the boarded-windows.
-Instead of opening the boarded-windows: say "The windows are boarded and can[apostrophe]t be opened."
-Instead of attacking the boarded-windows: say "You can[apostrophe]t break the windows open."
-
-Section 7 - Objects Outside the House
-The small mailbox is a closed openable container in West-of-House. "There is a small mailbox here."
-The description of the small mailbox is "It's a small mailbox."
-Understand "mailbox" and "box" as the small mailbox.
-The carrying capacity of the small mailbox is 2.
 After opening the small mailbox:
   play the sound of creak-sfx as sfx;
   continue the action.
