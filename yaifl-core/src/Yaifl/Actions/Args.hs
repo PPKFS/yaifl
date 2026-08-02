@@ -43,6 +43,7 @@ import Yaifl.Refreshable
 import Yaifl.WorldModel
 import Yaifl.Effects.ActionHandler
 import Yaifl.Room.Kind
+import Yaifl.Enclosing.Kind
 
 -- | Standard action argument payload.
 data Args (wm :: WorldModel) v = Args
@@ -123,6 +124,9 @@ instance ArgsHaveMainObject (Thing wm) (Thing wm) where
 
 instance ArgsHaveMainObject (Room wm) (Room wm) where
   argsMainObject = castOptic $ iso id id
+
+instance ArgsHaveMainObject (TaggedObject (Thing wm) t) (Thing wm) where
+  argsMainObject = #unTagObject % _2
 
 instance (ArgsHaveMainObject vars o) => ArgsHaveMainObject (Args wm vars) o where
   -- | Delegate to variables' main object through the variables lens.

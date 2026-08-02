@@ -51,6 +51,7 @@ executable yaifl-zork
 
     Yaifl.Zork.Metadata
     Yaifl.Zork.Specifics
+    Yaifl.Zork.Actions
   build-depends:
     yaifl
     , yaifl-core

@@ -143,6 +143,7 @@ instance WMWithProperty wm Enclosing => IsEnclosingObject (TaggedObject (Thing w
 instance IsEnclosingObject (Room wm) where
   getEnclosing = view (#objectData % #enclosing)
 
+
 getEnclosingObject :: (IsEnclosing o, HasCallStack, WithoutMissingObjects wm es) => o -> Eff es (TaggedAnyEnclosing wm)
 getEnclosingObject theObj = do
     let e = getEnclosingEntity theObj

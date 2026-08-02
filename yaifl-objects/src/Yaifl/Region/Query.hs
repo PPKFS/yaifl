@@ -4,6 +4,9 @@ module Yaifl.Region.Query
   , isSubregionOf
   , modifyRegion
   , roomsInRegion
+  , getRegion
+  , getEnclosingRegions
+  , getRegionHierarchy
   ) where
 
 import Yaifl.Prelude
@@ -12,7 +15,14 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Region.Kind
 import qualified Data.Set as S
+import Yaifl.Room.Kind
+import Yaifl.Object.Kind
 
+getRegion ::
+  WithoutMissingObjects wm es
+  => RegionEntity
+  -> Eff es (Region wm)
+getRegion r = lookupRegion r >>= return . fromRight (error $ "failed to find region " <> show r)
 
 areInRegion ::
   WithoutMissingObjects wm es
@@ -36,8 +46,8 @@ modifyRegion ::
   -> (Region wm -> Region wm)
   -> Eff es ()
 modifyRegion o u = do
-  r <- lookupRegion o
-  whenRight_ r $ \r' -> setRegion (u r')
+  r' <- getRegion o
+  setRegion (u r')
 
 isSubregionOf ::
   WithoutMissingObjects wm es
@@ -55,3 +65,26 @@ roomsInRegion r = do
   subRegs <- rights <$> mapM lookupRegion (S.toList $ subRegions r)
   rs <- mapM roomsInRegion subRegs
   pure $ S.unions $ rooms r : rs
+
+getRegionHierarchy ::
+  WithoutMissingObjects wm es
+  => Region wm
+  -> Eff es [Region wm]
+getRegionHierarchy r = case r ^. #superRegion of
+  Nothing -> return []
+  Just x -> do
+    superR <- getRegion x
+    supersR <- getRegionHierarchy superR
+    return (superR:supersR)
+
+getEnclosingRegions ::
+  WithoutMissingObjects wm es
+  => Room wm
+  -> Eff es [Region wm]
+getEnclosingRegions r = do
+  case r ^. #objectData % #containingRegion of
+    ContainingRegion Nothing -> pure []
+    ContainingRegion (Just reg') -> do
+      superR <- getRegion reg'
+      supersR <- getRegionHierarchy superR
+      return (superR:supersR)

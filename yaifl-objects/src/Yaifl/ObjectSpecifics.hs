@@ -28,7 +28,7 @@ data ObjectSpecifics =
   | PersonSpecifics Person
   | SupporterSpecifics Supporter
   | BackdropSpecifics Backdrop
-  deriving stock (Eq, Show, Read, Generic)
+  deriving stock (Eq, Show, Generic)
 
 makePrisms ''ObjectSpecifics
 
@@ -49,7 +49,7 @@ instance MayHaveProperty ObjectSpecifics Enclosing where
 
 instance MayHaveProperty ObjectSpecifics MultiLocated where
   propertyAT = _DoorSpecifics % #multiLocated
-    `thenATraverse` (_BackdropSpecifics % coerced @_ @MultiLocated)
+    `thenATraverse` (_BackdropSpecifics % #rooms % coerced)
 
 instance MayHaveProperty ObjectSpecifics Container where
   propertyAT = castOptic _ContainerSpecifics

@@ -6,6 +6,8 @@ module Yaifl.Preconditions
   , theObject'
   , whenIn
   , whenPlayerIsIn
+  , not_
+  , whenPlayerIsInRegion
   ) where
 import Yaifl.Prelude
 import Yaifl.Rulebook
@@ -19,6 +21,8 @@ import Yaifl.ObjectLike
 import Yaifl.TH
 import Yaifl.MultiLocated.Kind
 import Yaifl.Enclosing.Query
+import Yaifl.Region.Kind
+import Yaifl.Region.Query
 
 forPlayer :: Precondition wm (Args wm v)
 forPlayer = Precondition (pure "actor is the player") $ \v -> do
@@ -73,6 +77,11 @@ whenIn e = Precondition
       pure $ any (elem (getEnclosingEntity e)) hierarchy
   }
 
+not_ ::
+  Precondition wm a
+  -> Precondition wm a
+not_ prec = prec { checkPrecondition = \v -> not <$> (checkPrecondition prec v)}
+
 whenPlayerIsIn ::
   ObjectLike wm e
   => WMWithProperty wm MultiLocated
@@ -82,12 +91,24 @@ whenPlayerIsIn ::
 whenPlayerIsIn e = Precondition
   { preconditionName = do
       e' <- getObject e
-      pure $ "when in the location " <> display (e' ^. #name)
+      pure $ "when player is in the location " <> display (e' ^. #name)
   , checkPrecondition = const $ do
       hierarchy <- getPlayer' >>= getContainingHierarchies
       pure $ any (elem (getEnclosingEntity e)) hierarchy
   }
 
+whenPlayerIsInRegion ::
+  RegionEntity
+  -> Precondition wm a
+whenPlayerIsInRegion e = Precondition
+    { preconditionName = do
+      e' <- getObject e
+      pure $ "when player is in the region " <> display (e' ^. #name)
+  , checkPrecondition = const $ do
+      playerRoom <- getPlayerLocation
+      regHierarchy <- getEnclosingRegions playerRoom
+      pure $ e `elem` (map tagRegionEntity regHierarchy)
+  }
 aKindOf ::
   ObjectKind
   -> Precondition wm (AnyObject wm)

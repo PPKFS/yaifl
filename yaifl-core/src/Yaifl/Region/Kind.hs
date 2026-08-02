@@ -13,6 +13,7 @@ module Yaifl.Region.Kind (
     RegionTag
   , RegionEntity
   , Region(..)
+  , tagRegionEntity
   ) where
 
 import Yaifl.Prelude
@@ -53,4 +54,6 @@ data Region wm = Region
 
 deriving stock instance Show (WMRegionData wm) => Show (Region wm)
 
+tagRegionEntity :: Region wm -> RegionEntity
+tagRegionEntity = regionID
 makeFieldLabelsNoPrefix ''Region

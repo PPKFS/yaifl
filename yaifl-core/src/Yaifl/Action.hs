@@ -64,7 +64,6 @@ import Yaifl.Actions.GoesWith
 import Yaifl.Effects.RuleEffects
 import Yaifl.Text.Responses
 import Yaifl.Refreshable
-import Yaifl.Effects.Print (printLn)
 
 type ParseArgumentEffects wm es = (WithMetadata wm es, WithoutMissingObjects wm es, RuleEffects wm es)
 
@@ -188,8 +187,7 @@ makeAction n = Action
   , parseArguments = ParseArguments $ const $ pure $ FailedParse "not parsed"
   , beforeRules = makeActionRulebook ("before " <> n <> " rulebook") []
   , insteadRules = makeActionRulebook ("instead " <> n <> " rulebook") []
-  , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook")
-      [makeRule' "not implemented action rule" $ printLn "This action has not been implemented." >> rulePass]
+  , carryOutRules = makeActionRulebook ("carry out " <> n <> " rulebook") []
   , afterRules = makeActionRulebook ("after " <> n <> " rulebook") []
   , checkRules = makeActionRulebook ("check " <> n <> " rulebook") []
   , reportRules = makeActionRulebook ("report " <> n <> " rulebook") []

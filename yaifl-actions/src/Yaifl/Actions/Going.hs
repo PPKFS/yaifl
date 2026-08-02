@@ -6,6 +6,7 @@ module Yaifl.Actions.Going
   , toTheRoom
   , throughTheDoor
   , throughTheClosedDoor
+  , inDirection
   ) where
 
 import Yaifl.Prelude
@@ -46,6 +47,7 @@ data GoingActionVariables wm = GoingActionVariables
   , vehicleGoneBy :: Maybe (Thing wm)
     --The going action has an object called the thing gone with (matched as "with").
   , thingGoneWith :: Maybe (Thing wm)
+  , directionGoingIn :: WMDirection wm
   } deriving stock ( Generic )
 
 instance Display (GoingActionVariables wm) where
@@ -57,6 +59,7 @@ instance Refreshable wm (GoingActionVariables wm) where
     <*> pure doorGoneThrough
     <*> refresh vehicleGoneBy
     <*> refresh thingGoneWith
+    <*> pure directionGoingIn
 
 data GoingResponses =
     GoStandUpA
@@ -162,27 +165,29 @@ goingActionSet ua@(UnverifiedArgs Args{..}) = do
     and of course now the room we're going to is on the other side of the door.
   -}
   -- find all the possible targets we could mean
-  mbTargetAndConn <- case fst variables of
+  (mbTargetAndConn :: Maybe (WMDirection wm, (RoomEntity, Connection wm))) <- case fst variables of
     -- if the noun is a direction:
     -- let direction D be the noun;
     -- let the target be the room-or-door direction D from the room gone from;
     Just (Left dir) -> do
       addAnnotation $ "going in direction " <> show dir
       addAnnotation $ "possible exits are " <> show (roomGoneFrom ^. #objectData % #mapConnections)
-      pure $ getConnection @wm dir roomGoneFrom
+      pure $ (dir,) <$> getConnection @wm dir roomGoneFrom
     -- if the noun is a door, let the target be the noun;
     -- now the door gone through is the target;
     -- now the target is the other side of the target from the room gone from;
-    Just (Right door) -> pure $ (\ds -> getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom) =<< getDoorMaybe door
+
+    -- TODO: fix this so it's not always west
+    Just (Right door) -> pure $ (\ds -> fmap (\c -> (injectDirection West,c)) $ getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom) =<< getDoorMaybe door
     Nothing -> do
       mbThrough <- getMatchingThing "through" ua
       pure $ do
             door <- mbThrough
             ds <- getDoorMaybe door
-            getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom
+            (injectDirection West,) <$> getConnectionViaDoor (tagEntity ds (getEntity door)) roomGoneFrom
   case mbTargetAndConn of
     Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through" ua
-    Just (target, conn) -> do
+    Just (dir, (target, conn)) -> do
       mbRoomGoneTo <- getRoomMaybe target
       case mbRoomGoneTo of
         Nothing -> flip (cantGoThatWay source) roomGoneFrom =<< getMatchingThing "through" ua
@@ -194,6 +199,7 @@ goingActionSet ua@(UnverifiedArgs Args{..}) = do
             , doorGoneThrough = conn ^. #doorThrough
             , roomGoneTo = roomGoneTo
             , vehicleGoneBy
+            , directionGoingIn = dir
             }
 
 cantGoThatWay ::
@@ -299,3 +305,15 @@ throughTheClosedDoor d = Precondition (pure "through a specific closed door") $ 
   pure $
     isClosed o &&
     (getEntity <$> doorGoneThrough (variables v)) == Just (getEntity d)
+
+inDirection ::
+  Eq (WMDirection wm)
+  => Show (WMDirection wm)
+  => WMDirection wm
+  -> Precondition wm (Args wm (GoingActionVariables wm))
+inDirection dir = Precondition {
+  preconditionName = pure $ "in the direction " <> show dir
+  , checkPrecondition = \v -> do
+    let var = variables v
+    return $ dir == (directionGoingIn var)
+}

@@ -20,12 +20,12 @@ import Yaifl.Object.Create
 import Yaifl.Metadata (Metadata(..))
 import Yaifl.Builder
 
-data RoomConfig wm p = RoomConfig
+data RoomConfig wm = RoomConfig
   { description :: WMText wm
   , roomModify :: Eff '[State (Room wm)] ()
   } deriving stock (Generic)
 
-newRoom :: IsString (WMText wm) => RoomConfig wm 'Complete
+newRoom :: IsString (WMText wm) => RoomConfig wm
 newRoom = RoomConfig
   { description = ""
   , roomModify = pass
@@ -60,7 +60,7 @@ addRoomInternal1 n d rd = addRoomInternal n d (ObjectKind "room")
 addRoom ::
   AddObjects wm es
   => WMText wm -- ^ Name.
-  -> RoomConfig wm 'Complete
+  -> RoomConfig wm
   -> Eff es RoomEntity
 addRoom n config = addRoomInternal1 n (view #description config) (Just $ view #roomModify config)
 

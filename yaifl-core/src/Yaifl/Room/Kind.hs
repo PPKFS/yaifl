@@ -65,6 +65,7 @@ import Yaifl.Object.Kind
 import Yaifl.WorldModel
 import qualified Data.Map.Strict as Map
 import Yaifl.Metadata
+import Yaifl.Region.Kind
 
 -- | Whether a connection was made by the user or simply assumed (we can override assumed connections but
 -- error on overriding explicitly made connections).
@@ -108,7 +109,7 @@ data IsVisited = Visited | Unvisited
 
 -- | The region in which a room is located.
 newtype ContainingRegion = ContainingRegion
-  { unRegion :: Maybe Entity
+  { unRegion :: Maybe RegionEntity
   } deriving stock (Eq, Show)
     deriving newtype (Read, Ord, Generic)
 

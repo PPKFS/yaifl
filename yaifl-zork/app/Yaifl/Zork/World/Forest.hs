@@ -1,5 +1,16 @@
 module Yaifl.Zork.World.Forest where
 
+import Yaifl.Prelude
+
+import Yaifl.Region.Kind
+import Yaifl.Zork.Specifics
+import Yaifl.Effects.Interpreters
+import Yaifl.Region.Create (addRegion)
+
+newtype Forest = Forest RegionEntity
+forest ::  Game ZorkWorldModel Forest
+forest = do
+  coerce <$> addRegion "Forest Area"
 {-
 TODO
 Section 4 - Forest Rooms

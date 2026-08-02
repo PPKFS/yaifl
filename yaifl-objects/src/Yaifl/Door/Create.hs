@@ -47,7 +47,7 @@ data DoorConfig wm p = DoorConfig
   , doorModify :: Eff '[State Door] ()
   , openStatus :: (Opened, Openable)
   , lockStatus :: DoorLockStatus
-  }
+  } deriving stock (Generic)
 
 newDoor :: IsString (WMText wm) => (RoomEntity, WMDirection wm) -> (RoomEntity, WMDirection wm) -> DoorConfig wm 'Complete
 newDoor front back = DoorConfig

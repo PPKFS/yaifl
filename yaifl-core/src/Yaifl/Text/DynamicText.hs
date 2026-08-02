@@ -2,6 +2,7 @@
 module Yaifl.Text.DynamicText
   ( DynamicText(..)
   , text
+  , text'
   , RuleLimitedEffect(..)
   ) where
 
@@ -35,6 +36,7 @@ instance Semigroup (DynamicText wm) where
   (<>) (DynamicText (Right (n, RuleLimitedEffect r))) (DynamicText (Right (n2, RuleLimitedEffect r2))) = DynamicText (Right (n <> n2, RuleLimitedEffect $ r >> r2 ))
 instance Monoid (DynamicText wm) where
   mempty = DynamicText (Left "")
+
 text ::
   SayableValue (WMText wm) wm
   => Display (WMText wm)
@@ -42,3 +44,10 @@ text ::
   -> Eff (Writer Text : ConcreteRuleStack wm) ()
   -> DynamicText wm
 text t f = DynamicText $ Right (t, RuleLimitedEffect f)
+
+text' ::
+  SayableValue (WMText wm) wm
+  => Display (WMText wm)
+  => Eff (Writer Text : ConcreteRuleStack wm) ()
+  -> DynamicText wm
+text' f = DynamicText $ Right ("", RuleLimitedEffect f)

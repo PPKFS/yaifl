@@ -1,17 +1,108 @@
 module Yaifl.Zork.World.House where
 
+import Yaifl.Prelude
+
+import Yaifl.Actions.Imports
+import Yaifl
+import Yaifl.Room.Create
+import Yaifl.Text.DynamicText
+import Yaifl.Effects.RuleEffects
+import Yaifl.Zork.Specifics
+import Yaifl.Region.Query (areInRegion)
+import Yaifl.Region.Create (addRegion)
+import Yaifl.Region.Kind
+import Yaifl.Backdrop.Create
+import Yaifl.Object.Query
+import Yaifl.Create.Rule
+import Yaifl.Preconditions
+import Yaifl.Thing.Kind
+import Yaifl.Object.Kind
+import Yaifl.Entity
+import Yaifl.Openable.Kind
+import Yaifl.ObjectLike
+import Yaifl.Door.Create
+import Yaifl.Direction.Kind (Direction(..))
+import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable)
+import Yaifl.Room.Query
+import Yaifl.Actions.Going
+
+data OutsideTheHouse = OutsideTheHouse RoomEntity
+roomsOutsideTheHouse :: RegionEntity -> Game ZorkWorldModel OutsideTheHouse
+roomsOutsideTheHouse forestArea = do
+  houseExterior <- addRegion "House Exterior"
+  westOfHouse <- addRoom "West of House" $ newRoom
+    & #description .~ (text' $ do
+      won <- getValue #wonFlag
+      [sayingTell|You are standing in an open field west of a white house, with a boarded front door.{?if won} A secret path leads southwest into the forest.{?end if}|]
+      pass)
+  whiteHouse <- addBackdrop "white house" $ newBackdrop (InRegions (houseExterior:|[forestArea]))
+    & #description .~ "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy."
+  whiteHouse `isUnderstoodAs` ["house", "white", "beautiful", "colonial"]
+  let notAtTheHouse :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => ActionPointer ZorkWorldModel resps goesWith v -> Game ZorkWorldModel ()
+      notAtTheHouse l = insteadOf' l [theObject whiteHouse, not_ (whenPlayerIsInRegion houseExterior) ] $ do
+        [saying|You're not at the house.|]
+  notAtTheHouse #taking
+  notAtTheHouse #pushing
+  notAtTheHouse #pulling
+  notAtTheHouse #touching
+
+  kitchen <- addRoom' "Kitchen"
+
+  behindHouse <- addRoom "Behind House" $ newRoom
+  kitchenWindow <- addDoor "kitchen window" $ newDoor
+    (kitchen `isToThe` West) (behindHouse `isToThe` East)
+    & makeItClosedAndOpenable
+    & makeItScenery
+  kitchenWindow `isUnderstoodAs` ["window", "kitchen", "small"]
+
+  northOfHouse <- addRoom "North of House" $ newRoom
+    & #description .~ "You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees."
+  southOfHouse <- addRoom "South of House" $ newRoom
+    & #description .~ "You are facing the south side of a white house. There is no door here, and all the windows are boarded."
+  modifyRoom behindHouse $
+    #description .~ (text' $ do
+        window <- getObject kitchenWindow
+        let windowOpen = isOpen window
+        [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}}open{?else}slightly ajar{?end if}.|]
+        )
+  [southOfHouse, northOfHouse, behindHouse, westOfHouse] `areInRegion` houseExterior
+
+  northOfHouse `isNorthOf` westOfHouse
+  southOfHouse `isSouthOf` westOfHouse
+  northOfHouse `isNorthEastOf` westOfHouse
+  southOfHouse `isSouthEastOf` westOfHouse
+  northOfHouse `isNorthOf` behindHouse
+  southOfHouse `isSouthOf` behindHouse
+  southOfHouse `isSouthWestOf` behindHouse
+  northOfHouse `isNorthWestOf` behindHouse
+  behindHouse `isEastOf` southOfHouse
+  westOfHouse `isWestOf` southOfHouse
+  behindHouse `isNorthEastOf` southOfHouse
+  westOfHouse `isNorthWestOf` southOfHouse
+  behindHouse `isEastOf` northOfHouse
+  westOfHouse `isWestOf` northOfHouse
+
+  insteadOf' #entering [theObject whiteHouse, whenPlayerIsInRegion houseExterior, not_ (whenPlayerIsIn behindHouse)] $ do
+    [saying|I can't see how to get in from here.|]
+  insteadOf' #going [inDirection East, whenPlayerIsIn behindHouse] $ do
+    [saying|The door is boarded and you can't remove the boards.|]
+  insteadOf #entering [theObject whiteHouse, whenPlayerIsIn behindHouse] $ \a -> do
+    window <- getObject kitchenWindow
+    if isOpen window
+    then tryAction "go" [TheDirection West] a >> pass
+    else [saying|The window is closed.|]
+
+  clearing <- addRoom' "Clearing"
+  clearing `isEastOf` behindHouse
+
+  boardedWindows <- addBackdrop "boarded window" $ newBackdrop (InRooms (northOfHouse:|[southOfHouse]))
+    & #description .~ "The windows are all boarded up."
+  boardedWindows `isUnderstoodAs` ["window", "windows", "boarded"]
+  insteadOf' #going [inDirection South, whenPlayerIsIn northOfHouse] $ [saying|The windows are all boarded.|]
+  insteadOf' #going [inDirection North, whenPlayerIsIn southOfHouse] $ [saying|The windows are all boarded.|]
+  return (OutsideTheHouse westOfHouse)
 {-
 TODO
-Section 2 - Rooms Outside the House
-West-of-House is a room. "You are standing in an open field west of a white house, with a boarded front door.[if the won-flag is true] A secret path leads southwest into the forest.[end if]".
-The printed name of West-of-House is "West of House".
-West-of-House is in House Exterior.
-The white house is a backdrop. The white house is in House Exterior and Forest Area. The description of the white house is "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy."
-Understand "house" and "white" and "beautiful" and "colonial" as the white house.
-Instead of burning the white house:
-  say "You must be joking."
-Instead of taking or pushing or pulling or touching the white house when the location of the player is not in House Exterior:
-  say "You're not at the house."
 Finding is an action applying to one visible thing. Understand "find [something]" and "where is [something]" as finding.
 Carry out finding: say "I couldn't find that."
 Instead of finding the white house when the location of the player is in House Interior:
@@ -22,44 +113,13 @@ Instead of finding the white house when the location of the player is in House E
   say "It's right here! Are you blind or something?"
 Instead of finding the white house when the location of the player is not in House Exterior and the location of the player is not in House Interior and the location of the player is not the Clearing:
   say "It was here just a minute ago...."
-Instead of entering the white house when the location of the player is Behind House:
-  if the kitchen-window is open:
-    try going west;
-  otherwise:
-    say "The window is closed."
-Instead of entering the white house when the location of the player is in House Exterior and the location of the player is not Behind House:
-  say "I can't see how to get in from here."
-North-of-House is a room. "You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees."
-The printed name of North-of-House is "North of House".
-North-of-House is in House Exterior.
-South-of-House is a room. "You are facing the south side of a white house. There is no door here, and all the windows are boarded."
-The printed name of South-of-House is "South of House".
-South-of-House is in House Exterior.
-Behind House is a room. The printed name of Behind House is "Behind House".
-Behind House is in House Exterior.
-The description of Behind House is "You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is [if the kitchen-window is open]open[otherwise]slightly ajar[end if]."
+
 Section 3 - Map Connections Around the House
-North-of-House is north of West-of-House. South-of-House is south of West-of-House.
-Northeast of West-of-House is North-of-House. Southeast of West-of-House is South-of-House.
-North of Behind House is North-of-House. South of Behind House is South-of-House.
-Southwest of Behind House is South-of-House. Northwest of Behind House is North-of-House.
-East of South-of-House is Behind House. West of South-of-House is West-of-House.
-Northeast of South-of-House is Behind House. Northwest of South-of-House is West-of-House.
-East of North-of-House is Behind House. West of North-of-House is West-of-House.
-East of Behind House is Clearing.
-Instead of going east in West-of-House:
-  say "The door is boarded and you can't remove the boards."
-The boarded-windows are a backdrop. The boarded-windows are in North-of-House and South-of-House.
+
 The printed name of the boarded-windows is "boarded window".
 Understand "window" and "windows" and "boarded" as the boarded-windows.
-The description of the boarded-windows is "The windows are all boarded up."
 Instead of opening the boarded-windows: say "The windows are boarded and can[apostrophe]t be opened."
 Instead of attacking the boarded-windows: say "You can[apostrophe]t break the windows open."
-Instead of going south in North-of-House:
-  say "The windows are all boarded."
-Instead of going north in South-of-House:
-  say "The windows are all boarded."
-
 
 Section 7 - Objects Outside the House
 The small mailbox is a closed openable container in West-of-House. "There is a small mailbox here."
@@ -99,10 +159,7 @@ Understand "nails" and "nail" as the nails.
 The description of the nails is "The nails are deeply imbedded in the door."
 Instead of taking the nails: say "The nails, deeply imbedded in the door, cannot be removed."
 Section 8 - Kitchen Window (a door)
-The kitchen-window is a door. The kitchen-window is not open. The kitchen-window is scenery.
-The printed name of the kitchen-window is "kitchen window".
-Understand "window" and "kitchen" and "small" as the kitchen-window.
-The kitchen-window is west of Behind House and east of Kitchen.
+
 The description of the kitchen-window is "[if the kitchen-window-touched is false]The window is slightly ajar, but not enough to allow entry.[otherwise if the kitchen-window is open]The window is open.[otherwise]The window is closed.[end if]".
 The kitchen-window-touched is a truth state that varies. The kitchen-window-touched is false.
 Instead of opening the kitchen-window:

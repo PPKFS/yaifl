@@ -2,6 +2,7 @@
 module Yaifl.Backdrop.Create
   ( addBackdrop
   , BackdropConfig(..)
+  , BackdropLocationsConfig(..)
   , newBackdrop
   , backdropInRooms
   ) where
@@ -24,16 +25,22 @@ import Yaifl.ObjectLike
 import Yaifl.Room.Kind
 import Yaifl.Enclosing.Kind
 import qualified Data.List.NonEmpty as NE
+import Yaifl.Region.Kind
+import Yaifl.Region.Query
+import Yaifl.Metadata (Metadata)
 
-data BackdropConfig wm p = BackdropConfig
+data BackdropConfig wm = BackdropConfig
   { description :: WMText wm
   , described :: ThingDescribed
   , initialAppearance :: WMText wm
   , thingModify :: Eff '[State (Thing wm)] ()
-  , locations :: NonEmpty EnclosingEntity
+  , locations :: BackdropLocationsConfig
   } deriving stock (Generic)
 
-newBackdrop :: IsString (WMText wm) => NonEmpty EnclosingEntity -> BackdropConfig wm 'Defaults
+data BackdropLocationsConfig = InRooms (NonEmpty RoomEntity) | InRegions (NonEmpty RegionEntity) | Everywhere
+  deriving stock (Eq, Ord, Generic)
+
+newBackdrop :: IsString (WMText wm) => BackdropLocationsConfig -> BackdropConfig wm
 newBackdrop locations = BackdropConfig
   { description = ""
   , initialAppearance = ""
@@ -42,16 +49,27 @@ newBackdrop locations = BackdropConfig
   , locations
   }
 
-backdropInRooms :: NonEmpty (Room wm) -> NonEmpty EnclosingEntity
-backdropInRooms = NE.map (coerceTag . tagRoomEntity)
+backdropInRooms :: NonEmpty (Room wm) -> BackdropLocationsConfig
+backdropInRooms = InRooms . NE.map tagRoomEntity
 
 addBackdrop ::
   forall wm es.
   AddObjects wm es
   => WMText wm
-  -> BackdropConfig wm 'Complete
+  -> BackdropConfig wm
   -> Eff es ThingEntity
-addBackdrop name BackdropConfig{initialAppearance, description, thingModify, described, locations=l:|ls} = do
+addBackdrop name BackdropConfig{initialAppearance, description, thingModify, described, locations} = do
+  (mainLocation, backdrop) <- case locations of
+    Everywhere -> do
+      r <- coerceTag <$> use @(Metadata wm) #firstRoom
+      return (r, Backdrop (MultiLocated S.empty) S.empty True)
+    InRegions (r:|rs) -> do
+      anyRoom <- fromMaybe voidID . listToMaybe . catMaybes <$>
+        mapM (\region -> getRegion region >>= roomsInRegion >>= return . listToMaybe . S.toList) (r:rs)
+      return (anyRoom, Backdrop (MultiLocated S.empty) (S.fromList (r:rs)) True)
+
+    InRooms (l:|ls) -> return (l, (Backdrop (MultiLocated (S.fromList $ map coerceTag $ l:ls)) S.empty False))
+
   d <- addThing name newThing
         { initialAppearance
         , description
@@ -62,10 +80,10 @@ addBackdrop name BackdropConfig{initialAppearance, description, thingModify, des
             #objectData % #portable .= FixedInPlace
             #objectData % #pushableBetweenRooms .= False
             #objectData % #described .= described
-        , specifics = inj (Proxy @wm) $ BackdropSpecifics (Backdrop (MultiLocated (S.fromList $ l:ls)))
-        , location = Just l
+        , specifics = inj (Proxy @wm) $ BackdropSpecifics backdrop
+        , location = Just $ coerceTag mainLocation
         , objType = ObjectKind "backdrop"
         }
 
-  updateMultiLocatedObject d
+  when (has #_InRooms locations) $ updateMultiLocatedObject d
   pure d

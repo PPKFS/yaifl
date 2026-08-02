@@ -10,6 +10,9 @@ module Yaifl.Room.Query
   , isSouthOfOneWay
   , isEastOfOneWay
   , isNorthOfOneWay
+  , isNorthEastOf
+  , isNorthWestOf
+  , isSouthEastOf
   , isInsideFrom
   , isOutsideFrom
   , isAbove
