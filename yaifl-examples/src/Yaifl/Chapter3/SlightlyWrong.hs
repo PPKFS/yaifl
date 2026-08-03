@@ -7,7 +7,6 @@ import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Text.Say
 import Yaifl.Text.DynamicText
 import Yaifl.Room.Kind
-import Yaifl.Object.Kind
 import Yaifl.Room.Create
 import Yaifl.Room.Query
 

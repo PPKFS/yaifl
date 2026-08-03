@@ -53,6 +53,7 @@ import Yaifl.Property.Query( defaultPropertyGetter )
 import Yaifl.TH ( WMWithProperty, makeGetMaybe )
 import Yaifl.Openable.Kind
 import qualified Data.EnumSet as ES
+import Yaifl.ObjectLike
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent
@@ -83,6 +84,8 @@ inThe = coerceTag
 instance Taggable ContainerEntity EnclosingTag
 instance Taggable Container EnclosingTag
 instance Taggable Container ContainerTag
+instance Taggable Container ThingTag
+instance Taggable ContainerEntity ThingTag
 
 instance IsEnclosing ContainerEntity
 
@@ -92,7 +95,9 @@ makeFieldLabelsNoPrefix ''Enterable
 makeGetMaybe ''Container
 makeGetMaybe ''Enterable
 
--- | Check if a container is currently open.
+instance ThingLike wm ContainerEntity where
+  getThing = getThing . coerceTag @ThingTag
+
 -- | Check if a container is currently open.
 isOpenContainer ::
   Container

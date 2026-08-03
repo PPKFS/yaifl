@@ -17,6 +17,7 @@ import Yaifl.Person.Create
 import Yaifl.Entity
 import Yaifl.Object.Create
 import Yaifl.Object.Kind
+import Yaifl.Zork.Actions
 
 data Defeated = Defeated | NotDefeated
 data ZorkSpecifics = YaiflSpecifics (ObjectSpecifics) | ExtendedPersonSpecifics (Defeated, Person)
@@ -39,7 +40,7 @@ addZorkPerson ::
 addZorkPerson name config@PersonConfig{..} = addPerson name $ config & #thingModify .~ (#specifics .= (ExtendedPersonSpecifics (NotDefeated, ((Person gender carrying)))))
 
 
-type ZorkWorldModel = 'WorldModel ZorkSpecifics Direction ZorkData ZorkThingData () () ActivityCollection ResponseCollection DynamicText ActionCollection
+type ZorkWorldModel = 'WorldModel ZorkSpecifics Direction ZorkData ZorkThingData () () ActivityCollection ResponseCollection DynamicText ZorkActions
 
 instance WMHasObjSpecifics ZorkWorldModel where
   inj _ = YaiflSpecifics
