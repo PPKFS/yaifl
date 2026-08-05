@@ -40,7 +40,7 @@ import Yaifl.Effects.Print
 class SayableValue s wm where
     -- | Output text to a Writer effect for accumulation.
   sayTell :: (Writer Text :> es, RuleEffects wm es) => s -> Eff es ()
-  
+
     -- | Output text directly using the Print effect.
   say :: RuleEffects wm es => s -> Eff es ()
   default say :: RuleEffects wm es => s -> Eff es ()

@@ -31,7 +31,8 @@ import Yaifl.Container.Kind
 import Yaifl.Property.Has
 import Yaifl.Thing.Create
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Openable.Query (openIt)
+import Yaifl.Openable.Query (openIt, closeIt)
+import Yaifl.Person.Query (getPlayerLocation)
 
 inTheRoom :: TaggedEntity RoomTag -> Maybe (TaggedEntity EnclosingTag)
 inTheRoom = Just . coerceTag
@@ -185,27 +186,28 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
         setValue #kitchenWindowTouched True
         -- play the sound of window-sfx as sfx;
         [saying|With great effort, you open the window far enough to allow entry.|]
+  insteadOf #closing [theObject kitchenWindow] $ \a -> do
+    let w = variables a
+    if isClosed w
+      then [saying|It is already closed.|]
+      else do
+        closeIt w
+        setValue #kitchenWindowTouched True
+        -- play the sound of window-sfx as sfx;
+        [saying|The window closes (more easily than it opened).|]
+  insteadOf' #searching [theObject kitchenWindow] $ do
+    p <- getPlayerLocation
+    if p `objectEquals` kitchen then [saying|You can see a clear area leading towards a forest.|]
+    else [saying|You can see what appears to be a kitchen.|]
+
   return (OutsideTheHouse westOfHouse)
 {-
 TODO
-Instead of closing the kitchen-window:
-  if the kitchen-window is not open:
-    say "It is already closed." instead;
-  now the kitchen-window is not open;
-  now the kitchen-window-touched is true;
-  say "The window closes (more easily than it opened)."
-Instead of searching the kitchen-window:
-  if the player is in Kitchen:
-    say "You can see a clear area leading towards a forest.";
-  otherwise:
-    say "You can see what appears to be a kitchen."
-
-Instead of reading the front door:
-  if the player is in Living Room:
-    say "The engravings translate to [quotation mark]This space intentionally left blank.[quotation mark]";
-  otherwise:
-    say "There is no writing on this side."
-
+  {- insteadOf' #reading [theObject frontDoor] $ do
+    p <- getPlayerLocation
+    if p `objectEquals` livingRoom then [saying|The engravings translate to "This space intentionally left blank."|]
+    else [saying|There is no writing on this side.|]
+  -}
 Finding is an action applying to one visible thing. Understand "find [something]" and "where is [something]" as finding.
 Carry out finding: say "I couldn't find that."
 Instead of finding the white house when the location of the player is in House Interior:
