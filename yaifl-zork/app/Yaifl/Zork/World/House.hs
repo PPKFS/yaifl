@@ -2,40 +2,38 @@ module Yaifl.Zork.World.House where
 
 import Yaifl.Prelude
 
-import Yaifl.Actions.Imports
 import Yaifl
-import Yaifl.Room.Create
-import Yaifl.Text.DynamicText
-import Yaifl.Effects.RuleEffects
-import Yaifl.Zork.Specifics
-import Yaifl.Region.Query (areInRegion)
-import Yaifl.Region.Create (addRegion)
-import Yaifl.Region.Kind
-import Yaifl.Backdrop.Create
-import Yaifl.Object.Query
-import Yaifl.Create.Rule
-import Yaifl.Preconditions
-import Yaifl.Thing.Kind
-import Yaifl.Object.Kind
-import Yaifl.Entity
-import Yaifl.Openable.Kind
-import Yaifl.ObjectLike
-import Yaifl.Door.Create
-import Yaifl.Direction.Kind (Direction(..))
-import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, placeIt, makeItPlural)
-import Yaifl.Room.Query
 import Yaifl.Actions.Going
+import Yaifl.Actions.Imports
+import Yaifl.Backdrop.Create
+import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, placeIt, makeItPlural)
 import Yaifl.Container.Create
-import Yaifl.Tag
 import Yaifl.Container.Kind
-import Yaifl.Property.Has
-import Yaifl.Thing.Create
-import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Create.Rule
+import Yaifl.Direction.Kind (Direction(..))
+import Yaifl.Door.Create
+import Yaifl.Effects.RuleEffects
+import Yaifl.Entity
+import Yaifl.Object.Kind
+import Yaifl.Object.Query
+import Yaifl.ObjectLike
+import Yaifl.Openable.Kind
 import Yaifl.Openable.Query (openIt, closeIt)
 import Yaifl.Person.Query (getPlayerLocation)
+import Yaifl.Preconditions
+import Yaifl.Property.Has
+import Yaifl.Region.Create (addRegion)
+import Yaifl.Region.Kind
+import Yaifl.Region.Query (areInRegion)
+import Yaifl.Room.Create
+import Yaifl.Room.Query
+import Yaifl.Tag
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Text.DynamicText
+import Yaifl.Thing.Create
+import Yaifl.Thing.Kind
+import Yaifl.Zork.Specifics
 
-inTheRoom :: TaggedEntity RoomTag -> Maybe (TaggedEntity EnclosingTag)
-inTheRoom = Just . coerceTag
 containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
 containerModify f = #specifics % propertyAT %= f
 data OutsideTheHouse = OutsideTheHouse RoomEntity
@@ -132,7 +130,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
   frontDoor <- addThing "front door" $ newThing
     & #description .~ "The door is boarded shut."
     & makeItScenery
-    & #location .~ inTheRoom westOfHouse
+    & #location .~ (Just . coerceTag $ westOfHouse)
   frontDoor `isUnderstoodAs` ["door", "front", "boarded"]
 
   insteadOf' #opening [theObject frontDoor] $ [saying|The door cannot be opened.|]
