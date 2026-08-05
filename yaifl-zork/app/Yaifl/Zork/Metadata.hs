@@ -16,6 +16,8 @@ data ZorkData = ZorkData
   , gatesOpenFlag :: Bool
   , luckyFlag :: Bool
 
+  , kitchenWindowTouched :: Bool
+
   , playerDeaths :: Int
   , playerIsDead :: Bool
   , alwaysLitMode :: Bool
@@ -39,6 +41,8 @@ defaultZorkValues = ZorkData
   , gateFlag = False
   , gatesOpenFlag = False
   , luckyFlag = True
+
+  , kitchenWindowTouched = False
 
   , playerDeaths = 0
   , playerIsDead = False

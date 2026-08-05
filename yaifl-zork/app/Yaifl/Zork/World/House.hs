@@ -22,16 +22,16 @@ import Yaifl.Openable.Kind
 import Yaifl.ObjectLike
 import Yaifl.Door.Create
 import Yaifl.Direction.Kind (Direction(..))
-import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, placeIt)
+import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, placeIt, makeItPlural)
 import Yaifl.Room.Query
 import Yaifl.Actions.Going
 import Yaifl.Container.Create
 import Yaifl.Tag
-import Yaifl.Container.Query
 import Yaifl.Container.Kind
-import Yaifl.TH (MayHaveProperty(..))
 import Yaifl.Property.Has
 import Yaifl.Thing.Create
+import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Openable.Query (openIt)
 
 inTheRoom :: TaggedEntity RoomTag -> Maybe (TaggedEntity EnclosingTag)
 inTheRoom = Just . coerceTag
@@ -53,22 +53,12 @@ roomsOutsideTheHouse forestArea = do
   clearing <- addRoom' "Clearing"
 
   behindHouse <- addRoom "Behind House" $ newRoom
-  kitchenWindow <- addDoor "kitchen window" $ newDoor
-    (kitchen `isToThe` West) (behindHouse `isToThe` East)
-    & makeItClosedAndOpenable
-    & makeItScenery
-  kitchenWindow `isUnderstoodAs` ["window", "kitchen", "small"]
 
   northOfHouse <- addRoom "North of House" $ newRoom
     & #description .~ "You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees."
   southOfHouse <- addRoom "South of House" $ newRoom
     & #description .~ "You are facing the south side of a white house. There is no door here, and all the windows are boarded."
-  modifyRoom behindHouse $
-    #description .~ (text' $ do
-        window <- getObject kitchenWindow
-        let windowOpen = isOpen window
-        [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}}open{?else}slightly ajar{?end if}.|]
-        )
+
   [southOfHouse, northOfHouse, behindHouse, westOfHouse] `areInRegion` houseExterior
 
   -- position the rooms
@@ -104,11 +94,6 @@ roomsOutsideTheHouse forestArea = do
     [saying|I can't see how to get in from here.|]
   insteadOf' #going [inDirection East, whenPlayerIsIn behindHouse] $ do
     [saying|The door is boarded and you can't remove the boards.|]
-  insteadOf #entering [theObject whiteHouse, whenPlayerIsIn behindHouse] $ \a -> do
-    window <- getObject kitchenWindow
-    if isOpen window
-    then tryAction "go" [TheDirection West] a >> pass
-    else [saying|The window is closed.|]
 
   -- add some objects
   boardedWindows <- addBackdrop "boarded window" $ newBackdrop (InRooms (northOfHouse:|[southOfHouse]))
@@ -122,7 +107,7 @@ roomsOutsideTheHouse forestArea = do
 
   mailbox <- addContainer "small mailbox" $ newContainer
     & makeItClosedAndOpenable
-    & #initialAppearance .~ "There is a small mailbox here"
+    & #initialAppearance .~ "There is a small mailbox here."
     & #location ?~ coerceTag westOfHouse
     & #thingModify .~ (do
         containerModify $ #enclosing % #capacity ?~ 2
@@ -136,7 +121,7 @@ roomsOutsideTheHouse forestArea = do
   insteadOf' #taking [theObject mailbox] $ [saying|It is securely anchored.|]
 
   leaflet <- addThing "leaflet" $ newThing
-    & #description .~ (text' [saying|WELCOME TO ZORK!#{paragraphBreak}ZORK is a game of adventure, danger, and low cunning.
+    & #description .~ (text' [sayingTell|WELCOME TO ZORK!#{paragraphBreak}ZORK is a game of adventure, danger, and low cunning.
 In it you will explore some of the most amazing territory ever seen by mortals. No computer should be without one!#{paragraphBreak}
 Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#{linebreak}Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson.
 #{linebreak}Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under MIT License.|])
@@ -153,10 +138,68 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
   insteadOf' #attacking [theObject frontDoor] $ [saying|You can't seem to damage the door.|]
   insteadOf' #burning [theObject frontDoor] $ [saying|You cannot burn this door.|]
   insteadOf' #lookingUnder [theObject frontDoor] $ [saying|It won't open.|]
-  -- insteadOf' #reading [theObject frontDoor] $ [saying||]
+
+  boards <- addThing "boards" $ newThing
+    & makeItScenery
+    & #description .~ "The boards are securely fastened."
+    & makeItPlural
+  insteadOf' #taking [theObject boards] $ [saying|The boards are securely fastened.|]
+  boards `isUnderstoodAs` ["board"]
+
+  nails <- addThing "nails" $ newThing
+    & makeItScenery
+    & #description .~ "The nails are deeply imbedded in the door."
+    & makeItPlural
+  insteadOf' #taking [theObject boards] $ [saying|The nails, deeply imbedded in the door, cannot be removed.|]
+  nails `isUnderstoodAs` ["nail"]
+
+  -- kitchen window
+  kitchenWindow <- addDoor "kitchen window" $ newDoor
+    (kitchen `isToThe` West) (behindHouse `isToThe` East)
+    & makeItClosedAndOpenable
+    & makeItScenery
+    & #description .~ (text' $ withThing $ \t -> do
+      notTouched <- not <$> getValue #kitchenWindowTouched
+      let windowOpen = isOpen t
+      [sayingTell|{?if notTouched}The window is slightly ajar, but not enough to allow entry.{?else if windowOpen}The window is open.{?else}The window is closed.{?end if}|]
+      )
+  kitchenWindow `isUnderstoodAs` ["window", "kitchen", "small"]
+  modifyRoom behindHouse $
+    #description .~ (text' $ do
+        window <- getObject kitchenWindow
+        let windowOpen = isOpen window
+        [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}}open{?else}slightly ajar{?end if}.|]
+        )
+  insteadOf #entering [theObject whiteHouse, whenPlayerIsIn behindHouse] $ \a -> do
+    window <- getObject kitchenWindow
+    if isOpen window
+    then tryAction "go" [TheDirection West] a >> pass
+    else [saying|The window is closed.|]
+
+  insteadOf #opening [theObject kitchenWindow] $ \a -> do
+    let w = variables a
+    if isOpen w
+      then [saying|It is already open.|]
+      else do
+        openIt w
+        setValue #kitchenWindowTouched True
+        -- play the sound of window-sfx as sfx;
+        [saying|With great effort, you open the window far enough to allow entry.|]
   return (OutsideTheHouse westOfHouse)
 {-
 TODO
+Instead of closing the kitchen-window:
+  if the kitchen-window is not open:
+    say "It is already closed." instead;
+  now the kitchen-window is not open;
+  now the kitchen-window-touched is true;
+  say "The window closes (more easily than it opened)."
+Instead of searching the kitchen-window:
+  if the player is in Kitchen:
+    say "You can see a clear area leading towards a forest.";
+  otherwise:
+    say "You can see what appears to be a kitchen."
+
 Instead of reading the front door:
   if the player is in Living Room:
     say "The engravings translate to [quotation mark]This space intentionally left blank.[quotation mark]";
@@ -173,36 +216,5 @@ Instead of finding the white house when the location of the player is in House E
   say "It's right here! Are you blind or something?"
 Instead of finding the white house when the location of the player is not in House Exterior and the location of the player is not in House Interior and the location of the player is not the Clearing:
   say "It was here just a minute ago...."
-
-The boards are scenery in West-of-House.
-Understand "boards" and "board" as the boards.
-The description of the boards is "The boards are securely fastened."
-Instead of taking the boards:
-  say "The boards are securely fastened."
-The nails are scenery in West-of-House.
-Understand "nails" and "nail" as the nails.
-The description of the nails is "The nails are deeply imbedded in the door."
-Instead of taking the nails: say "The nails, deeply imbedded in the door, cannot be removed."
-
-The description of the kitchen-window is "[if the kitchen-window-touched is false]The window is slightly ajar, but not enough to allow entry.[otherwise if the kitchen-window is open]The window is open.[otherwise]The window is closed.[end if]".
-The kitchen-window-touched is a truth state that varies. The kitchen-window-touched is false.
-Instead of opening the kitchen-window:
-  if the kitchen-window is open:
-    say "It is already open." instead;
-  now the kitchen-window is open;
-  now the kitchen-window-touched is true;
-  play the sound of window-sfx as sfx;
-  say "With great effort, you open the window far enough to allow entry."
-Instead of closing the kitchen-window:
-  if the kitchen-window is not open:
-    say "It is already closed." instead;
-  now the kitchen-window is not open;
-  now the kitchen-window-touched is true;
-  say "The window closes (more easily than it opened)."
-Instead of searching the kitchen-window:
-  if the player is in Kitchen:
-    say "You can see a clear area leading towards a forest.";
-  otherwise:
-    say "You can see what appears to be a kitchen."
 
 -}

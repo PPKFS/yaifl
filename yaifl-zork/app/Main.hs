@@ -49,5 +49,5 @@ zorkWorld = do
 
 main :: IO ()
 main = do
-  r <- gameHarness "Zork" (defaultZorkOptions) zorkWorld
+  r <- gameHarness "Zork" (defaultZorkOptions) zorkWorld ["open mailbox", "take leaflet", "examine leaflet", "east", "e", "open window"]
   mapM_ putTextLn (lines r)
