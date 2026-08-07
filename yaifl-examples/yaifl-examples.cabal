@@ -97,6 +97,7 @@ test-suite yaifl-test
     , tasty
     , tasty-silver
     , yaifl
+    , yaifl-actions
     , yaifl-examples
     , yaifl-core
     , yaifl-rules

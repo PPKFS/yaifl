@@ -14,8 +14,9 @@ import Yaifl.Room.Create
 import Yaifl.Thing.Create as T
 import Yaifl.Combinators
 import Yaifl.Effects.RuleEffects
+import Yaifl.Effects.Interpreters
 
-ex2 :: (Text, [a], Game PlainWorldModel ())
+ex2 :: (Text, [a], WorldConstruction PlainWorldModel ())
 ex2 = ("Bic", [], ex2World)
 
 isBlankDescription ::
@@ -25,7 +26,7 @@ isBlankDescription ::
   -> Eff es Bool
 isBlankDescription d = T.null <$> sayText (d ^. #description)
 
-ex2World :: Game PlainWorldModel ()
+ex2World :: WorldConstruction PlainWorldModel ()
 ex2World = do
   setTitle "Bic"
 

@@ -64,6 +64,7 @@ newtype ValueCollector wm = ValueCollector { valueCollection :: WMValues wm }
 
 makeFieldLabelsNoPrefix ''ActivityCollector
 makeFieldLabelsNoPrefix ''ResponseCollector
+makeFieldLabelsNoPrefix ''ActionCollector
 
 -- |  This type synonym bundles all the effects required for rule execution.
 type RuleEffects wm es = (

@@ -24,8 +24,10 @@ import Yaifl.Chapter3.DisenchantmentBay4
 import Yaifl.Chapter3.Laura
 import Yaifl.Chapter3.Escape
 import Yaifl.Chapter3.Garibaldi (ex22)
+import Yaifl.Run
+import Yaifl.Effects.Interpreters
 
-c3Harness :: (Text, [Text], Game PlainWorldModel ()) -> (String, IO Text)
+c3Harness :: (Text, [Text], WorldConstruction PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
 
 spec :: Bool -> Map String (IO Text)

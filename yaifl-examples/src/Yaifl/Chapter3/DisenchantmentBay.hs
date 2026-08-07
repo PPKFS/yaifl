@@ -15,10 +15,10 @@ import Yaifl.Supporter.Kind
 import Yaifl.Test.Common
 import Yaifl.Thing.Create as T
 
-ex14 :: (Text, [Text], Game PlainWorldModel ())
+ex14 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex14 = ("Disenchantment Bay", disenchantmentBayTestMeWith, disenchantmentBayWorld)
 
-disenchantmentBayWorld :: Game PlainWorldModel ()
+disenchantmentBayWorld :: WorldConstruction PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
   addRoom "The Cabin" $ newRoom

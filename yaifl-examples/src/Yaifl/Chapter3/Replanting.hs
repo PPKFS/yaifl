@@ -15,10 +15,10 @@ import Yaifl.Actions.Imports
 import Yaifl.Create.Rule
 import Yaifl.Combinators
 
-ex16 :: (Text, [Text], Game PlainWorldModel ())
+ex16 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex16 = ("Replanting", replantingTestMeWith, replantingWorld)
 
-replantingWorld :: Game PlainWorldModel ()
+replantingWorld :: WorldConstruction PlainWorldModel ()
 replantingWorld = do
   setTitle "Replanting"
   addRoom "The Orchard" $ newRoom

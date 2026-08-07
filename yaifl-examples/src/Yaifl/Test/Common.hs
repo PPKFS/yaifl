@@ -20,6 +20,7 @@ import Yaifl.Effects.Interpreters
 import Yaifl.ActionCollection
 import Yaifl.Rulebooks.Run
 import Yaifl.Run
+import Yaifl.Effects.RuleEffects
 
 expQQ :: (String -> Q Exp) -> QuasiQuoter
 expQQ quoteExp = QuasiQuoter quoteExp notSupported notSupported notSupported where
@@ -67,14 +68,14 @@ testHarness ::
   -> Text
   -> [Text]
   -> ConstructionOptions wm
-  -> Game wm a
+  -> WorldConstruction wm a
   -> IO Text
 testHarness allTenses fullTitle actionsToDo conOptions initWorld = do
   fst <<$>> runGame (runPrintPure @(World wm)) runInputAsBuffer (blankWorld (conValues conOptions) (activityCollectionBuilder conOptions) (responseCollectionBuilder conOptions)) blankActionCollection $ do
       output <- withSpan' "test run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
-          initWorld
+          evalStateLocal (ActionCollector $ initialExtraActions conOptions) initWorld
           -- this just moves the actions from the indexed, static, standard library collection
           -- into the dynamic collection
           -- we do it here because we need to copy over changes to actions and we can't modify WrappedActions directly

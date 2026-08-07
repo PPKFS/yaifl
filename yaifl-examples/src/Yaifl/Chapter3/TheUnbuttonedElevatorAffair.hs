@@ -14,11 +14,12 @@ import Yaifl.Rulebook
 import Yaifl.Room.Create
 import Yaifl.Room.Query
 import Yaifl.Create.Rule
+import Yaifl.Effects.Interpreters
 
-ex9 :: (Text, [Text], Game PlainWorldModel ())
+ex9 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex9 = ("The Unbuttoned Elevator Affair", theUnbuttonedElevatorAffairTestMeWith, theUnbuttonedElevatorAffairWorld)
 
-theUnbuttonedElevatorAffairWorld :: Game PlainWorldModel ()
+theUnbuttonedElevatorAffairWorld :: WorldConstruction PlainWorldModel ()
 theUnbuttonedElevatorAffairWorld = do
   setTitle "The Unbuttoned Elevator Affair"
   uh <- addRoom "UNCLE Headquarters" $ newRoom

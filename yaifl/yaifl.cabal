@@ -68,4 +68,5 @@ library
   exposed-modules:
     Yaifl
     Yaifl.Create.Rule
+    Yaifl.Create.CustomActionRule
     Yaifl.Run

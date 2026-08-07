@@ -9,11 +9,12 @@ import Yaifl.Rulebook
 import Yaifl.Room.Query
 import Yaifl.Room.Create
 import Yaifl.Create.Rule
+import Yaifl.Effects.Interpreters
 
-ex6 :: (Text, [Text], Game PlainWorldModel ())
+ex6 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex6 = ("Up and Up", upAndUpTestMeWith, upAndUp)
 
-upAndUp :: Game PlainWorldModel ()
+upAndUp :: WorldConstruction PlainWorldModel ()
 upAndUp = do
   setTitle "Up and Up"
   pots <- addRoom "The Plain of the Skull" $ newRoom & #description .~ [wrappedText|A vast and trackless plain, enlivened only by the bones of those who have previously

@@ -12,11 +12,12 @@ import Yaifl.Person.Kind
 import Yaifl.Room.Create
 import Yaifl.Device.Create as D
 import Yaifl.Person.Create
+import Yaifl.Effects.Interpreters
 
-ex11 :: (Text, [Text], Game PlainWorldModel ())
+ex11 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex11 = ("First Name Basis", firstNameBasisTestMeWith, firstNameBasisWorld)
 
-firstNameBasisWorld :: Game PlainWorldModel ()
+firstNameBasisWorld :: WorldConstruction PlainWorldModel ()
 firstNameBasisWorld = do
   setTitle "First Name Basis"
   addRoom "The Crew Lounge" $ newRoom

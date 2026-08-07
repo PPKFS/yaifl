@@ -45,6 +45,7 @@ type EffStack (wm :: WorldModel) = '[
 
 type Game wm = Eff (EffStack wm ++ '[IOE])
 
+type WorldConstruction wm = Eff ('[State (ActionCollector wm)] ++ EffStack wm ++ '[IOE])
 type UnderlyingEffStack wm = '[State (World wm), IOE]
 
 zoomState ::

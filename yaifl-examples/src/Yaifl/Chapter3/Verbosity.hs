@@ -6,8 +6,9 @@ import Yaifl.Prelude
 import Yaifl.Text.DynamicText
 import Yaifl.Room.Create
 import Yaifl.Room.Query
+import Yaifl.Effects.Interpreters
 
-ex3 :: (Text, [Text], Game PlainWorldModel ())
+ex3 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex3 = ("Verbosity", ex3TestMeWith, ex3World)
 
 wmrwN :: DynamicText wm
@@ -31,7 +32,7 @@ tmrDesc = [wrappedText|Well, yes, you really shouldn't be in here. But the neare
       and at this hour you have the labs mostly to yourself. All the same, you try not to read any of the things
       scrawled over the urinals which might have been intended in confidence.|]
 
-ex3World :: Game PlainWorldModel ()
+ex3World :: WorldConstruction PlainWorldModel ()
 ex3World = do
     setTitle "Verbosity"
     w <- addRoom wmrwN $ newRoom & #description .~ wmrwDesc

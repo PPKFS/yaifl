@@ -9,8 +9,9 @@ import Yaifl.Text.DynamicText
 import Yaifl.Room.Kind
 import Yaifl.Room.Create
 import Yaifl.Room.Query
+import Yaifl.Effects.Interpreters
 
-ex4 :: (Text, [Text], Game PlainWorldModel ())
+ex4 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex4 = ("Slightly Wrong", ex4TestMeWith, ex4World)
 
 awnN :: DynamicText wm
@@ -31,7 +32,7 @@ swcDesc = text "description of slightly wrong chamber" $ do
     [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]
   [sayingTell|A mural on the far wall depicts a woman with a staff, tipped with a pine-cone. She appears to be watching you.|]
 
-ex4World :: Game PlainWorldModel ()
+ex4World :: WorldConstruction PlainWorldModel ()
 ex4World = do
     setTitle "Slightly Wrong"
     swc <- addRoom swcN $ newRoom & #description .~ swcDesc

@@ -21,10 +21,10 @@ import Yaifl.Door.Query
 import Yaifl.Preconditions
 import Yaifl.Combinators
 
-ex21 :: (Text, [Text], Game PlainWorldModel ())
+ex21 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex21 = ("Escape", escapeTestMeWith, escapeWorld)
 
-escapeWorld :: Game PlainWorldModel ()
+escapeWorld :: WorldConstruction PlainWorldModel ()
 escapeWorld = do
   setTitle "Escape"
   yb <- addRoom' "Your Bedroom"

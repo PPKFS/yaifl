@@ -10,11 +10,12 @@ import Yaifl.Supporter.Create
 import Yaifl.Room.Query
 import Yaifl.Container.Create
 import Yaifl.Combinators
+import Yaifl.Effects.Interpreters
 
-ex12 :: (Text, [Text], Game PlainWorldModel ())
+ex12 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex12 = ("Midsummer Day", midsummerDayTestMeWith, midsummerDayWorld)
 
-midsummerDayWorld :: Game PlainWorldModel ()
+midsummerDayWorld :: WorldConstruction PlainWorldModel ()
 midsummerDayWorld = do
   setTitle "Midsummer Day"
   ga <- addRoom' "Garden"

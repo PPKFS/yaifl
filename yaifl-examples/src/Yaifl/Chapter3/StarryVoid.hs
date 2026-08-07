@@ -19,12 +19,13 @@ import Yaifl.Person.Query
 import Yaifl.Thing.Query
 import Yaifl.Preconditions
 import Yaifl.Create.Rule
+import Yaifl.Effects.Interpreters
 
 
-ex7 :: (Text, [Text], Game PlainWorldModel ())
+ex7 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex7 = ("Starry Void", starryVoidTestMeWith, starryVoidWorld)
 
-starryVoidWorld :: Game PlainWorldModel ()
+starryVoidWorld :: WorldConstruction PlainWorldModel ()
 starryVoidWorld = do
   setTitle "Starry Void"
   tcr <- addRoom' "The Centre Ring"

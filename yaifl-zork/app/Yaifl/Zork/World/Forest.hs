@@ -8,7 +8,7 @@ import Yaifl.Effects.Interpreters
 import Yaifl.Region.Create (addRegion)
 
 newtype Forest = Forest RegionEntity
-forest ::  Game ZorkWorldModel Forest
+forest ::  WorldConstruction ZorkWorldModel Forest
 forest = do
   coerce <$> addRegion "Forest Area"
 {-

@@ -19,11 +19,13 @@ import Yaifl.Zork.Specifics
 import Yaifl.Zork.World.Forest
 import Yaifl.Zork.World.House
 import Yaifl.Entity
+import Yaifl.Zork.Actions
+import Yaifl.Effects.Interpreters (WorldConstruction)
 
 defaultZorkOptions :: ConstructionOptions ZorkWorldModel
-defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues
+defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues (baseZorkActions)
 
-zorkWorld :: Game ZorkWorldModel ()
+zorkWorld :: WorldConstruction ZorkWorldModel ()
 zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"
   scoring
@@ -49,5 +51,5 @@ zorkWorld = do
 
 main :: IO ()
 main = do
-  r <- gameHarness "Zork" (defaultZorkOptions) zorkWorld ["open mailbox", "take leaflet", "examine leaflet", "east", "e", "open window"]
+  r <- gameHarness "Zork" (defaultZorkOptions) zorkWorld testMeWith
   mapM_ putTextLn (lines r)

@@ -22,10 +22,10 @@ import Yaifl.Preconditions
 import Yaifl.Room.Query
 import Yaifl.Combinators
 
-ex13 :: (Text, [Text], Game PlainWorldModel ())
+ex13 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex13 = ("Tamed", tamedTestMeWith, tamedWorld)
 
-tamedWorld :: Game PlainWorldModel ()
+tamedWorld :: WorldConstruction PlainWorldModel ()
 tamedWorld = do
   setTitle "Tamed"
   tcr <- addRoom' "Center Ring"

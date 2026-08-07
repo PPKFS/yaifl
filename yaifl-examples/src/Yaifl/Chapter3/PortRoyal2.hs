@@ -6,11 +6,12 @@ import Yaifl.Test.Common
 import Yaifl.Room.Create
 import Yaifl.Direction.Kind (Direction(..))
 import Yaifl.Room.Query
+import Yaifl.Effects.Interpreters
 
-ex8 :: (Text, [Text], Game PlainWorldModel ())
+ex8 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex8 = ("Port Royal 2", portRoyal2TestMeWith, portRoyalWorld2)
 
-portRoyalWorld2 :: Game PlainWorldModel ()
+portRoyalWorld2 :: WorldConstruction PlainWorldModel ()
 portRoyalWorld2 = do
   setTitle "1691"
   ts <- addRoom "Thames Street End" $ newRoom &

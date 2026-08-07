@@ -28,10 +28,10 @@ import Yaifl.TH
 import qualified Yaifl.Device.Kind as Device
 import Yaifl.Combinators
 
-ex22 :: (Text, [Text], Game PlainWorldModel ())
+ex22 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex22 = ("Garibaldi", escapeTestMeWith, garibaldiWorld)
 
-garibaldiWorld :: Game PlainWorldModel ()
+garibaldiWorld :: WorldConstruction PlainWorldModel ()
 garibaldiWorld = do
   setTitle "Garibaldi"
   sr <- addDevice "security readout" $ newDevice

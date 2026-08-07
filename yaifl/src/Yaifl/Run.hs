@@ -18,10 +18,11 @@ data ConstructionOptions wm = ConstructionOptions
   { activityCollectionBuilder :: ActivityCollection wm -> ActivityCollector wm
   , responseCollectionBuilder :: ResponseCollection wm -> ResponseCollector wm
   , conValues :: WMValues wm
+  , initialExtraActions :: WMActions wm
   }
 
-defaultOptions :: (WMActivities wm ~ ActivityCollection wm, WMValues wm ~ (), WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
-defaultOptions = ConstructionOptions ActivityCollector ResponseCollector ()
+defaultOptions :: (WMActivities wm ~ ActivityCollection wm, WMValues wm ~ (), WMActions wm ~ (Const () wm), WMResponses wm ~ ResponseCollection wm) => ConstructionOptions wm
+defaultOptions = ConstructionOptions ActivityCollector ResponseCollector () (Const ())
 
 gameHarness ::
   forall wm a.
@@ -30,7 +31,7 @@ gameHarness ::
   => HasCallStack
   => Text
   -> ConstructionOptions wm
-  -> Game wm a
+  -> WorldConstruction wm a
   -> [Text]
   -> IO Text
 gameHarness fullTitle conOptions initWorld buffer = do
@@ -38,7 +39,7 @@ gameHarness fullTitle conOptions initWorld buffer = do
       output <- withSpan' "game run" fullTitle $ do
         withSpan' "worldbuilding" fullTitle $ do
           newWorld
-          initWorld
+          evalStateLocal (ActionCollector $ initialExtraActions conOptions) initWorld
           -- this just moves the actions from the indexed, static, standard library collection
           -- into the dynamic collection
           -- we do it here because we need to copy over changes to actions and we can't modify WrappedActions directly

@@ -12,10 +12,10 @@ import Yaifl.Person.Query
 import Yaifl.Thing.Create
 import Yaifl.Room.Create
 
-ex19 :: (Text, [Text], Game PlainWorldModel ())
+ex19 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex19 = ("Laura", lauraTestMeWith, lauraWorld)
 
-lauraWorld :: Game PlainWorldModel ()
+lauraWorld :: WorldConstruction PlainWorldModel ()
 lauraWorld = do
   setTitle "Laura"
   addRoom' "City of Angels"

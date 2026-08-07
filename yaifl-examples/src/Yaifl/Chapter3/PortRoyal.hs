@@ -5,13 +5,14 @@ import Yaifl.Room.Create
 import Yaifl.Prelude
 import Yaifl.Test.Common
 import Yaifl.Room.Query
+import Yaifl.Effects.Interpreters
 
-ex5 :: (Text, [Text], Game PlainWorldModel ())
+ex5 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex5 = ("Port Royal", portRoyalTestMeWith, portRoyalWorld)
 
 -- a combination of port royale:
 -- part 1 https://ganelson.github.io/inform-website/book/WI_3_2.html
-portRoyalWorld :: Game PlainWorldModel ()
+portRoyalWorld :: WorldConstruction PlainWorldModel ()
 portRoyalWorld = do
   setTitle "1691"
   fj <- addRoom "Fort James" $ newRoom & #description .~ [wrappedText|The enclosure of Fort James is a large, roughly hexagonal court walled with heavy stone.

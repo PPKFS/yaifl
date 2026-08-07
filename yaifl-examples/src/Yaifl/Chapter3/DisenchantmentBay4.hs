@@ -17,10 +17,10 @@ import Yaifl.Thing.Create
 import Yaifl.Backdrop.Create
 import Yaifl.Combinators
 
-ex18 :: (Text, [Text], Game PlainWorldModel ())
+ex18 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex18 = ("Disenchantment Bay 4", disenchantmentBayTestMeWith, disenchantmentBayWorld)
 
-disenchantmentBayWorld :: Game PlainWorldModel ()
+disenchantmentBayWorld :: WorldConstruction PlainWorldModel ()
 disenchantmentBayWorld = do
   setTitle "Disenchantment Bay"
   addRoom "The Cabin" $ newRoom

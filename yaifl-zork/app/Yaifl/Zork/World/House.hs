@@ -2,7 +2,6 @@ module Yaifl.Zork.World.House where
 
 import Yaifl.Prelude
 
-import Yaifl
 import Yaifl.Actions.Going
 import Yaifl.Actions.Imports
 import Yaifl.Backdrop.Create
@@ -33,15 +32,20 @@ import Yaifl.Text.DynamicText
 import Yaifl.Thing.Create
 import Yaifl.Thing.Kind
 import Yaifl.Zork.Specifics
+import qualified Yaifl.Create.CustomActionRule as E
+import Yaifl.Effects.Interpreters (WorldConstruction)
+import Yaifl.Zork.Actions
 
 containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
 containerModify f = #specifics % propertyAT %= f
+
 data OutsideTheHouse = OutsideTheHouse RoomEntity
-roomsOutsideTheHouse :: RegionEntity -> Game ZorkWorldModel OutsideTheHouse
+roomsOutsideTheHouse :: RegionEntity -> WorldConstruction ZorkWorldModel OutsideTheHouse
 roomsOutsideTheHouse forestArea = do
 
   -- make the rooms
   houseExterior <- addRegion "House Exterior"
+  houseInterior <- addRegion "House Interior"
   westOfHouse <- addRoom "West of House" $ newRoom
     & #description .~ (text' $ do
       won <- getValue #wonFlag
@@ -50,6 +54,7 @@ roomsOutsideTheHouse forestArea = do
   -- forward declare a couple of nearby rooms because we need to refer to them
   kitchen <- addRoom' "Kitchen"
   clearing <- addRoom' "Clearing"
+  livingRoom <- addRoom' "Living Room"
 
   behindHouse <- addRoom "Behind House" $ newRoom
 
@@ -81,7 +86,7 @@ roomsOutsideTheHouse forestArea = do
   whiteHouse <- addBackdrop "white house" $ newBackdrop (InRegions (houseExterior:|[forestArea]))
     & #description .~ "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy."
   whiteHouse `isUnderstoodAs` ["house", "white", "beautiful", "colonial"]
-  let notAtTheHouse :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => ActionPointer ZorkWorldModel resps goesWith v -> Game ZorkWorldModel ()
+  let notAtTheHouse :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => ActionPointer ZorkWorldModel resps goesWith v -> WorldConstruction ZorkWorldModel ()
       notAtTheHouse l = insteadOf' l [theObject whiteHouse, not_ (whenPlayerIsInRegion houseExterior) ] $ do
         [saying|You're not at the house.|]
   notAtTheHouse #taking
@@ -91,7 +96,7 @@ roomsOutsideTheHouse forestArea = do
 
   insteadOf' #entering [theObject whiteHouse, whenPlayerIsInRegion houseExterior, not_ (whenPlayerIsIn behindHouse)] $ do
     [saying|I can't see how to get in from here.|]
-  insteadOf' #going [inDirection East, whenPlayerIsIn behindHouse] $ do
+  insteadOf' #going [inDirection East, whenPlayerIsIn westOfHouse] $ do
     [saying|The door is boarded and you can't remove the boards.|]
 
   -- add some objects
@@ -197,24 +202,91 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     p <- getPlayerLocation
     if p `objectEquals` kitchen then [saying|You can see a clear area leading towards a forest.|]
     else [saying|You can see what appears to be a kitchen.|]
-
+  -- note the translation considers it possible to read this door from inside, which is a different door.
+  E.insteadOf' #reading [theObject frontDoor] $ [saying|There is no writing on this side.|]
+  -- you also cannot see the white house from inside the house, so you cannot get the "find your brains" message.
+  E.insteadOf' #finding [theObject whiteHouse, whenPlayerIsIn clearing] $ [saying|It seems to be to the west.|]
+  E.insteadOf' #finding [theObject whiteHouse, whenPlayerIsInRegion houseExterior] $ [saying|It's right here! Are you blind or something?|]
+  E.insteadOf' #finding
+    [ theObject whiteHouse
+    , not_ (whenPlayerIsInRegion houseExterior)
+    , not_ (whenPlayerIsInRegion houseInterior)
+    , not_ (whenPlayerIsIn clearing) ] $
+      [saying|It was here just a minute ago....|]
   return (OutsideTheHouse westOfHouse)
-{-
-TODO
-  {- insteadOf' #reading [theObject frontDoor] $ do
-    p <- getPlayerLocation
-    if p `objectEquals` livingRoom then [saying|The engravings translate to "This space intentionally left blank."|]
-    else [saying|There is no writing on this side.|]
-  -}
-Finding is an action applying to one visible thing. Understand "find [something]" and "where is [something]" as finding.
-Carry out finding: say "I couldn't find that."
-Instead of finding the white house when the location of the player is in House Interior:
-  say "Why not find your brains?"
-Instead of finding the white house when the location of the player is the Clearing:
-  say "It seems to be to the west."
-Instead of finding the white house when the location of the player is in House Exterior:
-  say "It's right here! Are you blind or something?"
-Instead of finding the white house when the location of the player is not in House Exterior and the location of the player is not in House Interior and the location of the player is not the Clearing:
-  say "It was here just a minute ago...."
 
--}
+-- Test commands for all logic in this module
+testMeWith :: [Text]
+testMeWith =
+  [
+    "look"
+  , "examine house"
+  , "examine door"
+  , "x boards"
+  , "x nails"
+  , "examine mailbox"
+
+  , "open mailbox"
+  , "take leaflet"
+  , "examine leaflet"
+  , "take mailbox"
+  , "open door"
+  , "attack door"
+  , "burn door"
+  , "look under door"
+  , "take boards"
+  , "take nails"
+
+  , "enter house"
+  , "go east"
+  , "go north"
+  , "look"
+  , "examine windows"
+  , "south"
+  , "open windows"
+  , "attack windows"
+  , "enter house"
+
+  , "e"
+  , "s"
+  , "look"
+  , "go north"
+  , "enter house"
+
+  , "go east"
+  , "look"
+  , "go east"
+  , "take house"
+  , "push house"
+  , "pull house"
+  , "touch house"
+  , "go west"
+  , "examine window"
+
+  , "open window"
+  , "examine window"
+  , "go west"
+  , "look"
+  , "search window"
+  , "go east"
+  , "close window"
+  , "examine window"
+  , "close window"
+  , "enter house"
+  , "search window"
+  , "open window"
+  , "enter house"
+  , "go east"
+  , "find house"
+  , "go east"
+  , "find house"
+  , "go west"
+  , "go north"
+  , "find house"
+  , "go west"
+  , "find house"
+  , "go south"
+  , "find house"
+  , "go west"
+  , "read door"
+  ]

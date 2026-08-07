@@ -84,7 +84,7 @@ import Yaifl.Activities.PrintingTheBannerText (printingTheBannerTextImpl)
 import Yaifl.Activities.PrintingThePlayersObituary (printingThePlayersObituaryImpl)
 import Yaifl.Activities.RequestingTheScore (requestingTheScoreImpl)
 
-type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText ActionCollection
+type PlainWorldModel = 'WorldModel ObjectSpecifics Direction () () () () ActivityCollection ResponseCollection DynamicText (Const ())
 
 
 -- | All the standard library activities.

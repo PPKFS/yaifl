@@ -8,13 +8,14 @@ import Yaifl.Direction.Kind
 import Yaifl.Test.Common
 import Yaifl.Room.Query
 import Yaifl.Region.Create
+import Yaifl.Effects.Interpreters
 
-ex10 :: (Text, [Text], Game PlainWorldModel ())
+ex10 :: (Text, [Text], WorldConstruction PlainWorldModel ())
 ex10 = ("Port Royal 3", portRoyal3TestMeWith, portRoyal3World)
 
 -- a combination of port royale:
 -- part 1 https://ganelson.github.io/inform-website/book/WI_3_2.html
-portRoyal3World :: Game PlainWorldModel ()
+portRoyal3World :: WorldConstruction PlainWorldModel ()
 portRoyal3World = do
   setTitle "1691"
   fj <- addRoom "Fort James" $ newRoom

@@ -12,6 +12,7 @@ import Yaifl.Zork.Metadata (ZorkData)
 import Yaifl.Thing.Kind
 import Yaifl.Object.Kind
 import Yaifl.Object.Query (modifyThing)
+import Yaifl.Effects.Interpreters
 
 rankings :: [(Int, Text)]
 rankings =
@@ -40,7 +41,7 @@ scoring ::
   => WMValues wm ~ ZorkData
   => WithRequestingTheScore wm
   => WithPrintingThePlayersObituary wm
-  => SayableValue (WMText wm) wm => Game wm ()
+  => SayableValue (WMText wm) wm => WorldConstruction wm ()
 scoring = do
   (#score :: Lens' (Metadata wm) Score) % #maxScore .= Just 350
   afterActivity' #printingThePlayersObituary [] "score and rank" $ do
