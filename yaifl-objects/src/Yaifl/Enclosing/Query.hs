@@ -31,13 +31,20 @@ import Yaifl.Object.Query
 import qualified Data.EnumSet as ES
 import Yaifl.Property.Has
 import Yaifl.MultiLocated.Kind
+import Yaifl.Metadata
+import Yaifl.Thing.Query (getLocation)
+import Yaifl.Region.Query (getEnclosingRegions)
+import Yaifl.Region.Kind
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
+  deriving stock (Eq, Ord, Show, Generic)
 data IncludeDoors = IncludeDoors | ExcludeDoors
+  deriving stock (Eq, Ord, Show, Generic)
 data RecurseAllObjects = Recurse | DontRecurse
+  deriving stock (Eq, Ord, Show, Generic)
 
 getAllObjectsInEnclosing ::
-  WithoutMissingObjects wm es
+  forall wm es. WithoutMissingObjects wm es
   => WMWithProperty wm Enclosing
   => IncludeScenery
   -> IncludeDoors
@@ -56,7 +63,16 @@ getAllObjectsInEnclosing incScenery incDoors recurse r = do
       Just enc' -> getAllObjectsInEnclosing incScenery incDoors recurse (tagEntity enc' t)
       Nothing -> return []) things
   enclosingItself <- getThingMaybe r
-  return $ ordNub (maybeToList enclosingItself <> things <> recursedThings)
+  mbBackdrops <- if incScenery == IncludeScenery
+  then do
+    loc <- asThingOrRoom getLocation pure (getTaggedObject e)
+    rs <- getEnclosingRegions loc
+    let regionBackdropIds = mconcat $ Yaifl.Prelude.map (toList . backdrops) rs
+    everywhereBackdropIds <- toList <$> use @(Metadata wm) #everywhereBackdrops
+    mapM getThing (regionBackdropIds <> everywhereBackdropIds)
+  else
+    return []
+  return $ ordNub (mbBackdrops <> maybeToList enclosingItself <> things <> recursedThings)
 
 getContainingHierarchies ::
   forall wm es.

@@ -102,7 +102,7 @@ whenPlayerIsInRegion ::
   -> Precondition wm a
 whenPlayerIsInRegion e = Precondition
     { preconditionName = do
-      e' <- getObject e
+      e' <- getRegion e
       pure $ "when player is in the region " <> display (e' ^. #name)
   , checkPrecondition = const $ do
       playerRoom <- getPlayerLocation

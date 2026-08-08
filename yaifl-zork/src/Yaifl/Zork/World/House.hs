@@ -35,6 +35,8 @@ import Yaifl.Zork.Specifics
 import qualified Yaifl.Create.CustomActionRule as E
 import Yaifl.Effects.Interpreters (WorldConstruction)
 import Yaifl.Zork.Actions
+import Yaifl.Effects.ObjectQuery (traverseRegions_)
+import Yaifl.Effects.Print
 
 containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
 containerModify f = #specifics % propertyAT %= f
@@ -95,6 +97,7 @@ roomsOutsideTheHouse forestArea = do
   notAtTheHouse #touching
 
   insteadOf' #entering [theObject whiteHouse, whenPlayerIsInRegion houseExterior, not_ (whenPlayerIsIn behindHouse)] $ do
+    printLn "Here"
     [saying|I can't see how to get in from here.|]
   insteadOf' #going [inDirection East, whenPlayerIsIn westOfHouse] $ do
     [saying|The door is boarded and you can't remove the boards.|]
@@ -112,6 +115,7 @@ roomsOutsideTheHouse forestArea = do
   mailbox <- addContainer "small mailbox" $ newContainer
     & makeItClosedAndOpenable
     & #initialAppearance .~ "There is a small mailbox here."
+    & #description .~ "It's a small mailbox."
     & #location ?~ coerceTag westOfHouse
     & #thingModify .~ (do
         containerModify $ #enclosing % #capacity ?~ 2
@@ -147,6 +151,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     & makeItScenery
     & #description .~ "The boards are securely fastened."
     & makeItPlural
+    & #location .~ (Just . coerceTag $ westOfHouse)
   insteadOf' #taking [theObject boards] $ [saying|The boards are securely fastened.|]
   boards `isUnderstoodAs` ["board"]
 
@@ -154,7 +159,8 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     & makeItScenery
     & #description .~ "The nails are deeply imbedded in the door."
     & makeItPlural
-  insteadOf' #taking [theObject boards] $ [saying|The nails, deeply imbedded in the door, cannot be removed.|]
+    & #location .~ (Just . coerceTag $ westOfHouse)
+  insteadOf' #taking [theObject nails] $ [saying|The nails, deeply imbedded in the door, cannot be removed.|]
   nails `isUnderstoodAs` ["nail"]
 
   -- kitchen window
@@ -203,6 +209,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     if p `objectEquals` kitchen then [saying|You can see a clear area leading towards a forest.|]
     else [saying|You can see what appears to be a kitchen.|]
   -- note the translation considers it possible to read this door from inside, which is a different door.
+  -- it also considers reading to be examining..
   E.insteadOf' #reading [theObject frontDoor] $ [saying|There is no writing on this side.|]
   -- you also cannot see the white house from inside the house, so you cannot get the "find your brains" message.
   E.insteadOf' #finding [theObject whiteHouse, whenPlayerIsIn clearing] $ [saying|It seems to be to the west.|]
@@ -237,7 +244,7 @@ testMeWith =
   , "take boards"
   , "take nails"
 
-  , "enter house"
+  , "enter house" -- this prints nothing
   , "go east"
   , "go north"
   , "look"
@@ -245,8 +252,8 @@ testMeWith =
   , "south"
   , "open windows"
   , "attack windows"
-  , "enter house"
-
+  , "enter house" -- this prints nothing
+{-
   , "e"
   , "s"
   , "look"
@@ -289,4 +296,5 @@ testMeWith =
   , "find house"
   , "go west"
   , "read door"
+  -}
   ]

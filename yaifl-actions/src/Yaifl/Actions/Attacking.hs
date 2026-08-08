@@ -9,6 +9,7 @@ module Yaifl.Actions.Attacking
 import Yaifl.Prelude
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.ActionOn
 
 data AttackingResponses wm =
   FooA
@@ -17,11 +18,13 @@ attackingResponses :: AttackingResponses wm -> Response wm (Args wm (Thing wm))
 attackingResponses = \case
   _ -> notImplementedResponse "response"
 
-type AttackingAction wm = Action wm (AttackingResponses wm) 'TakesNoParameter (Thing wm)
+type AttackingAction wm = Action wm (AttackingResponses wm) 'TakesThingParameter (Thing wm)
 type AttackingRule wm = ActionRule wm (AttackingAction wm) (Thing wm)
 attackingAction :: AttackingAction wm
 attackingAction = (makeAction "attacking")
   { responses = attackingResponses
+  , understandAs = ["attack"]
+  , parseArguments = actionOnOneThing
   , checkRules = makeActionRulebook "check attacking" ([] <> map notImplementedRule
     [ "can't do attacking"
     ])

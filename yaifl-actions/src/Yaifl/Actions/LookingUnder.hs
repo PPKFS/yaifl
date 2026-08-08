@@ -8,6 +8,7 @@ module Yaifl.Actions.LookingUnder
 
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.ActionOn
 
 data LookingUnderResponses wm =
   LookUnderReportA
@@ -17,11 +18,13 @@ lookingUnderResponses :: LookingUnderResponses wm -> Response wm (Args wm (Thing
 lookingUnderResponses = \case
   _ -> notImplementedResponse "response"
 
-type LookingUnderAction wm = Action wm (LookingUnderResponses wm) 'TakesNoParameter (Thing wm)
+type LookingUnderAction wm = Action wm (LookingUnderResponses wm) 'TakesThingParameter (Thing wm)
 type LookingUnderRule wm = ActionRule wm (LookingUnderAction wm) (Thing wm)
 lookingUnderAction :: LookingUnderAction wm
 lookingUnderAction = (makeAction "lookingUnder")
-  { responses = lookingUnderResponses
+  { understandAs =  ["look under"]
+  , parseArguments = actionOnOneThing
+  , responses = lookingUnderResponses
   , carryOutRules = makeActionRulebook "carry out lookingUnder" [ notImplementedRule "standard lookingUnder"  ]
   , reportRules = makeActionRulebook "report lookingUnder"  [ notImplementedRule "standard report lookingUnder"  ]
   }

@@ -135,6 +135,7 @@ data Metadata wm = Metadata
   , statusBar :: StatusBar wm
   , score :: Score
   , turnCount :: Int
+  , everywhereBackdrops :: S.Set ThingEntity
   -- more to come I guess
   } deriving stock (Generic)
 

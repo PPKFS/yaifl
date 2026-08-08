@@ -165,6 +165,9 @@ addStandardActions = do
   addAction gettingOff
   addAction climbing
   addAction searching
+  addAction attacking
+  addAction burning
+  addAction lookingUnder
   pass
 
 blankActions ::
@@ -211,6 +214,7 @@ blankMetadata = Metadata
   , statusBar = StatusBar "" ""
   , score = (Score 0 Nothing False)
   , turnCount = 0
+  , everywhereBackdrops = S.empty
   }
 
 newWorld ::

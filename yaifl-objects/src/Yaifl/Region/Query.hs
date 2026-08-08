@@ -17,6 +17,7 @@ import Yaifl.Region.Kind
 import qualified Data.Set as S
 import Yaifl.Room.Kind
 import Yaifl.Object.Kind
+import Yaifl.Object.Query (modifyRoom)
 
 getRegion ::
   WithoutMissingObjects wm es
@@ -39,6 +40,7 @@ isInRegion ::
   -> Eff es ()
 isInRegion r reg = do
   modifyRegion reg (#rooms %~ S.insert r)
+  modifyRoom r (#objectData % #containingRegion .~ ContainingRegion (Just reg))
 
 modifyRegion ::
   WithoutMissingObjects wm es

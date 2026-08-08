@@ -135,7 +135,7 @@ interpretLookup = do
     LookupThing e -> lookupHelper (getEntity e) #things #rooms "thing" "room"
     LookupRoom e -> lookupHelper (getEntity e) #rooms #things "room" "thing"
     LookupRegion e -> do
-      mbReg <- use $ #stores % #regions % at (unTagEntity e)
+      mbReg <- use $ #stores % #regions % at (coerce e)
       case mbReg of
         Nothing -> pure $ Left $ "could not find region with id " <> show e
         Just r -> pure $ Right r
@@ -159,7 +159,7 @@ interpretLookup = do
         return (fromMaybe aT r)) m
     SetRoom r -> #stores % #rooms % at (getEntity r) %= updateIt r
     SetThing t -> #stores % #things % at (getEntity t) %= updateIt t
-    SetRegion t -> #stores % #regions % at (unTagEntity $ regionID t) %= updateIt t
+    SetRegion t -> #stores % #regions % at (coerce $ regionID t) %= updateIt t
     GenerateEntity bThing -> if bThing then
       (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unEntity) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unEntity x - 1)
 

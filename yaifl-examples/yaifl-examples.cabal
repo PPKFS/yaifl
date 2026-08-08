@@ -84,7 +84,6 @@ library
     Yaifl.Chapter3.TheUnbuttonedElevatorAffair
     Yaifl.Chapter3.UpAndUp
     Yaifl.Chapter3.Verbosity
-    Yaifl.Test.Common
 
 test-suite yaifl-test
   type:               exitcode-stdio-1.0

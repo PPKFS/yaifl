@@ -33,4 +33,5 @@ type HasStandardProperties s = (
   , Pointed (WMObjSpecifics s)
   , SayableValue (WMText s) s
   , WithPrintingTheBannerText s
+  , Show (WMRegionData s)
   )

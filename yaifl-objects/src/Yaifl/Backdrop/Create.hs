@@ -20,14 +20,13 @@ import Yaifl.WorldModel
 import Yaifl.ObjectSpecifics
 import Yaifl.Thing.Create
 import Yaifl.MultiLocated.Query
-import Yaifl.Builder
-import Yaifl.ObjectLike
 import Yaifl.Room.Kind
 import Yaifl.Enclosing.Kind
 import qualified Data.List.NonEmpty as NE
 import Yaifl.Region.Kind
 import Yaifl.Region.Query
-import Yaifl.Metadata (Metadata)
+import Yaifl.Metadata
+import Yaifl.Effects.Print
 
 data BackdropConfig wm = BackdropConfig
   { description :: WMText wm
@@ -38,7 +37,7 @@ data BackdropConfig wm = BackdropConfig
   } deriving stock (Generic)
 
 data BackdropLocationsConfig = InRooms (NonEmpty RoomEntity) | InRegions (NonEmpty RegionEntity) | Everywhere
-  deriving stock (Eq, Ord, Generic)
+  deriving stock (Show, Eq, Ord, Generic)
 
 newBackdrop :: IsString (WMText wm) => BackdropLocationsConfig -> BackdropConfig wm
 newBackdrop locations = BackdropConfig
@@ -52,6 +51,11 @@ newBackdrop locations = BackdropConfig
 backdropInRooms :: NonEmpty (Room wm) -> BackdropLocationsConfig
 backdropInRooms = InRooms . NE.map tagRoomEntity
 
+updateEverywhereBackdrop ::
+  State (Metadata wm) :> es
+  => ThingEntity
+  -> Eff es ()
+updateEverywhereBackdrop d = (#everywhereBackdrops %= S.insert d)
 addBackdrop ::
   forall wm es.
   AddObjects wm es
@@ -84,6 +88,9 @@ addBackdrop name BackdropConfig{initialAppearance, description, thingModify, des
         , location = Just $ coerceTag mainLocation
         , objType = ObjectKind "backdrop"
         }
+  when (has #_Everywhere locations) $ updateEverywhereBackdrop d
 
+  whenJust (preview #_InRegions locations) $ \(r:|rs) -> mapM_
+      (\region -> modifyRegion region (#backdrops %~ S.insert d)) (r:rs)
   when (has #_InRooms locations) $ updateMultiLocatedObject d
   pure d

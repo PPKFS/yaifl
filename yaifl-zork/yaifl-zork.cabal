@@ -19,39 +19,8 @@ source-repository head
   type:     git
   location: https://github.com/PPKFS/yaifl.git
 
-executable yaifl-zork
-  hs-source-dirs:  app
-  main-is: Main.hs
-  other-modules:
-    Yaifl.Zork.Boat
-    Yaifl.Zork.Combat
-    Yaifl.Zork.Cyclops
-    Yaifl.Zork.Death
-    Yaifl.Zork.Egg
-    Yaifl.Zork.Grues
-    Yaifl.Zork.Lamps
-    Yaifl.Zork.Misc
-    Yaifl.Zork.Rainbow
-    Yaifl.Zork.RandomText
-    Yaifl.Zork.Scoring
-    Yaifl.Zork.Thief
-    Yaifl.Zork.Troll
-    Yaifl.Zork.World
-    Yaifl.Zork.World.Barrow
-    Yaifl.Zork.World.Canyon
-    Yaifl.Zork.World.Forest
-    Yaifl.Zork.World.House
-    Yaifl.Zork.World.Inside
-    Yaifl.Zork.World.Maze
-    Yaifl.Zork.World.Mine
-    Yaifl.Zork.World.Mirrors
-    Yaifl.Zork.World.Reservoir
-    Yaifl.Zork.World.Temple
-    Yaifl.Zork.World.Underground
-
-    Yaifl.Zork.Metadata
-    Yaifl.Zork.Specifics
-    Yaifl.Zork.Actions
+library
+  hs-source-dirs: src
   build-depends:
     yaifl
     , yaifl-core
@@ -83,6 +52,120 @@ executable yaifl-zork
     OverloadedLabels
     OverloadedStrings
     QuasiQuotes
+    TemplateHaskell
+    TypeFamilies
+    TypeApplications
+    UndecidableInstances
+    ViewPatterns
+  exposed-modules:
+    Yaifl.Zork.Boat
+    Yaifl.Zork.Combat
+    Yaifl.Zork.Cyclops
+    Yaifl.Zork.Death
+    Yaifl.Zork.Egg
+    Yaifl.Zork.Grues
+    Yaifl.Zork.Lamps
+    Yaifl.Zork.Misc
+    Yaifl.Zork.Rainbow
+    Yaifl.Zork.RandomText
+    Yaifl.Zork.Scoring
+    Yaifl.Zork.Thief
+    Yaifl.Zork.Troll
+    Yaifl.Zork.World
+    Yaifl.Zork.World.Barrow
+    Yaifl.Zork.World.Canyon
+    Yaifl.Zork.World.Forest
+    Yaifl.Zork.World.House
+    Yaifl.Zork.World.Inside
+    Yaifl.Zork.World.Maze
+    Yaifl.Zork.World.Mine
+    Yaifl.Zork.World.Mirrors
+    Yaifl.Zork.World.Reservoir
+    Yaifl.Zork.World.Temple
+    Yaifl.Zork.World.Underground
+
+    Yaifl.Zork.Metadata
+    Yaifl.Zork.Specifics
+    Yaifl.Zork.Actions
+
+executable yaifl-zork-app
+  hs-source-dirs:  app
+  main-is: Main.hs
+  build-depends:
+    yaifl
+    , yaifl-core
+    , yaifl-rules
+    , yaifl-objects
+    , yaifl-zork
+    , yaifl-actions
+    , text
+    , effectful-core
+    , effectful-plugin >= 1.1.0 && < 2.2
+    , breadcrumbs
+    , base
+
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wredundant-constraints
+    -Wno-unused-packages -Wno-deprecations -fhide-source-paths
+    -Wno-unused-top-binds -Wmissing-deriving-strategies -O2
+    -flate-specialise -fspecialise-aggressively
+    -fprint-potential-instances -fno-warn-unused-do-bind -haddock
+    -fwrite-ide-info -fplugin=Effectful.Plugin -Wunused-packages
+  default-language: GHC2024
+  default-extensions:
+    DefaultSignatures
+    DeriveAnyClass
+    DuplicateRecordFields
+    FunctionalDependencies
+    LambdaCase
+    MultiWayIf
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    QuasiQuotes
+    TemplateHaskell
+    TypeFamilies
+    TypeApplications
+    UndecidableInstances
+    ViewPatterns
+
+test-suite yaifl-zork-test
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            ZorkSpec.hs
+  build-depends:
+    , aeson
+    , directory
+    , effectful-plugin
+    , tasty
+    , tasty-silver
+    , yaifl
+    , yaifl-actions
+    , yaifl-examples
+    , yaifl-zork
+    , yaifl-core
+    , yaifl-rules
+    , containers
+    , random
+    , breadcrumbs
+
+  ghc-options:
+    -Wno-unused-packages -threaded -rtsopts -with-rtsopts=-N
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DefaultSignatures
+    DerivingStrategies
+    DeriveAnyClass
+    DuplicateRecordFields
+    FunctionalDependencies
+    LambdaCase
+    MultiWayIf
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    QuasiQuotes
+    StrictData
     TemplateHaskell
     TypeFamilies
     TypeApplications

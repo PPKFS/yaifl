@@ -34,6 +34,7 @@ library
     aeson >= 2.0,
     yaml,
     yaifl-objects,
+    template-haskell,
     yaifl-actions,
     yaifl-rules,
     text >= 2.0.2 && < 3.1
@@ -70,3 +71,4 @@ library
     Yaifl.Create.Rule
     Yaifl.Create.CustomActionRule
     Yaifl.Run
+    Yaifl.Test.Common

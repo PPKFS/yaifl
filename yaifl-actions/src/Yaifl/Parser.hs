@@ -69,7 +69,8 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
     ac <- case possVerbs of
       [] -> return $ Left ("I have no idea what you meant by '" <> t <> "'.")
       _ -> do
-        filterFirstStringM "." $ map (inject . handleVerbAction actionOpts additionalArgs) possVerbs
+        -- sort the list so it prefers the longest verb string
+        filterFirstStringM "." $ map (inject . handleVerbAction actionOpts additionalArgs) (sortOn (\x -> negate $ length $ words (x ^. _1)) possVerbs)
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ say t')
@@ -77,7 +78,8 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
 
 handleVerbAction ::
   forall es wm.
-  ActionHandlerConstraints es wm
+  HasCallStack
+  => ActionHandlerConstraints es wm
   => ActionOptions wm
   -> [ActionParameter wm]
   -> (Text, Text, ActionPhrase wm)

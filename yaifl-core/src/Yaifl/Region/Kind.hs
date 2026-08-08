@@ -11,19 +11,20 @@ related rooms and provide hierarchical structure.
 module Yaifl.Region.Kind (
   -- * Region types
     RegionTag
-  , RegionEntity
+  , RegionEntity(..)
   , Region(..)
   , tagRegionEntity
   ) where
 
 import Yaifl.Prelude
-import Yaifl.Entity (TaggedEntity, RoomEntity)
+import Yaifl.Entity (RoomEntity, ThingEntity, Entity)
 import qualified Data.Set as S
 import Yaifl.WorldModel
 import Yaifl.Object.Kind
 
 data RegionTag
-type RegionEntity = TaggedEntity RegionTag
+newtype RegionEntity = RegionEntity Entity
+  deriving newtype (Show, Eq, Ord, Read)
 
 -- | Spatial organization that groups related rooms.
 -- Example hierarchy:
@@ -49,6 +50,7 @@ data Region wm = Region
   , rooms :: S.Set RoomEntity
     -- ^ Rooms that belong to this region. Rooms can only belong to 0-1 regions at a time.
   , regionData :: WMRegionData wm
+  , backdrops :: S.Set ThingEntity
     -- ^ World-model-specific region data.]
   } deriving stock (Generic)
 
@@ -56,4 +58,5 @@ deriving stock instance Show (WMRegionData wm) => Show (Region wm)
 
 tagRegionEntity :: Region wm -> RegionEntity
 tagRegionEntity = regionID
+
 makeFieldLabelsNoPrefix ''Region

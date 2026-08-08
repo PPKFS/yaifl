@@ -10,8 +10,9 @@ import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.WorldModel
 
+
+import Yaifl.Region.Kind (RegionEntity(..), Region (..))
 import qualified Data.Set as S
-import Yaifl.Region.Kind (RegionEntity, Region (..))
 
 addRegion ::
   Pointed (WMRegionData wm)
@@ -20,6 +21,14 @@ addRegion ::
   -> Eff es RegionEntity
 addRegion n = do
   rId <- generateEntity False
-  let r = Region (unsafeTagEntity rId) n PubliclyNamed S.empty Nothing S.empty identityElement
+  let r = Region
+        { regionID = (RegionEntity rId)
+        , name = n
+        , namePrivacy = PubliclyNamed
+        , subRegions = S.empty
+        , superRegion = Nothing
+        , rooms = S.empty
+        , regionData = identityElement
+        , backdrops = S.empty }
   setRegion r
-  pure (unsafeTagEntity rId)
+  pure (RegionEntity rId)
