@@ -56,4 +56,5 @@ zorkWorld = do
   (Forest f) <- forest
   (OutsideTheHouse wh) <- roomsOutsideTheHouse f
   (#firstRoom :: Lens' (Metadata ZorkWorldModel) RoomEntity) .= wh
+  addAction (view #finding baseZorkActions)
   pass

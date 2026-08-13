@@ -30,8 +30,7 @@ library
     effectful-plugin >= 1.1.0 && < 2.2,
     enummapset >= 0.7.2 && < 1.8,
     yaifl-core,
-    template-haskell,
-    yaifl-rules
+    template-haskell
     , yaifl-actions
     , yaifl
     , yaifl-objects
@@ -101,7 +100,6 @@ test-suite yaifl-test
     , yaifl-actions
     , yaifl-examples
     , yaifl-core
-    , yaifl-rules
     , containers
     , random
     , breadcrumbs

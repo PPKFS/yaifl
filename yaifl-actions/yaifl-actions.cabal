@@ -37,8 +37,8 @@ common common-options
     , enummapset >= 0.7.2 && < 1.8
     , text >= 2.0.2 && < 3.1
     , yaifl-core
+    , text-display
     , yaifl-objects
-    , yaifl-rules
 
   ghc-options:
     -Wall -Wcompat -Widentities -Wredundant-constraints
@@ -143,3 +143,29 @@ library
     Yaifl.Preconditions
     Yaifl.Parser
     Yaifl.ActionOn
+
+    Yaifl.Activities.ChoosingNotableLocaleObjects
+    Yaifl.Activities.ListingContents
+    Yaifl.Activities.PrintingLocaleParagraphAbout
+    Yaifl.Activities.PrintingTheLocaleDescription
+    Yaifl.Activities.PrintingRoomDescriptionDetails
+    Yaifl.Activities.PrintingInventoryDetails
+    Yaifl.Activities.PrintingThePlayersObituary
+    Yaifl.Activities.PrintingTheBannerText
+    Yaifl.Activities.RequestingTheScore
+
+    Yaifl.Locale
+    Yaifl.Rulebooks.ActionProcessing
+
+    Yaifl.Text.ListWriter
+    Yaifl.Text.ListWriter.AfterEntry
+    Yaifl.Text.ListWriter.Parameters
+    Yaifl.Text.ListWriter.Responses
+    Yaifl.Text.ListWriter.WriteListR
+    Yaifl.Text.ResponseCollection
+    Yaifl.Text.Regarding
+    Yaifl.Text.Say
+
+    Yaifl.Rulebooks.WhenPlayBegins
+    Yaifl.Rulebooks.TurnSequence
+    Yaifl.Rulebooks.Accessibility

@@ -3,7 +3,6 @@ module Yaifl.Rulebooks.WhenPlayBegins
   ) where
 
 import Yaifl.Prelude
-import qualified Data.Text as T
 
 import Breadcrumbs ( addAnnotation )
 import Yaifl.Move ( move )
@@ -11,11 +10,9 @@ import Yaifl.Actions.Args
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Property.Has ( WMWithProperty )
 import Yaifl.Enclosing.Kind ( Enclosing )
-import Yaifl.Metadata ( Metadata )
 import Yaifl.ObjectLike
 import Yaifl.Rulebook
 import Yaifl.Effects.RuleEffects
-import Yaifl.Effects.Print
 import Yaifl.Room.Kind
 import Yaifl.Person.Query
 import Yaifl.Thing.Query

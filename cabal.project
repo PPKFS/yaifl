@@ -6,7 +6,6 @@ packages:
   yaifl/yaifl.cabal
   yaifl-core/yaifl-core.cabal
   yaifl-objects/yaifl-objects.cabal
-  yaifl-rules/yaifl-rules.cabal
   yaifl-actions/yaifl-actions.cabal
   yaifl/yaifl.cabal
   yaifl-examples/yaifl-examples.cabal

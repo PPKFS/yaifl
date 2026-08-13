@@ -24,7 +24,6 @@ library
   build-depends:
     yaifl
     , yaifl-core
-    , yaifl-rules
     , yaifl-objects
     , yaifl-actions
     , text
@@ -94,7 +93,6 @@ executable yaifl-zork-app
   build-depends:
     yaifl
     , yaifl-core
-    , yaifl-rules
     , yaifl-objects
     , yaifl-zork
     , yaifl-actions
@@ -146,7 +144,6 @@ test-suite yaifl-zork-test
     , yaifl-examples
     , yaifl-zork
     , yaifl-core
-    , yaifl-rules
     , containers
     , random
     , breadcrumbs
