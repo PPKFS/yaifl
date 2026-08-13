@@ -55,7 +55,8 @@ instance MayHaveProperty ObjectSpecifics Container where
   propertyAT = castOptic _ContainerSpecifics
 
 instance MayHaveProperty ObjectSpecifics Enterable where
-  propertyAT = _ContainerSpecifics % #enterable
+  propertyAT = (_ContainerSpecifics % #enterable)
+    `thenATraverse` (_SupporterSpecifics % #enterable)
 
 instance MayHaveProperty ObjectSpecifics Openability where
   propertyAT = _OpenabilitySpecifics

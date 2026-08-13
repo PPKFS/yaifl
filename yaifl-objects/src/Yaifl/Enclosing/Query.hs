@@ -33,8 +33,11 @@ import Yaifl.Property.Has
 import Yaifl.MultiLocated.Kind
 import Yaifl.Metadata
 import Yaifl.Thing.Query (getLocation)
-import Yaifl.Region.Query (getEnclosingRegions)
+import Yaifl.Region.Query (getEnclosingRegions, roomsInRegion, getRegion)
 import Yaifl.Region.Kind
+import Yaifl.Backdrop.Kind
+import qualified Data.Set as S
+import Yaifl.WorldModel (WorldModel)
 
 data IncludeScenery = IncludeScenery | ExcludeScenery
   deriving stock (Eq, Ord, Show, Generic)
@@ -77,6 +80,7 @@ getAllObjectsInEnclosing incScenery incDoors recurse r = do
 getContainingHierarchies ::
   forall wm es.
   WithoutMissingObjects wm es
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => Thing wm
   -> Eff es (NonEmpty (NonEmpty EnclosingEntity))
@@ -100,14 +104,30 @@ getContainingHierarchies tLike = do
           Just multiLoc -> do
             hierarchies <- forM (toList $ locations multiLoc) fromContainingObject
             case hierarchies of
-              [] -> error "multilocated object had no locations"
+              [] -> do
+                -- maybe we have a backdrop that is only in regions
+                case getBackdropMaybe obj of
+                  Nothing -> error "multilocated object had no locations and also wasn't a backdrop"
+                  Just bd -> do
+                    alr <- roomsForBackdrop (Proxy @wm) bd
+                    case alr of
+                      [] -> error "backdrop is nowhere"
+                      (x:xs) -> (\(y :| ys) -> foldl' NE.append y ys) <$> forM (x:|xs) fromContainingObject
               l@(a:_) -> return $ foldl' NE.append a l
   getHierarchy tLike
+
+roomsForBackdrop :: forall wm es. WithoutMissingObjects wm es => Proxy (wm :: WorldModel) -> Backdrop -> Eff es [EnclosingEntity]
+roomsForBackdrop _ bd = do
+  if everywhere bd then toList . fmap getEnclosingEntity <$> allRooms @wm else do
+    let multiLocRooms = toList (view (#rooms % #locations) bd)
+    regionRooms <- fmap getEnclosingEntity . mconcat . fmap S.toList <$> (mapM (\region -> getRegion region >>= roomsInRegion) $ S.toList (regions bd))
+    return $ multiLocRooms <> regionRooms
 
 -- | get the first (and unless you're messing with doors or backdrops or other multi-located objects, you probably
 -- want this one).
 getContainingHierarchy ::
   WithoutMissingObjects wm es
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => Thing wm
   -> Eff es (NonEmpty EnclosingEntity)
@@ -147,6 +167,8 @@ class IsEnclosing o where
 instance IsEnclosing RoomEntity where
   getEnclosingEntity = coerceTag
 
+instance IsEnclosing (Room wm)
+
 instance IsEnclosing EnclosingEntity where
   getEnclosingEntity = id
 
@@ -169,6 +191,7 @@ getEnclosingObject theObj = do
 
 enclosingContains ::
   WithoutMissingObjects wm es
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => ThingLike wm o
   => EnclosingEntity
@@ -181,6 +204,7 @@ enclosingContains e o = do
 getCommonAncestor ::
   HasCallStack
   => WithoutMissingObjects wm es
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => ThingLike wm o1
   => ThingLike wm o2

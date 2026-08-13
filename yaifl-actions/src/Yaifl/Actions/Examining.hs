@@ -22,6 +22,7 @@ import Yaifl.MultiLocated.Kind
 import Yaifl.Text.Regarding
 import Yaifl.Preconditions
 import Yaifl.Person.Query
+import Yaifl.Backdrop.Kind
 
 data ExaminingResponses =
   ExamineDirectionA
@@ -64,6 +65,7 @@ type HasExaminingProperties wm =
   ( WithPrintingNameOfSomething wm
   , WMWithProperty wm Container
   , WMWithProperty wm MultiLocated
+  , WMWithProperty wm Backdrop
   , WithListWriting wm
   )
 

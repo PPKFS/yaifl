@@ -168,6 +168,9 @@ addStandardActions = do
   addAction attacking
   addAction burning
   addAction lookingUnder
+  addAction pushing
+  addAction pulling
+  addAction touching
   pass
 
 blankActions ::

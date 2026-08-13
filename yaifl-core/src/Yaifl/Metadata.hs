@@ -161,7 +161,8 @@ type WithMetadata wm es = (State (Metadata wm) :> es, Breadcrumbs :> es)
 -- This function is phase-agnostic and will record errors in all stages.
 -- For runtime-specific error handling, see `noteRuntimeError`.
 noteError ::
-  WithMetadata wm es
+  HasCallStack
+  => WithMetadata wm es
   => (Text -> a) -- ^ Recovery function (error message -> result)
   -> Text -- ^ Error message to record
   -> Eff es a

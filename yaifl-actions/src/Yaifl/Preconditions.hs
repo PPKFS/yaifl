@@ -23,6 +23,7 @@ import Yaifl.MultiLocated.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Region.Kind
 import Yaifl.Region.Query
+import Yaifl.Backdrop.Kind
 
 forPlayer :: Precondition wm (Args wm v)
 forPlayer = Precondition (pure "actor is the player") $ \v -> do
@@ -64,6 +65,7 @@ theObject' o = Precondition
 
 whenIn ::
   ObjectLike wm e
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => IsEnclosing e
   => e
@@ -84,6 +86,7 @@ not_ prec = prec { checkPrecondition = \v -> not <$> (checkPrecondition prec v)}
 
 whenPlayerIsIn ::
   ObjectLike wm e
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm MultiLocated
   => IsEnclosing e
   => e

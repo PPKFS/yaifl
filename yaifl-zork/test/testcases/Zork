@@ -89,6 +89,8 @@ The nails, deeply imbedded in the door, cannot be removed.
 
 >enter house
 
+I can't see how to get in from here.
+
 >go east
 
 The door is boarded and you can't remove the boards.
@@ -120,3 +122,68 @@ The windows are boarded and can't be opened.
 You can't break the windows open.
 
 >enter house
+
+I can't see how to get in from here.
+
+>e
+
+Behind House
+You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is slightly ajar.
+
+>s
+
+South of House
+You are facing the south side of a white house. There is no door here, and all the windows are boarded.
+
+>look
+
+South of House
+You are facing the south side of a white house. There is no door here, and all the windows are boarded.
+
+>go north
+
+The windows are all boarded.
+
+>enter house
+
+I can't see how to get in from here.
+
+>go east
+
+Behind House
+You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is slightly ajar.
+
+>look
+
+Behind House
+You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is slightly ajar.
+
+>go east
+
+Clearing
+You are in a small clearing in a well marked forest path that extends to the east and west.
+
+>take house
+
+You're not at the house.
+
+>push house
+
+You're not at the house.
+
+>pull house
+
+You're not at the house.
+
+>touch house
+
+You're not at the house.
+
+>go west
+
+Behind House
+You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is slightly ajar.
+
+>examine window
+
+The window is slightly ajar, but not enough to allow entry.

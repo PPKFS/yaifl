@@ -180,7 +180,7 @@ makeAction ::
   -> Action wm resp goesWith v
 makeAction n = Action
   { name = n
-  , understandAs = [n]
+  , understandAs = [n] <> (maybeToList (T.stripSuffix "ing" n))
   , matches = []
   , touchableNouns = const []
   , responses = \_ -> notImplementedResponse "no response"

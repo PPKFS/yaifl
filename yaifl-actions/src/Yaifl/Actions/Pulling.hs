@@ -9,6 +9,7 @@ module Yaifl.Actions.Pulling
 import Yaifl.Prelude
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.ActionOn
 
 data PullingResponses wm =
   FooA
@@ -17,11 +18,12 @@ pullingResponses :: PullingResponses wm -> Response wm (Args wm (Thing wm))
 pullingResponses = \case
   _ -> notImplementedResponse "response"
 
-type PullingAction wm = Action wm (PullingResponses wm) 'TakesNoParameter (Thing wm)
+type PullingAction wm = Action wm (PullingResponses wm) 'TakesThingParameter (Thing wm)
 type PullingRule wm = ActionRule wm (PullingAction wm) (Thing wm)
 pullingAction :: PullingAction wm
 pullingAction = (makeAction "pulling")
   { responses = pullingResponses
+  , parseArguments = actionOnOneThing
   , checkRules = makeActionRulebook "check pulling" ([] <> map notImplementedRule
     [ "can't do pulling"
     ])

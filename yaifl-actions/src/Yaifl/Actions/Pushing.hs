@@ -9,6 +9,7 @@ module Yaifl.Actions.Pushing
 import Yaifl.Prelude
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.ActionOn
 
 data PushingResponses wm =
   FooA
@@ -17,11 +18,12 @@ pushingResponses :: PushingResponses wm -> Response wm (Args wm (Thing wm))
 pushingResponses = \case
   _ -> notImplementedResponse "response"
 
-type PushingAction wm = Action wm (PushingResponses wm) 'TakesNoParameter (Thing wm)
+type PushingAction wm = Action wm (PushingResponses wm) 'TakesThingParameter (Thing wm)
 type PushingRule wm = ActionRule wm (PushingAction wm) (Thing wm)
 pushingAction :: PushingAction wm
 pushingAction = (makeAction "pushing")
   { responses = pushingResponses
+  , parseArguments = actionOnOneThing
   , checkRules = makeActionRulebook "check pushing" ([] <> map notImplementedRule
     [ "can't do pushing"
     ])

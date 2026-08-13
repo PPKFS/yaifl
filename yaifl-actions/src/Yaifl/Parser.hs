@@ -70,7 +70,7 @@ runActionHandlerAsWorldActions = interpret $ \_ -> \case
       [] -> return $ Left ("I have no idea what you meant by '" <> t <> "'.")
       _ -> do
         -- sort the list so it prefers the longest verb string
-        filterFirstStringM "." $ map (inject . handleVerbAction actionOpts additionalArgs) (sortOn (\x -> negate $ length $ words (x ^. _1)) possVerbs)
+        filterFirstStringM "." $ map (inject . handleVerbAction t actionOpts additionalArgs) (sortOn (\x -> negate $ length $ words (x ^. _1)) possVerbs)
     whenLeft_ ac (\t' -> do
       noteError (const ()) $ "Failed to parse the command " <> t <> " because " <> t'
       runActionHandlerAsWorldActions $ say t')
@@ -80,11 +80,12 @@ handleVerbAction ::
   forall es wm.
   HasCallStack
   => ActionHandlerConstraints es wm
-  => ActionOptions wm
+  => Text
+  -> ActionOptions wm
   -> [ActionParameter wm]
   -> (Text, Text, ActionPhrase wm)
   -> Eff es (Either Text Bool)
-handleVerbAction actionOpts additionalArgs = \case
+handleVerbAction fullText actionOpts additionalArgs = \case
   -- this phrase should be interpreted as a different action
   (matched, r, Interpret (InterpretAs x params)) -> do
     addAnnotation $ "Matched " <> matched <> " and interpreting this as " <> x
@@ -113,7 +114,7 @@ handleVerbAction actionOpts additionalArgs = \case
               Just v' -> do
                 ts <- getGlobalTime
                 actor <- getPlayer
-                Right <$> runAction actionOpts a (UnverifiedArgs $ Args { actionOptions = actionOpts, timestamp = ts, source = getTaggedObject actor, variables = (v', parsedArgs) })
+                Right <$> runAction actionOpts a (UnverifiedArgs $ Args { command = fullText, actionOptions = actionOpts, timestamp = ts, source = getTaggedObject actor, variables = (v', parsedArgs) })
       case nouns of
         Left ex -> do
           addAnnotation $ "noun parsing failed because " <> ex

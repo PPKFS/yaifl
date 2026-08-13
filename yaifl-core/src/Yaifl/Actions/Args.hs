@@ -51,6 +51,7 @@ data Args (wm :: WorldModel) v = Args
   , variables :: v -- ^ the variables for the action.
   , actionOptions :: ActionOptions wm -- ^ specific configuration for this invokation of the action.
   , timestamp :: Timestamp -- ^ the timestamp when the action was initiated.
+  , command :: Text -- ^ the full text of the player's command
   } deriving stock (Eq, Ord, Generic)
 
 instance (Display v, Display (WMText wm)) => Display (Args wm v) where

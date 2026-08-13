@@ -9,6 +9,7 @@ module Yaifl.Actions.Touching
 import Yaifl.Prelude
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.ActionOn
 
 data TouchingResponses wm =
   FooA
@@ -17,11 +18,12 @@ touchingResponses :: TouchingResponses wm -> Response wm (Args wm (Thing wm))
 touchingResponses = \case
   _ -> notImplementedResponse "response"
 
-type TouchingAction wm = Action wm (TouchingResponses wm) 'TakesNoParameter (Thing wm)
+type TouchingAction wm = Action wm (TouchingResponses wm) 'TakesThingParameter (Thing wm)
 type TouchingRule wm = ActionRule wm (TouchingAction wm) (Thing wm)
 touchingAction :: TouchingAction wm
 touchingAction = (makeAction "touching")
   { responses = touchingResponses
+  , parseArguments = actionOnOneThing
   , checkRules = makeActionRulebook "check touching" ([] <> map notImplementedRule
     [ "can't do touching"
     ])

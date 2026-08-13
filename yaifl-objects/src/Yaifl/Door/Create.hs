@@ -62,7 +62,7 @@ newDoor front back = DoorConfig
   }
 
 isToThe :: RoomEntity -> Direction -> (RoomEntity, Direction)
-isToThe r d = (r, d)
+isToThe r d = (r, opposite d)
 
 addDoor ::
   forall wm es.

@@ -89,7 +89,7 @@ cantExceedCapacity = notImplementedRule "can't exit if this exceeds carrying cap
 standardExiting :: WMWithProperty wm Enclosing => ExitingRule wm
 standardExiting = makeRule "standard exiting" [] $ \a@Args{variables=v} -> do
   o <- getObject (thingContainedBy $ getTaggedObject v)
-  bool (Just True) Nothing <$> move (source a) (tagObject @_ @EnclosingTag (thingContainedBy $ getTaggedObject v) o)
+  bool (Just True) Nothing <$> move (source a) (tagObject @EnclosingTag (thingContainedBy $ getTaggedObject v) o)
 
 describeExited ::
   ExitingRule wm

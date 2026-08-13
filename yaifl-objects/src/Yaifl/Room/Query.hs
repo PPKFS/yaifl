@@ -201,12 +201,17 @@ modifyAndVerifyConnection fromRoomE' fromDir destE f = do
     Just dest
       | dest == destE ->
         modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
-    Just anotherDest -> do
+    {- Just anotherDest -> do
       let r = display $ fromRoom ^. #name
       r2 <- getRoom anotherDest
       let r2' = display (r2 ^. #name)
+      modifyRoom @wm fromRoom (connectionLens fromDir % _Just %~ f)
       noteError (const ()) ("When modifying the connection from " <> r <> " we expected the other side to be "
         <> show destE <> ". but it was " <> r2' <> " in the direction " <> show fromDir)
+      -}
+    Just _otherDest -> do
+      inDirection ! #thisRoom fromRoomE' ! #leads fromDir ! #here destE ! defaults
+      modifyRoom @wm fromRoomE' (connectionLens fromDir % _Just %~ f)
     Nothing -> do
       inDirection ! #thisRoom fromRoomE' ! #leads fromDir ! #here destE ! #isOneWay True
       modifyRoom @wm fromRoomE' (connectionLens fromDir % _Just %~ f)

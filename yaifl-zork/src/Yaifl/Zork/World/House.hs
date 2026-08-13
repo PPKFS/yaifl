@@ -23,7 +23,7 @@ import Yaifl.Preconditions
 import Yaifl.Property.Has
 import Yaifl.Region.Create (addRegion)
 import Yaifl.Region.Kind
-import Yaifl.Region.Query (areInRegion)
+import Yaifl.Region.Query (areInRegion, isInRegion)
 import Yaifl.Room.Create
 import Yaifl.Room.Query
 import Yaifl.Tag
@@ -35,8 +35,6 @@ import Yaifl.Zork.Specifics
 import qualified Yaifl.Create.CustomActionRule as E
 import Yaifl.Effects.Interpreters (WorldConstruction)
 import Yaifl.Zork.Actions
-import Yaifl.Effects.ObjectQuery (traverseRegions_)
-import Yaifl.Effects.Print
 
 containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
 containerModify f = #specifics % propertyAT %= f
@@ -55,7 +53,9 @@ roomsOutsideTheHouse forestArea = do
       pass)
   -- forward declare a couple of nearby rooms because we need to refer to them
   kitchen <- addRoom' "Kitchen"
-  clearing <- addRoom' "Clearing"
+  clearing <- addRoom "Clearing" $ newRoom
+    & #description .~ "You are in a small clearing in a well marked forest path that extends to the east and west."
+  clearing `isInRegion` forestArea
   livingRoom <- addRoom' "Living Room"
 
   behindHouse <- addRoom "Behind House" $ newRoom
@@ -97,7 +97,6 @@ roomsOutsideTheHouse forestArea = do
   notAtTheHouse #touching
 
   insteadOf' #entering [theObject whiteHouse, whenPlayerIsInRegion houseExterior, not_ (whenPlayerIsIn behindHouse)] $ do
-    printLn "Here"
     [saying|I can't see how to get in from here.|]
   insteadOf' #going [inDirection East, whenPlayerIsIn westOfHouse] $ do
     [saying|The door is boarded and you can't remove the boards.|]
@@ -178,7 +177,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     #description .~ (text' $ do
         window <- getObject kitchenWindow
         let windowOpen = isOpen window
-        [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}}open{?else}slightly ajar{?end if}.|]
+        [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}open{?else}slightly ajar{?end if}.|]
         )
   insteadOf #entering [theObject whiteHouse, whenPlayerIsIn behindHouse] $ \a -> do
     window <- getObject kitchenWindow
@@ -208,6 +207,13 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     p <- getPlayerLocation
     if p `objectEquals` kitchen then [saying|You can see a clear area leading towards a forest.|]
     else [saying|You can see what appears to be a kitchen.|]
+
+  modifyRoom kitchen $
+    #description .~ (text' $ do
+        window <- getObject kitchenWindow
+        let windowOpen = isOpen window
+        [sayingTell|You are in the kitchen of the white house. A table seems to have been used recently for the preparation of food. A passage leads to the west and a dark staircase can be seen leading upward. A dark chimney leads down and to the east is a small window which is {?if windowOpen}open{?else}slightly ajar{?end if}.|])
+
   -- note the translation considers it possible to read this door from inside, which is a different door.
   -- it also considers reading to be examining..
   E.insteadOf' #reading [theObject frontDoor] $ [saying|There is no writing on this side.|]
@@ -253,7 +259,7 @@ testMeWith =
   , "open windows"
   , "attack windows"
   , "enter house" -- this prints nothing
-{-
+
   , "e"
   , "s"
   , "look"
@@ -272,14 +278,12 @@ testMeWith =
 
   , "open window"
   , "examine window"
-  , "go west"
-  , "look"
   , "search window"
   , "go east"
   , "close window"
   , "examine window"
   , "close window"
-  , "enter house"
+{-}
   , "search window"
   , "open window"
   , "enter house"

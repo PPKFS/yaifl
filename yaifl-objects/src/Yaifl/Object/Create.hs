@@ -101,7 +101,7 @@ addObject updWorld n d ty isT specifics details mbLocation =
             Just loc -> do
               encLoc <- getObject loc
               asThingOrRoom
-                (void . move @(EnclosingThing wm) @_ @_ t . tagObject @EnclosingEntity @EnclosingTag loc)
+                (void . move @(EnclosingThing wm) @_ @_ t . tagObject @EnclosingTag loc)
                 (void . move t)
                 encLoc
         )

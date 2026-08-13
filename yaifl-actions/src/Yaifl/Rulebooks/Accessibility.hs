@@ -44,6 +44,7 @@ import Yaifl.Rulebook
 import Yaifl.Enclosing.Query
 import Yaifl.Object.Kind
 import Yaifl.MultiLocated.Kind (MultiLocated)
+import Yaifl.Backdrop.Kind
 
 -- | Main accessibility rulebook.
 --
@@ -59,6 +60,7 @@ import Yaifl.MultiLocated.Kind (MultiLocated)
 accessibility ::
   WithPrintingNameOfSomething wm
   => WMWithProperty wm MultiLocated
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm Container
   => Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
 accessibility = Rulebook
@@ -98,6 +100,7 @@ samePlace Args{source=s, variables=v} =
 insideClosedContainers ::
   WithPrintingNameOfSomething wm
   => WMWithProperty wm MultiLocated
+  => WMWithProperty wm Backdrop
   => RuleEffects wm es
   => WMWithProperty wm Container
   => Args wm (Thing wm) -> Eff es (Maybe Bool)
@@ -111,6 +114,7 @@ insideClosedContainers Args{source=s, variables=v}= do
         display (source ^. #name) <> " to " <> display (target ^. #name) <> ": " <> show hierarchies
       hier = case manyHiers of
         [x] -> x
+        (x:_) -> x
         x -> error $ accessibilityHierarchyError s v x
   anyClosed <- (join . listToMaybe . catMaybes) <<$>> forM (reverse hier) $ \barrier -> do
     barrierThing <- getThingMaybe barrier

@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE MultiWayIf #-}
 module Yaifl.Actions.Entering where
 
 import Yaifl.Actions.Imports
@@ -27,6 +28,9 @@ import Yaifl.Preconditions
 import Yaifl.Container.Query
 import Yaifl.Supporter.Query
 import Yaifl.Animal.Query
+import qualified Data.Text as T
+import Yaifl.Entity (EnclosingTag)
+import Yaifl.Backdrop.Kind
 
 data EnteringResponses wm =
     EnterAlreadyEnteredA
@@ -49,32 +53,41 @@ data EnteringResponses wm =
     | EnterReportC
     | EnterReportD
 
-type EnteringAction wm = Action wm () 'TakesThingParameter (EnclosingThing wm)
+type EnteringAction wm = Action wm (EnteringResponses wm) (TakesOneOf TakesDirectionParameter TakesThingParameter) (Thing wm)
+
+type EnteringRule wm = ActionRule wm (EnteringAction wm) (Thing wm)
 
 -- TODO: "supplying a missing noun rulebook"
+{-
+Rule for supplying a missing noun while entering (this is the find what to enter
+rule):
+    if something enterable (called the box) is in the location,
+        now the noun is the box;
+    otherwise continue the activity.
 
+The find what to enter rule is listed last in the for supplying a missing noun
+rulebook.
+-}
 enteringAction ::
   WithPrintingTheLocaleDescription wm
   => WMWithProperty wm MultiLocated
+  => WMWithProperty wm Enterable
+  => WMWithProperty wm Backdrop
   => WMWithProperty wm Door
   => EnteringAction wm
 enteringAction = (makeAction "entering")
   { name = "entering"
   , understandAs = ["enter", "go in", "go into", "enter into", "get into", "get in", "get on", "sit in", "sit on"]
   , parseArguments = ParseArguments $ \(UnverifiedArgs Args{..}) -> do
-      let mbCont = getEnclosingMaybe (toAny $ fst variables)
-      let mbDoor = getDoorMaybe (fst variables)
-      case mbCont of
-        Nothing ->
+      case fst variables of
+        Left dir -> return $ ConversionTo "go" [DirectionParameter dir]
+        Right t -> do
+          let mbDoor = getDoorMaybe t
           case mbDoor of
-            Just _door -> return $ ConversionTo "go" [ThingParameter (fst variables)]
-            Nothing -> return $ FailedParse "That's not enterable."
-        Just x -> return $ SuccessfulParse (tagObject x (fst variables))
-  , beforeRules = makeActionRulebook "before entering rulebook" []
-  , insteadRules = makeActionRulebook "instead of entering rulebook" []
+            Just _door -> return $ ConversionTo "go" [ThingParameter t]
+            Nothing -> return $ SuccessfulParse t
   , checkRules = makeActionRulebook "check entering rulebook"
-    [ convertEnterDirection -- this one won't work - it needs to be an interpret as, and it needs to be before we parse..
-    , cantEnterWhenEntered
+    [ cantEnterWhenEntered
     , cantEnterUnenterable -- this one possibly needs to be moved to parse arguments too
     , cantEnterClosedContainers
     , cantExceedCapacity
@@ -88,27 +101,66 @@ enteringAction = (makeAction "entering")
     ]
   }
 
-type EnteringRule wm = ActionRule wm (EnteringAction wm) (EnclosingThing wm)
+cantEnterWhenEntered :: WMWithProperty wm MultiLocated => WMWithProperty wm Backdrop
+  => SayableValue (WMText wm) wm => EnteringRule wm
+cantEnterWhenEntered = makeRule "can't enter what's already entered rule" [] $ \a@Args{source=s, variables=v} -> withActionInterrupt' $ do
+  -- if the actor is the noun, make no decision;
+  when (v `objectEquals` s) $ throwError ContinueAction
+  localCeiling <- getLocalCeiling s v
+  -- if the local ceiling is the noun:
+  when (localCeiling `objectEquals` v) $ do
+    -- if the player is the actor:
+      whenPlayer s $ do
+        --  if the noun is a supporter:
+        ifM (isSupporter v)
+          -- say "But [we]['re] already on [the noun]." (A);
+          (sayResponse EnterAlreadyEnteredA a)
+          -- say "But [we]['re] already in [the noun]." (B);
+          (sayResponse EnterAlreadyEnteredB a)
+        throwError StopAction
+  rulePass
 
-convertEnterDirection :: EnteringRule wm
-convertEnterDirection = notImplementedRule "convert enter direction"
+commandIncludes :: Text -> Args wm v -> Bool
+commandIncludes s args = T.isInfixOf s (command args)
 
-cantEnterWhenEntered :: EnteringRule wm
-cantEnterWhenEntered = notImplementedRule "cant enter what's already entered"
+cantEnterUnenterable :: SayableValue (WMText wm) wm => WMWithProperty wm Enterable => EnteringRule wm
+cantEnterUnenterable = makeRule "can't enter what's not enterable rule" [] $ \a@Args{source=s, variables=v} -> withActionInterrupt' $ do
+  -- if the noun is not enterable:
+  when (isNothing (getEnterableMaybe v)) $ do
+    -- if the player is the actor:
+    whenPlayer s $ do
+      if
+        | commandIncludes "stand" a ->
+            -- say "[regarding the noun][They're] not something [we] [can] stand on." (A);
+            sayResponse EnterNotEnterableA a
+        | commandIncludes "sit" a ->
+            -- say "[regarding the noun][They're] not something [we] [can] sit down on." (B);
+            sayResponse EnterNotEnterableB a
+        | commandIncludes "lie" a ->
+            -- say "[regarding the noun][They're] not something [we] [can] lie down on." (C);
+            sayResponse EnterNotEnterableC a
+        | otherwise ->
+            -- say "[regarding the noun][They're] not something [we] [can] enter." (D);
+            sayResponse EnterNotEnterableD a
+    throwError StopAction
+  rulePass
 
-cantEnterUnenterable :: EnteringRule wm
-cantEnterUnenterable = notImplementedRule "can't enter what's not enterable rule"
-
-implicitlyPassThrough :: forall wm. (WMWithProperty wm MultiLocated, WithPrintingNameOfSomething wm) => EnteringRule wm
-implicitlyPassThrough = makeRule "can't enter closed containers rule" [] $ \a@Args{source=s, variables=v} -> withActionInterrupt' $ do
+getLocalCeiling :: WMWithProperty wm MultiLocated => WMWithProperty wm Backdrop
+  => RuleEffects wm es => Thing wm -> Thing wm -> Eff es EnclosingEntity
+getLocalCeiling s v = do
   let actorHolder = thingContainedBy s
-      nounHolder = thingContainedBy $ getTaggedObject v
+      nounHolder = thingContainedBy v
   -- let the local ceiling be the common ancestor of the actor with the noun;
-  localCeiling <-
-        if actorHolder == nounHolder
+  if actorHolder == nounHolder
         then return actorHolder
         else getCommonAncestor s v
 
+implicitlyPassThrough :: forall wm. (WMWithProperty wm MultiLocated, WithPrintingNameOfSomething wm) => WMWithProperty wm Backdrop
+  => EnteringRule wm
+implicitlyPassThrough = makeRule "can't enter closed containers rule" [] $ \a@Args{source=s, variables=v} -> withActionInterrupt' $ do
+  let actorHolder = thingContainedBy s
+      nounHolder = thingContainedBy v
+  localCeiling <- getLocalCeiling s v
   -- if the holder of the actor is the holder of the noun, continue the action;
   when (actorHolder == nounHolder) $ throwError ContinueAction
 
@@ -170,12 +222,12 @@ implicitlyPassThrough = makeRule "can't enter closed containers rule" [] $ \a@Ar
         actor' <- refreshThing s
         let actorHolder' = thingContainedBy actor'
         unless (actorHolder' `objectEquals` target) $ throwError StopAction
-        void $ parseAction ((actionOptions a) { silently = True }) [ThingParameter (getTaggedObject v)] "enter"
+        void $ parseAction ((actionOptions a) { silently = True }) [ThingParameter v] "enter"
   rulePass
 
 cantEnterClosedContainers :: (WithPrintingNameOfSomething wm, WMWithProperty wm Container) => EnteringRule wm
 cantEnterClosedContainers = makeRule "can't enter closed containers rule" [] $ \Args{source=s, variables=v} -> do
-  let asC = getContainerMaybe (getTaggedObject v)
+  let asC = getContainerMaybe v
   t <- getThing v
   --if the noun is a closed container:
   ruleWhen (isClosedContainer <$?> asC) $ do
@@ -183,13 +235,14 @@ cantEnterClosedContainers = makeRule "can't enter closed containers rule" [] $ \
     whenPlayer s [saying|#{We} #{can't get} into the closed {t}.|]
     return (Just False)
 
-
 cantExceedCapacity :: EnteringRule wm
 cantExceedCapacity = notImplementedRule "can't enter if this exceeds carrying capacity"
 
-standardEntering :: WMWithProperty wm Enclosing => EnteringRule wm
-standardEntering = makeRule "standard entering" [] $ \a@Args{variables=v} ->
-  bool (Just True) Nothing <$> move (source a) v
+standardEntering :: forall wm. WMWithProperty wm Enclosing => EnteringRule wm
+standardEntering = makeRule "standard entering" [] $ \a@Args{variables=v} -> do
+  case (getEnclosingMaybe $ toAny v) of
+    Nothing -> noteRuntimeError (const (Just False)) $ "Encountered a non-enclosing thing in the standard entering rules" <> show (display $ view #name v)
+    Just e ->  bool (Just True) Nothing <$> move (source a) (tagObject @EnclosingTag e v)
 
 standardReportEntering :: WithPrintingNameOfSomething wm => EnteringRule wm
 standardReportEntering = makeRule "standard report entering" [] $ \a@Args{source=s, variables=v} -> do
@@ -219,5 +272,5 @@ describeEntered ::
   WithPrintingTheLocaleDescription wm
   => EnteringRule wm
 describeEntered = makeRule "describe contents entered into" forPlayer' $ \Args{variables=v} -> do
-  doActivity #printingTheLocaleDescription (LocaleVariables emptyStore (toAny $ getTaggedObject v) 0)
+  doActivity #printingTheLocaleDescription (LocaleVariables emptyStore (toAny v) 0)
   rulePass

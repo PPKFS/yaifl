@@ -17,6 +17,7 @@ import Yaifl.Property.Has
 import Yaifl.MultiLocated.Kind
 import Yaifl.Visibility
 import Yaifl.Activities.PrintingTheBannerText (WithPrintingTheBannerText)
+import Yaifl.Backdrop.Kind
 
 type HasStandardProperties s = (
   WMWithProperty s Enclosing
@@ -26,6 +27,7 @@ type HasStandardProperties s = (
   , WMWithProperty s Device
   , WMWithProperty s Person
   , WMWithProperty s MultiLocated
+  , WMWithProperty s Backdrop
   , HasLookingProperties s
   , WMStdDirections s
   , WMWithProperty s Door

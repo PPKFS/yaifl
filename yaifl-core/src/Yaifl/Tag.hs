@@ -115,6 +115,7 @@ getTag = fst . unTagObject
 -- Provides the type safety that makes the tagging system valuable.
 -- Should be preferred over `unsafeTagObject` whenever possible.
 tagObject ::
+  forall taggableTo tagWith e.
   Taggable tagWith taggableTo
   => HasEntity e
   => tagWith
