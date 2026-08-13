@@ -91,10 +91,12 @@ test-suite yaifl-test
   main-is:            Spec.hs
   build-depends:
     , aeson
+    , base
     , directory
     , effectful-plugin
     , tasty
     , tasty-silver
+    , text
     , yaifl
     , yaifl-actions
     , yaifl-examples

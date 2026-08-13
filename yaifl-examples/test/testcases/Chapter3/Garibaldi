@@ -1,0 +1,28 @@
+---------------------
+----- Garibaldi -----
+---------------------
+
+Docking Bay
+You can see an inner airlock here.
+
+>x readout
+
+The screen is blank.
+
+>turn on readout
+
+You switch the security readout on.
+
+>x readout
+
+The screen reads:
+ inner airlock (Docking Bay/Zocalo): UNLOCKED 
+
+>lock inner airlock with security pass
+
+I have no idea what you meant by 'lock inner airlock with security pass'.
+
+>x readout
+
+The screen reads:
+ inner airlock (Docking Bay/Zocalo): UNLOCKED 

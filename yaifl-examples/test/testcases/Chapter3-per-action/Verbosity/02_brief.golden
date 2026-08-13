@@ -1,0 +1,3 @@
+>brief
+
+Verbosity is now in its "brief" printing mode, which gives long descriptions of places never before visited and short descriptions otherwise.

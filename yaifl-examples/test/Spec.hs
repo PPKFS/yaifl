@@ -97,6 +97,7 @@ goldenTests :: IO TestTree
 goldenTests = do
   let allExamples = makeExampleMap
       _allVerbs = makeVerbs
+  perActionTests <- Chapter3.perActionSpec
   return $ askOption $ \(AllTenses a) ->
     testGroup "Tests" [
       testGroup "Examples" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsAction
@@ -105,6 +106,7 @@ goldenTests = do
       v  -- action whose result is tested
       id)
       (allExamples a)
+    , perActionTests
     {- }, testGroup "Conjugation" $ map snd $ M.toAscList $ M.mapWithKey (\k v -> goldenVsStringDiff
       k -- test name
       (\ref new -> ["delta", ref, new])

@@ -3,6 +3,8 @@ module Yaifl.Test.Chapter3 where
 import Yaifl.Test.Common
 
 import Yaifl.Prelude
+import Data.List (lookup)
+import Text.Printf (printf)
 import Yaifl.Chapter3.Bic
 import Yaifl.Chapter3.PortRoyal
 import Yaifl.Chapter3.PortRoyal2
@@ -26,9 +28,36 @@ import Yaifl.Chapter3.Escape
 import Yaifl.Chapter3.Garibaldi (ex22)
 import Yaifl.Run
 import Yaifl.Effects.Interpreters
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.Silver (goldenVsAction)
+import qualified Data.Text as T
 
 c3Harness :: (Text, [Text], WorldConstruction PlainWorldModel ()) -> (String, IO Text)
 c3Harness (n, ac, g) = (toString n, testHarness False n ac defaultOptions g)
+
+-- | All Chapter 3 examples
+allExamples :: [(Text, [Text], WorldConstruction PlainWorldModel ())]
+allExamples = [
+    ex2,
+    ex3,
+    ex4,
+    ex5,
+    ex6,
+    ex7,
+    ex8,
+    ex9,
+    ex10,
+    ex11,
+    ex12,
+    ex13,
+    ex14,
+    ex15,
+    ex16,
+    ex18,
+    ex19,
+    ex21,
+    ex22
+  ]
 
 spec :: Bool -> Map String (IO Text)
 spec _allTenses = M.fromList
@@ -55,3 +84,19 @@ spec _allTenses = M.fromList
   , c3Harness ex21 -- Escape
   , c3Harness ex22 -- Garibaldi
   ]
+
+-- | Per-action test spec
+perActionSpec :: IO TestTree
+perActionSpec = do
+  tests <- mapM (\example -> do
+      let (name, commands, worldConstruction) = example
+      pairs <- testHarnessPerAction False name commands defaultOptions worldConstruction
+      let createTest (idx :: Int) (cmd, output) = 
+            goldenVsAction
+              (toString name <> ": " <> if T.null cmd then "initial" else toString cmd)
+              ("test/testcases/Chapter3-per-action/" <> T.unpack (T.replace " " "_" name) <> "/" <> printf "%02d" (idx :: Int) <> (if T.null cmd then "_init" else "_" <> T.unpack (T.replace " " "_" cmd)) <> ".golden")
+              (pure output)
+              id
+      return $ testGroup (toString name) (map (uncurry createTest) (zip ([0..] :: [Int]) pairs))
+    ) allExamples
+  return $ testGroup "Chapter3 (per-action)" tests

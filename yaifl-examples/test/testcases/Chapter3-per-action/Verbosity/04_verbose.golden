@@ -1,0 +1,3 @@
+>verbose
+
+Verbosity is now in its "verbose" mode, which always gives long descriptions of locations (even if you've been there before).

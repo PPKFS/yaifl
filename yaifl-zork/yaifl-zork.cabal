@@ -135,10 +135,12 @@ test-suite yaifl-zork-test
   main-is:            ZorkSpec.hs
   build-depends:
     , aeson
+    , base
     , directory
     , effectful-plugin
     , tasty
     , tasty-silver
+    , text
     , yaifl
     , yaifl-actions
     , yaifl-examples

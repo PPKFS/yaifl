@@ -1,0 +1,122 @@
+-------------------------------------------------
+----- Zork I - The Great Underground Empire -----
+-------------------------------------------------
+Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson.
+Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under the MIT License.
+
+Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.
+
+West of House
+You are standing in an open field west of a white house, with a boarded front door.
+
+There is a small mailbox here.
+
+>look
+
+West of House
+You are standing in an open field west of a white house, with a boarded front door.
+
+There is a small mailbox here.
+
+>examine house
+
+The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy.
+
+>examine door
+
+The door is boarded shut.
+
+>x boards
+
+The boards are securely fastened.
+
+>x nails
+
+The nails are deeply imbedded in the door.
+
+>examine mailbox
+
+It's a small mailbox.
+
+>open mailbox
+
+You open the small mailbox.
+
+>take leaflet
+
+Grabbing the leaflet.
+
+>examine leaflet
+
+WELCOME TO ZORK!
+
+ZORK is a game of adventure, danger, and low cunning.
+In it you will explore some of the most amazing territory ever seen by mortals. No computer should be without one!
+
+
+Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.
+Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson.
+
+Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under MIT License.
+
+>take mailbox
+
+It is securely anchored.
+
+>open door
+
+The door cannot be opened.
+
+>attack door
+
+You can't seem to damage the door.
+
+>burn door
+
+You cannot burn this door.
+
+>look under door
+
+It won't open.
+
+>take boards
+
+The boards are securely fastened.
+
+>take nails
+
+The nails, deeply imbedded in the door, cannot be removed.
+
+>enter house
+
+>go east
+
+The door is boarded and you can't remove the boards.
+
+>go north
+
+North of House
+You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees.
+
+>look
+
+North of House
+You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees.
+
+>examine windows
+
+The windows are all boarded up.
+
+>south
+
+The windows are all boarded.
+
+>open windows
+
+The windows are boarded and can't be opened.
+
+>attack windows
+
+You can't break the windows open.
+
+>enter house
