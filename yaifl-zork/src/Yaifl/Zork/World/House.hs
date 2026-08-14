@@ -279,18 +279,15 @@ testMeWith =
   , "open window"
   , "examine window"
   , "search window"
-  , "go east"
   , "close window"
   , "examine window"
   , "close window"
-{-}
+-- 46
   , "search window"
   , "open window"
-  , "enter house"
-  , "go east"
   , "find house"
   , "go east"
-  , "find house"
+  , "find house" -- it seems to be to the west
   , "go west"
   , "go north"
   , "find house"
@@ -299,6 +296,5 @@ testMeWith =
   , "go south"
   , "find house"
   , "go west"
-  , "read door"
-  -}
+  , "read door" -- need to have actual stuff
   ]

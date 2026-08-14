@@ -110,6 +110,7 @@ handleVerbAction fullText actionOpts additionalArgs = \case
               Nothing -> do
                 let errMsg = "Argument mismatch because we got " <> show (S.fromList $ match:additionalArgs) <> " and we expected " <> show (goesWithA @goesWith Proxy)
                 addAnnotation errMsg
+                error errMsg
                 return $ Left errMsg
               Just v' -> do
                 ts <- getGlobalTime
