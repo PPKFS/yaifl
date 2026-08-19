@@ -32,7 +32,7 @@ import Yaifl.Zork.Actions
 import Yaifl.Effects.Interpreters (WorldConstruction)
 
 defaultZorkOptions :: ConstructionOptions ZorkWorldModel
-defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues (baseZorkActions)
+defaultZorkOptions = ConstructionOptions ActivityCollector ResponseCollector defaultZorkValues baseZorkActions
 
 zorkWorld :: WorldConstruction ZorkWorldModel ()
 zorkWorld = do
@@ -40,7 +40,7 @@ zorkWorld = do
   scoring
   whenPlayBegins $ makeRule' "set status line" $ do
     setLeftStatusBar $ text "left status bar" $ do
-      surroundings <- execWriter $ getPlayerSurroundings
+      surroundings <- execWriter getPlayerSurroundings
       p <- getPlayer'
       notDarkness <- not <$> isInDarkness p
       score <- getScore
@@ -54,7 +54,7 @@ zorkWorld = do
     [saying|Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under the MIT License.#{paragraphBreak}|]
     [saying|Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.|]
   (Forest f) <- forest
-  (OutsideTheHouse wh) <- roomsOutsideTheHouse f
+  (OutsideTheHouse wh _hi) <- roomsOutsideTheHouse f
   (#firstRoom :: Lens' (Metadata ZorkWorldModel) RoomEntity) .= wh
   acs <- gets @(ActionCollector ZorkWorldModel) actionCollection
   addAction (view #finding acs)

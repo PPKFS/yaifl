@@ -1,6 +1,38 @@
 module Yaifl.Zork.Misc where
 
 {-
+Instead of entering the global-water:
+  say "You can't swim in the dungeon."
+Instead of swimming when the player can see the global-water:
+  say "You can't swim in the dungeon."
+The global-water is a backdrop. The global-water is in Dam-Base, River1, River2, River3, River4, River5, White Cliffs North, White Cliffs South, Sandy Beach, Shore, Aragain Falls, End of Rainbow, Canyon Bottom, On-the-Rainbow, Reservoir-South, Reservoir-North, Stream View, In-Stream, and Reservoir.
+The printed name of the global-water is "water".
+Understand "water" and "river" and "lake" and "stream" as the global-water.
+The description of the global-water is "It looks like water."
+Instead of taking the global-water:
+  if the player carries the glass bottle:
+    if the glass bottle is not open:
+      say "The bottle is closed.";
+    otherwise if the glass bottle contains something:
+      say "The water slips through your fingers.";
+    otherwise:
+      now the quantity of water is in the glass bottle;
+      say "The bottle is now full of water.";
+  otherwise:
+    say "The water slips through your fingers."
+Filling is an action applying to one thing. Understand "fill [something]" as filling.
+Carry out filling: say "You can't fill that."
+Instead of filling the glass bottle:
+  if the player can see the global-water:
+    if the glass bottle is not open:
+      say "The bottle is closed.";
+    otherwise if the glass bottle contains something:
+      say "The bottle is full.";
+    otherwise:
+      now the quantity of water is in the glass bottle;
+      say "The bottle is now full of water.";
+  otherwise:
+    say "There is nothing to fill it with."
 TODO
 Chapter 2 - Sword Glow
 The sword-glow-level is a number that varies. The sword-glow-level is 0.

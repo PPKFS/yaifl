@@ -18,7 +18,6 @@ import Yaifl.WorldModel
 
 import Yaifl.Object.Create
 import Yaifl.Metadata (Metadata(..))
-import Yaifl.Builder
 
 data RoomConfig wm = RoomConfig
   { description :: WMText wm

@@ -10,7 +10,6 @@ import Yaifl.Prelude
 import Yaifl.TH (WMWithProperty)
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Enclosing.Kind
-import Yaifl.Tag
 import Yaifl.Thing.Kind
 import Yaifl.ObjectLike
 import Yaifl.Move

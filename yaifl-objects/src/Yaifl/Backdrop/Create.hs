@@ -26,7 +26,6 @@ import qualified Data.List.NonEmpty as NE
 import Yaifl.Region.Kind
 import Yaifl.Region.Query
 import Yaifl.Metadata
-import Yaifl.Effects.Print
 
 data BackdropConfig wm = BackdropConfig
   { description :: WMText wm
@@ -55,7 +54,8 @@ updateEverywhereBackdrop ::
   State (Metadata wm) :> es
   => ThingEntity
   -> Eff es ()
-updateEverywhereBackdrop d = (#everywhereBackdrops %= S.insert d)
+updateEverywhereBackdrop d = #everywhereBackdrops %= S.insert d
+
 addBackdrop ::
   forall wm es.
   AddObjects wm es
@@ -69,10 +69,10 @@ addBackdrop name BackdropConfig{initialAppearance, description, thingModify, des
       return (r, Backdrop (MultiLocated S.empty) S.empty True)
     InRegions (r:|rs) -> do
       anyRoom <- fromMaybe voidID . listToMaybe . catMaybes <$>
-        mapM (\region -> getRegion region >>= roomsInRegion >>= return . listToMaybe . S.toList) (r:rs)
+        mapM (\region -> (getRegion region >>= roomsInRegion) <&> (listToMaybe . S.toList)) (r:rs)
       return (anyRoom, Backdrop (MultiLocated S.empty) (S.fromList (r:rs)) True)
 
-    InRooms (l:|ls) -> return (l, (Backdrop (MultiLocated (S.fromList $ map coerceTag $ l:ls)) S.empty False))
+    InRooms (l:|ls) -> return (l, Backdrop (MultiLocated (S.fromList $ map coerceTag $ l:ls)) S.empty False)
 
   d <- addThing name newThing
         { initialAppearance

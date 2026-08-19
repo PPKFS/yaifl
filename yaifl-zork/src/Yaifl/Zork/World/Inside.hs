@@ -1,126 +1,209 @@
 module Yaifl.Zork.World.Inside where
 
+import Yaifl.Prelude
+
+import Yaifl.Actions.Going
+import Yaifl.Actions.Imports
+import Yaifl.Backdrop.Create
+import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, makeItTransparent, placeIt)
+import Yaifl.Container.Create
+import Yaifl.Create.Rule
+import Yaifl.Direction.Kind (Direction(..))
+import Yaifl.Entity
+import Yaifl.Object.Kind
+import Yaifl.Object.Query
+import Yaifl.Person.Query (getPlayerLocation, getPlayer)
+import Yaifl.Preconditions
+import Yaifl.Region.Kind
+import Yaifl.Room.Create
+import Yaifl.Room.Query
+import Yaifl.Text.DynamicText
+import Yaifl.Zork.Specifics
+import Yaifl.Effects.Interpreters (WorldConstruction)
+import Yaifl.Supporter.Create
+import Yaifl.Enclosing.Query
+import Yaifl.Container.Query
+import Yaifl.Thing.Create
+import Yaifl.Container.Kind
+import Yaifl.Supporter.Kind
+import Yaifl.Enclosing.Kind
+import Yaifl.Effects.RuleEffects
+import Yaifl.Actions.Inserting
+import qualified Data.EnumSet as ES
+import Yaifl.Move
+import Yaifl.ObjectLike (ThingLike(..))
+import Yaifl.Region.Query
+
+removeFromPlay :: a
+removeFromPlay = error "todo"
+
+whenInside :: a
+whenInside = error "todo"
+data InsideTheHouse = InsideTheHouse RoomEntity
+theHouseInterior :: RoomEntity -> RegionEntity -> WorldConstruction ZorkWorldModel InsideTheHouse
+theHouseInterior kitchen houseInterior = do
+  livingRoom <- addRoom "Living Room" $ newRoom
+  attic <- addRoom "Attic" $ newRoom
+    & #description .~ "This is the attic, a low-ceilinged room thick with dust and the faint smell of old wood. Exposed rafters run overhead, and pale light filters through cracks in the boarded-up windows. The only exit is a stairway leading down."
+    & makeItDark
+  studio <- addRoom' "Studio"
+  livingRoom `isWestOf` kitchen
+  attic `isAbove` kitchen
+
+  insteadOf #going [inDirection Down, whenIn kitchen] $ \_ -> [saying|Only Santa Claus climbs down chimneys.|]
+  chimney <- addBackdrop "chimney" $ newBackdrop (InRooms (kitchen:|[studio]))
+    & #description .~ text' ( do
+        inKitchen <- objectEquals kitchen <$> getPlayerLocation
+        [sayingTell|{?if inKitchen}The chimney leads downward, and looks climbable.{?else}The chimney leads upward, and looks climbable.{?end if}|]
+        )
+  chimney `isUnderstoodAs` ["dark", "narrow", "fireplace"]
+
+  kitchenTable <- addSupporter "kitchen table" $ newSupporter
+    & makeItScenery
+  kitchenTable `isUnderstoodAs` ["table", "kitchen"]
+
+  glassBottle <- addContainer "glass bottle" $ newContainer
+    & makeItClosedAndOpenable
+    & makeItTransparent
+    & #initialAppearance .~ "A bottle is sitting on the table"
+    & #carryingCapacity .~ 1
+
+  glassBottle `isUnderstoodAs` ["bottle", "container", "clear", "glass"]
+
+  -- The magic boat is an open enterable vehicle. The carrying capacity of the magic boat is 10.
+  magicBoat <- addVehicle "magic boat" $ newVehicle
+    & makeItOpenAndEnterable
+    & #carryingCapacity .~ 10
+  insteadOf' #inserting [intoThe glassBottle, whenContainsSomething glassBottle] $ do
+    [saying|The bottle is full.|]
+  quantityOfWater <- addThing "quantity of water" $ newThing
+    & placeIt (inThe glassBottle)
+    & #description .~ "It looks like plain water."
+  quantityOfWater `isUnderstoodAs` ["liquid", "h2o"]
+  let removeWaterIfInBottleAndBottle :: RuleEffects ZorkWorldModel es => Eff es (Maybe Bool)
+      removeWaterIfInBottleAndBottle = do
+        c <- getContainer glassBottle
+        let waterIn = quantityOfWater `ES.member` (c ^. #enclosing % #contents)
+        when waterIn $ removeFromPlay quantityOfWater
+        removeFromPlay glassBottle
+  insteadOf' #throwing [theObject glassBottle] $ do
+    [saying|The bottle hits the far wall and shatters.|]
+    inject removeWaterIfInBottleAndBottle
+  insteadOf' #attacking [theObject glassBottle] $ do
+    [saying|A brilliant maneuver destroys the bottle.|]
+    inject removeWaterIfInBottleAndBottle
+  insteadOf' #drinking [theObject quantityOfWater] $ do
+    [saying|Thank you very much. I was rather thirsty (from strenuously carrying everything for you).|]
+    removeFromPlay quantityOfWater
+  insteadOf' #drinking [] [saying|How can you drink that?|]
+  insteadOf' #taking [theObject quantityOfWater, quantityOfWater `whenInside` glassBottle]
+    [saying|It's in the bottle. Perhaps you should take that instead.|]
+  insteadOf' #dropping [theObject quantityOfWater] $ do
+    inBottle <- (quantityOfWater `ES.member`) . (^. #enclosing % #contents) <$> getContainer glassBottle
+    bottleClosed <- isClosedContainer <$> getContainer glassBottle
+    p <- getPlayer
+    playerInBoat <- getVehicle magicBoat >>= \boat -> boat `enclosingContains` p
+    if
+      | inBottle && bottleClosed -> [saying|The bottle is closed.|]
+      | playerInBoat -> do
+          w <- getThing quantityOfWater
+          w `move` inThe magicBoat
+          [saying|There is now a puddle in the bottom of the magic boat.|]
+      | otherwise -> do
+          removeFromPlay quantityOfWater
+          [saying|The water spills to the floor and evaporates immediately.|]
+  insteadOf' #inserting [theObject quantityOfWater, not_ (intoThe glassBottle)] $ do
+    removeFromPlay quantityOfWater
+    [saying|Nice try.|]
+  insteadOf' #throwing [theObject quantityOfWater] $ do
+    removeFromPlay quantityOfWater
+    [saying|The water splashes on the walls and evaporates immediately.|]
+
+  brownSack <- addContainer "brown sack" $ newContainer
+    & placeIt (onThe kitchenTable)
+    & makeItClosedAndOpenable
+    & #initialAppearance .~ "On the table is an elongated brown sack, smelling of hot peppers."
+    & #carryingCapacity .~ 2
+  brownSack `isUnderstoodAs` ["bag", "elongated", "smelly"]
+
+  lunch <- addThing "lunch" $ newThing
+    & #description .~ "It looks like a hot pepper sandwich."
+    & placeIt (inThe brownSack)
+
+  lunch `isUnderstoodAs` ["food", "sandwich", "dinner", "hot", "pepper"]
+  insteadOf' #smelling [theObject brownSack] $ do
+    hasLunch <- coerceTag brownSack `enclosingContains` lunch
+    if hasLunch then [saying|It smells of hot peppers.|] else [saying|It smells faintly of hot peppers.|]
+
+  insteadOf' #eating [theObject lunch] $ do
+    removeFromPlay lunch
+    [saying|Thank you very much. It really hit the spot.|]
+
+  cloveOfGarlic <- addThing "clove of garlic" $ newThing
+    & #description .~ "It's a clove of garlic."
+    & placeIt (inThe brownSack)
+
+  insteadOf' #eating [theObject cloveOfGarlic] $ do
+    removeFromPlay cloveOfGarlic
+    [saying|What the heck! You won't make friends this way, but nobody around here is too friendly anyhow. Gulp!|]
+
+  [attic, kitchen, livingRoom] `areInRegion` houseInterior
+
+  atticTable <- addSupporter "attic table" $ newSupporter
+    & makeItScenery
+    & placeIt (inTheRoom attic)
+
+  nastyKnife <- addThing "nasty knife" $ newThing
+    & placeIt (onThe atticTable)
+    & #initialAppearance .~ "On a table is a nasty-looking knife."
+
+  nastyKnife `isUnderstoodAs` ["knives", "knife", "blade", "nasty"]
+
+  rope <- addThing "rope" $ newThing
+    & placeIt (inTheRoom attic)
+    & #initialAppearance .~ "A large coil of rope is lying in the corner."
+    & #description .~ "It's a large coil of sturdy hemp rope."
+
+  rope `isUnderstoodAs` ["hemp", "coil", "large"]
+
+  trophyCase <- addContainer "trophy case" $ newContainer
+    & makeItScenery
+    & makeItClosedAndOpenable
+    & makeItTransparent
+    & placeIt (inTheRoom livingRoom)
+    & #initialAppearance .~ "A trophy case is mounted firmly to the wall."
+    & #carryingCapacity .~ 100
+  insteadOf' #taking [theObject trophyCase] $ do
+    [saying|The trophy case is securely fastened to the wall.|]
+
+  everyTurn "trophy case scoring rule" [] $ do
+    newScore <- sum <$> (traverse (^. #objectData % #thingData % #treasureValue) =<< getContents (coerceTag trophyCase))
+    oldScore <- getValue #trophyCaseScore
+    when (newScore /= oldScore) $ do
+      let diff = newScore - oldScore
+      increaseScore diff
+      setValue #trophyCaseScore newScore
+    score <- getScore
+    wonFlag <- getValue #wonFlag
+    when (score >= 350 && not wonFlag) $ do
+      setValue #wonFlag True
+      makeAncientMapZilVisible
+      [saying|[line break]An almost inaudible voice whispers in your ear, [quotation mark]Look to your treasures for the final secret.[quotation mark][line break]|]
+
+  return (error "")
+
+
 {-
-TODO
-Chapter 2 - The House Interior
-Section 1 - Kitchen
-Kitchen is a room. Kitchen is in House Interior.
-The description of Kitchen is "You are in the kitchen of the white house. A table seems to have been used recently for the preparation of food. A passage leads to the west and a dark staircase can be seen leading upward. A dark chimney leads down and to the east is a small window which is [if the kitchen-window is open]open[otherwise]slightly ajar[end if]."
-West of Kitchen is Living Room. Above Kitchen is Attic.
-Instead of going down in Kitchen:
-  say "Only Santa Claus climbs down chimneys."
-The chimney is a backdrop. The chimney is in Kitchen and Studio. Understand "chimney" and "dark" and "narrow" and "fireplace" as the chimney.
-The description of the chimney is "[if the player is in Kitchen]The chimney leads downward, and looks climbable.[otherwise]The chimney leads upward, and looks climbable.[end if]"
-The kitchen table is a supporter in Kitchen. The kitchen table is scenery.
-Understand "table" and "kitchen" as the kitchen table.
-The glass bottle is a closed transparent openable container on the kitchen table. "A bottle is sitting on the table."
-Understand "bottle" and "container" and "clear" and "glass" as the glass bottle.
-The carrying capacity of the glass bottle is 1.
-Instead of inserting something into the glass bottle when the glass bottle contains something (called the existing contents):
-  say "The bottle is full."
-Instead of throwing the glass bottle at something:
-  say "The bottle hits the far wall and shatters.";
-  if the quantity of water is in the glass bottle:
-    remove the quantity of water from play;
-  remove the glass bottle from play.
-Instead of attacking the glass bottle:
-  say "A brilliant maneuver destroys the bottle.";
-  if the quantity of water is in the glass bottle:
-    remove the quantity of water from play;
-  remove the glass bottle from play.
-The quantity of water is a thing in the glass bottle.
-Understand "water" and "quantity" and "liquid" and "h2o" as the quantity of water.
-The description of the quantity of water is "It looks like plain water."
-Instead of drinking the quantity of water:
-  remove the quantity of water from play;
-  say "Thank you very much. I was rather thirsty (from strenuously carrying everything for you)."
-Instead of drinking something:
-  say "How can you drink that?"
-The global-water is a backdrop. The global-water is in Dam-Base, River1, River2, River3, River4, River5, White Cliffs North, White Cliffs South, Sandy Beach, Shore, Aragain Falls, End of Rainbow, Canyon Bottom, On-the-Rainbow, Reservoir-South, Reservoir-North, Stream View, In-Stream, and Reservoir.
-The printed name of the global-water is "water".
-Understand "water" and "river" and "lake" and "stream" as the global-water.
-The description of the global-water is "It looks like water."
-Instead of taking the global-water:
-  if the player carries the glass bottle:
-    if the glass bottle is not open:
-      say "The bottle is closed.";
-    otherwise if the glass bottle contains something:
-      say "The water slips through your fingers.";
-    otherwise:
-      now the quantity of water is in the glass bottle;
-      say "The bottle is now full of water.";
-  otherwise:
-    say "The water slips through your fingers."
-Filling is an action applying to one thing. Understand "fill [something]" as filling.
-Carry out filling: say "You can't fill that."
-Instead of filling the glass bottle:
-  if the player can see the global-water:
-    if the glass bottle is not open:
-      say "The bottle is closed.";
-    otherwise if the glass bottle contains something:
-      say "The bottle is full.";
-    otherwise:
-      now the quantity of water is in the glass bottle;
-      say "The bottle is now full of water.";
-  otherwise:
-    say "There is nothing to fill it with."
-Instead of taking the quantity of water when the quantity of water is in the glass bottle:
-  say "It's in the bottle. Perhaps you should take that instead."
-Instead of dropping the quantity of water:
-  if the glass bottle is not open and the quantity of water is in the glass bottle:
-    say "The bottle is closed.";
-  otherwise if the player is in the magic boat:
-    now the quantity of water is in the magic boat;
-    say "There is now a puddle in the bottom of the magic boat.";
-  otherwise:
-    remove the quantity of water from play;
-    say "The water spills to the floor and evaporates immediately."
-Instead of inserting the quantity of water into something when the second noun is not the glass bottle:
-  remove the quantity of water from play;
-  say "Nice try."
-Instead of throwing the quantity of water at something:
-  remove the quantity of water from play;
-  say "The water splashes on the walls and evaporates immediately."
-Instead of entering the global-water:
-  say "You can't swim in the dungeon."
-Instead of swimming when the player can see the global-water:
-  say "You can't swim in the dungeon."
-The brown sack is a closed openable container on the kitchen table. "On the table is an elongated brown sack, smelling of hot peppers."
-Understand "bag" and "sack" and "brown" and "elongated" and "smelly" as the brown sack.
-The carrying capacity of the brown sack is 2.
-Instead of smelling the brown sack:
-  if the lunch is in the brown sack:
-    say "It smells of hot peppers.";
-  otherwise:
-    say "It smells faintly of hot peppers."
-The lunch is in the brown sack. The description of the lunch is "It looks like a hot pepper sandwich."
-Understand "food" and "sandwich" and "lunch" and "dinner" and "hot" and "pepper" as the lunch.
-Instead of eating the lunch:
-  remove the lunch from play;
-  say "Thank you very much. It really hit the spot."
-The clove of garlic is in the brown sack. The description of the clove of garlic is "It's a clove of garlic."
-Understand "garlic" and "clove" as the clove of garlic.
-Instead of eating the clove of garlic:
-  remove the clove of garlic from play;
-  say "What the heck! You won't make friends this way, but nobody around here is too friendly anyhow. Gulp!"
-Section 2 - Attic
-Attic is a room. "This is the attic, a low-ceilinged room thick with dust and the faint smell of old wood. Exposed rafters run overhead, and pale light filters through cracks in the boarded-up windows. The only exit is a stairway leading down."
-Attic is in House Interior. Attic is a dark room.
-The attic table is a supporter in Attic. The attic table is scenery.
-Understand "table" as the attic table.
-The nasty knife is on the attic table. "On a table is a nasty-looking knife."
-Understand "knives" and "knife" and "blade" and "nasty" as the nasty knife.
-The rope is in Attic. "A large coil of rope is lying in the corner."
-Understand "rope" and "hemp" and "coil" and "large" as the rope.
-The description of the rope is "It's a large coil of sturdy hemp rope."
-Section 3 - Living Room
-Living Room is a room. Living Room is in House Interior.
-The description of Living Room is "You are in the living room. There is a doorway to the east[if the magic-flag is true]. To the west is a cyclops-shaped opening in an old wooden door, above which is some strange gothic lettering, [otherwise], a wooden door with strange gothic lettering to the west, which appears to be nailed shut, [end if]a trophy case, [if the rug-moved is false]and a large oriental rug in the center of the room.[otherwise if the trap door is open]and a rug lying beside an open trap door.[otherwise]and a closed trap door at your feet.[end if]"
-The trophy case is a transparent openable closed container in Living Room. The trophy case is scenery. "The trophy case is mounted firmly to the wall."
-Understand "case" and "trophy" as the trophy case.
-The carrying capacity of the trophy case is 100.
-Instead of taking the trophy case:
-  say "The trophy case is securely fastened to the wall."
+#description .~ text' ( do
+        magicFlag <- getMagicFlag
+        notRugMoved <- getRugMoved
+        trapDoorOpen <- isOpenDoor <$> getDoor trapdoor
+        [sayingTell|You are in the living room. There is a doorway to the east{?if magicFlag}.
+To the west is a cyclops-shaped opening in an old wooden door, above which is some strange gothic lettering,
+{?else}, a wooden door with strange gothic lettering to the west, which appears to be nailed shut, {?end if}a trophy case,
+{?if notRugMoved}and a large oriental rug in the center of the room.{?else if trapDoorOpen}and a rug lying beside an open trap door.
+{?else}and a closed trap door at your feet.{?end if}|]
+        )}
 
 Chapter 7 - Trophy Case Scoring
 Every turn (this is the trophy case scoring rule):

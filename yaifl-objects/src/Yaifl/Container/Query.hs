@@ -6,6 +6,7 @@ module Yaifl.Container.Query
   , thingIsOpenContainer
   , thingIsClosedContainer
   , isContainer
+  , getContainer
   ) where
 
 import Yaifl.Prelude
@@ -43,3 +44,12 @@ thingIsClosedContainer ::
   => Thing wm
   -> Bool
 thingIsClosedContainer = (== Just Closed) . fmap (view (#openable % #opened)) . getContainerMaybe
+
+getContainer ::
+  WithoutMissingObjects wm es
+  => WMWithProperty wm Container
+  => ContainerEntity
+  -> Eff es Container
+getContainer de = do
+  t <- getThing de
+  return $ fromMaybe (error "property witness violated") $ getContainerMaybe t

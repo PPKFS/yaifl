@@ -8,6 +8,8 @@ module Yaifl.Preconditions
   , whenPlayerIsIn
   , not_
   , whenPlayerIsInRegion
+  , intoThe
+  , whenContainsSomething
   ) where
 import Yaifl.Prelude
 import Yaifl.Rulebook
@@ -24,6 +26,9 @@ import Yaifl.Enclosing.Query
 import Yaifl.Region.Kind
 import Yaifl.Region.Query
 import Yaifl.Backdrop.Kind
+import Yaifl.Container.Kind
+import Yaifl.Container.Query
+import qualified Data.EnumSet as ES
 
 forPlayer :: Precondition wm (Args wm v)
 forPlayer = Precondition (pure "actor is the player") $ \v -> do
@@ -82,7 +87,7 @@ whenIn e = Precondition
 not_ ::
   Precondition wm a
   -> Precondition wm a
-not_ prec = prec { checkPrecondition = \v -> not <$> (checkPrecondition prec v)}
+not_ prec = prec { checkPrecondition = fmap not . checkPrecondition prec}
 
 whenPlayerIsIn ::
   ObjectLike wm e
@@ -110,8 +115,9 @@ whenPlayerIsInRegion e = Precondition
   , checkPrecondition = const $ do
       playerRoom <- getPlayerLocation
       regHierarchy <- getEnclosingRegions playerRoom
-      pure $ e `elem` (map tagRegionEntity regHierarchy)
+      pure $ e `elem` map tagRegionEntity regHierarchy
   }
+
 aKindOf ::
   ObjectKind
   -> Precondition wm (AnyObject wm)
@@ -119,4 +125,25 @@ aKindOf k@(ObjectKind kName) = Precondition
   { preconditionName = return $ "is of kind " <> kName
   , checkPrecondition = \noun -> do
       noun `isKind` k
+  }
+
+intoThe ::
+  LabelOptic' "into" A_Lens v (Thing wm)
+  => ContainerEntity
+  -> Precondition wm (Args wm v)
+intoThe thing = Precondition
+  { preconditionName = getThing thing >>= \t -> return $ "into the " <> display (t ^. #name)
+  , checkPrecondition = \Args{variables} -> do
+      return $ view #into variables `objectEquals` thing
+  }
+
+whenContainsSomething ::
+  WMWithProperty wm Container
+  => ContainerEntity
+  -> Precondition wm v
+whenContainsSomething theContainer = Precondition
+  { preconditionName = getThing theContainer >>= \t -> return $ "when the " <> display (t ^. #name) <> " contains something"
+  , checkPrecondition = const $ do
+      c <- getContainer theContainer
+      return $ (> 0) . ES.size $ c ^. #enclosing % #contents
   }

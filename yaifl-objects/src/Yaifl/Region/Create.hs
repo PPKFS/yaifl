@@ -7,7 +7,6 @@ import Yaifl.Prelude
 
 import Yaifl.Object.Kind
 import Yaifl.Effects.ObjectQuery
-import Yaifl.Entity
 import Yaifl.WorldModel
 
 
@@ -22,7 +21,7 @@ addRegion ::
 addRegion n = do
   rId <- generateEntity False
   let r = Region
-        { regionID = (RegionEntity rId)
+        { regionID = RegionEntity rId
         , name = n
         , namePrivacy = PubliclyNamed
         , subRegions = S.empty

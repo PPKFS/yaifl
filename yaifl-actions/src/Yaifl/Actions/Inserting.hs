@@ -4,6 +4,7 @@ module Yaifl.Actions.Inserting
   , InsertingRule
   , insertingAction
   , insertingResponses
+  , InsertingVariables(..)
   ) where
 
 import Yaifl.Prelude
@@ -20,12 +21,16 @@ data InsertingResponses wm =
   | InsertConciseReportA
   | InsertStandardReportA
 
-insertingResponses :: InsertingResponses wm -> Response wm (Args wm (Thing wm))
+insertingResponses :: InsertingResponses wm -> Response wm (Args wm (InsertingVariables wm))
 insertingResponses = \case
   _ -> notImplementedResponse "response"
 
-type InsertingAction wm = Action wm (InsertingResponses wm) 'TakesNoParameter (Thing wm)
-type InsertingRule wm = ActionRule wm (InsertingAction wm) (Thing wm)
+data InsertingVariables wm = InsertingVariables
+  { object :: Thing wm
+  , into :: Thing wm
+  } deriving stock (Generic)
+type InsertingAction wm = Action wm (InsertingResponses wm) 'TakesNoParameter (InsertingVariables wm)
+type InsertingRule wm = ActionRule wm (InsertingAction wm) (InsertingVariables wm)
 insertingAction :: InsertingAction wm
 insertingAction = (makeAction "inserting")
   { responses = insertingResponses

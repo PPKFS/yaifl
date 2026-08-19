@@ -4,7 +4,7 @@ module Yaifl.Zork.Boat where
 {-TODO
 
 Chapter 11 - Boat System
-The magic boat is an open enterable vehicle. The carrying capacity of the magic boat is 10.
+
 Understand "boat" and "raft" and "magic" and "plastic" and "seaworthy" and "inflat" as the magic boat.
 The description of the magic boat is "It's a seaworthy magic boat."
 The punctured boat is a thing. "There is a large punctured boat here."

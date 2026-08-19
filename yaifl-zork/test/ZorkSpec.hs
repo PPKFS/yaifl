@@ -61,7 +61,7 @@ zorkPerActionTests = do
           ("test/testcases/Zork-per-action/" <> printf "%02d" (idx :: Int) <> (if T.null cmd then "_init" else "_" <> T.unpack (T.replace " " "_" cmd)) <> ".golden")
           (pure output)
           id
-  return $ testGroup "Zork (per-action)" (map (uncurry createTest) (zip ([0..] :: [Int]) allPairs))
+  return $ testGroup "Zork (Outside of House)" (map (uncurry createTest) (zip ([0..] :: [Int]) allPairs))
 
 goldenTests :: IO TestTree
 goldenTests = do
