@@ -3,6 +3,7 @@ module Yaifl.Thing.Create
   ( addThing
   , ThingConfig(..)
   , newThing
+  , replaceObject
   ) where
 
 import Yaifl.Prelude
@@ -13,6 +14,7 @@ import Yaifl.Entity
 import Yaifl.Object.Create
 import Yaifl.Object.Kind
 import Yaifl.Object.Query
+import Yaifl.ObjectLike (ThingLike(..))
 import Yaifl.Thing.Kind
 import Yaifl.WorldModel
 
@@ -61,3 +63,27 @@ addThing n ThingConfig{..} = do
     t <- addThingInternal n description objType specifics td' location
     failHorriblyIfMissing $ modifyThing t (`runLocalState` thingModify)
     pure t
+
+
+-- | Replace one object with another in the world.
+-- This modifies the old object in place to have the new configuration,
+-- preserving the entity ID so that references remain valid.
+replaceObject ::
+  WithoutMissingObjects wm es
+  => ThingLike wm oldObj
+  => WMText wm
+  -> ThingConfig wm 'Complete
+  -> oldObj
+  -> Eff es ThingEntity
+replaceObject newName newConfig oldObj = do
+  modifyThing oldObj $ \oldThingObj ->
+    let ThingConfig{description = configDesc, initialAppearance = configInitApp,
+                    specifics = configSpecs, thingData = configThingData} = newConfig
+        td' = configThingData & #initialAppearance .~ configInitApp
+    in oldThingObj
+      & #name .~ newName
+      & #description .~ configDesc
+      & #objectType .~ objType newConfig
+      & #specifics .~ configSpecs
+      & #objectData .~ td'
+  pure $ unsafeTagEntity (getEntity oldObj)

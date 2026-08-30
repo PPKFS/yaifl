@@ -5,6 +5,7 @@ module Yaifl.Preconditions
   , theObject
   , theObject'
   , whenIn
+  , whenInside
   , whenPlayerIsIn
   , not_
   , whenPlayerIsInRegion
@@ -28,6 +29,7 @@ import Yaifl.Region.Query
 import Yaifl.Backdrop.Kind
 import Yaifl.Container.Kind
 import Yaifl.Container.Query
+import Yaifl.Tag
 import qualified Data.EnumSet as ES
 
 forPlayer :: Precondition wm (Args wm v)
@@ -146,4 +148,16 @@ whenContainsSomething theContainer = Precondition
   , checkPrecondition = const $ do
       c <- getContainer theContainer
       return $ (> 0) . ES.size $ c ^. #enclosing % #contents
+  }
+
+whenInside ::
+  (WMWithProperty wm Backdrop, WMWithProperty wm MultiLocated,
+   ThingLike wm o)
+  => ContainerEntity
+  -> o
+  -> Precondition wm (Args wm v)
+container `whenInside` obj = Precondition
+  { preconditionName = pure "when the object is inside the container"
+  , checkPrecondition = \_ -> do
+      coerceTag container `enclosingContains` obj
   }

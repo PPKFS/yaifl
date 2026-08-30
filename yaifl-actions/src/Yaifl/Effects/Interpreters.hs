@@ -19,7 +19,6 @@ import Yaifl.Region.Kind
 
 import Yaifl.Rulebooks.ActionProcessing
 import Yaifl.Effects.RuleEffects
-import Effectful.Provider.List (type (++))
 import Yaifl.Effects.Input
 import Yaifl.ActionCollection
 import Yaifl.Visibility
@@ -160,6 +159,7 @@ interpretLookup = do
     SetRoom r -> #stores % #rooms % at (getEntity r) %= updateIt r
     SetThing t -> #stores % #things % at (getEntity t) %= updateIt t
     SetRegion t -> #stores % #regions % at (coerce $ regionID t) %= updateIt t
+    RemoveThing e -> #stores % #things % at (getEntity e) .= Nothing
     GenerateEntity bThing -> if bThing then
       (#stores % #entityCounter % _1) <<%= (Entity . (+1) . unEntity) else (#stores % #entityCounter % _2) <<%= (\x -> Entity $ unEntity x - 1)
 

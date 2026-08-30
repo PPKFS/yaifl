@@ -1,3 +1,7 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE MultiWayIf #-}
 module Yaifl.Zork.World.Inside where
 
 import Yaifl.Prelude
@@ -8,13 +12,14 @@ import Yaifl.Backdrop.Create
 import Yaifl.Container.Create
 import Yaifl.Create.Rule
 import Yaifl.Direction.Kind (Direction(..))
-import Yaifl.AnyObject
 import Yaifl.Entity
 import Yaifl.Object.Kind
 import Yaifl.Object.Query
-import Yaifl.Person.Query (getPlayerLocation, getPlayer)
+import Yaifl.Effects.ObjectQuery
 import Yaifl.Preconditions
+import Yaifl.Person.Query (getPlayerLocation, getPlayer)
 import Yaifl.Region.Kind
+import Yaifl.Region.Query
 import Yaifl.Room.Create
 import Yaifl.Room.Query
 import Yaifl.Text.DynamicText
@@ -32,22 +37,15 @@ import Yaifl.Actions.Inserting
 import qualified Data.EnumSet as ES
 import Yaifl.Move
 import Yaifl.ObjectLike (ThingLike(..))
-import Yaifl.Region.Query
 import Yaifl.Openable.Kind
 import Yaifl.Door.Query
 import Yaifl.Door.Create
 import Yaifl.Combinators
 import Yaifl.Vehicle.Create
 import qualified Yaifl.Vehicle.Kind as V
-import Yaifl.Metadata (getScore, Score)
+import Yaifl.Metadata (getScore', WithMetadata, Score(..))
 import Yaifl.Thing.Kind
 import Yaifl.Text.AdaptiveNarrative
-
-removeFromPlay :: a
-removeFromPlay = error "todo"
-
-whenInside :: a
-whenInside = error "todo"
 
 data InsideTheHouse = InsideTheHouse RoomEntity
 
@@ -97,6 +95,7 @@ theHouseInterior kitchen houseInterior = do
         let waterIn = quantityOfWater `ES.member` (c ^. #enclosing % #contents)
         when waterIn $ removeFromPlay quantityOfWater
         removeFromPlay glassBottle
+        pure Nothing
   insteadOf' #throwing [theObject glassBottle] $ do
     [saying|The bottle hits the far wall and shatters.|]
     inject removeWaterIfInBottleAndBottle
@@ -107,7 +106,7 @@ theHouseInterior kitchen houseInterior = do
     [saying|Thank you very much. I was rather thirsty (from strenuously carrying everything for you).|]
     removeFromPlay quantityOfWater
   insteadOf' #drinking [] [saying|How can you drink that?|]
-  insteadOf' #taking [theObject quantityOfWater, whenInside glassBottle]
+  insteadOf' #taking [theObject quantityOfWater, glassBottle `whenInside` quantityOfWater]
     [saying|It's in the bottle. Perhaps you should take that instead.|]
   insteadOf' #dropping [theObject quantityOfWater] $ do
     inBottle <- (quantityOfWater `ES.member`) . (^. #enclosing % #contents) <$> getContainer glassBottle
@@ -207,6 +206,30 @@ theHouseInterior kitchen houseInterior = do
     & #initialAppearance .~ "A dusty cover of a trap door is in the center of the room."
     & understandItAs ["trapdoor", "trap-door", "cover", "trap", "dusty"]
 
+  -- Old wooden door
+  oldWoodenDoor <- addThing "old wooden door" $ newThing
+    & placeIt (inTheRoom livingRoom)
+    & makeItScenery
+    & #description .~ text (do
+        magicFlag <- getValue #magicFlag
+        [sayingTell|{?if magicFlag}The door has a cyclops-shaped opening in it.{?else}The engravings translate to "This space intentionally left blank."{?end if}|])
+    & understandItAs ["door", "wooden", "gothic", "strange", "lettering", "writing"]
+
+  -- Rules for old wooden door
+  insteadOf' #opening [theObject oldWoodenDoor] $ do
+    magicFlag <- getValue #magicFlag
+    if magicFlag
+      then [saying|The door is already open -- the cyclops saw to that.|]
+      else [saying|The door is nailed shut.|]
+
+  before #going [inDirection West, whenIn livingRoom] "old wooden door check" $ const $ do
+    magicFlag <- getValue #magicFlag
+    if magicFlag
+      then rulePass
+      else do
+        [saying|The door is nailed shut.|]
+        pure (Just False)
+
   modifyRoom livingRoom $
     #description .~ text (do
         magicFlag <- getValue #magicFlag
@@ -226,7 +249,7 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
     [saying|#{paragraphBreak}|]
     rulePass
 
-  sword <- addThing "sword" $ newThing
+  void $ addThing "sword" $ newThing
     & placeIt (inTheRoom livingRoom)
     & #description .~ "It's an old elvish sword of great antiquity."
     & #initialAppearance .~ "Above the trophy case hangs an elvish sword of great antiquity."
@@ -263,19 +286,21 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
     else do
       modifyThing brassLantern (#objectData % #lit .~ NotLit)
       [saying|The brass lantern is now off.|]
-  error ""
-{-}
-  brokenLamp <- addThing "broken lantern" $ newThing
-    & placeIt (inTheRoom livingRoom)
-    & #description .~ "The lamp is seriously damaged."
-    & understandItAs ["lamp", "lantern", "broken"]
 
-  insteadOf' #switchingOn [theObject brokenLamp] [saying|The lamp is broken.|]
-  insteadOf' #switchingOff [theObject brokenLamp] [saying|The lamp is broken.|]
--}
+  insteadOf' #throwing [theObject brassLantern] $ do
+    [saying|The lamp has smashed into the floor, and the light has gone out.|]
+    modifyThing brassLantern (#objectData % #lit .~ NotLit)
+    setValue #lampBurnedOutFlag True
+    replaceObject "broken lantern" (newThing
+      & #description .~ "The lamp is seriously damaged."
+      & understandItAs ["lamp", "lantern", "broken"])
+      brassLantern
+    rulePass
 
-increaseScore :: Int -> Eff es ()
-increaseScore n = error ""
+  pure $ InsideTheHouse livingRoom
+
+increaseScore :: WithMetadata ZorkWorldModel es => Int -> Eff es ()
+increaseScore n = #score %= (\s -> s { currentScore = currentScore s + n })
 
 makeAncientMapZilVisible :: Eff es ()
 makeAncientMapZilVisible = pure ()
@@ -284,15 +309,6 @@ whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel v
 whenNotEmpty = whenContainsSomething
 
 {-
-The description of the broken lamp is "The lamp is seriously damaged."
-Instead of switching on the broken lamp: say "The lamp is broken."
-Instead of switching off the broken lamp: say "The lamp is broken."
-Instead of throwing the brass lantern at something:
-  say "The lamp has smashed into the floor, and the light has gone out.";
-  now the brass lantern is not lit;
-  now the lamp-burned-out is true;
-  now the broken lamp is in the location;
-  remove the brass lantern from play.
 The old wooden door is scenery in Living Room. Understand "door" and "wooden" and "gothic" and "strange" and "lettering" and "writing" as the old wooden door.
 The description of the old wooden door is "[if the magic-flag is true]The door has a cyclops-shaped opening in it.[otherwise]The engravings translate to 'This space intentionally left blank.'[end if]".
 Instead of opening the old wooden door:

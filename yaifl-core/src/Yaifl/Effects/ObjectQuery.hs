@@ -18,6 +18,8 @@ module Yaifl.Effects.ObjectQuery
   , setThing
   , setRoom
   , setRegion
+  , removeThing
+  , removeFromPlay
   , traverseRooms
   , traverseThings
   , traverseThings_
@@ -56,6 +58,7 @@ data ObjectQuery (wm :: WorldModel) :: Effect where
   SetRoom :: Room wm -> ObjectQuery wm m ()
   SetThing :: Thing wm -> ObjectQuery wm m ()
   SetRegion :: Region wm -> ObjectQuery wm m ()
+  RemoveThing :: ThingEntity -> ObjectQuery wm m ()
 
   TraverseThings :: (Thing wm -> m (Maybe (Thing wm))) -> ObjectQuery wm m [Thing wm]
   TraverseRooms :: (Room wm -> m (Maybe (Room wm))) -> ObjectQuery wm m [Room wm]
@@ -146,3 +149,9 @@ failHorriblyIfMissing f = withoutMissingObjects f (\(MissingObject t o) -> do
   let msg = "the object with ID " <> show o <> " could not be found because " <> show t <> ". We are failing horribly and erroring out because we can't recover."
   addAnnotation msg
   error msg)
+
+removeFromPlay ::
+  (ObjectQuery wm :> es, HasEntity o)
+  => o
+  -> Eff es ()
+removeFromPlay thing = removeThing (unsafeTagEntity (getEntity thing))
