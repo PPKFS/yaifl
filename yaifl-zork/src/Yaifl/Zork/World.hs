@@ -19,7 +19,7 @@ import Yaifl.Create.Rule
 import Yaifl.Run
 import Yaifl.Visibility
 import Yaifl.Person.Query (getPlayer')
-import Yaifl.Text.DynamicText (text)
+import Yaifl.Text.DynamicText (text')
 import Yaifl.Effects.RuleEffects
 import Yaifl.Zork.Scoring
 import Effectful.Writer.Static.Local (execWriter)
@@ -39,7 +39,7 @@ zorkWorld = do
   setTitle "Zork I - The Great Underground Empire"
   scoring
   whenPlayBegins $ makeRule' "set status line" $ do
-    setLeftStatusBar $ text "left status bar" $ do
+    setLeftStatusBar $ text' "left status bar" $ do
       surroundings <- execWriter getPlayerSurroundings
       p <- getPlayer'
       notDarkness <- not <$> isInDarkness p

@@ -5,7 +5,6 @@ import Yaifl.Prelude
 import Yaifl.Actions.Going
 import Yaifl.Actions.Imports
 import Yaifl.Backdrop.Create
-import Yaifl.Combinators (makeItScenery, makeItClosedAndOpenable, makeItTransparent, placeIt)
 import Yaifl.Container.Create
 import Yaifl.Create.Rule
 import Yaifl.Direction.Kind (Direction(..))
@@ -33,13 +32,24 @@ import qualified Data.EnumSet as ES
 import Yaifl.Move
 import Yaifl.ObjectLike (ThingLike(..))
 import Yaifl.Region.Query
+import Yaifl.Openable.Kind
+import Yaifl.Door.Query
+import Yaifl.Door.Create
+import Yaifl.Combinators
+import Yaifl.Vehicle.Create
+import qualified Yaifl.Vehicle.Kind as V
+import Yaifl.Metadata (getScore)
+import Yaifl.Thing.Kind
+import Yaifl.Text.AdaptiveNarrative
 
 removeFromPlay :: a
 removeFromPlay = error "todo"
 
 whenInside :: a
 whenInside = error "todo"
+
 data InsideTheHouse = InsideTheHouse RoomEntity
+
 theHouseInterior :: RoomEntity -> RegionEntity -> WorldConstruction ZorkWorldModel InsideTheHouse
 theHouseInterior kitchen houseInterior = do
   livingRoom <- addRoom "Living Room" $ newRoom
@@ -47,12 +57,13 @@ theHouseInterior kitchen houseInterior = do
     & #description .~ "This is the attic, a low-ceilinged room thick with dust and the faint smell of old wood. Exposed rafters run overhead, and pale light filters through cracks in the boarded-up windows. The only exit is a stairway leading down."
     & makeItDark
   studio <- addRoom' "Studio"
+  cellar <- addRoom' "Cellar"
   livingRoom `isWestOf` kitchen
   attic `isAbove` kitchen
 
   insteadOf #going [inDirection Down, whenIn kitchen] $ \_ -> [saying|Only Santa Claus climbs down chimneys.|]
   chimney <- addBackdrop "chimney" $ newBackdrop (InRooms (kitchen:|[studio]))
-    & #description .~ text' ( do
+    & #description .~ text ( do
         inKitchen <- objectEquals kitchen <$> getPlayerLocation
         [sayingTell|{?if inKitchen}The chimney leads downward, and looks climbable.{?else}The chimney leads upward, and looks climbable.{?end if}|]
         )
@@ -70,9 +81,8 @@ theHouseInterior kitchen houseInterior = do
 
   glassBottle `isUnderstoodAs` ["bottle", "container", "clear", "glass"]
 
-  -- The magic boat is an open enterable vehicle. The carrying capacity of the magic boat is 10.
   magicBoat <- addVehicle "magic boat" $ newVehicle
-    & makeItOpenAndEnterable
+    & #openStatus .~ (Open, Openable)
     & #carryingCapacity .~ 10
   insteadOf' #inserting [intoThe glassBottle, whenContainsSomething glassBottle] $ do
     [saying|The bottle is full.|]
@@ -102,12 +112,12 @@ theHouseInterior kitchen houseInterior = do
     inBottle <- (quantityOfWater `ES.member`) . (^. #enclosing % #contents) <$> getContainer glassBottle
     bottleClosed <- isClosedContainer <$> getContainer glassBottle
     p <- getPlayer
-    playerInBoat <- getVehicle magicBoat >>= \boat -> boat `enclosingContains` p
+    playerInBoat <- V.inThe magicBoat `enclosingContains` p
     if
       | inBottle && bottleClosed -> [saying|The bottle is closed.|]
       | playerInBoat -> do
           w <- getThing quantityOfWater
-          w `move` inThe magicBoat
+          w `move` V.inThe magicBoat
           [saying|There is now a puddle in the bottom of the magic boat.|]
       | otherwise -> do
           removeFromPlay quantityOfWater
@@ -177,7 +187,7 @@ theHouseInterior kitchen houseInterior = do
     [saying|The trophy case is securely fastened to the wall.|]
 
   everyTurn "trophy case scoring rule" [] $ do
-    newScore <- sum <$> (traverse (^. #objectData % #thingData % #treasureValue) =<< getContents (coerceTag trophyCase))
+    newScore <- sum . map (^. #objectData % #thingData % #treasureValue % #unValue) <$> getContents trophyCase
     oldScore <- getValue #trophyCaseScore
     when (newScore /= oldScore) $ do
       let diff = newScore - oldScore
@@ -188,65 +198,91 @@ theHouseInterior kitchen houseInterior = do
     when (score >= 350 && not wonFlag) $ do
       setValue #wonFlag True
       makeAncientMapZilVisible
-      [saying|[line break]An almost inaudible voice whispers in your ear, [quotation mark]Look to your treasures for the final secret.[quotation mark][line break]|]
+      [saying|#{linebreak}An almost inaudible voice whispers in your ear, "Look to your treasures for the final secret."#{linebreak}|]
 
-  return (error "")
+  trapdoor <- addDoor "trap door" $ newDoor (livingRoom, Up) (cellar, Down)
+    & makeItScenery
+    & makeItClosedAndOpenable
+    & #initialAppearance .~ "A dusty cover of a trap door is in the center of the room."
+    & understandItAs ["trapdoor", "trap-door", "cover", "trap", "dusty"]
 
-
-{-
-#description .~ text' ( do
-        magicFlag <- getMagicFlag
-        notRugMoved <- getRugMoved
-        trapDoorOpen <- isOpenDoor <$> getDoor trapdoor
+  modifyRoom livingRoom $
+    #description .~ text (do
+        magicFlag <- getValue #magicFlag
+        notRugMoved <- not <$> getValue #rugMovedFlag
+        trapDoorOpen <- isOpen <$> getDoor trapdoor
         [sayingTell|You are in the living room. There is a doorway to the east{?if magicFlag}.
 To the west is a cyclops-shaped opening in an old wooden door, above which is some strange gothic lettering,
 {?else}, a wooden door with strange gothic lettering to the west, which appears to be nailed shut, {?end if}a trophy case,
 {?if notRugMoved}and a large oriental rug in the center of the room.{?else if trapDoorOpen}and a rug lying beside an open trap door.
-{?else}and a closed trap door at your feet.{?end if}|]
-        )}
+{?else}and a closed trap door at your feet.{?end if}|])
 
-Chapter 7 - Trophy Case Scoring
-Every turn (this is the trophy case scoring rule):
-  let new-score be 0;
-  repeat with item running through things in the trophy case:
-    increase new-score by the treasure-value of the item;
-    repeat with inner running through things enclosed by the item:
-      increase new-score by the treasure-value of the inner;
-  if new-score is not the trophy-case-score:
-    let diff be new-score minus the trophy-case-score;
-    increase the score by diff;
-    now the trophy-case-score is new-score;
-  if the score is at least 350 and the won-flag is false:
-    now the won-flag is true;
-    now the ancient map is zil-visible;
-    say "[line break]An almost inaudible voice whispers in your ear, [quotation mark]Look to your treasures for the final secret.[quotation mark][line break]".
-After looking when the location is Living Room and the number of things in the trophy case is greater than 0:
-  say "Your collection of treasures consists of:";
-  repeat with item running through things in the trophy case:
-    say "[line break]  [a item]";
-  say "[paragraph break]".
-The sword is in Living Room. "Above the trophy case hangs an elvish sword of great antiquity."
-Understand "sword" and "orcrist" and "glamdring" and "blade" and "elvish" and "old" and "antique" as the sword.
-The description of the sword is "It's an old elvish sword of great antiquity."
-The treasure-value of the sword is 0.
-The brass lantern is in Living Room. "A battery-powered brass lantern is on the trophy case."
-Understand "lamp" and "lantern" and "light" and "brass" as the brass lantern.
-After printing the name of the brass lantern:
-  if the lamp-burned-out is false and the brass lantern is not lit:
-    say " (battery-powered)".
-The description of the brass lantern is "[if the lamp-burned-out is true]The lamp has burned out.[otherwise if the brass lantern is lit]The lamp is on.[otherwise]The lamp is turned off.[end if]".
-Instead of switching on the brass lantern:
-  if the lamp-burned-out is true:
-    say "A burned-out lamp won't light." instead;
-  now the brass lantern is lit;
-  say "The brass lantern is now on."
-Instead of switching off the brass lantern:
-  if the lamp-burned-out is true:
-    say "The lamp has already burned out." instead;
-  now the brass lantern is not lit;
-  say "The brass lantern is now off."
-The broken lamp is a thing. The printed name of the broken lamp is "broken lantern".
-Understand "lamp" and "lantern" and "broken" as the broken lamp.
+  after #looking [whenIn livingRoom, whenNotEmpty trophyCase] " " $ const $ do
+    [saying|Your collection of treasures consists of:|]
+    items <- getContents trophyCase
+    forM_ items $ \item -> do
+      [saying|#{linebreak} {a item}|]
+    [saying|#{paragraphBreak}|]
+    rulePass
+
+  sword <- addThing "sword" $ newThing
+    & placeIt (inTheRoom livingRoom)
+    & #description .~ "It's an old elvish sword of great antiquity."
+    & #initialAppearance .~ "Above the trophy case hangs an elvish sword of great antiquity."
+    & #thingModify .~ (#objectData % #thingData % #treasureValue .= 0)
+    & understandItAs ["orcrist", "glamdring", "blade", "elvish", "old", "antique"]
+
+  brassLantern <- addThing "brass lantern" $ newThing
+    & placeIt (inTheRoom livingRoom)
+    & #description .~ text (withThing $ \lantern ->do
+        lampBurnedOut <- getValue #lampBurnedOutFlag
+        let lanternLit = thingIsLit lantern
+        [sayingTell|{?if lampBurnedOut}The lamp has burned out.{?else if lanternLit}The lamp is on.{?else}The lamp is turned off.{?end if}|])
+    & #initialAppearance .~ "A battery-powered brass lantern is on the trophy case."
+    & understandItAs ["lamp", "lantern", "light", "brass"]
+
+  afterActivity #printingNameOfSomething [theObject' brassLantern] "brass lantern name" $ \lantern -> do
+    lampBurnedOut <- getValue #lampBurnedOutFlag
+    lanternLit <- thingIsLit <<$>> getThingMaybe lantern
+    when (not lampBurnedOut && (not <$?> lanternLit)) [saying| (battery-powered)|]
+    rulePass
+
+  insteadOf' #switchingOn [theObject brassLantern] $ do
+    lampBurnedOut <- getValue #lampBurnedOutFlag
+    if lampBurnedOut
+    then [saying|A burned-out lamp won't light.|]
+    else do
+      modifyThing brassLantern (#objectData % #lit .~ Lit)
+      [saying|The brass lantern is now on.|]
+
+  insteadOf' #switchingOff [theObject brassLantern] $ do
+    lampBurnedOut <- getValue #lampBurnedOutFlag
+    if lampBurnedOut
+    then [saying|A burned-out lamp won't light.|]
+    else do
+      modifyThing brassLantern (#objectData % #lit .~ NotLit)
+      [saying|The brass lantern is now off.|]
+{-}
+  brokenLamp <- addThing "broken lantern" $ newThing
+    & placeIt (inTheRoom livingRoom)
+    & #description .~ "The lamp is seriously damaged."
+    & understandItAs ["lamp", "lantern", "broken"]
+
+  insteadOf' #switchingOn [theObject brokenLamp] [saying|The lamp is broken.|]
+  insteadOf' #switchingOff [theObject brokenLamp] [saying|The lamp is broken.|]
+-}
+  error ""
+
+increaseScore :: Int -> Eff es' a0
+increaseScore = error ""
+
+makeAncientMapZilVisible :: Eff es' a0
+makeAncientMapZilVisible = error ""
+
+whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel a
+whenNotEmpty = error ""
+
+{-
 The description of the broken lamp is "The lamp is seriously damaged."
 Instead of switching on the broken lamp: say "The lamp is broken."
 Instead of switching off the broken lamp: say "The lamp is broken."
@@ -299,8 +335,7 @@ Instead of raising the carpet:
     say "The rug is too heavy to lift.";
   otherwise:
     say "The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it."
-The trap door is a door. The trap door is scenery. The trap door is closed and openable.
-Understand "door" and "trapdoor" and "trap-door" and "cover" and "trap" and "dusty" as the trap door.
+
 The trap door is below Living Room and above Cellar.
 A thing can be zil-visible or zil-invisible. A thing is usually zil-visible. The trap door is zil-invisible.
 Rule for writing a paragraph about a zil-invisible thing: now the item described is mentioned.

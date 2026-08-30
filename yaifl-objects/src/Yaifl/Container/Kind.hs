@@ -39,6 +39,8 @@ module Yaifl.Container.Kind
   , isOpenTransparentContainer
   , isOpaqueContainer
   , TaggedContainer
+
+  , containerModify
   ) where
 
 
@@ -50,10 +52,11 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Thing.Kind
 import Yaifl.Enclosing.Query
 import Yaifl.Property.Query( defaultPropertyGetter )
-import Yaifl.TH ( WMWithProperty, makeGetMaybe )
+import Yaifl.TH ( WMWithProperty, makeGetMaybe, propertyAT )
 import Yaifl.Openable.Kind
 import qualified Data.EnumSet as ES
 import Yaifl.ObjectLike
+import Yaifl.Object.Kind
 
 -- | If the container is see-through.
 data Opacity = Opaque | Transparent
@@ -178,3 +181,6 @@ makeContainer cc op e oa opd = (Container
   })
   & maybe id (set (#openable % #opened)) opd
   & maybe id (set (#openable % #openable)) oa
+
+containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
+containerModify f = #specifics % propertyAT %= f

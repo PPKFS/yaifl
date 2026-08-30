@@ -11,12 +11,12 @@ module Yaifl.Enclosing.Query
   , getEnclosingObject
   , enclosingContains
   , getCommonAncestor
+  , getContents
   ) where
 
 import Yaifl.Prelude
 
 import Data.List.NonEmpty as NE (cons, map, append)
-
 
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
@@ -235,3 +235,12 @@ getCommonAncestor t1' t2' = do
       return $ case catMaybes $ [commAncestor (Just a) b |  a <- toList acHier, b <- toList nounHier] of
         [] -> error $ unwords ["no common ancestor", display (t1 ^. #name), display (t2 ^. #name), show actorHolder, show nounHolder]
         (x:_) -> x
+
+
+getContents ::
+  forall o wm es. WithoutMissingObjects wm es
+  => WMWithProperty wm Enclosing
+  => IsEnclosing o
+  => o
+  -> Eff es [Thing wm]
+getContents = getAllObjectsInEnclosing IncludeScenery IncludeDoors DontRecurse . getEnclosingEntity

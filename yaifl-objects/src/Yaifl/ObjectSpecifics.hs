@@ -17,6 +17,7 @@ import Yaifl.Person.Kind
 import Yaifl.Supporter.Kind
 import Yaifl.Backdrop.Kind
 import Yaifl.WorldModel
+import Yaifl.Vehicle.Kind
 
 data ObjectSpecifics =
   NoSpecifics
@@ -28,6 +29,7 @@ data ObjectSpecifics =
   | PersonSpecifics Person
   | SupporterSpecifics Supporter
   | BackdropSpecifics Backdrop
+  | VehicleSpecifics Vehicle
   deriving stock (Eq, Show, Generic)
 
 makePrisms ''ObjectSpecifics
@@ -52,7 +54,8 @@ instance MayHaveProperty ObjectSpecifics MultiLocated where
     `thenATraverse` (_BackdropSpecifics % #rooms % coerced)
 
 instance MayHaveProperty ObjectSpecifics Container where
-  propertyAT = castOptic _ContainerSpecifics
+  propertyAT = _ContainerSpecifics
+    `thenATraverse` (_VehicleSpecifics % #container)
 
 instance MayHaveProperty ObjectSpecifics Enterable where
   propertyAT = (_ContainerSpecifics % #enterable)

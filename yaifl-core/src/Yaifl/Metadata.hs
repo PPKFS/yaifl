@@ -383,10 +383,10 @@ random = do
 
 getScore ::
   WithMetadata wm es
-  => Eff es (Maybe Int)
+  => Eff es Int
 getScore = do
-  s <- use $ #score
-  if usingScore s then return $ Just (currentScore s) else return Nothing
+  s <- use #score
+  if usingScore s then return $ (currentScore s) else return 0
 
 getMaxScore ::
   WithMetadata wm es

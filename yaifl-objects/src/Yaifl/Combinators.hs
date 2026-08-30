@@ -8,6 +8,8 @@ import Yaifl.Enclosing.Kind
 import Yaifl.Openable.Kind
 import Yaifl.Container.Kind
 import Yaifl.Room.Kind
+import Yaifl.Entity
+import qualified Data.Set as S
 
 type ConfigCombinator s t sym val = LabelOptic sym A_Lens s t val val
 type Modification s t x sym = ConfigCombinator s t sym (Eff '[State x] ())
@@ -54,6 +56,11 @@ placeIt ::
   -> t
 placeIt e = #location ?~ e
 
+inTheRoom ::
+  RoomEntity
+  -> EnclosingEntity
+inTheRoom = coerceTag
+
 makeItClosedAndOpenable ::
   ConfigCombinator s t "openStatus" (Opened, Openable)
   => s
@@ -83,3 +90,10 @@ makeItScenery ::
   => s
   -> t
 makeItScenery = amendThingModify $ #objectData % #isScenery .= True
+
+understandItAs ::
+  ThingModification wm s t
+  => [Text]
+  -> s
+  -> t
+understandItAs names = amendThingModify $ #understandAs %= S.union (S.fromList names)

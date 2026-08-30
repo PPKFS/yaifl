@@ -99,3 +99,6 @@ library
     Yaifl.Supporter.Query
     Yaifl.Thing.Create
     Yaifl.Thing.Query
+    Yaifl.Vehicle.Create
+    Yaifl.Vehicle.Kind
+    Yaifl.Vehicle.Query

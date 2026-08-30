@@ -20,7 +20,6 @@ import Yaifl.Openable.Kind
 import Yaifl.Openable.Query (openIt, closeIt)
 import Yaifl.Person.Query (getPlayerLocation)
 import Yaifl.Preconditions
-import Yaifl.Property.Has
 import Yaifl.Region.Create (addRegion)
 import Yaifl.Region.Kind
 import Yaifl.Region.Query (areInRegion, isInRegion)
@@ -36,9 +35,6 @@ import qualified Yaifl.Create.CustomActionRule as E
 import Yaifl.Effects.Interpreters (WorldConstruction)
 import Yaifl.Zork.Actions
 
-containerModify :: forall wm. (WMWithProperty wm Container) => (Container -> Container) -> Eff '[State (Thing wm)] ()
-containerModify f = #specifics % propertyAT %= f
-
 data OutsideTheHouse = OutsideTheHouse
   { westOfHouse :: RoomEntity
   , houseInterior :: RegionEntity
@@ -46,19 +42,19 @@ data OutsideTheHouse = OutsideTheHouse
 roomsOutsideTheHouse :: RegionEntity -> WorldConstruction ZorkWorldModel OutsideTheHouse
 roomsOutsideTheHouse forestArea = do
 
-  -- make the rooms
   houseExterior <- addRegion "House Exterior"
   houseInterior <- addRegion "House Interior"
+
   westOfHouse <- addRoom "West of House" $ newRoom
-    & #description .~ text' ( do
+    & #description .~ text ( do
       won <- getValue #wonFlag
-      [sayingTell|You are standing in an open field west of a white house, with a boarded front door.{?if won} A secret path leads southwest into the forest.{?end if}|]
-      pass)
+      [sayingTell|You are standing in an open field west of a white house, with a boarded front door.{?if won} A secret path leads southwest into the forest.{?end if}|])
+  
   -- forward declare a couple of nearby rooms because we need to refer to them
   kitchen <- addRoom' "Kitchen"
   clearing <- addRoom "Clearing" $ newRoom
     & #description .~ "You are in a small clearing in a well marked forest path that extends to the east and west."
-  clearing `isInRegion` forestArea
+    & placeInRegion forestArea
 
   behindHouse <- addRoom "Behind House" newRoom
 
@@ -125,7 +121,7 @@ roomsOutsideTheHouse forestArea = do
   insteadOf' #taking [theObject mailbox] [saying|It is securely anchored.|]
 
   leaflet <- addThing "leaflet" $ newThing
-    & #description .~ text' [sayingTell|WELCOME TO ZORK!#{paragraphBreak}ZORK is a game of adventure, danger, and low cunning.
+    & #description .~ text [sayingTell|WELCOME TO ZORK!#{paragraphBreak}ZORK is a game of adventure, danger, and low cunning.
 In it you will explore some of the most amazing territory ever seen by mortals. No computer should be without one!#{paragraphBreak}
 Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#{linebreak}Original by Marc Blank, Dave Lebling, Bruce Daniels, and Tim Anderson.
 #{linebreak}Copyright (c) 1981-1986 Infocom, Inc. ZIL source released under MIT License.|]
@@ -164,13 +160,13 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     (kitchen `isToThe` West) (behindHouse `isToThe` East)
     & makeItClosedAndOpenable
     & makeItScenery
-    & #description .~ text' (withThing $ \t -> do
+    & #description .~ text (withThing $ \t -> do
       notTouched <- not <$> getValue #kitchenWindowTouched
       let windowOpen = isOpen t
       [sayingTell|{?if notTouched}The window is slightly ajar, but not enough to allow entry.{?else if windowOpen}The window is open.{?else}The window is closed.{?end if}|])
   kitchenWindow `isUnderstoodAs` ["window", "kitchen", "small"]
   modifyRoom behindHouse $
-    #description .~ text' (do
+    #description .~ text (do
         window <- getObject kitchenWindow
         let windowOpen = isOpen window
         [saying|You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is {?if windowOpen}open{?else}slightly ajar{?end if}.|])
@@ -204,7 +200,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     else [saying|You can see what appears to be a kitchen.|]
 
   modifyRoom kitchen $
-    #description .~ text' ( do
+    #description .~ text ( do
         window <- getObject kitchenWindow
         let windowOpen = isOpen window
         [sayingTell|You are in the kitchen of the white house. A table seems to have been used recently for the preparation of food. A passage leads to the west and a dark staircase can be seen leading upward. A dark chimney leads down and to the east is a small window which is {?if windowOpen}open{?else}slightly ajar{?end if}.|])

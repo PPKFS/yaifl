@@ -15,6 +15,8 @@ data ZorkData = ZorkData
   , gateFlag :: Bool
   , gatesOpenFlag :: Bool
   , luckyFlag :: Bool
+  , rugMovedFlag :: Bool
+  , lampBurnedOutFlag :: Bool
 
   , kitchenWindowTouched :: Bool
 
@@ -41,6 +43,8 @@ defaultZorkValues = ZorkData
   , gateFlag = False
   , gatesOpenFlag = False
   , luckyFlag = True
+  , lampBurnedOutFlag = False
+  , rugMovedFlag = False
 
   , kitchenWindowTouched = False
 

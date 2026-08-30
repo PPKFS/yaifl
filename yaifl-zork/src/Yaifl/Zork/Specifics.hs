@@ -18,17 +18,20 @@ import Yaifl.Entity
 import Yaifl.Object.Create
 import Yaifl.Object.Kind
 import Yaifl.Zork.Actions
+import Yaifl.Enclosing.Kind
 
 data Defeated = Defeated | NotDefeated
-data ZorkSpecifics = YaiflSpecifics (ObjectSpecifics) | ExtendedPersonSpecifics (Defeated, Person)
+data ZorkSpecifics = YaiflSpecifics ObjectSpecifics | ExtendedPersonSpecifics (Defeated, Person)
   deriving stock (Generic)
 
 instance Pointed ZorkSpecifics where
   identityElement = YaiflSpecifics identityElement
 
-instance MayHaveProperty ObjectSpecifics v => MayHaveProperty ZorkSpecifics v where
+instance {-# OVERLAPPABLE #-} MayHaveProperty ObjectSpecifics v => MayHaveProperty ZorkSpecifics v where
   propertyAT = #_YaiflSpecifics % propertyAT
 
+instance MayHaveProperty ZorkSpecifics Enclosing where
+  propertyAT = (#_ExtendedPersonSpecifics % _2 % #carrying) `thenATraverse` (#_YaiflSpecifics % propertyAT)
 
 addZorkPerson ::
   forall wm es.
@@ -37,7 +40,7 @@ addZorkPerson ::
   => WMText wm -- ^ Name.
   -> PersonConfig wm
   -> Eff es ThingEntity
-addZorkPerson name config@PersonConfig{..} = addPerson name $ config & #thingModify .~ (#specifics .= (ExtendedPersonSpecifics (NotDefeated, ((Person gender carrying)))))
+addZorkPerson name config@PersonConfig{..} = addPerson name $ config & #thingModify .~ (#specifics .= ExtendedPersonSpecifics (NotDefeated, ((Person gender carrying))))
 
 
 type ZorkWorldModel = 'WorldModel ZorkSpecifics Direction ZorkData ZorkThingData () () ActivityCollection ResponseCollection DynamicText ZorkActions

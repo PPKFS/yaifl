@@ -23,16 +23,17 @@ rankings =
   , (100, "Junior Adventurer")
   , (50, "Novice Adventurer")
   , (25, "Amateur Adventurer")
+  , (0, "Beginner")
   ]
 
 scoreToRank :: Int -> Text
-scoreToRank score = fromMaybe "Beginner" $ snd <$> (find (\x -> score >= fst x) rankings)
+scoreToRank score = maybe "Beginner" snd (find (\x -> score >= fst x) rankings)
 scoreAndRankRule :: Rule' wm () r
 scoreAndRankRule = makeRule' "score and rank rule" $ do
   score <- getScore
   turnCount <- getTurnCount
   let multipleTurns = turnCount > 1
-      rank = fromMaybe "Beginner" (scoreToRank <$> score)
+      rank = scoreToRank score
   [saying|Your score is {score} (total of 350 points), in {turnCount} move{?if multipleTurns}s{?end if}.#{linebreak}This gives you the rank of {rank}.#{linebreak}|]
   rulePass
 
@@ -54,23 +55,30 @@ scoring = do
     then [saying|You're dead! How can you think of your score?|] >> return (Just ())
     else runRule scoreAndRankRule () >> return (Just ())
 
-  after #taking [anObjectWithPoints] "first-take scoring rule" $ \a@Args{variables} -> do
-    let thingScore = variables ^. #objectData % #thingData % _1
+  after #taking [anObjectWithPoints] "first-take scoring rule" $ \Args{variables} -> do
+    let thingScore = variables ^. #objectData % #thingData % #pointValue
     (#score :: Lens' (Metadata wm) Score) % #currentScore %= (+ coerce thingScore)
-    modifyThing variables (#objectData % #thingData % _1 .~ PointValue 0)
+    modifyThing variables (#objectData % #thingData % #pointValue .~ PointValue 0)
     rulePass
 
 anObjectWithPoints :: (WMThingData wm ~ ZorkThingData) => Precondition wm (Args wm (Thing wm))
 anObjectWithPoints = Precondition
   { preconditionName = (pure "an object with a points value")
   , checkPrecondition = \args -> do
-      let thingValue = (variables args) ^. #objectData % #thingData % _1
+      let thingValue = (variables args) ^. #objectData % #thingData % #pointValue
       pure $ thingValue > 0
   }
 
-type ZorkThingData = (PointValue, TreasureValue)
+data ZorkThingData = ZorkThingData
+  { pointValue :: PointValue
+  , treasureValue :: TreasureValue
+  } deriving stock (Eq, Ord, Show, Generic)
+
+instance Pointed ZorkThingData where
+  identityElement = ZorkThingData defaultPointValue defaultTreasureValue
 newtype TreasureValue = TreasureValue { unValue :: Int }
   deriving newtype (Eq, Ord, Num, Show)
+  deriving stock (Generic)
 
 defaultTreasureValue :: TreasureValue
 defaultTreasureValue = TreasureValue 0
@@ -86,3 +94,7 @@ instance Pointed TreasureValue where
 
 instance Pointed PointValue where
   identityElement = defaultPointValue
+
+makeFieldLabelsNoPrefix ''ZorkThingData
+makeFieldLabelsNoPrefix ''TreasureValue
+makeFieldLabelsNoPrefix ''PointValue

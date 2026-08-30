@@ -37,17 +37,17 @@ instance Semigroup (DynamicText wm) where
 instance Monoid (DynamicText wm) where
   mempty = DynamicText (Left "")
 
-text ::
+text' ::
   SayableValue (WMText wm) wm
   => Display (WMText wm)
   => Text
   -> Eff (Writer Text : ConcreteRuleStack wm) ()
   -> DynamicText wm
-text t f = DynamicText $ Right (t, RuleLimitedEffect f)
+text' t f = DynamicText $ Right (t, RuleLimitedEffect f)
 
-text' ::
+text ::
   SayableValue (WMText wm) wm
   => Display (WMText wm)
   => Eff (Writer Text : ConcreteRuleStack wm) ()
   -> DynamicText wm
-text' f = DynamicText $ Right ("", RuleLimitedEffect f)
+text f = DynamicText $ Right ("", RuleLimitedEffect f)
