@@ -26,7 +26,7 @@ swcN :: DynamicText wm
 swcN = "Slightly Wrong Chamber"
 
 swcDesc :: DynamicText PlainWorldModel
-swcDesc = text "description of slightly wrong chamber" $ do
+swcDesc = text' "description of slightly wrong chamber" $ do
   room <- getMentionedRoom
   when (roomIsNotVisited room)
     [sayingTell|When you first step into the room, you are bothered by the sense that something is not quite right: perhaps the lighting, perhaps the angle of the walls. |]

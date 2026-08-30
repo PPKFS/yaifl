@@ -32,6 +32,7 @@ module Yaifl.Metadata (
   , setLeftStatusBar
   , setRightStatusBar
   , getScore
+  , getScore'
   , getMaxScore
   , isRuntime
   , gameHasEnded
@@ -383,18 +384,25 @@ random = do
 
 getScore ::
   WithMetadata wm es
-  => Eff es Int
+  => Eff es (Maybe Int)
 getScore = do
   s <- use #score
-  if usingScore s then return $ (currentScore s) else return 0
+  if usingScore s then return $ Just (currentScore s) else return Nothing
+
+getScore' ::
+  WithMetadata wm es
+  => Eff es Int
+getScore' = do
+  s <- use #score
+  if usingScore s then return $ currentScore s else return 0
 
 getMaxScore ::
   WithMetadata wm es
   => Eff es (Maybe Int)
 getMaxScore = do
-  s <- use $ #score
+  s <- use #score
   if usingScore s then return $ (maxScore s) else return Nothing
 getTurnCount ::
   WithMetadata wm es
   => Eff es Int
-getTurnCount = use $ #turnCount
+getTurnCount = use #turnCount

@@ -8,6 +8,7 @@ import Yaifl.Backdrop.Create
 import Yaifl.Container.Create
 import Yaifl.Create.Rule
 import Yaifl.Direction.Kind (Direction(..))
+import Yaifl.AnyObject
 import Yaifl.Entity
 import Yaifl.Object.Kind
 import Yaifl.Object.Query
@@ -38,7 +39,7 @@ import Yaifl.Door.Create
 import Yaifl.Combinators
 import Yaifl.Vehicle.Create
 import qualified Yaifl.Vehicle.Kind as V
-import Yaifl.Metadata (getScore)
+import Yaifl.Metadata (getScore, Score)
 import Yaifl.Thing.Kind
 import Yaifl.Text.AdaptiveNarrative
 
@@ -106,7 +107,7 @@ theHouseInterior kitchen houseInterior = do
     [saying|Thank you very much. I was rather thirsty (from strenuously carrying everything for you).|]
     removeFromPlay quantityOfWater
   insteadOf' #drinking [] [saying|How can you drink that?|]
-  insteadOf' #taking [theObject quantityOfWater, quantityOfWater `whenInside` glassBottle]
+  insteadOf' #taking [theObject quantityOfWater, whenInside glassBottle]
     [saying|It's in the bottle. Perhaps you should take that instead.|]
   insteadOf' #dropping [theObject quantityOfWater] $ do
     inBottle <- (quantityOfWater `ES.member`) . (^. #enclosing % #contents) <$> getContainer glassBottle
@@ -117,7 +118,7 @@ theHouseInterior kitchen houseInterior = do
       | inBottle && bottleClosed -> [saying|The bottle is closed.|]
       | playerInBoat -> do
           w <- getThing quantityOfWater
-          w `move` V.inThe magicBoat
+          w `move` magicBoat
           [saying|There is now a puddle in the bottom of the magic boat.|]
       | otherwise -> do
           removeFromPlay quantityOfWater
@@ -193,7 +194,7 @@ theHouseInterior kitchen houseInterior = do
       let diff = newScore - oldScore
       increaseScore diff
       setValue #trophyCaseScore newScore
-    score <- getScore
+    score <- getScore'
     wonFlag <- getValue #wonFlag
     when (score >= 350 && not wonFlag) $ do
       setValue #wonFlag True
@@ -262,6 +263,7 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
     else do
       modifyThing brassLantern (#objectData % #lit .~ NotLit)
       [saying|The brass lantern is now off.|]
+  error ""
 {-}
   brokenLamp <- addThing "broken lantern" $ newThing
     & placeIt (inTheRoom livingRoom)
@@ -271,16 +273,15 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
   insteadOf' #switchingOn [theObject brokenLamp] [saying|The lamp is broken.|]
   insteadOf' #switchingOff [theObject brokenLamp] [saying|The lamp is broken.|]
 -}
-  error ""
 
-increaseScore :: Int -> Eff es' a0
-increaseScore = error ""
+increaseScore :: Int -> Eff es ()
+increaseScore n = error ""
 
-makeAncientMapZilVisible :: Eff es' a0
-makeAncientMapZilVisible = error ""
+makeAncientMapZilVisible :: Eff es ()
+makeAncientMapZilVisible = pure ()
 
-whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel a
-whenNotEmpty = error ""
+whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel v
+whenNotEmpty = whenContainsSomething
 
 {-
 The description of the broken lamp is "The lamp is seriously damaged."

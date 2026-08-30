@@ -10,6 +10,7 @@ module Yaifl.Actions.Inserting
 import Yaifl.Prelude
 import Yaifl.Actions.Imports
 import Yaifl.Thing.Kind
+import Yaifl.Actions.Args ()
 
 data InsertingResponses wm =
   InsertAlreadyInsertedA
@@ -29,8 +30,13 @@ data InsertingVariables wm = InsertingVariables
   { object :: Thing wm
   , into :: Thing wm
   } deriving stock (Generic)
+
 type InsertingAction wm = Action wm (InsertingResponses wm) 'TakesNoParameter (InsertingVariables wm)
 type InsertingRule wm = ActionRule wm (InsertingAction wm) (InsertingVariables wm)
+
+instance ArgsHaveMainObject (InsertingVariables wm) (Thing wm) where
+  argsMainObject = #object
+
 insertingAction :: InsertingAction wm
 insertingAction = (makeAction "inserting")
   { responses = insertingResponses

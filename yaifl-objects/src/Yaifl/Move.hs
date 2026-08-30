@@ -23,7 +23,7 @@ move ::
   forall l wm es.
   WithoutMissingObjects wm es
   => WMWithProperty wm Enclosing
-  => IsEnclosingObject l
+  => IsEnclosing l
   => ObjectLike wm l
   => Thing wm
   -> l
@@ -32,7 +32,8 @@ move objectToMove oLoc = moveBlock
   where
     moveBlock = withSpan' "move" "" $ do
       objectToMove' <- refreshThing objectToMove
-      let loc :: Enclosing = getEnclosing oLoc
+      taggedNewLoc <- getEnclosingObject oLoc
+      let loc :: Enclosing = getEnclosing taggedNewLoc
       let (c :: EnclosingEntity) = thingContainedBy objectToMove'
       c' <- getObject c
       oLoc' <- getObject oLoc

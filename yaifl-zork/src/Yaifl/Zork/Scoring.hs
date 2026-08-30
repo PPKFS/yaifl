@@ -33,7 +33,7 @@ scoreAndRankRule = makeRule' "score and rank rule" $ do
   score <- getScore
   turnCount <- getTurnCount
   let multipleTurns = turnCount > 1
-      rank = scoreToRank score
+      rank = maybe "Beginner" scoreToRank score
   [saying|Your score is {score} (total of 350 points), in {turnCount} move{?if multipleTurns}s{?end if}.#{linebreak}This gives you the rank of {rank}.#{linebreak}|]
   rulePass
 

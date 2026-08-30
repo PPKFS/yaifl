@@ -33,7 +33,7 @@ starryVoidWorld = do
   tsv `isInsideFrom` tcr
 
   tmb <- addDoor "magician's booth" $ (newDoor (tsv, Out) (tcr, In))
-    { initialAppearance = text "description of magician's booth door" $
+    { initialAppearance = text' "description of magician's booth door" $
         withThing $ \t ->
         do
           p <- getPlayer

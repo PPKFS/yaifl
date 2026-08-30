@@ -41,6 +41,7 @@ import qualified Data.Text.Lazy.Builder as TLB
 import Yaifl.Thing.Kind
 import Yaifl.Entity
 import Yaifl.Enclosing.Query
+import Yaifl.Tag
 
 data Gender = Male | Female | NonBinary | Other Text
   deriving stock (Eq, Ord, Show, Generic, Read)
@@ -81,6 +82,8 @@ isFemale = (== Female) . gender
 instance Taggable Person PersonTag
 instance Taggable Person EnclosingTag
 
+instance WMWithProperty wm Person => IsEnclosing (TaggedPerson wm) where
+  getEnclosingEntity tp = let (_, thing) = unTagObject tp in tagEntity (undefined :: Person) thing
 
 getPerson ::
   WMWithProperty wm Person

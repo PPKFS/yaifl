@@ -19,6 +19,7 @@ import Yaifl.Prelude
 import Data.List.NonEmpty as NE (cons, map, append)
 
 import Yaifl.Effects.ObjectQuery
+import Yaifl.Tag
 import Yaifl.Entity
 import Yaifl.AnyObject
 import Yaifl.Enclosing.Kind
@@ -171,6 +172,12 @@ instance IsEnclosing (Room wm)
 
 instance IsEnclosing EnclosingEntity where
   getEnclosingEntity = id
+
+instance IsEnclosing (TaggedObject (Thing wm) EnclosingTag) where
+  getEnclosingEntity = fst . unTagObject
+
+instance IsEnclosing (TaggedObject (AnyObject wm) EnclosingTag) where
+  getEnclosingEntity = fst . unTagObject
 
 instance WMWithProperty wm Enclosing => IsEnclosingObject (TaggedObject (AnyObject wm) EnclosingTag) where
   getEnclosing = fromMaybe (error "property witness was violated") . getEnclosingMaybe . getTaggedObject

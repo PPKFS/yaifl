@@ -25,7 +25,7 @@ firstNameBasisWorld = do
 
   thp <- addDevice "holographic projector" $ (newDevice @PlainWorldModel)
     { D.initialAppearance = "The one major source of entertainment is the holographic projector, a top of the line Misthon 9000, on which you view every beam you can get."
-    , description = text "projector description" $ withThing $ \t -> do
+    , description = text' "projector description" $ withThing $ \t -> do
           let isOn = fromMaybe False $ getDeviceMaybe t ^? _Just % #switchedOn
           [sayingTell|{?if isOn}The projector is now playing a documentary about the early politics of the Mars colony.
 {?else}The air above the projector is disappointingly clear.{?end if}|]
