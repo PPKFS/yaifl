@@ -69,13 +69,9 @@ anObjectWithPoints = Precondition
       pure $ thingValue > 0
   }
 
-data ZorkThingData = ZorkThingData
-  { pointValue :: PointValue
-  , treasureValue :: TreasureValue
-  } deriving stock (Eq, Ord, Show, Generic)
+data ZilVisibility = ZilVisible | ZilInvisible
+  deriving stock (Eq, Ord, Show, Generic)
 
-instance Pointed ZorkThingData where
-  identityElement = ZorkThingData defaultPointValue defaultTreasureValue
 newtype TreasureValue = TreasureValue { unValue :: Int }
   deriving newtype (Eq, Ord, Num, Show)
   deriving stock (Generic)
@@ -94,6 +90,15 @@ instance Pointed TreasureValue where
 
 instance Pointed PointValue where
   identityElement = defaultPointValue
+
+data ZorkThingData = ZorkThingData
+  { pointValue :: PointValue
+  , treasureValue :: TreasureValue
+  , zilVisibility :: ZilVisibility
+  } deriving stock (Eq, Ord, Show, Generic)
+
+instance Pointed ZorkThingData where
+  identityElement = ZorkThingData defaultPointValue defaultTreasureValue ZilVisible
 
 makeFieldLabelsNoPrefix ''ZorkThingData
 makeFieldLabelsNoPrefix ''TreasureValue

@@ -6,6 +6,8 @@ module Yaifl.Zork.World.Inside where
 
 import Yaifl.Prelude
 
+import Effectful.Error.Static
+import Yaifl.Action
 import Yaifl.Actions.Going
 import Yaifl.Actions.Imports
 import Yaifl.Backdrop.Create
@@ -46,11 +48,50 @@ import qualified Yaifl.Vehicle.Kind as V
 import Yaifl.Metadata (getScore', WithMetadata, Score(..))
 import Yaifl.Thing.Kind
 import Yaifl.Text.AdaptiveNarrative
+import Yaifl.Zork.Scoring (ZilVisibility(..))
+import Yaifl.Openable.Query (openIt, closeIt)
+
+
+increaseScore :: WithMetadata ZorkWorldModel es => Int -> Eff es ()
+increaseScore n = #score %= (\s -> s { currentScore = currentScore s + n })
+
+makeAncientMapZilVisible :: Eff es ()
+makeAncientMapZilVisible = pure ()
+
+whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel v
+whenNotEmpty = whenContainsSomething
+
+-- Zil-visibility helper
+isZilVisible :: WithoutMissingObjects ZorkWorldModel es => ThingEntity -> Eff es Bool
+isZilVisible thing = do
+  t <- getThing thing
+  let visibility = t ^. #objectData % #thingData % #zilVisibility
+  pure (visibility == ZilVisible)
+
+isZilVisibleDoor :: WithoutMissingObjects ZorkWorldModel es => DoorEntity -> Eff es Bool
+isZilVisibleDoor door = isZilVisible (coerceTag @ThingTag door)
+
+-- Global before hook for zil-visibility checks
+-- Checks if the main object (noun) of an action is zil-invisible
+checkZilVisibilityGlobal :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => RuleEffects ZorkWorldModel es => Args ZorkWorldModel v -> Eff es (Maybe Bool)
+checkZilVisibilityGlobal args = do
+  case preview (#variables % argsMainObjectMaybe @_ @(Thing ZorkWorldModel)) args of
+    Just thing -> do
+      let visibility = thing ^. #objectData % #thingData % #zilVisibility
+      if visibility == ZilInvisible
+      then do
+        [saying|You can't see any such thing.|]
+        pure (Just False)
+      else rulePass
+    Nothing -> rulePass
 
 data InsideTheHouse = InsideTheHouse RoomEntity
 
 theHouseInterior :: RoomEntity -> RegionEntity -> WorldConstruction ZorkWorldModel InsideTheHouse
 theHouseInterior kitchen houseInterior = do
+  -- Add global before hook for zil-visibility
+  globalBefore checkZilVisibilityGlobal
+
   livingRoom <- addRoom "Living Room" $ newRoom
   attic <- addRoom "Attic" $ newRoom
     & #description .~ "This is the attic, a low-ceilinged room thick with dust and the faint smell of old wood. Exposed rafters run overhead, and pale light filters through cracks in the boarded-up windows. The only exit is a stairway leading down."
@@ -203,8 +244,48 @@ theHouseInterior kitchen houseInterior = do
   trapdoor <- addDoor "trap door" $ newDoor (livingRoom, Up) (cellar, Down)
     & makeItScenery
     & makeItClosedAndOpenable
-    & #initialAppearance .~ "A dusty cover of a trap door is in the center of the room."
     & understandItAs ["trapdoor", "trap-door", "cover", "trap", "dusty"]
+  modifyThing (coerceTag @ThingTag trapdoor) (#objectData % #thingData % #zilVisibility .~ ZilInvisible)
+
+  insteadOf' #entering [theObject trapdoor] $ do
+    throwError ContinueAction
+
+  before #going [inDirection Down, whenIn livingRoom] "trap door check" $ const $ do
+    rugMoved <- getValue #rugMovedFlag
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if not rugMoved
+      then do
+        [saying|You can't go that way.|]
+        pure (Just False)
+      else if not trapDoorIsOpen
+        then do
+          [saying|The trap door is closed.|]
+          pure (Just False)
+        else rulePass
+
+  insteadOf' #opening [theObject trapdoor, whenIn livingRoom] $ do
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if trapDoorIsOpen
+      then [saying|It is already open.|]
+      else do
+        trapdoorThing <- getThing (coerceTag @ThingTag trapdoor)
+        openIt trapdoorThing
+        [saying|The door reluctantly opens to reveal a rickety staircase descending into darkness.|]
+
+  insteadOf' #closing [theObject trapdoor, whenIn livingRoom] $ do
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if not trapDoorIsOpen
+      then [saying|It is already closed.|]
+      else do
+        trapdoorThing <- getThing (coerceTag @ThingTag trapdoor)
+        closeIt trapdoorThing
+        [saying|The door swings shut and closes.|]
+
+  insteadOf' #lookingUnder [theObject trapdoor, whenIn livingRoom] $ do
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if trapDoorIsOpen
+      then [saying|You see a rickety staircase descending into darkness.|]
+      else [saying|It's closed.|]
 
   -- Old wooden door
   oldWoodenDoor <- addThing "old wooden door" $ newThing
@@ -222,10 +303,18 @@ theHouseInterior kitchen houseInterior = do
       then [saying|The door is already open -- the cyclops saw to that.|]
       else [saying|The door is nailed shut.|]
 
+  insteadOf' #going [inDirection West, whenIn livingRoom] $ do
+    magicFlag <- getValue #magicFlag
+    if magicFlag
+      then throwError ContinueAction
+      else do
+        [saying|The door is nailed shut.|]
+        throwError StopAction
+
   before #going [inDirection West, whenIn livingRoom] "old wooden door check" $ const $ do
     magicFlag <- getValue #magicFlag
     if magicFlag
-      then rulePass
+      then [saying|The door is already open -- the cyclops saw to that.|] >> rulePass
       else do
         [saying|The door is nailed shut.|]
         pure (Just False)
@@ -297,62 +386,53 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
       brassLantern
     rulePass
 
+  carpet <- addThing "carpet" $ newThing
+    & placeIt (inTheRoom livingRoom)
+    & makeItScenery
+    & #description .~ text (do
+        rugMoved <- getValue #rugMovedFlag
+        if rugMoved
+          then [sayingTell|The carpet has been moved to one side of the room.|]
+          else [sayingTell|A large oriental rug covers the center of the room.|])
+    & understandItAs ["rug", "carpet", "large", "oriental"]
+
+  insteadOf' #taking [theObject carpet] $ do
+    [saying|The rug is extremely heavy and cannot be carried.|]
+
+  let doRugMove :: RuleEffects ZorkWorldModel es => Eff es ()
+      doRugMove = do
+        rugMoved <- getValue #rugMovedFlag
+        when rugMoved [saying|Having moved the carpet previously, you find it impossible to move it again.|]
+        setValue #rugMovedFlag True
+        modifyThing (coerceTag @ThingTag trapdoor) (#objectData % #thingData % #zilVisibility .~ ZilVisible)
+        [saying|With a great effort, the rug is moved to one side of the room, revealing the dusty cover of a closed trap door.|]
+
+  insteadOf' #pushing [theObject carpet] doRugMove
+  insteadOf' #pulling [theObject carpet] doRugMove
+
+  insteadOf' #entering [theObject carpet] $ do
+    rugMoved <- getValue #rugMovedFlag
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if not rugMoved && not trapDoorIsOpen
+      then [saying|As you sit, you notice an irregularity underneath it. Rather than be uncomfortable, you stand up again.|]
+      else [saying|I suppose you think it's a magic carpet?|]
+
+  insteadOf' #lookingUnder [theObject carpet] $ do
+    rugMoved <- getValue #rugMovedFlag
+    trapDoorIsOpen <- isOpen <$> getDoor trapdoor
+    if not rugMoved && not trapDoorIsOpen
+      then [saying|Underneath the rug is a closed trap door. As you drop the corner of the rug, the trap door is once again concealed from view.|]
+      else [saying|I suppose you think it's a magic carpet?|]
+
+  -- insteadOf' #raising [theObject carpet] $ do
+  --   rugMoved <- getValue #rugMovedFlag
+  --   if rugMoved
+  --     then [saying|The rug is too heavy to lift.|]
+  --     else [saying|The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it.|]
   pure $ InsideTheHouse livingRoom
 
-increaseScore :: WithMetadata ZorkWorldModel es => Int -> Eff es ()
-increaseScore n = #score %= (\s -> s { currentScore = currentScore s + n })
-
-makeAncientMapZilVisible :: Eff es ()
-makeAncientMapZilVisible = pure ()
-
-whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel v
-whenNotEmpty = whenContainsSomething
 
 {-
-The old wooden door is scenery in Living Room. Understand "door" and "wooden" and "gothic" and "strange" and "lettering" and "writing" as the old wooden door.
-The description of the old wooden door is "[if the magic-flag is true]The door has a cyclops-shaped opening in it.[otherwise]The engravings translate to 'This space intentionally left blank.'[end if]".
-Instead of opening the old wooden door:
-  if the magic-flag is true:
-    say "The door is already open -- the cyclops saw to that.";
-  otherwise:
-    say "The door is nailed shut."
-Instead of going west in Living Room:
-  if the magic-flag is true:
-    continue the action;
-  say "The door is nailed shut."
-Section 4 - Rug and Trap Door Puzzle
-The rug-moved is a truth state that varies. The rug-moved is false.
-The carpet is scenery in Living Room. Understand "rug" and "carpet" and "large" and "oriental" as the carpet.
-The description of the carpet is "[if the rug-moved is false]A large oriental rug covers the center of the room.[otherwise]The carpet has been moved to one side of the room.[end if]".
-Instead of taking the carpet:
-  say "The rug is extremely heavy and cannot be carried."
-Instead of pushing the carpet:
-  try the-rug-move.
-Instead of pulling the carpet:
-  try the-rug-move.
-The-rug-move is an action applying to nothing.
-Carry out the-rug-move:
-  if the rug-moved is true:
-    say "Having moved the carpet previously, you find it impossible to move it again." instead;
-  now the rug-moved is true;
-  now the trap door is zil-visible;
-  say "With a great effort, the rug is moved to one side of the room, revealing the dusty cover of a closed trap door."
-Instead of entering the carpet:
-  if the rug-moved is false and the trap door is not open:
-    say "As you sit, you notice an irregularity underneath it. Rather than be uncomfortable, you stand up again.";
-  otherwise:
-    say "I suppose you think it[apostrophe]s a magic carpet?"
-Instead of looking under the carpet:
-  if the rug-moved is false and the trap door is not open:
-    say "Underneath the rug is a closed trap door. As you drop the corner of the rug, the trap door is once again concealed from view.";
-  otherwise:
-    say "I suppose you think it's a magic carpet?"
-Instead of raising the carpet:
-  if the rug-moved is true:
-    say "The rug is too heavy to lift.";
-  otherwise:
-    say "The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it."
-
 The trap door is below Living Room and above Cellar.
 A thing can be zil-visible or zil-invisible. A thing is usually zil-visible. The trap door is zil-invisible.
 Rule for writing a paragraph about a zil-invisible thing: now the item described is mentioned.

@@ -23,6 +23,7 @@ import Yaifl.Rulebooks.ActionProcessing
 import Breadcrumbs
 import Yaifl.Refreshable
 import Yaifl.Actions.GoesWith
+import Yaifl.Actions.Args
 
 data World (wm :: WorldModel) = World
   { metadata :: Metadata wm
@@ -57,6 +58,7 @@ whenPlayBegins r = #whenPlayBeginsRulebook %= addRuleLast r
 addAction ::
   (State (WorldActions wm) :> es, Breadcrumbs :> es)
   => Refreshable wm v
+  => ArgsMightHaveMainObject v (Thing wm)
   => Display v
   => GoesWith goesWith
   => Action wm resp goesWith v

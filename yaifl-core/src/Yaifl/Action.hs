@@ -120,7 +120,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
 -- - The action's variables can be displayed (has `Display` instance) for debugging purposes
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
-    (Refreshable wm v, GoesWith goesWith, Display v)
+    (Refreshable wm v, GoesWith goesWith, Display v, ArgsMightHaveMainObject v (Thing wm))
     => Action wm resp goesWith v
     -> WrappedAction wm
 

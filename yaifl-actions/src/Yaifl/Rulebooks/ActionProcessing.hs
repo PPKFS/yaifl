@@ -15,28 +15,12 @@ This module provides the core functionality for processing player actions
 through a rule-based system. It coordinates multiple rulebooks, manages
 action processing state, and handles the complex interactions between
 actions, rules, and world state.
-
-The module is designed around three key concepts:
-
-1. @WorldActions@: Central data structure containing all action processing
-   state and rulebook references
-
-2. @ActionProcessing@: Core action processing function with constrained
-effects for type-safe operation
-
-3. @Rulebook Integration@: Coordination system for multiple rulebooks
-   working together to process actions
-
-See also:
-- "Yaifl.Rulebook" for rulebook infrastructure
-- "Yaifl.Action" for action definitions
-- "Yaifl.Effects.RuleEffects" for rule effect capabilities
-- "Yaifl.WorldModel" for world state management
 -}
 
 module Yaifl.Rulebooks.ActionProcessing
   ( -- * Core Types
     WorldActions(..)
+  , GlobalBeforeHook(..)
   , ActionProcessing
 
   -- * Core Functions
@@ -45,6 +29,7 @@ module Yaifl.Rulebooks.ActionProcessing
 
   -- * State Management
   , actionsMapL
+  , globalBeforeHooksL
   ) where
 
 import Yaifl.Prelude hiding (runReader, Reader)
@@ -89,6 +74,9 @@ import Yaifl.Rulebooks.Run
 --   }
 -- @
 
+newtype GlobalBeforeHook wm = GlobalBeforeHook
+  (forall v es. ArgsMightHaveMainObject v (Thing wm) => RuleEffects wm es => Args wm v -> Eff es (Maybe Bool))
+
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
   , whenPlayBeginsRulebook :: Rulebook wm Unconstrained () Bool
@@ -96,6 +84,7 @@ data WorldActions (wm :: WorldModel) = WorldActions
   , everyTurnRules :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
   , actionProcessing :: ActionProcessing wm
   , accessibilityRules :: Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
+  , globalBeforeHooks :: [GlobalBeforeHook wm]
   } deriving stock ( Generic )
 
 
@@ -116,6 +105,10 @@ data WorldActions (wm :: WorldModel) = WorldActions
 
 actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
+
+-- | Lens for accessing the global before hooks in WorldActions.
+globalBeforeHooksL :: Lens' (WorldActions wm) [GlobalBeforeHook wm]
+globalBeforeHooksL = #globalBeforeHooks
 
 -- | Core action processing function with constrained effects.
 --
@@ -148,6 +141,7 @@ actionsMapL = #actionsMap
 newtype ActionProcessing wm = ActionProcessing
   (forall es resp goesWith v.
     RuleEffects wm es
+    => ArgsMightHaveMainObject v (Thing wm)
     => State (WorldActions wm) :> es
     => Refreshable wm v
     => Display v
@@ -169,11 +163,24 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
     -- a third go over: nope, still no idea
     -- fourth time: thankfully I can just delete it but leave it here for posterity
     --(ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <<$>> (ignoreSpan >> runParseArguments parseArguments uv)))
-    [ Rule "before stage rule" []
+    [ Rule "global before hooks rule" []
           ( \v -> do
-            ignoreSpanIfEmptyRulebook beforeRules
-            r <- runRulebookAndReturnVariables (aSpan) False beforeRules v
-            return (first Just $ fromMaybe (v, Nothing) r))
+            let hooks = wa ^. #globalBeforeHooks
+            if null hooks
+              then do
+                ignoreSpanIfEmptyRulebook beforeRules
+                r <- runRulebookAndReturnVariables (aSpan) False beforeRules v
+                return (first Just $ fromMaybe (v, Nothing) r)
+              else do
+                -- Run each global before hook
+                results <- mapM (\(GlobalBeforeHook hook) -> hook v) hooks
+                -- If any hook returns Just _, the action fails
+                if isJust `any` results
+                  then return (Just v, Just False)
+                  else do
+                    ignoreSpanIfEmptyRulebook beforeRules
+                    r <- runRulebookAndReturnVariables (aSpan) False beforeRules v
+                    return (first Just $ fromMaybe (v, Nothing) r))
     , notImplementedRule "carrying requirements rule"
     , notImplementedRule "basic visibility rule"
     , Rule "basic accessibility rule" []
@@ -233,6 +240,7 @@ makeFieldLabelsNoPrefix ''WorldActions
 runAction ::
   forall wm es goesWith resps v.
   Refreshable wm v
+  => ArgsMightHaveMainObject v (Thing wm)
   => Display v
   => State (WorldActions wm) :> es
   => RuleEffects wm es

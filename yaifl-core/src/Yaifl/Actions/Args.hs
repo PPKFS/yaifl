@@ -5,12 +5,6 @@ License     : MIT
 Maintainer  : ppkfs@outlook.com
 
 Action argument handling and configuration.
-
-Provides:
-- `Args`: Standard action argument payload
-- `UnverifiedArgs`: Intermediate parsing stage
-- Typeclasses for main object extraction
-- Silent/normal action configuration
 -}
 
 {-# LANGUAGE RecordWildCards #-}
@@ -111,13 +105,13 @@ unlessSilent args = unless (silently . actionOptions $ args)
 -- | Unifying typeclass for getting some sort of main object out of something. This is lawless (except normal lens laws),
 -- but it should be the...well, something that can be seen as the main object. Examples would be the object being used (but not the one
 -- being used *with*) or the room being travelled to (but not the door gone through).
-class ArgsHaveMainObject argVars obj | argVars -> obj where
+class ArgsHaveMainObject argVars obj where
   argsMainObject :: Lens' argVars obj
 
 -- | Unifying typeclass for MAYBE getting some sort of main object out of something. Used for actions where the object may or may not exist
 -- (for example, it's possible to examine a direction. For some reason. This means examining variables do not have a main object every time, but
 -- only most of the time.)
-class ArgsMightHaveMainObject argVars obj | argVars -> obj where
+class ArgsMightHaveMainObject argVars obj where
   argsMainObjectMaybe :: AffineTraversal' argVars obj
 
 instance ArgsHaveMainObject (Thing wm) (Thing wm) where
@@ -133,9 +127,16 @@ instance (ArgsHaveMainObject vars o) => ArgsHaveMainObject (Args wm vars) o wher
   -- | Delegate to variables' main object through the variables lens.
   argsMainObject = #variables % argsMainObject
 
-instance (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject (Args wm vars) o where
+instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject (Args wm vars) o where
   -- | Delegate to variables' main object (maybe) through the variables lens.
   argsMainObjectMaybe = #variables % argsMainObjectMaybe
 
 instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject vars o where
   argsMainObjectMaybe = castOptic argsMainObject
+
+instance ArgsMightHaveMainObject () o where
+  -- | Delegate to variables' main object through the variables lens.
+  argsMainObjectMaybe = atraversal Left const
+instance ArgsMightHaveMainObject (Args wm ()) o where
+  -- | Delegate to variables' main object through the variables lens.
+  argsMainObjectMaybe = atraversal Left const

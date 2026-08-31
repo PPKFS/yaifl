@@ -25,6 +25,7 @@ data ZorkData = ZorkData
   , alwaysLitMode :: Bool
 
   , trophyCaseScore :: Int
+  , trapDoorTouchedFlag :: Bool
   } deriving stock (Eq, Ord, Generic, Show)
 
 makeFieldLabelsNoPrefix ''ZorkData
@@ -53,4 +54,5 @@ defaultZorkValues = ZorkData
   , alwaysLitMode = False
 
   , trophyCaseScore = 0
+  , trapDoorTouchedFlag = False
   }

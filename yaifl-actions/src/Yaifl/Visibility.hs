@@ -59,6 +59,8 @@ data LookingActionVariables wm = LookingActionVariables
 instance Display (LookingActionVariables wm) where
   displayBuilder = const "todo"
 
+instance ArgsMightHaveMainObject (LookingActionVariables wm) a where
+  argsMainObjectMaybe = atraversal Left const
 -- | Something is in darkness if its parent has a light level of 0.
 isInDarkness ::
   WithoutMissingObjects wm es

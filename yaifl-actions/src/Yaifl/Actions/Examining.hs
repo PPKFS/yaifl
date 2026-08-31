@@ -122,7 +122,7 @@ examineDevices = notImplementedRule "examine devices rule"
 
 examineSupporters :: forall wm. HasExaminingProperties wm => ExamineRule wm
 examineSupporters = Rule "examine supporters rule" forPlayer' $ \a@Args{} -> do
-  let o = a ^? #variables % argsMainObjectMaybe
+  let (o :: Maybe (Thing wm)) = a ^? #variables % argsMainObjectMaybe
   flip (maybe (return (Nothing, Nothing))) (getSupporterMaybe =<< o) $ \sup -> do
     -- if something described which is not scenery is on the noun and something which
     -- is not the player is in the noun and the noun is not falsely-unoccupied:
@@ -145,7 +145,7 @@ examiningTextNowTrue a = return (Just $ a & #variables % #examiningTextPrinted .
 
 examineContainers :: forall wm. HasExaminingProperties wm => ExamineRule wm
 examineContainers = Rule "examine containers rule" forPlayer' $ \a@Args{..} -> do
-  let o = a ^? #variables % argsMainObjectMaybe
+  let (o :: Maybe (Thing wm)) = a ^? #variables % argsMainObjectMaybe
   flip (maybe (return (Nothing, Nothing))) o $ \obj ->
     -- if the noun is a container:
     -- if the noun is closed and the noun is opaque, make no decision;

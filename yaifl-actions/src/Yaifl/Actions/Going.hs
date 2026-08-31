@@ -52,6 +52,7 @@ data GoingActionVariables wm = GoingActionVariables
 
 instance Display (GoingActionVariables wm) where
   displayBuilder = const "todo"
+
 instance Refreshable wm (GoingActionVariables wm) where
   refresh GoingActionVariables{..} = GoingActionVariables
     <$> refresh roomGoneFrom
@@ -60,6 +61,9 @@ instance Refreshable wm (GoingActionVariables wm) where
     <*> refresh vehicleGoneBy
     <*> refresh thingGoneWith
     <*> pure directionGoingIn
+
+instance ArgsMightHaveMainObject (GoingActionVariables wm) a where
+  argsMainObjectMaybe = atraversal Left const
 
 data GoingResponses =
     GoStandUpA

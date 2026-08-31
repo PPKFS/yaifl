@@ -5,6 +5,7 @@ module Yaifl.Create.Rule
   , after'
   , insteadOf
   , insteadOf'
+  , globalBefore
   , afterActivity
   , afterActivity'
   , carryOutActivity
@@ -21,6 +22,7 @@ module Yaifl.Create.Rule
   ) where
 
 import Yaifl.Prelude
+import Effectful.Error.Static (Error, runErrorNoCallStack)
 import Yaifl.Actions.Imports
 import Yaifl.Activity
 import Yaifl.AnyObject
@@ -33,6 +35,7 @@ import Yaifl.Rulebooks.ActionProcessing
 import Yaifl.Effects.ObjectQuery
 import Yaifl.Entity
 import Yaifl.Tag
+import Yaifl.Thing.Kind
 
 type ActionPointer wm resps goesWith v = (Lens' (ActionCollection wm) (Action wm resps goesWith v))
 newtype ActionOrActivity wm resps goesWith v = ActionRule (ActionPointer wm resps goesWith v)
@@ -51,6 +54,14 @@ before ::
 before a precs t f = do
   let rule = makeRule t precs f
   a % #beforeRules %= addRuleLast rule
+  pass
+
+globalBefore ::
+  State (WorldActions wm) :> es
+  => (forall v' es'. RuleEffects wm es' => ArgsMightHaveMainObject v' (Thing wm) => Args wm v' -> Eff es' (Maybe Bool))
+  -> Eff es ()
+globalBefore hook = do
+  #globalBeforeHooks %= (++ [GlobalBeforeHook hook])
   pass
 
 before' ::
@@ -115,21 +126,27 @@ carryOutActivity a precs t f = do
   let rule = makeRule t precs f
   #activityCollection % a % #carryOutRules %= addRuleFirst rule
   pass
+
 insteadOf ::
   State (ActionCollection wm) :> es
   => ActionPointer wm resps goesWith v
   -> [Precondition wm (Args wm v)]
-  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff es' a) -- ^ Rule function.
+  -> (forall es'. (RuleEffects wm es', Refreshable wm (Args wm v)) => Args wm v -> Eff (Error ActionInterrupt : es') a) -- ^ Rule function.
   -> Eff es ()
 insteadOf a precs f = do
-  let rule = makeRule "" precs (fmap (\v -> v >> pure (Just True)) f)
+  let rule = makeRule "" precs (fmap (\v -> do
+        result <- runErrorNoCallStack v
+        case result of
+          Left ContinueAction -> pure Nothing
+          Left StopAction -> pure (Just True)
+          Right _ -> pure (Just True)) f)
   a % #insteadRules %= addRuleLast rule
 
 insteadOf' ::
   State (ActionCollection wm) :> es
   => ActionPointer wm resps goesWith v
   -> [Precondition wm (Args wm v)]
-  -> (forall es'. (RuleEffects wm es') => Eff es' a) -- ^ Rule function.
+  -> (forall es'. (RuleEffects wm es') => Eff (Error ActionInterrupt : es') a) -- ^ Rule function.
   -> Eff es ()
 insteadOf' a precs f = insteadOf a precs (const f)
 data ParameterReference wm =

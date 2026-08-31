@@ -22,7 +22,7 @@ import Yaifl.Person.Query (getPlayerLocation)
 import Yaifl.Preconditions
 import Yaifl.Region.Create (addRegion)
 import Yaifl.Region.Kind
-import Yaifl.Region.Query (areInRegion, isInRegion)
+import Yaifl.Region.Query (areInRegion)
 import Yaifl.Room.Create
 import Yaifl.Room.Query
 import Yaifl.Tag
@@ -49,7 +49,7 @@ roomsOutsideTheHouse forestArea = do
     & #description .~ text ( do
       won <- getValue #wonFlag
       [sayingTell|You are standing in an open field west of a white house, with a boarded front door.{?if won} A secret path leads southwest into the forest.{?end if}|])
-  
+
   -- forward declare a couple of nearby rooms because we need to refer to them
   kitchen <- addRoom' "Kitchen"
   clearing <- addRoom "Clearing" $ newRoom
