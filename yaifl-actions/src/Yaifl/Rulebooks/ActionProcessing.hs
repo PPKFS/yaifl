@@ -29,7 +29,7 @@ module Yaifl.Rulebooks.ActionProcessing
 
   -- * State Management
   , actionsMapL
-  , globalBeforeHooksL
+  , globalBeforeRulesL
   ) where
 
 import Yaifl.Prelude hiding (runReader, Reader)
@@ -75,7 +75,7 @@ import Yaifl.Rulebooks.Run
 -- @
 
 newtype GlobalBeforeHook wm = GlobalBeforeHook
-  (forall v es. ArgsMightHaveMainObject v (Thing wm) => RuleEffects wm es => Args wm v -> Eff es (Maybe Bool))
+  (forall v es. ArgsMightHaveMainObject v (Thing wm) => ArgsMightHaveSecondObject v (Thing wm) => RuleEffects wm es => Args wm v -> Eff es (Maybe Bool))
 
 data WorldActions (wm :: WorldModel) = WorldActions
   { actionsMap :: Map Text (ActionPhrase wm)
@@ -84,7 +84,7 @@ data WorldActions (wm :: WorldModel) = WorldActions
   , everyTurnRules :: Rulebook wm ((:>) (State (WorldActions wm))) () Bool
   , actionProcessing :: ActionProcessing wm
   , accessibilityRules :: Rulebook wm Unconstrained (Args wm (Thing wm)) Bool
-  , globalBeforeHooks :: [GlobalBeforeHook wm]
+  , globalBeforeRules :: [GlobalBeforeHook wm]
   } deriving stock ( Generic )
 
 
@@ -107,8 +107,8 @@ actionsMapL :: Lens' (WorldActions wm) (Map Text (ActionPhrase wm))
 actionsMapL = #actionsMap
 
 -- | Lens for accessing the global before hooks in WorldActions.
-globalBeforeHooksL :: Lens' (WorldActions wm) [GlobalBeforeHook wm]
-globalBeforeHooksL = #globalBeforeHooks
+globalBeforeRulesL :: Lens' (WorldActions wm) [GlobalBeforeHook wm]
+globalBeforeRulesL = #globalBeforeRules
 
 -- | Core action processing function with constrained effects.
 --
@@ -142,6 +142,7 @@ newtype ActionProcessing wm = ActionProcessing
   (forall es resp goesWith v.
     RuleEffects wm es
     => ArgsMightHaveMainObject v (Thing wm)
+    => ArgsMightHaveSecondObject v (Thing wm)
     => State (WorldActions wm) :> es
     => Refreshable wm v
     => Display v
@@ -165,7 +166,7 @@ actionProcessingRules = ActionProcessing $ \aSpan a@((Action{..}) :: Action wm r
     --(ParseArguments (\uv -> (\v -> fmap (const v) (unArgs uv)) <<$>> (ignoreSpan >> runParseArguments parseArguments uv)))
     [ Rule "global before hooks rule" []
           ( \v -> do
-            let hooks = wa ^. #globalBeforeHooks
+            let hooks = wa ^. #globalBeforeRules
             if null hooks
               then do
                 ignoreSpanIfEmptyRulebook beforeRules
@@ -241,6 +242,7 @@ runAction ::
   forall wm es goesWith resps v.
   Refreshable wm v
   => ArgsMightHaveMainObject v (Thing wm)
+  => ArgsMightHaveSecondObject v (Thing wm)
   => Display v
   => State (WorldActions wm) :> es
   => RuleEffects wm es

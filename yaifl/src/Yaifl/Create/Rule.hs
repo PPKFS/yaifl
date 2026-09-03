@@ -8,10 +8,14 @@ module Yaifl.Create.Rule
   , globalBefore
   , afterActivity
   , afterActivity'
+  , beforeActivity
+  , beforeActivity'
   , carryOutActivity
   , afterPrintingTheNameOf
   , duringActivity
   , everyTurn
+  , rulePass
+  , stopTheAction
   , ActionOrActivity(..)
   , ActionPointer
   , tryAction
@@ -58,10 +62,10 @@ before a precs t f = do
 
 globalBefore ::
   State (WorldActions wm) :> es
-  => (forall v' es'. RuleEffects wm es' => ArgsMightHaveMainObject v' (Thing wm) => Args wm v' -> Eff es' (Maybe Bool))
+  => (forall v' es'. RuleEffects wm es' => ArgsMightHaveMainObject v' (Thing wm) => ArgsMightHaveSecondObject v' (Thing wm) => Args wm v' -> Eff es' (Maybe Bool))
   -> Eff es ()
 globalBefore hook = do
-  #globalBeforeHooks %= (++ [GlobalBeforeHook hook])
+  #globalBeforeRules %= (++ [GlobalBeforeHook hook])
   pass
 
 before' ::
@@ -114,6 +118,27 @@ afterActivity' ::
   -> (forall es'. (RuleEffects wm es') => Eff es' ()) -- ^ Rule function.
   -> Eff es ()
 afterActivity' a precs t f = afterActivity a precs t (const $ f >> rulePass)
+
+beforeActivity ::
+  State (ActivityCollector wm) :> es
+  => ActivityLens wm resps v r
+  -> [Precondition wm v]
+  -> Text
+  -> (forall es'. (RuleEffects wm es', Refreshable wm v) => v -> Eff es' (Maybe r)) -- ^ Rule function.
+  -> Eff es ()
+beforeActivity a precs t f = do
+  let rule = makeRule t precs f
+  #activityCollection % a % #beforeRules %= addRuleLast rule
+  pass
+
+beforeActivity' ::
+  State (ActivityCollector wm) :> es
+  => ActivityLens wm resps v r
+  -> [Precondition wm v]
+  -> Text
+  -> (forall es'. (RuleEffects wm es') => Eff es' ()) -- ^ Rule function.
+  -> Eff es ()
+beforeActivity' a precs t f = beforeActivity a precs t (const $ f >> rulePass)
 
 carryOutActivity ::
   State (ActivityCollector wm) :> es

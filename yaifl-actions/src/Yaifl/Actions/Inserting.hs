@@ -37,6 +37,9 @@ type InsertingRule wm = ActionRule wm (InsertingAction wm) (InsertingVariables w
 instance ArgsHaveMainObject (InsertingVariables wm) (Thing wm) where
   argsMainObject = #object
 
+instance ArgsHaveSecondObject (InsertingVariables wm) (Thing wm) where
+  argsSecondObject = #into
+
 insertingAction :: InsertingAction wm
 insertingAction = (makeAction "inserting")
   { responses = insertingResponses

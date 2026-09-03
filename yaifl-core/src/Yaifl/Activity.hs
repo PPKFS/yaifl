@@ -92,7 +92,7 @@ data Activity wm resps v r = Activity
     -- ^ Current state variables (Nothing before execution)
     , responses :: resps -> Response wm v
     -- ^ Function to generate responses from the response collection
-    , beforeRules :: ActivityRulebook wm resps v r ()
+    , beforeRules :: ActivityRulebook wm resps v r r
     -- ^ Rulebook for pre-execution setup and validation
     , carryOutRules :: ActivityRulebook wm resps v r r
     -- ^ Rulebook for main execution logic
@@ -137,7 +137,7 @@ beginActivity ::
   forall wm resps v r es.
   RuleEffects wm es
   => SayableValue (WMText wm) wm
-  => Display v
+  => (Display v, Display r)
   => Refreshable wm v
   => ActivityLens wm resps v r  -- ^ Lens to access the activity in the activities record
   -> v -- ^ Initial variables for the activity

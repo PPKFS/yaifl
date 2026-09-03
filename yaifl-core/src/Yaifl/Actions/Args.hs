@@ -23,6 +23,8 @@ module Yaifl.Actions.Args
   --  both of these implement `ArgsHaveMainObject` and the preconditions can be written as @[theObject <specific object>]@ accordingly.
   , ArgsHaveMainObject(..)
   , ArgsMightHaveMainObject(..)
+  , ArgsHaveSecondObject(..)
+  , ArgsMightHaveSecondObject(..)
   -- * Standard action configurations
   , silentAction
   , normalAction
@@ -108,11 +110,18 @@ unlessSilent args = unless (silently . actionOptions $ args)
 class ArgsHaveMainObject argVars obj where
   argsMainObject :: Lens' argVars obj
 
+class ArgsHaveSecondObject argVars obj where
+  argsSecondObject :: Lens' argVars obj
+
 -- | Unifying typeclass for MAYBE getting some sort of main object out of something. Used for actions where the object may or may not exist
 -- (for example, it's possible to examine a direction. For some reason. This means examining variables do not have a main object every time, but
 -- only most of the time.)
 class ArgsMightHaveMainObject argVars obj where
   argsMainObjectMaybe :: AffineTraversal' argVars obj
+
+-- | Unifying typeclass for MAYBE getting a second object out of something. Used for actions like inserting where there's a main object and a second object.
+class ArgsMightHaveSecondObject argVars obj where
+  argsSecondObjectMaybe :: AffineTraversal' argVars obj
 
 instance ArgsHaveMainObject (Thing wm) (Thing wm) where
   argsMainObject = castOptic $ iso id id
@@ -134,9 +143,15 @@ instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject
 instance {-# OVERLAPS #-} (ArgsHaveMainObject vars o) => ArgsMightHaveMainObject vars o where
   argsMainObjectMaybe = castOptic argsMainObject
 
+-- Instances for ArgsMightHaveSecondObject
+instance (ArgsMightHaveSecondObject vars o) => ArgsMightHaveSecondObject (Args wm vars) o where
+  argsSecondObjectMaybe = #variables % argsSecondObjectMaybe
+
 instance ArgsMightHaveMainObject () o where
   -- | Delegate to variables' main object through the variables lens.
   argsMainObjectMaybe = atraversal Left const
 instance ArgsMightHaveMainObject (Args wm ()) o where
   -- | Delegate to variables' main object through the variables lens.
   argsMainObjectMaybe = atraversal Left const
+instance {-# OVERLAPPABLE #-} ArgsMightHaveSecondObject v o where
+  argsSecondObjectMaybe = atraversal Left const

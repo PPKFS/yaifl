@@ -59,6 +59,7 @@ addAction ::
   (State (WorldActions wm) :> es, Breadcrumbs :> es)
   => Refreshable wm v
   => ArgsMightHaveMainObject v (Thing wm)
+  => ArgsMightHaveSecondObject v (Thing wm)
   => Display v
   => GoesWith goesWith
   => Action wm resp goesWith v

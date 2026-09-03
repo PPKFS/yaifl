@@ -12,7 +12,7 @@ import Breadcrumbs ( addTag, addAnnotation )
 
 import Yaifl.Actions.Imports
 import Effectful.Reader.Static
-import Yaifl.Locale
+import Yaifl.Locale (LocaleVariables(..), clearMentioned)
 import Yaifl.Visibility
 import Yaifl.Activity
 import Yaifl.Metadata
@@ -43,6 +43,10 @@ lookingAction = (makeAction "looking")
   { understandAs = ["look", "looking"]
   , matches = map (,TakesObjectParameter) ["at", "through"]
   , responses = roomDescriptionResponsesImpl
+  , beforeRules = makeActionRulebook "before looking rulebook"
+      [ makeRule "clear mentioned things before looking" forPlayer'
+          (\_ -> clearMentioned >> rulePass)
+      ]
   , parseArguments = ParseArguments $ \ua@(UnverifiedArgs Args{..}) -> do
     -- if we have no source, then we have no idea where we are looking 'from'; return nothing
     -- lightLevels (recalc light) is how many levels we can actually see because of light

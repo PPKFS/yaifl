@@ -2,13 +2,24 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Yaifl.Locale where
+module Yaifl.Locale
+  ( LocaleVariables(..)
+  , LocalePriorities
+  , LocaleInfo(..)
+  , markAsMentioned
+  , clearMentioned
+  ) where
 
 import Yaifl.Prelude
+
+import qualified Data.Set as S
 import Yaifl.Store
 import Yaifl.AnyObject
+import Yaifl.Effects.ObjectQuery (WithoutMissingObjects)
 import Yaifl.Refreshable
 import Yaifl.Thing.Kind
+import Yaifl.Metadata
+import Yaifl.ObjectLike
 
 -- | Some state we thread through printing out locale information.
 data LocaleVariables wm = LocaleVariables
@@ -46,3 +57,19 @@ instance Display (LocaleInfo wm) where
 
 makeFieldLabelsNoPrefix ''LocaleInfo
 makeFieldLabelsNoPrefix ''LocaleVariables
+
+-- | Mark a thing as mentioned in the current turn.
+-- Used by the visibility system to track which objects have been referenced.
+markAsMentioned ::
+  WithoutMissingObjects wm es
+  => ThingLike wm o
+  => o
+  -> Eff es ()
+markAsMentioned thing = getThing thing >>= \t -> #mentionedThings %= S.insert (tagThingEntity t)
+
+-- | Clear all mentioned things from the current turn.
+-- Called before each look action to reset the mentioned state.
+clearMentioned ::
+  State (Metadata wm) :> es
+  => Eff es ()
+clearMentioned = #mentionedThings .= S.empty

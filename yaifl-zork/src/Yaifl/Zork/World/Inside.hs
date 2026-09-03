@@ -6,6 +6,7 @@ module Yaifl.Zork.World.Inside where
 
 import Yaifl.Prelude
 
+import Yaifl.AnyObject (asThingOrRoom)
 import Effectful.Error.Static
 import Yaifl.Action
 import Yaifl.Actions.Going
@@ -13,6 +14,7 @@ import Yaifl.Actions.Imports
 import Yaifl.Backdrop.Create
 import Yaifl.Container.Create
 import Yaifl.Create.Rule
+import Yaifl.Locale (LocaleVariables(..), markAsMentioned)
 import Yaifl.Direction.Kind (Direction(..))
 import Yaifl.Entity
 import Yaifl.Object.Kind
@@ -45,52 +47,53 @@ import Yaifl.Door.Create
 import Yaifl.Combinators
 import Yaifl.Vehicle.Create
 import qualified Yaifl.Vehicle.Kind as V
-import Yaifl.Metadata (getScore', WithMetadata, Score(..))
+import Yaifl.Metadata (getScore', WithMetadata, Score(..), random)
 import Yaifl.Thing.Kind
 import Yaifl.Text.AdaptiveNarrative
-import Yaifl.Zork.Scoring (ZilVisibility(..))
+import Yaifl.Zork.ZilVisibility
 import Yaifl.Openable.Query (openIt, closeIt)
 
 
 increaseScore :: WithMetadata ZorkWorldModel es => Int -> Eff es ()
 increaseScore n = #score %= (\s -> s { currentScore = currentScore s + n })
 
-makeAncientMapZilVisible :: Eff es ()
-makeAncientMapZilVisible = pure ()
-
-whenNotEmpty :: ContainerEntity -> Precondition ZorkWorldModel v
-whenNotEmpty = whenContainsSomething
-
--- Zil-visibility helper
-isZilVisible :: WithoutMissingObjects ZorkWorldModel es => ThingEntity -> Eff es Bool
-isZilVisible thing = do
-  t <- getThing thing
-  let visibility = t ^. #objectData % #thingData % #zilVisibility
-  pure (visibility == ZilVisible)
-
-isZilVisibleDoor :: WithoutMissingObjects ZorkWorldModel es => DoorEntity -> Eff es Bool
-isZilVisibleDoor door = isZilVisible (coerceTag @ThingTag door)
-
--- Global before hook for zil-visibility checks
--- Checks if the main object (noun) of an action is zil-invisible
-checkZilVisibilityGlobal :: ArgsMightHaveMainObject v (Thing ZorkWorldModel) => RuleEffects ZorkWorldModel es => Args ZorkWorldModel v -> Eff es (Maybe Bool)
-checkZilVisibilityGlobal args = do
-  case preview (#variables % argsMainObjectMaybe @_ @(Thing ZorkWorldModel)) args of
-    Just thing -> do
-      let visibility = thing ^. #objectData % #thingData % #zilVisibility
-      if visibility == ZilInvisible
-      then do
-        [saying|You can't see any such thing.|]
-        pure (Just False)
-      else rulePass
-    Nothing -> rulePass
+-- |  Based on the ZIL DUMMY table from the original Zork.
+dummyResponse :: WithMetadata ZorkWorldModel es => Eff es Text
+dummyResponse = do
+  r <- random @Int
+  let idx = (r `mod` 3) + 1
+  pure $ case idx of
+    1 -> "Look around."
+    2 -> "Too late for that."
+    _ -> "Have your eyes checked."
 
 data InsideTheHouse = InsideTheHouse RoomEntity
 
 theHouseInterior :: RoomEntity -> RegionEntity -> WorldConstruction ZorkWorldModel InsideTheHouse
 theHouseInterior kitchen houseInterior = do
-  -- Add global before hook for zil-visibility
+
   globalBefore checkZilVisibilityGlobal
+  globalBefore checkZilVisibilitySecondNoun
+
+  beforeActivity #printingTheLocaleDescription [] "mark zil-invisible things as mentioned" $ \lv -> do
+    case lv of
+      LocaleVariables _ localeObj _ -> do
+        asThingOrRoom
+          (const rulePass)
+          (\room -> do
+            things <- getContents room
+            forM_ things $ \thing -> do
+              unlessM (isZilVisible thing) $ markAsMentioned thing
+            rulePass)
+          localeObj
+    rulePass
+
+  afterActivity #printingNameOfSomething [] "mark zil-invisible thing as mentioned" $ \obj -> do
+    asThingOrRoom
+      (\thing -> unlessM (isZilVisible thing) $ markAsMentioned thing)
+      (const pass)
+      obj
+    rulePass
 
   livingRoom <- addRoom "Living Room" $ newRoom
   attic <- addRoom "Attic" $ newRoom
@@ -227,6 +230,12 @@ theHouseInterior kitchen houseInterior = do
   insteadOf' #taking [theObject trophyCase] $ do
     [saying|The trophy case is securely fastened to the wall.|]
 
+  ancientMap <- addThing "ancient map" $ newThing
+    & placeIt (inThe trophyCase)
+    & #description .~ "The map shows a forest with three clearings. The largest clearing contains a house. Three paths leave the large clearing. One of these paths, leading southwest, is marked 'To Stone Barrow'."
+    & understandItAs ["parchment", "map", "antique", "old", "ancient"]
+  makeZilInvisible ancientMap
+
   everyTurn "trophy case scoring rule" [] $ do
     newScore <- sum . map (^. #objectData % #thingData % #treasureValue % #unValue) <$> getContents trophyCase
     oldScore <- getValue #trophyCaseScore
@@ -238,19 +247,18 @@ theHouseInterior kitchen houseInterior = do
     wonFlag <- getValue #wonFlag
     when (score >= 350 && not wonFlag) $ do
       setValue #wonFlag True
-      makeAncientMapZilVisible
+      makeZilVisible ancientMap
       [saying|#{linebreak}An almost inaudible voice whispers in your ear, "Look to your treasures for the final secret."#{linebreak}|]
 
   trapdoor <- addDoor "trap door" $ newDoor (livingRoom, Up) (cellar, Down)
     & makeItScenery
     & makeItClosedAndOpenable
     & understandItAs ["trapdoor", "trap-door", "cover", "trap", "dusty"]
-  modifyThing (coerceTag @ThingTag trapdoor) (#objectData % #thingData % #zilVisibility .~ ZilInvisible)
+  makeZilInvisible trapdoor
 
-  insteadOf' #entering [theObject trapdoor] $ do
-    throwError ContinueAction
+  insteadOf #entering [theObject trapdoor] $ \a -> tryAction "go" [TheDirection Down] a >> pass
 
-  before #going [inDirection Down, whenIn livingRoom] "trap door check" $ const $ do
+  before' #going [inDirection Down, whenIn livingRoom] "trap door check" $ do
     rugMoved <- getValue #rugMovedFlag
     trapDoorIsOpen <- isOpen <$> getDoor trapdoor
     if not rugMoved
@@ -263,23 +271,29 @@ theHouseInterior kitchen houseInterior = do
           pure (Just False)
         else rulePass
 
-  insteadOf' #opening [theObject trapdoor, whenIn livingRoom] $ do
+  insteadOf #opening [theObject trapdoor, whenIn livingRoom] $ \_ -> do
     trapDoorIsOpen <- isOpen <$> getDoor trapdoor
     if trapDoorIsOpen
-      then [saying|It is already open.|]
+      then do
+        resp <- dummyResponse
+        [saying|{resp}|]
       else do
-        trapdoorThing <- getThing (coerceTag @ThingTag trapdoor)
+        trapdoorThing <- getThing trapdoor
         openIt trapdoorThing
         [saying|The door reluctantly opens to reveal a rickety staircase descending into darkness.|]
+        throwError ContinueAction
 
-  insteadOf' #closing [theObject trapdoor, whenIn livingRoom] $ do
+  insteadOf #closing [theObject trapdoor, whenIn livingRoom] $ \_ -> do
     trapDoorIsOpen <- isOpen <$> getDoor trapdoor
     if not trapDoorIsOpen
-      then [saying|It is already closed.|]
+      then do
+        resp <- dummyResponse
+        [saying|{resp}|]
       else do
-        trapdoorThing <- getThing (coerceTag @ThingTag trapdoor)
+        trapdoorThing <- getThing trapdoor
         closeIt trapdoorThing
         [saying|The door swings shut and closes.|]
+        throwError ContinueAction
 
   insteadOf' #lookingUnder [theObject trapdoor, whenIn livingRoom] $ do
     trapDoorIsOpen <- isOpen <$> getDoor trapdoor
@@ -330,7 +344,7 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
 {?if notRugMoved}and a large oriental rug in the center of the room.{?else if trapDoorOpen}and a rug lying beside an open trap door.
 {?else}and a closed trap door at your feet.{?end if}|])
 
-  after #looking [whenIn livingRoom, whenNotEmpty trophyCase] " " $ const $ do
+  after #looking [whenIn livingRoom, whenContainsSomething trophyCase] " " $ const $ do
     [saying|Your collection of treasures consists of:|]
     items <- getContents trophyCase
     forM_ items $ \item -> do
@@ -404,7 +418,7 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
         rugMoved <- getValue #rugMovedFlag
         when rugMoved [saying|Having moved the carpet previously, you find it impossible to move it again.|]
         setValue #rugMovedFlag True
-        modifyThing (coerceTag @ThingTag trapdoor) (#objectData % #thingData % #zilVisibility .~ ZilVisible)
+        makeZilVisible trapdoor
         [saying|With a great effort, the rug is moved to one side of the room, revealing the dusty cover of a closed trap door.|]
 
   insteadOf' #pushing [theObject carpet] doRugMove
@@ -430,39 +444,3 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
   --     then [saying|The rug is too heavy to lift.|]
   --     else [saying|The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it.|]
   pure $ InsideTheHouse livingRoom
-
-
-{-
-The trap door is below Living Room and above Cellar.
-A thing can be zil-visible or zil-invisible. A thing is usually zil-visible. The trap door is zil-invisible.
-Rule for writing a paragraph about a zil-invisible thing: now the item described is mentioned.
-Before printing the locale description of a room (called the place):
-  repeat with item running through zil-invisible things in the place:
-    now item is mentioned.
-Before doing anything to a zil-invisible thing:
-  say "You can't see any such thing." instead.
-Before doing anything when the second noun is a zil-invisible thing:
-  say "You can't see any such thing." instead.
-Instead of entering the trap door: try going down.
-Before going down in Living Room:
-  if the rug-moved is false:
-    say "You can't go that way." instead;
-  if the trap door is not open:
-    say "The trap door is closed." instead.
-Instead of opening the trap door when the player is in Living Room:
-  if the trap door is open:
-    say "[dummy]" instead;
-  now the trap door is open;
-  say "The door reluctantly opens to reveal a rickety staircase descending into darkness."
-Instead of closing the trap door when the player is in Living Room:
-  if the trap door is not open:
-    say "It is already closed." instead;
-  now the trap door is not open;
-  say "The door swings shut and closes."
-Instead of looking under the trap door when the player is in Living Room:
-  if the trap door is open:
-    say "You see a rickety staircase descending into darkness.";
-  otherwise:
-    say "It[apostrophe]s closed."
-The trap-door-touched is a truth state that varies. The trap-door-touched is false.
--}

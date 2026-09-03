@@ -22,7 +22,8 @@ source-repository head
 library
   hs-source-dirs: src
   build-depends:
-    yaifl
+    containers
+    , yaifl
     , yaifl-core
     , yaifl-objects
     , yaifl-actions
@@ -73,6 +74,7 @@ library
     Yaifl.Zork.Scoring
     Yaifl.Zork.Thief
     Yaifl.Zork.Troll
+    Yaifl.Zork.ZilVisibility
     Yaifl.Zork.World
     Yaifl.Zork.World.Barrow
     Yaifl.Zork.World.Canyon

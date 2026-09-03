@@ -120,7 +120,7 @@ data Action (wm :: WorldModel) resps (goesWith :: ActionSignature) v where
 -- - The action's variables can be displayed (has `Display` instance) for debugging purposes
 data WrappedAction (wm :: WorldModel) where
   WrappedAction ::
-    (Refreshable wm v, GoesWith goesWith, Display v, ArgsMightHaveMainObject v (Thing wm))
+    (Refreshable wm v, GoesWith goesWith, Display v, ArgsMightHaveMainObject v (Thing wm), ArgsMightHaveSecondObject v (Thing wm))
     => Action wm resp goesWith v
     -> WrappedAction wm
 
@@ -180,7 +180,7 @@ makeAction ::
   -> Action wm resp goesWith v
 makeAction n = Action
   { name = n
-  , understandAs = [n] <> (maybeToList (T.stripSuffix "ing" n))
+  , understandAs = [n] <> maybeToList (T.stripSuffix "ing" n)
   , matches = []
   , touchableNouns = const []
   , responses = \_ -> notImplementedResponse "no response"
@@ -208,3 +208,5 @@ getAllRules ::
   -> Text
 getAllRules Action{..} = T.intercalate "," . mconcat . map getRuleNames $
   [ beforeRules, insteadRules, checkRules, carryOutRules, reportRules, afterRules ]
+
+

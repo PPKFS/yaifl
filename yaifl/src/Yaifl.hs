@@ -183,6 +183,7 @@ blankActions = WorldActions
   , turnSequence = turnSequenceRules
   , everyTurnRules = everyTurnRulesImpl
   , accessibilityRules = accessibility
+  , globalBeforeRules = []
   }
 
 blankStores :: WorldStores s
@@ -215,7 +216,7 @@ blankMetadata = Metadata
   , rng = mkStdGen 69
   , usePostPromptPbreak = True
   , statusBar = StatusBar "" ""
-  , score = (Score 0 Nothing False)
+  , score = Score { currentScore = 0, maxScore = Nothing, usingScore = False }
   , turnCount = 0
   , everywhereBackdrops = S.empty
   }
