@@ -6,6 +6,7 @@ module Yaifl.Zork.World.Inside where
 
 import Yaifl.Prelude
 
+import Yaifl.Zork.Actions
 import Yaifl.AnyObject (asThingOrRoom)
 import Effectful.Error.Static
 import Yaifl.Action
@@ -52,7 +53,7 @@ import Yaifl.Thing.Kind
 import Yaifl.Text.AdaptiveNarrative
 import Yaifl.Zork.ZilVisibility
 import Yaifl.Openable.Query (openIt, closeIt)
-
+import qualified Yaifl.Create.CustomActionRule as E
 
 increaseScore :: WithMetadata ZorkWorldModel es => Int -> Eff es ()
 increaseScore n = #score %= (\s -> s { currentScore = currentScore s + n })
@@ -438,9 +439,9 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
       then [saying|Underneath the rug is a closed trap door. As you drop the corner of the rug, the trap door is once again concealed from view.|]
       else [saying|I suppose you think it's a magic carpet?|]
 
-  -- insteadOf' #raising [theObject carpet] $ do
-  --   rugMoved <- getValue #rugMovedFlag
-  --   if rugMoved
-  --     then [saying|The rug is too heavy to lift.|]
-  --     else [saying|The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it.|]
+  E.insteadOf' #raising [theObject carpet] $ do
+    rugMoved <- getValue #rugMovedFlag
+    if rugMoved
+      then [saying|The rug is too heavy to lift.|]
+      else [saying|The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it.|]
   pure $ InsideTheHouse livingRoom
