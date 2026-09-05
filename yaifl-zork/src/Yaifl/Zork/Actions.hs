@@ -2,7 +2,6 @@
 module Yaifl.Zork.Actions where
 
 import Yaifl.Prelude
-import Yaifl.Action (makeActionRulebook)
 import Yaifl.Actions.GoesWith
 import Yaifl.Actions.Args (Args(..))
 import Yaifl.Thing.Kind
@@ -51,3 +50,5 @@ raisingAction = (makeAction "raising")
   , parseArguments = actionOnOneThing
   , carryOutRules = makeActionRulebook "carry out raising" [standardRaising]
   }
+
+makeFieldLabelsNoPrefix ''ZorkActions

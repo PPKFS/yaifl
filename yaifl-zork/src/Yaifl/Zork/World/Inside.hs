@@ -68,7 +68,7 @@ dummyResponse = do
     2 -> "Too late for that."
     _ -> "Have your eyes checked."
 
-data InsideTheHouse = InsideTheHouse RoomEntity
+data InsideTheHouse = InsideTheHouse RoomEntity V.VehicleEntity
 
 theHouseInterior :: RoomEntity -> RegionEntity -> WorldConstruction ZorkWorldModel InsideTheHouse
 theHouseInterior kitchen houseInterior = do
@@ -444,4 +444,4 @@ To the west is a cyclops-shaped opening in an old wooden door, above which is so
     if rugMoved
       then [saying|The rug is too heavy to lift.|]
       else [saying|The rug is too heavy to lift, but in trying to take it you have noticed an irregularity beneath it.|]
-  pure $ InsideTheHouse livingRoom
+  pure $ InsideTheHouse livingRoom magicBoat

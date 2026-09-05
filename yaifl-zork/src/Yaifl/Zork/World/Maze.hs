@@ -215,6 +215,13 @@ Grating Room is a dark room.
 The description of Grating Room is "You are in a small room near the maze. There are twisty passages in the immediate vicinity.[if the grate is open][line break]Above you is an open grating with sunlight pouring in.[otherwise if the grate is not locked][line break]Above you is a grating.[otherwise][line break]Above you is a grating locked with a skull-and-crossbones lock.[end if]".
 Grating Room is in the Underground.
 Southwest of Grating Room is Maze11.
+
+  -- The description of Grating Clearing is "You are in a clearing, with a forest surrounding you on all sides. A path leads south.
+  -- [if the grate is open][line break]There is an open grating, descending into darkness.[otherwise if the grate-revealed is true][line break]There is a grating securely fastened into the ground.[end if]".
+    & #description .~ text (do
+      grateOpen <- isOpen <$> getThing grate
+      [sayingTell|"You are in a clearing, with a forest surrounding you on all sides. A path leads south."|]
+    )
 -}
 
 {-

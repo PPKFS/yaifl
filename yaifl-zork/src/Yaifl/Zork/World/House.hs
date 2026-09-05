@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Yaifl.Zork.World.House where
 
 import Yaifl.Prelude
@@ -11,6 +12,7 @@ import Yaifl.Container.Kind
 import Yaifl.Create.Rule
 import Yaifl.Direction.Kind (Direction(..))
 import Yaifl.Door.Create
+import Yaifl.Effects.Interpreters (WorldConstruction)
 import Yaifl.Effects.RuleEffects
 import Yaifl.Entity
 import Yaifl.Object.Kind
@@ -32,12 +34,14 @@ import Yaifl.Thing.Create
 import Yaifl.Thing.Kind
 import Yaifl.Zork.Specifics
 import qualified Yaifl.Create.CustomActionRule as E
-import Yaifl.Effects.Interpreters (WorldConstruction)
-import Yaifl.Zork.Actions
 
 data OutsideTheHouse = OutsideTheHouse
   { westOfHouse :: RoomEntity
+  , southOfHouse :: RoomEntity
+  , northOfHouse :: RoomEntity
+  , behindHouse :: RoomEntity
   , houseInterior :: RegionEntity
+  , kitchen :: RoomEntity
   } deriving stock (Eq, Ord, Show, Generic)
 roomsOutsideTheHouse :: RegionEntity -> WorldConstruction ZorkWorldModel OutsideTheHouse
 roomsOutsideTheHouse forestArea = do
@@ -216,7 +220,7 @@ Translated to Yaifl by PPK, based on the Inform 7 translation by John Escobedo.#
     , not_ (whenPlayerIsInRegion houseExterior)
     , not_ (whenPlayerIsInRegion houseInterior)
     , not_ (whenPlayerIsIn clearing) ] [saying|It was here just a minute ago....|]
-  return (OutsideTheHouse westOfHouse houseInterior)
+  return (OutsideTheHouse{..})
 
 -- Test commands for all logic in this module
 testMeWith :: [Text]
